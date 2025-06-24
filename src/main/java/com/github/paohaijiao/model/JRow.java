@@ -31,6 +31,7 @@ import java.util.Set;
 public class JRow {
 
     private Map<String, Object> rowData;
+
     public JRow() {
         this.rowData = new HashMap<>();
     }

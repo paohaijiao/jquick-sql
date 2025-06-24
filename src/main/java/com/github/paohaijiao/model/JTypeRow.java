@@ -27,7 +27,7 @@ import java.util.Map;
  * @date 2025/6/24
  * @description
  */
-public class JTypeRow extends JRow{
+public class JTypeRow extends JRow {
     private final Map<String, Class<?>> columnTypes;
 
     public JTypeRow() {
