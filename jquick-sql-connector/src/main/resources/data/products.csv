@@ -1,0 +1,6 @@
+id,name,price,quantity,in_stock,created_at
+1,Apple,3.99,100,true,2023-01-15
+2,Banana,1.99,200,true,2023-02-20
+3,Orange,2.49,150,true,2023-03-10
+4,Mango,4.99,50,false,2023-04-05
+5,Pineapple,6.99,30,true,2023-05-12

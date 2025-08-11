@@ -1,0 +1,20 @@
+package com.github.paohaijiao.enums;
+
+public enum JErrorCode {
+
+    CONNECTION_FAILED,
+
+    SQL_EXECUTION_ERROR,
+
+    RESULT_PROCESSING_ERROR,
+
+    TRANSACTION_ERROR,
+
+    CONFIGURATION_ERROR,
+
+    RESOURCE_NOT_FOUND,
+
+    PERMISSION_DENIED,
+
+    UNKNOWN_ERROR
+}

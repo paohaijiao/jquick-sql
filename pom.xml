@@ -1,26 +1,37 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-
     <artifactId>jquick-sql</artifactId>
     <version>1.0.0</version>
-    <packaging>jar</packaging>
+    <packaging>pom</packaging>
     <name>jquick-sql</name>
+    <modules>
+        <module>jquick-sql-connector</module>
+        <module>jquick-sql-metastore</module>
+        <module>jquick-sql-transformer</module>
+        <module>jquick-sql-executor</module>
+    </modules>
     <parent>
-        <groupId>com.github.paohaijiao</groupId>
-        <artifactId>jquick-parent</artifactId>
-        <version>1.0.0</version>
+        <groupId>io.github.paohaijiao</groupId>
+        <artifactId>javelin</artifactId>
+        <version>1.3.0</version>
     </parent>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <java.version>1.8</java.version>
+        <javelin.version>1.3.0</javelin.version>
         <lombok.version>1.14.8</lombok.version>
         <log4jdbc.log4j2.version>1.16</log4jdbc.log4j2.version>
         <rest.assured.version>2.3.3</rest.assured.version>
     </properties>
 
     <dependencies>
+        <dependency>
+            <groupId>io.github.paohaijiao</groupId>
+            <artifactId>javelin-mybatis</artifactId>
+            <version>1.3.0</version>
+        </dependency>
 
     </dependencies>
 
