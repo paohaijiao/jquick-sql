@@ -1,0 +1,510 @@
+// Generated from D:/idea/jthornruleGrammer/sql/JQuickSQL.g4 by ANTLR 4.13.2
+package com.github.paohaijiao.parser;
+import org.antlr.v4.runtime.tree.ParseTreeVisitor;
+
+/**
+ * This interface defines a complete generic visitor for a parse tree produced
+ * by {@link JQuickSQLParser}.
+ *
+ * @param <T> The return type of the visit operation. Use {@link Void} for
+ * operations with no return type.
+ */
+public interface JQuickSQLVisitor<T> extends ParseTreeVisitor<T> {
+	/**
+	 * Visit a parse tree produced by {@link JQuickSQLParser#query}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitQuery(JQuickSQLParser.QueryContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link JQuickSQLParser#selectStatement}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitSelectStatement(JQuickSQLParser.SelectStatementContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link JQuickSQLParser#selectExpression}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitSelectExpression(JQuickSQLParser.SelectExpressionContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link JQuickSQLParser#olapOperation}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitOlapOperation(JQuickSQLParser.OlapOperationContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link JQuickSQLParser#rollUp}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitRollUp(JQuickSQLParser.RollUpContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link JQuickSQLParser#drillDown}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitDrillDown(JQuickSQLParser.DrillDownContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link JQuickSQLParser#drillDownDimensions}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitDrillDownDimensions(JQuickSQLParser.DrillDownDimensionsContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link JQuickSQLParser#slice}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitSlice(JQuickSQLParser.SliceContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link JQuickSQLParser#sliceCondition}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitSliceCondition(JQuickSQLParser.SliceConditionContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link JQuickSQLParser#dice}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitDice(JQuickSQLParser.DiceContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link JQuickSQLParser#diceConditions}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitDiceConditions(JQuickSQLParser.DiceConditionsContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link JQuickSQLParser#diceCondition}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitDiceCondition(JQuickSQLParser.DiceConditionContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link JQuickSQLParser#pivot}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitPivot(JQuickSQLParser.PivotContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link JQuickSQLParser#pivotAggregate}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitPivotAggregate(JQuickSQLParser.PivotAggregateContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link JQuickSQLParser#pivotColumn}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitPivotColumn(JQuickSQLParser.PivotColumnContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link JQuickSQLParser#pivotValues}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitPivotValues(JQuickSQLParser.PivotValuesContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link JQuickSQLParser#selectClause}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitSelectClause(JQuickSQLParser.SelectClauseContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link JQuickSQLParser#selectSpec}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitSelectSpec(JQuickSQLParser.SelectSpecContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link JQuickSQLParser#selectElements}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitSelectElements(JQuickSQLParser.SelectElementsContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link JQuickSQLParser#selectElement}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitSelectElement(JQuickSQLParser.SelectElementContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link JQuickSQLParser#fromClause}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitFromClause(JQuickSQLParser.FromClauseContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link JQuickSQLParser#tableSources}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitTableSources(JQuickSQLParser.TableSourcesContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link JQuickSQLParser#tableSource}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitTableSource(JQuickSQLParser.TableSourceContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link JQuickSQLParser#tableSourceItem}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitTableSourceItem(JQuickSQLParser.TableSourceItemContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link JQuickSQLParser#joinPart}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitJoinPart(JQuickSQLParser.JoinPartContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link JQuickSQLParser#indexHintList}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitIndexHintList(JQuickSQLParser.IndexHintListContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link JQuickSQLParser#indexHint}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitIndexHint(JQuickSQLParser.IndexHintContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link JQuickSQLParser#uidList}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitUidList(JQuickSQLParser.UidListContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link JQuickSQLParser#groupByItem}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitGroupByItem(JQuickSQLParser.GroupByItemContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link JQuickSQLParser#havingExpr}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitHavingExpr(JQuickSQLParser.HavingExprContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link JQuickSQLParser#orderByClause}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitOrderByClause(JQuickSQLParser.OrderByClauseContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link JQuickSQLParser#orderByExpression}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitOrderByExpression(JQuickSQLParser.OrderByExpressionContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link JQuickSQLParser#limitClause}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitLimitClause(JQuickSQLParser.LimitClauseContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link JQuickSQLParser#limitOnly}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitLimitOnly(JQuickSQLParser.LimitOnlyContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link JQuickSQLParser#limitWithOffset}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitLimitWithOffset(JQuickSQLParser.LimitWithOffsetContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link JQuickSQLParser#commonTableExpression}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitCommonTableExpression(JQuickSQLParser.CommonTableExpressionContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code inExpression}
+	 * labeled alternative in {@link JQuickSQLParser#expression}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitInExpression(JQuickSQLParser.InExpressionContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code selectResult}
+	 * labeled alternative in {@link JQuickSQLParser#expression}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitSelectResult(JQuickSQLParser.SelectResultContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code notExpression}
+	 * labeled alternative in {@link JQuickSQLParser#expression}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitNotExpression(JQuickSQLParser.NotExpressionContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code parenExpression}
+	 * labeled alternative in {@link JQuickSQLParser#expression}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitParenExpression(JQuickSQLParser.ParenExpressionContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code logicalExpression}
+	 * labeled alternative in {@link JQuickSQLParser#expression}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitLogicalExpression(JQuickSQLParser.LogicalExpressionContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code predicateExpression}
+	 * labeled alternative in {@link JQuickSQLParser#expression}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitPredicateExpression(JQuickSQLParser.PredicateExpressionContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code expressionAtomPredicate}
+	 * labeled alternative in {@link JQuickSQLParser#predicate}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitExpressionAtomPredicate(JQuickSQLParser.ExpressionAtomPredicateContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code binaryComparisonPredicate}
+	 * labeled alternative in {@link JQuickSQLParser#predicate}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitBinaryComparisonPredicate(JQuickSQLParser.BinaryComparisonPredicateContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code inPredicate}
+	 * labeled alternative in {@link JQuickSQLParser#predicate}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitInPredicate(JQuickSQLParser.InPredicateContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code betweenPredicate}
+	 * labeled alternative in {@link JQuickSQLParser#predicate}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitBetweenPredicate(JQuickSQLParser.BetweenPredicateContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code isNullPredicate}
+	 * labeled alternative in {@link JQuickSQLParser#predicate}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitIsNullPredicate(JQuickSQLParser.IsNullPredicateContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code likePredicate}
+	 * labeled alternative in {@link JQuickSQLParser#predicate}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitLikePredicate(JQuickSQLParser.LikePredicateContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code regexpPredicate}
+	 * labeled alternative in {@link JQuickSQLParser#predicate}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitRegexpPredicate(JQuickSQLParser.RegexpPredicateContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code unaryExpressionAtom}
+	 * labeled alternative in {@link JQuickSQLParser#expressionAtom}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitUnaryExpressionAtom(JQuickSQLParser.UnaryExpressionAtomContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code subqueryExperssionAtom}
+	 * labeled alternative in {@link JQuickSQLParser#expressionAtom}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitSubqueryExperssionAtom(JQuickSQLParser.SubqueryExperssionAtomContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code constantExpressionAtom}
+	 * labeled alternative in {@link JQuickSQLParser#expressionAtom}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitConstantExpressionAtom(JQuickSQLParser.ConstantExpressionAtomContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code functionCallExpressionAtom}
+	 * labeled alternative in {@link JQuickSQLParser#expressionAtom}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitFunctionCallExpressionAtom(JQuickSQLParser.FunctionCallExpressionAtomContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code fullColumnNameExpressionAtom}
+	 * labeled alternative in {@link JQuickSQLParser#expressionAtom}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitFullColumnNameExpressionAtom(JQuickSQLParser.FullColumnNameExpressionAtomContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code nestedExpressionAtom}
+	 * labeled alternative in {@link JQuickSQLParser#expressionAtom}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitNestedExpressionAtom(JQuickSQLParser.NestedExpressionAtomContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code mathExpressionAtom}
+	 * labeled alternative in {@link JQuickSQLParser#expressionAtom}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitMathExpressionAtom(JQuickSQLParser.MathExpressionAtomContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link JQuickSQLParser#expressions}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitExpressions(JQuickSQLParser.ExpressionsContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code aggregateFunctionCall}
+	 * labeled alternative in {@link JQuickSQLParser#functionCall}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitAggregateFunctionCall(JQuickSQLParser.AggregateFunctionCallContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code scalarFunctionCall}
+	 * labeled alternative in {@link JQuickSQLParser#functionCall}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitScalarFunctionCall(JQuickSQLParser.ScalarFunctionCallContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code udfFunctionCall}
+	 * labeled alternative in {@link JQuickSQLParser#functionCall}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitUdfFunctionCall(JQuickSQLParser.UdfFunctionCallContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link JQuickSQLParser#aggregateWindowedFunction}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitAggregateWindowedFunction(JQuickSQLParser.AggregateWindowedFunctionContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link JQuickSQLParser#scalarFunctionName}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitScalarFunctionName(JQuickSQLParser.ScalarFunctionNameContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link JQuickSQLParser#logicalOperator}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitLogicalOperator(JQuickSQLParser.LogicalOperatorContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link JQuickSQLParser#comparisonOperator}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitComparisonOperator(JQuickSQLParser.ComparisonOperatorContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link JQuickSQLParser#mathOperator}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitMathOperator(JQuickSQLParser.MathOperatorContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link JQuickSQLParser#unaryOperator}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitUnaryOperator(JQuickSQLParser.UnaryOperatorContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link JQuickSQLParser#constant}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitConstant(JQuickSQLParser.ConstantContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link JQuickSQLParser#booleanLiteral}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitBooleanLiteral(JQuickSQLParser.BooleanLiteralContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link JQuickSQLParser#fullColumnName}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitFullColumnName(JQuickSQLParser.FullColumnNameContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link JQuickSQLParser#uid}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitUid(JQuickSQLParser.UidContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link JQuickSQLParser#simpleId}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitSimpleId(JQuickSQLParser.SimpleIdContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link JQuickSQLParser#dottedId}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitDottedId(JQuickSQLParser.DottedIdContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link JQuickSQLParser#keyword}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitKeyword(JQuickSQLParser.KeywordContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link JQuickSQLParser#compOperator}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitCompOperator(JQuickSQLParser.CompOperatorContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link JQuickSQLParser#aggregateFunction}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitAggregateFunction(JQuickSQLParser.AggregateFunctionContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link JQuickSQLParser#tableName}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitTableName(JQuickSQLParser.TableNameContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link JQuickSQLParser#schemaName}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitSchemaName(JQuickSQLParser.SchemaNameContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link JQuickSQLParser#functionArgs}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitFunctionArgs(JQuickSQLParser.FunctionArgsContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link JQuickSQLParser#functionArg}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitFunctionArg(JQuickSQLParser.FunctionArgContext ctx);
+}

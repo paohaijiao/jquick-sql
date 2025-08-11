@@ -7,6 +7,4 @@
         <version>1.0.0</version>
     </parent>
     <artifactId>jquick-sql-executor</artifactId>
-    <name>Archetype - jquick-sql-executor</name>
-    <url>http://maven.apache.org</url>
 </project>
