@@ -1,4 +1,4 @@
-package com.github.paohaijiao.manage;
+package com.github.paohaijiao.registry;
 
 import com.github.paohaijiao.adaptor.JDataSourceAdapter;
 import com.github.paohaijiao.model.JMetadata;

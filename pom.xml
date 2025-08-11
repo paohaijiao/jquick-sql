@@ -21,10 +21,37 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <java.version>1.8</java.version>
         <javelin.version>1.3.0</javelin.version>
+        <jquick-sql>1.3.0</jquick-sql>
         <lombok.version>1.14.8</lombok.version>
         <log4jdbc.log4j2.version>1.16</log4jdbc.log4j2.version>
         <rest.assured.version>2.3.3</rest.assured.version>
     </properties>
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>io.github.paohaijiao</groupId>
+                <artifactId>jquick-sql-connector</artifactId>
+                <version>${jquick-sql}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.paohaijiao</groupId>
+                <artifactId>jquick-sql-metastore</artifactId>
+                <version>${jquick-sql}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.paohaijiao</groupId>
+                <artifactId>jquick-sql-transformer</artifactId>
+                <version>${jquick-sql}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.paohaijiao</groupId>
+                <artifactId>jquick-sql-executor</artifactId>
+                <version>${jquick-sql}</version>
+            </dependency>
+        </dependencies>
+
+
+    </dependencyManagement>
 
     <dependencies>
         <dependency>
