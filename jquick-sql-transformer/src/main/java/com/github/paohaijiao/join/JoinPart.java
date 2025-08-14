@@ -28,8 +28,11 @@ import lombok.Getter;
  */
 @Getter
 public class JoinPart {
+
     private JoinType joinType;
+
     private JTableSource tableSource;
+
     private JExpression onCondition;
 
     public JoinPart(JoinType joinType, JTableSource tableSource) {

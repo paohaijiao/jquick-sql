@@ -17,11 +17,12 @@ package com.github.paohaijiao.handler.impl;
 
 import com.github.paohaijiao.expression.JExpression;
 import com.github.paohaijiao.handler.JQueryHandler;
+import com.github.paohaijiao.join.JEvaluateJoinCondition;
 import com.github.paohaijiao.join.JoinPart;
 import com.github.paohaijiao.join.JTableSource;
 import com.github.paohaijiao.model.JoinResult;
 import com.github.paohaijiao.model.JResultMapper;
-import com.github.paohaijiao.query.JQueryPlan;
+import com.github.paohaijiao.plan.JExecutionPlan;
 import com.github.paohaijiao.util.JEntityAccessor;
 
 import java.util.ArrayList;
@@ -37,16 +38,14 @@ import java.util.stream.Collectors;
  * @since 2025/8/12
  */
 public class JMultiTableHandler<T> implements JQueryHandler<T> {
+
     private final JTableSource mainTable;
     private final List<JoinPart> joinParts;
     private final Map<String, List<?>> tableDataMap;
     private final JEntityAccessor<T> mainEntityAccessor;
     private final JResultMapper<T> resultMapper;
 
-    public JMultiTableHandler(Class<T> mainEntityClass,
-                              JTableSource mainTable,
-                              List<JoinPart> joinParts,
-                              Map<String, List<?>> tableDataMap) {
+    public JMultiTableHandler(Class<T> mainEntityClass, JTableSource mainTable, List<JoinPart> joinParts, Map<String, List<?>> tableDataMap) {
         this.mainTable = mainTable;
         this.joinParts = joinParts;
         this.tableDataMap = tableDataMap;
@@ -55,16 +54,15 @@ public class JMultiTableHandler<T> implements JQueryHandler<T> {
     }
 
     @Override
-    public List<T> handle(List<T> dataset, JQueryPlan plan) {
+    public List<T> handle(List<T> dataset, JExecutionPlan plan) {
         List<T> mainData = getMainTableData();
         List<JoinResult<T>> joinResults = processJoins(mainData);
         return mapToResultEntities(joinResults);
     }
 
     private List<T> getMainTableData() {
-        List<?> data = tableDataMap.get(mainTable.getAlias() != null ?
-                mainTable.getAlias() :
-                mainTable.getTableName());
+        String mainTableName= mainTable.getAlias() != null ? mainTable.getAlias() : mainTable.getTableName();
+        List<?> data = tableDataMap.get(mainTableName);
         return data.stream()
                 .map(item -> (T) item)
                 .collect(Collectors.toList());
@@ -72,14 +70,11 @@ public class JMultiTableHandler<T> implements JQueryHandler<T> {
 
     private List<JoinResult<T>> processJoins(List<T> mainData) {
         List<JoinResult<T>> results = new ArrayList<>();
-
         for (T mainRecord : mainData) {
             JoinResult<T> joinResult = new JoinResult<>(mainRecord);
-
             for (JoinPart join : joinParts) {
                 processSingleJoin(joinResult, join);
             }
-
             results.add(joinResult);
         }
 
@@ -106,7 +101,6 @@ public class JMultiTableHandler<T> implements JQueryHandler<T> {
                                   JExpression condition) {
         boolean matched = false;
         T mainRecord = joinResult.getMainRecord();
-
         for (Object joinRecord : joinData) {
             if (evaluateJoinCondition(mainRecord, joinRecord, condition)) {
                 joinResult.addJoinedRecord(joinTable.getAlias(), joinRecord);
@@ -125,7 +119,6 @@ public class JMultiTableHandler<T> implements JQueryHandler<T> {
                                  JExpression condition) {
         boolean matched = false;
         T mainRecord = joinResult.getMainRecord();
-
         for (Object joinRecord : joinData) {
             if (evaluateJoinCondition(mainRecord, joinRecord, condition)) {
                 joinResult.addJoinedRecord(joinTable.getAlias(), joinRecord);
@@ -146,13 +139,12 @@ public class JMultiTableHandler<T> implements JQueryHandler<T> {
     }
 
     private boolean evaluateJoinCondition(T leftRecord, Object rightRecord, JExpression condition) {
-        // 实现条件评估逻辑，使用EntityAccessor
-        return true; // 简化示例
+        Class<T> rightEntityAccessor= (Class<T>) rightRecord.getClass();
+        return new JEvaluateJoinCondition(mainEntityAccessor,new JEntityAccessor<>(rightEntityAccessor)).evaluateJoinCondition(leftRecord,rightRecord,condition);
     }
 
     private List<?> getJoinTableData(JTableSource table) {
-        return tableDataMap.get(table.getAlias() != null ?
-                table.getAlias() :
-                table.getTableName());
+      String tableName=table.getAlias() != null ? table.getAlias() : table.getTableName();
+        return tableDataMap.get(tableName);
     }
 }

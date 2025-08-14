@@ -17,7 +17,7 @@ package com.github.paohaijiao.handler.impl;
 
 import com.github.paohaijiao.condition.JCondition;
 import com.github.paohaijiao.handler.JQueryHandler;
-import com.github.paohaijiao.query.JQueryPlan;
+import com.github.paohaijiao.plan.JExecutionPlan;
 import com.github.paohaijiao.util.JEntityAccessor;
 
 import java.util.List;
@@ -41,7 +41,7 @@ public class JFilterHandler<T> implements JQueryHandler<T> {
     }
 
     @Override
-    public List<T> handle(List<T> dataset, JQueryPlan plan) {
+    public List<T> handle(List<T> dataset, JExecutionPlan plan) {
         return dataset.stream()
                 .filter(entity -> evaluateCondition(entity, condition))
                 .collect(Collectors.toList());

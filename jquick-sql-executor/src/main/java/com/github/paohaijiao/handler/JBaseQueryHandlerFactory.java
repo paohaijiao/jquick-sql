@@ -19,7 +19,7 @@ import com.github.paohaijiao.enums.JHandlerType;
 import com.github.paohaijiao.handler.impl.JFilterHandler;
 import com.github.paohaijiao.handler.impl.JGroupByHandler;
 import com.github.paohaijiao.handler.impl.JOrderByHandler;
-import com.github.paohaijiao.query.JQueryPlan;
+import com.github.paohaijiao.plan.JExecutionPlan;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -35,7 +35,7 @@ public abstract  class JBaseQueryHandlerFactory<T> implements JQueryHandlerFacto
 
     protected   Class<T> entityClass;
 
-    protected JHandlerType determineHandlerType(JQueryPlan plan) {
+    protected JHandlerType determineHandlerType(JExecutionPlan plan) {
         if (plan.getWhereCondition() != null || plan.getHavingCondition() != null) {
             return JHandlerType.FILTER;
         } else if (plan.getGroupBy() != null || plan.getOlapOperationType() != null) {
@@ -49,7 +49,7 @@ public abstract  class JBaseQueryHandlerFactory<T> implements JQueryHandlerFacto
         }
         return null;
     }
-    public List<JQueryHandler<T>> createExecutionChain(JQueryPlan plan)
+    public List<JQueryHandler<T>> createExecutionChain(JExecutionPlan plan)
     {
 
         List<JQueryHandler<T>> chain = new ArrayList<>();

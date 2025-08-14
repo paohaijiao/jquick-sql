@@ -2,10 +2,9 @@ package com.github.paohaijiao.example;
 
 import com.github.paohaijiao.adaptor.JCsvAdapter;
 import com.github.paohaijiao.config.JDataSourceConfig;
-import com.github.paohaijiao.map.JMultiValuedMap;
 import com.github.paohaijiao.model.JMetadata;
-import com.github.paohaijiao.query.JDataSet;
-import com.github.paohaijiao.query.JQuery;
+import com.github.paohaijiao.plan.JDataSet;
+import com.github.paohaijiao.plan.JQuery;
 import org.junit.Test;
 
 import java.io.IOException;

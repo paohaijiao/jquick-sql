@@ -18,7 +18,7 @@ package com.github.paohaijiao.handler.impl;
 import com.github.paohaijiao.enums.JSortDirection;
 import com.github.paohaijiao.expression.JOrderByExpression;
 import com.github.paohaijiao.handler.JQueryHandler;
-import com.github.paohaijiao.query.JQueryPlan;
+import com.github.paohaijiao.plan.JExecutionPlan;
 import com.github.paohaijiao.util.JEntityAccessor;
 
 import java.util.Comparator;
@@ -43,7 +43,7 @@ public class JOrderByHandler<T> implements JQueryHandler<T> {
     }
 
     @Override
-    public List<T> handle(List<T> dataset, JQueryPlan plan) {
+    public List<T> handle(List<T> dataset, JExecutionPlan plan) {
         Comparator<T> comparator = createComparator();
         return dataset.stream()
                 .sorted(comparator)

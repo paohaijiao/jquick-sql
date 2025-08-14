@@ -28,8 +28,11 @@ import lombok.Getter;
  */
 @Getter
 public class JOrderByExpression {
+
     private JExpression expression;
+
     private JSortDirection direction;
+
     private JNullsOrder nullsOrder;
 
     public JOrderByExpression(JExpression expression) {

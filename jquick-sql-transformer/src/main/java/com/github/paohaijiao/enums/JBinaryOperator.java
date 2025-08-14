@@ -18,9 +18,14 @@ public enum JBinaryOperator {
 
     CONCAT("||"),
 
+    IS("IS"),
+
+    NOT("NOT"),
+
     LIKE("LIKE"),
 
     NOT_LIKE("NOT LIKE");
+
 
     private final String symbol;
 

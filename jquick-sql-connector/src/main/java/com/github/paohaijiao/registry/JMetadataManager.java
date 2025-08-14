@@ -2,8 +2,8 @@ package com.github.paohaijiao.registry;
 
 import com.github.paohaijiao.adaptor.JDataSourceAdapter;
 import com.github.paohaijiao.model.JMetadata;
-import com.github.paohaijiao.query.JDataSet;
-import com.github.paohaijiao.query.JQuery;
+import com.github.paohaijiao.plan.JDataSet;
+import com.github.paohaijiao.plan.JQuery;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;

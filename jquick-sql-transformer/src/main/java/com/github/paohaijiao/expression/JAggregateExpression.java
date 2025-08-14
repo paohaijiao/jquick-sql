@@ -32,15 +32,11 @@ import java.util.List;
 public class JAggregateExpression extends JExpression {
 
     private JAggregateFunction function;
-    private JExpression argument;
-    private boolean distinct;
-    private JExpression filter;
-    private List<JExpression> orderBy;
 
-    public JAggregateExpression(JAggregateFunction function, JExpression argument) {
+
+    public JAggregateExpression(JAggregateFunction function) {
         this.type = JExpressionType.AGGREGATE;
         this.function = function;
-        this.argument = argument;
     }
 
 //    @Override

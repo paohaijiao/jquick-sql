@@ -2,8 +2,8 @@ package com.github.paohaijiao.adaptor;
 
 import com.github.paohaijiao.config.JDataSourceConfig;
 import com.github.paohaijiao.model.JMetadata;
-import com.github.paohaijiao.query.JDataSet;
-import com.github.paohaijiao.query.JQuery;
+import com.github.paohaijiao.plan.JDataSet;
+import com.github.paohaijiao.plan.JQuery;
 
 public interface JDataSourceAdapter {
 

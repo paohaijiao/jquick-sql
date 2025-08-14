@@ -16,7 +16,7 @@
 package com.github.paohaijiao.expression;
 
 import com.github.paohaijiao.enums.JExpressionType;
-import com.github.paohaijiao.query.JQueryPlan;
+import com.github.paohaijiao.plan.JExecutionPlan;
 
 /**
  * packageName com.github.paohaijiao.expression
@@ -27,7 +27,7 @@ import com.github.paohaijiao.query.JQueryPlan;
  */
 public class JSubqueryExpression extends JExpression {
 
-    private JQueryPlan subQuery;
+    private JExecutionPlan subQuery;
 
     private SubqueryType subqueryType;
 
@@ -35,7 +35,7 @@ public class JSubqueryExpression extends JExpression {
         SCALAR, EXISTS, IN, COMPARISON
     }
 
-    public JSubqueryExpression(JQueryPlan subQuery, SubqueryType subqueryType) {
+    public JSubqueryExpression(JExecutionPlan subQuery, SubqueryType subqueryType) {
         this.type = JExpressionType.SUBQUERY;
         this.subQuery = subQuery;
         this.subqueryType = subqueryType;

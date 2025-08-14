@@ -17,6 +17,7 @@ package com.github.paohaijiao.function;
 
 import com.github.paohaijiao.enums.JAggregateType;
 import com.github.paohaijiao.expression.JExpression;
+import lombok.Getter;
 
 /**
  * packageName com.github.paohaijiao.function
@@ -25,25 +26,30 @@ import com.github.paohaijiao.expression.JExpression;
  * @version 1.0.0
  * @since 2025/8/12
  */
+@Getter
 public class JAggregateFunction extends JExpression {
-    private JAggregateType type;
+
+    private JAggregateType aggregateType;
+
     private JExpression argument;
+
     private boolean distinct;
+
     private String alias;
 
 
-    public JAggregateFunction(JAggregateType type, JExpression argument) {
-        this.type = type;
+    public JAggregateFunction(JAggregateType aggregateType, JExpression argument) {
+        this.aggregateType = aggregateType;
         this.argument = argument;
     }
 
-    public JAggregateFunction(JAggregateType type, JExpression argument, boolean distinct) {
-        this(type, argument);
+    public JAggregateFunction(JAggregateType aggregateType, JExpression argument, boolean distinct) {
+        this(aggregateType, argument);
         this.distinct = distinct;
     }
 
-    public JAggregateFunction(JAggregateType type, JExpression argument, String alias) {
-        this(type, argument);
+    public JAggregateFunction(JAggregateType aggregateType, JExpression argument, String alias) {
+        this(aggregateType, argument);
         this.alias = alias;
     }
 

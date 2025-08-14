@@ -15,7 +15,7 @@
  */
 package com.github.paohaijiao.join;
 
-import com.github.paohaijiao.query.JQueryPlan;
+import com.github.paohaijiao.plan.JExecutionPlan;
 import lombok.Getter;
 
 /**
@@ -29,7 +29,7 @@ import lombok.Getter;
 public class JTableSource {
     private String tableName;
     private String alias;
-    private JQueryPlan subQuery;
+    private JExecutionPlan subQuery;
 
     private boolean isEntityList = false;
 
@@ -44,7 +44,7 @@ public class JTableSource {
         this.alias = alias;
     }
 
-    public JTableSource(JQueryPlan subQuery, String alias) {
+    public JTableSource(JExecutionPlan subQuery, String alias) {
         this.subQuery = subQuery;
         this.alias = alias;
     }

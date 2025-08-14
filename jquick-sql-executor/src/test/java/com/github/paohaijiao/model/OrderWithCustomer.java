@@ -28,7 +28,10 @@ import java.math.BigDecimal;
  */
 @Data
 public class OrderWithCustomer {
+
     private Long orderId;
+
     private BigDecimal amount;
+
     private String customerName;
 }

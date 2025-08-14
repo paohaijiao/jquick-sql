@@ -8,8 +8,8 @@ import com.github.paohaijiao.enums.JDataType;
 import com.github.paohaijiao.model.JEntityMetadata;
 import com.github.paohaijiao.model.JFieldMetadata;
 import com.github.paohaijiao.model.JMetadata;
-import com.github.paohaijiao.query.JDataSet;
-import com.github.paohaijiao.query.JQuery;
+import com.github.paohaijiao.plan.JDataSet;
+import com.github.paohaijiao.plan.JQuery;
 
 import java.io.BufferedReader;
 import java.io.File;

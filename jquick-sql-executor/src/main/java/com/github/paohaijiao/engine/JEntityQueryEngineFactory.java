@@ -22,7 +22,7 @@ import com.github.paohaijiao.handler.impl.JFilterHandler;
 import com.github.paohaijiao.handler.impl.JGroupByHandler;
 import com.github.paohaijiao.handler.impl.JMultiTableHandler;
 import com.github.paohaijiao.handler.impl.JOrderByHandler;
-import com.github.paohaijiao.query.JQueryPlan;
+import com.github.paohaijiao.plan.JExecutionPlan;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -43,7 +43,7 @@ public class JEntityQueryEngineFactory<T> extends JBaseQueryHandlerFactory<T> {
     }
 
     @Override
-    public JQueryHandler<T> createHandler(JQueryPlan plan) {
+    public JQueryHandler<T> createHandler(JExecutionPlan plan) {
         JHandlerType type = determineHandlerType(plan);
         switch (type) {
             case FILTER:
@@ -73,20 +73,13 @@ public class JEntityQueryEngineFactory<T> extends JBaseQueryHandlerFactory<T> {
 //                        entityClass
 //                );
             case JOIN:
-                 return   new JMultiTableHandler<>(
-                        entityClass,
-                        plan.getTableSources().get(0),
-                        plan.getJoinParts(),
-                        new HashMap<>()
-                );
+                 return   new JMultiTableHandler<>(entityClass, plan.getTableSources().get(0), plan.getJoinParts(), new HashMap<>());
 
             default:
                 throw new IllegalArgumentException("Unsupported query type");
         }
     }
-
-
-    public List<JQueryHandler<T>> createExecutionChain(JQueryPlan plan) {
+    public List<JQueryHandler<T>> createExecutionChain(JEntityQueryEngine<?> engine, JExecutionPlan plan) {
         List<JQueryHandler<T>> chain = new ArrayList<>();
         if (plan.getWhereCondition() != null) {
             chain.add(createHandler(plan));

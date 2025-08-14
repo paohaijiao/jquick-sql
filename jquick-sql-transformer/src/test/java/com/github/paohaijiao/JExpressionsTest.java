@@ -24,7 +24,7 @@ import com.github.paohaijiao.expression.JLiteralExpression;
 import com.github.paohaijiao.expression.JOrderByExpression;
 import com.github.paohaijiao.function.JAggregateFunction;
 import com.github.paohaijiao.olap.JOlapOperation;
-import com.github.paohaijiao.query.JQueryPlan;
+import com.github.paohaijiao.plan.JExecutionPlan;
 import com.github.paohaijiao.select.JSelectColumn;
 import org.junit.Test;
 
@@ -64,7 +64,7 @@ public class JExpressionsTest {
                 new JOrderByExpression(new JColumnExpression("total_amount"), JSortDirection.DESC)
         );
         JOlapOperation olapOp = JOlapOperation.rollup(Arrays.asList("year", "quarter", "month"));
-        JQueryPlan queryPlan = new JQueryPlan();
+        JExecutionPlan queryPlan = new JExecutionPlan();
         queryPlan.setSelectedColumns(columns);
         queryPlan.setWhereCondition(whereCondition);
         queryPlan.setGroupBy(groupBy);
@@ -73,4 +73,5 @@ public class JExpressionsTest {
         queryPlan.setOlapOperation(olapOp);
         System.out.println(queryPlan);
     }
+
 }

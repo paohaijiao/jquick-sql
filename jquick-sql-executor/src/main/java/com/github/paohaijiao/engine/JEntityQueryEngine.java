@@ -17,7 +17,7 @@ package com.github.paohaijiao.engine;
 
 import com.github.paohaijiao.handler.JQueryHandler;
 import com.github.paohaijiao.handler.JQueryHandlerFactory;
-import com.github.paohaijiao.query.JQueryPlan;
+import com.github.paohaijiao.plan.JExecutionPlan;
 
 import javax.sql.DataSource;
 import java.nio.file.Path;
@@ -49,18 +49,17 @@ public class JEntityQueryEngine<T>  {
     }
 
     public List<T> executeQuery(String sql, List<T> dataset) {
-        JQueryPlan plan = parseSql(sql);
-        List<JQueryHandler<T>> handlers = handlerFactory.createExecutionChain(plan);
+        JExecutionPlan plan = parseSql(sql);
+        List<JQueryHandler<T>> handlers = handlerFactory.createExecutionChain(this,plan);
         List<T> result = dataset;
         for (JQueryHandler<T> handler : handlers) {
             result = handler.handle(result, plan);
         }
-
         return result;
     }
 
-    private JQueryPlan parseSql(String sql) {
-        return new JQueryPlan();
+    private JExecutionPlan parseSql(String sql) {
+        return new JExecutionPlan();
     }
     public JEntityQueryEngine<T> registerJdbcTable(String tableName, DataSource dataSource) {
         return this;
@@ -68,16 +67,17 @@ public class JEntityQueryEngine<T>  {
     public JEntityQueryEngine<T> registerCsvTable(String tableName, Path csvFile) {
         return this;
     }
+
     public <E> JEntityQueryEngine<T> registerEntityList(Class<E> entityClass, List<E> data) {
         String tableName = entityClass.getSimpleName();
         return registerEntityList(tableName, entityClass, data);
     }
     public <E> JEntityQueryEngine<T> registerEntityList(String tableName, Class<E> entityClass, List<E> data) {
-        Objects.requireNonNull(tableName, "Table name cannot be null");
-        Objects.requireNonNull(entityClass, "Entity class cannot be null");
-        Objects.requireNonNull(data, "Data list cannot be null");
+        Objects.requireNonNull(tableName, "table name cannot be null");
+        Objects.requireNonNull(entityClass, "entity class cannot be null");
+        Objects.requireNonNull(data, "data list cannot be null");
         if (tableName.trim().isEmpty()) {
-            throw new IllegalArgumentException("Table name cannot be empty");
+            throw new IllegalArgumentException("table name cannot be empty");
         }
         tableRegistry.put(tableName, data);
         entityClassRegistry.put(tableName, entityClass);
@@ -86,14 +86,14 @@ public class JEntityQueryEngine<T>  {
 
     public List<?> getTableData(String tableName) {
         if (!tableRegistry.containsKey(tableName)) {
-            throw new IllegalArgumentException("Table not registered: " + tableName);
+            throw new IllegalArgumentException("table not registered: " + tableName);
         }
         return tableRegistry.get(tableName);
     }
 
     public Class<?> getEntityClass(String tableName) {
         if (!entityClassRegistry.containsKey(tableName)) {
-            throw new IllegalArgumentException("Table not registered: " + tableName);
+            throw new IllegalArgumentException("table not registered: " + tableName);
         }
         return entityClassRegistry.get(tableName);
     }

@@ -18,7 +18,7 @@ package com.github.paohaijiao.handler.impl;
 import com.github.paohaijiao.enums.JOlapOperationType;
 import com.github.paohaijiao.expression.JExpression;
 import com.github.paohaijiao.handler.JQueryHandler;
-import com.github.paohaijiao.query.JQueryPlan;
+import com.github.paohaijiao.plan.JExecutionPlan;
 import com.github.paohaijiao.util.JEntityAccessor;
 
 import java.util.Comparator;
@@ -49,7 +49,7 @@ public class JGroupByHandler<T> implements JQueryHandler<T> {
     }
 
     @Override
-    public List<T> handle(List<T> dataset, JQueryPlan plan) {
+    public List<T> handle(List<T> dataset, JExecutionPlan plan) {
 //        if (olapType != null) {
 //            return handleOlapOperation(dataset);
 //        }

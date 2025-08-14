@@ -15,6 +15,9 @@
  */
 package com.github.paohaijiao.visitor;
 
+import com.github.paohaijiao.parser.JQuickSQLParser;
+import com.github.paohaijiao.plan.JExecutionPlan;
+
 /**
  * packageName com.github.paohaijiao.visitor
  *
@@ -23,4 +26,15 @@ package com.github.paohaijiao.visitor;
  * @since 2025/8/11
  */
 public class JQuikSQLCommonVisitor extends JQuikSQLCoreVisitor{
+
+    @Override
+    public JExecutionPlan visitQuery(JQuickSQLParser.QueryContext ctx) {
+        return visitSelectStatement(ctx.selectStatement());
+    }
+    @Override
+    public JExecutionPlan visitSelectStatement(JQuickSQLParser.SelectStatementContext ctx) {
+        return null;
+    }
+
+
 }

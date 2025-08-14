@@ -28,7 +28,9 @@ import lombok.Getter;
  */
 @Getter
 public class JLiteralExpression extends JExpression {
+
     private Object value;
+
     private JDataType dataType;
 
 

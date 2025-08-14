@@ -26,7 +26,9 @@ import com.github.paohaijiao.enums.JUnaryOperator;
  * @since 2025/8/12
  */
 public class JUnaryExpression extends JExpression {
+
     private JExpression expression;
+
     private JUnaryOperator operator;
 
 

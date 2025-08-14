@@ -1,4 +1,4 @@
-package com.github.paohaijiao.query;
+package com.github.paohaijiao.plan;
 
 import com.github.paohaijiao.model.JMetadata;
 import lombok.Data;

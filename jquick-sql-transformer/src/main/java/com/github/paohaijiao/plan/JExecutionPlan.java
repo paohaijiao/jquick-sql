@@ -13,7 +13,7 @@
  *
  * Copyright (c) [2025-2099] Martin (goudingcheng@gmail.com)
  */
-package com.github.paohaijiao.query;
+package com.github.paohaijiao.plan;
 
 import com.github.paohaijiao.condition.JCondition;
 import com.github.paohaijiao.enums.JOlapOperationType;
@@ -36,7 +36,7 @@ import java.util.List;
  * @since 2025/8/12
  */
 @Data
-public class JQueryPlan {
+public class JExecutionPlan {
 
     private List<JSelectColumn> selectedColumns;
 
@@ -55,9 +55,11 @@ public class JQueryPlan {
     private Integer limit;
 
     private JOlapOperation olapOperation;
+
     private List<JExpression> groupBy;
 
     private List<JOrderByExpression> orderByExpressions;
+
     private JOlapOperationType olapOperationType;
 
     private List<String> drillDimensions;

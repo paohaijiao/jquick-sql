@@ -40,21 +40,12 @@ public class JoinResult <T>{
         this.mainRecord = mainRecord;
     }
 
-    public T getMainRecord() {
-        return mainRecord;
-    }
 
     public void addJoinedRecord(String tableAlias, Object record) {
         joinedRecords.put(tableAlias, record);
     }
 
-    public Object getJoinedRecord(String tableAlias) {
-        return joinedRecords.get(tableAlias);
-    }
 
-    public boolean isExcluded() {
-        return excluded;
-    }
 
     public void setExcluded(boolean excluded) {
         this.excluded = excluded;

@@ -38,22 +38,16 @@ import java.util.List;
 public class JTest {
     @Test
     public void haha() throws IOException {
-        List<Order> orders = Arrays.asList(
-                new Order(1L, 101L, new BigDecimal("100.00")),
-                new Order(2L, 102L, new BigDecimal("200.00"))
+        List<Order> orders = Arrays.asList(new Order(1L, 101L, new BigDecimal("100.00")), new Order(2L, 102L, new BigDecimal("200.00"))
         );
-
-        List<Customer> customers = Arrays.asList(
-                new Customer(101L, "Alice", "alice@example.com"),
-                new Customer(102L, "Bob", "bob@example.com")
-        );
-        JEntityQueryEngine<OrderWithCustomer> queryEngine =
-                new JEntityQueryEngine<>(OrderWithCustomer.class)
+        List<Customer> customers = Arrays.asList(new Customer(101L, "Alice", "alice@example.com"), new Customer(102L, "Bob", "bob@example.com"));
+        JEntityQueryEngine<OrderWithCustomer> queryEngine = new JEntityQueryEngine<>(OrderWithCustomer.class)
                         .registerEntityList(Order.class, orders)
                         .registerEntityList(Customer.class, customers);
         String sql = "SELECT o.orderId, o.amount, c.name as customerName " +
                 "FROM Order o JOIN Customer c ON o.customerId = c.customerId";
         List<OrderWithCustomer> results = queryEngine.executeQuery(sql, new ArrayList<>());
+        System.out.println(results);
 
     }
 

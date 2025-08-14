@@ -15,12 +15,24 @@
  */
 package com.github.paohaijiao.support;
 
+import com.github.paohaijiao.condition.JCondition;
+import com.github.paohaijiao.condition.JConditionEvaluator;
 import com.github.paohaijiao.dataset.JColumnMeta;
 import com.github.paohaijiao.dataset.JDataSet;
+import com.github.paohaijiao.enums.JAggregateType;
+import com.github.paohaijiao.enums.JExpressionType;
+import com.github.paohaijiao.enums.JNullsOrder;
+import com.github.paohaijiao.enums.JSortDirection;
+import com.github.paohaijiao.expression.*;
 import com.github.paohaijiao.func.JoinCondition;
+import com.github.paohaijiao.function.JAggregateFunction;
 
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static com.github.paohaijiao.enums.JAggregateType.*;
+import static com.github.paohaijiao.evalue.JEvaluator.evaluateFunction;
+
 /**
  * packageName com.github.paohaijiao.support
  *
@@ -178,6 +190,277 @@ public class JDataSetJoiner {
     private static void validateUnionCompatible(JDataSet ds1, JDataSet ds2) {
         if (ds1.getColumns().size() != ds2.getColumns().size()) {
             throw new IllegalArgumentException("Datasets have different number of columns");
+        }
+    }
+    public static JDataSet selectColumns(JDataSet dataset, List<String> columnNames) {
+        List<JColumnMeta> currentColumns = dataset.getColumns();
+        List<Map<String, Object>> currentRows = dataset.getRows();
+        List<JColumnMeta> newColumns = currentColumns.stream()
+                .filter(col -> columnNames.contains(col.getName()))
+                .collect(Collectors.toList());
+        List<Map<String, Object>> newRows = currentRows.stream()
+                .map(row -> columnNames.stream()
+                        .collect(Collectors.toMap(
+                                col -> col,
+                                row::get
+                        )))
+                .collect(Collectors.toList());
+
+        return new JDataSet(newColumns, newRows);
+    }
+    /**
+     * Filters a dataset based on a condition and returns a new filtered dataset.
+     * @param dataset The source dataset to filter
+     * @param condition The condition to apply for filtering
+     * @return New JDataSet containing only rows that match the condition
+     */
+    public static JDataSet filter(JDataSet dataset, JCondition condition) {
+        JConditionEvaluator evaluator = new JConditionEvaluator();
+        List<Map<String, Object>> filteredRows = dataset.getRows().stream()
+                .filter(row -> evaluator.evaluate(condition, row))
+                .collect(Collectors.toList());
+        return new JDataSet(dataset.getColumns(), filteredRows);
+    }
+    public static JDataSet transform(JDataSet dataset, Map<String, JFunctionCallExpression> transformations) {
+        List<JColumnMeta> newColumns = new ArrayList<>();
+        for (JColumnMeta column : dataset.getColumns()) {
+            if (transformations.containsKey(column.getName())) {
+                newColumns.add(new JColumnMeta(
+                        column.getName(),
+                        Object.class,
+                        column.getSource() + "_transformed"
+                ));
+            } else {
+                newColumns.add(column);
+            }
+        }
+        List<Map<String, Object>> newRows = dataset.getRows().stream()
+                .map(row -> transformRow(row, transformations))
+                .collect(Collectors.toList());
+        return new JDataSet(newColumns, newRows);
+    }
+    private static Map<String, Object> transformRow(Map<String, Object> row, Map<String, JFunctionCallExpression> transformations) {
+        Map<String, Object> newRow = new HashMap<>();
+        for (String column : row.keySet()) {
+            if (transformations.containsKey(column)) {
+                JFunctionCallExpression function=transformations.get(column);
+                String functionName = function.getFunctionName().toUpperCase();
+                //List<Object> args = function.getArguments();
+             //   int i= evaluateFunction(transformations.get(column), row);
+                newRow.put(column,1);
+            } else {
+                newRow.put(column, row.get(column));
+            }
+        }
+
+        return newRow;
+    }
+    /**
+     * Sorts a dataset based on order by expressions and returns a new sorted dataset
+     * @param dataset The source dataset to sort
+     * @param orderByExpressions List of order by expressions
+     * @return New JDataSet with sorted rows
+     */
+    public static JDataSet sort(JDataSet dataset, List<JOrderByExpression> orderByExpressions) {
+        if (orderByExpressions == null || orderByExpressions.isEmpty()) {
+            return dataset; // return original if no sorting specified
+        }
+        List<Map<String, Object>> sortedRows = new ArrayList<>(dataset.getRows());
+        // Create comparator chain
+        Comparator<Map<String, Object>> comparator = createComparatorChain(orderByExpressions);
+        sortedRows.sort(comparator);
+        return new JDataSet(dataset.getColumns(), sortedRows);
+    }
+    private static Comparator<Map<String, Object>> createComparatorChain(List<JOrderByExpression> orderByExpressions) {
+        Comparator<Map<String, Object>> comparator = null;
+        for (JOrderByExpression orderBy : orderByExpressions) {
+            Comparator<Map<String, Object>> current = createSingleComparator(orderBy);
+            comparator = (comparator == null) ? current : comparator.thenComparing(current);
+        }
+        return comparator;
+    }
+    @SuppressWarnings("unchecked")
+    private static Comparator<Map<String, Object>> createSingleComparator(JOrderByExpression orderBy) {
+        // Get the column name from the expression (assuming it's a column expression)
+        String columnName = getColumnNameFromExpression(orderBy.getExpression());
+        Comparator<Map<String, Object>> comparator = (row1, row2) -> {
+            Object val1 = row1.get(columnName);
+            Object val2 = row2.get(columnName);
+            if (val1 == null && val2 == null) return 0;
+            if (val1 == null) return orderBy.getNullsOrder() == JNullsOrder.FIRST ? -1 : 1;
+            if (val2 == null) return orderBy.getNullsOrder() == JNullsOrder.FIRST ? 1 : -1;
+
+            if (val1 instanceof Comparable && val2 instanceof Comparable) {
+                return ((Comparable<Object>) val1).compareTo(val2);
+            }
+            return 0; // if not comparable, treat as equal
+        };
+        if (orderBy.getDirection() == JSortDirection.DESC) {
+            comparator = comparator.reversed();
+        }
+
+        return comparator;
+    }
+
+    private static String getColumnNameFromExpression(JExpression expression) {
+        if (expression instanceof JColumnExpression) {
+            return ((JColumnExpression) expression).getColumnName();
+        }
+        throw new UnsupportedOperationException("Only column expressions are supported for sorting");
+    }
+    /**
+     * Creates a new dataset with column aliases based on expressions
+     * @param dataset The source dataset
+     * @param aliases Map of alias expressions (key: new column name, value: expression for the column)
+     * @return New JDataSet with aliased columns
+     */
+    public static JDataSet alias(JDataSet dataset, Map<String, JExpression> aliases) {
+        // Create new column metadata
+        List<JColumnMeta> newColumns = new ArrayList<>();
+
+        // 1. First add all original columns that aren't being aliased
+        for (JColumnMeta column : dataset.getColumns()) {
+            if (!aliases.containsValue(new JColumnExpression(column.getName()))) {
+                newColumns.add(column);
+            }
+        }
+
+        // 2. Add new aliased columns
+        for (Map.Entry<String, JExpression> entry : aliases.entrySet()) {
+            String alias = entry.getKey();
+            JExpression expr = entry.getValue();
+
+            // Determine the type (simplified as Object.class - should derive from expression in real implementation)
+            Class<?> type = determineExpressionType(expr);
+            newColumns.add(new JColumnMeta(alias, type, "alias"));
+        }
+
+        // Create new rows with aliased values
+        List<Map<String, Object>> newRows = dataset.getRows().stream()
+                .map(row -> createAliasedRow(row, aliases))
+                .collect(Collectors.toList());
+
+        return new JDataSet(newColumns, newRows);
+    }
+
+    private static Map<String, Object> createAliasedRow(Map<String, Object> originalRow, Map<String, JExpression> aliases) {
+        Map<String, Object> newRow = new HashMap<>(originalRow);
+        for (Map.Entry<String, JExpression> entry : aliases.entrySet()) {
+            String alias = entry.getKey();
+            JExpression expr = entry.getValue();
+            newRow.put(alias, evaluateExpression(expr, originalRow));
+        }
+        aliases.values().stream()
+                .filter(expr -> expr instanceof JColumnExpression)
+                .map(expr -> ((JColumnExpression) expr).getColumnName())
+                .forEach(newRow::remove);
+        return newRow;
+    }
+
+    private static Class<?> determineExpressionType(JExpression expr) {
+        if (expr instanceof JLiteralExpression) {
+            return ((JLiteralExpression) expr).getValue().getClass();
+        } else if (expr instanceof JColumnExpression) {
+            return Object.class;
+        } else if (expr instanceof JFunctionCallExpression) {
+            return Object.class;
+        }
+        return Object.class;
+    }
+
+    private static Object evaluateExpression(JExpression expr, Map<String, Object> row) {
+        if (expr instanceof JColumnExpression) {
+            return row.get(((JColumnExpression) expr).getColumnName());
+        } else if (expr instanceof JLiteralExpression) {
+            return ((JLiteralExpression) expr).getValue();
+        }
+        throw new UnsupportedOperationException("Unsupported expression type for aliasing: " + expr.getType());
+    }
+    /**
+     * Aggregates a dataset based on group by columns and aggregate expressions
+     * @param dataset The source dataset
+     * @param groupBy List of column names to group by
+     * @param aggregations Map of aggregation expressions (key: result column name, value: aggregate expression)
+     * @return New JDataSet with aggregated results
+     */
+    public static JDataSet aggregate(JDataSet dataset, List<String> groupBy, Map<String, JAggregateExpression> aggregations) {
+        Map<List<Object>, List<Map<String, Object>>> groups = dataset.getRows().stream()
+                .collect(Collectors.groupingBy(
+                        row -> groupBy.stream()
+                                .map(row::get)
+                                .collect(Collectors.toList())
+                ));
+        List<JColumnMeta> newColumns = new ArrayList<>();
+        for (String col : groupBy) {
+            Class<?> type = dataset.getColumns().stream()
+                    .filter(c -> c.getName().equals(col))
+                    .findFirst()
+                    .<Class<?>>map(JColumnMeta::getType)
+                    .orElse(Object.class);
+            newColumns.add(new JColumnMeta(col, type, "group_by"));
+        }
+        for (String aggCol : aggregations.keySet()) {
+            newColumns.add(new JColumnMeta(aggCol, Object.class, "aggregate"));
+        }
+
+        List<Map<String, Object>> resultRows = new ArrayList<>();
+        for (Map.Entry<List<Object>, List<Map<String, Object>>> entry : groups.entrySet()) {
+            Map<String, Object> resultRow = new HashMap<>();
+            for (int i = 0; i < groupBy.size(); i++) {
+                resultRow.put(groupBy.get(i), entry.getKey().get(i));
+            }
+            for (Map.Entry<String, JAggregateExpression> aggEntry : aggregations.entrySet()) {
+                String colName = aggEntry.getKey();
+                JAggregateExpression aggExpr = aggEntry.getValue();
+                JAggregateFunction function = aggExpr.getFunction();
+                List<Object> values = entry.getValue().stream()
+                        .map(row -> {
+                            if (function.getArgument() instanceof JColumnExpression) {
+                                return row.get(((JColumnExpression) function.getArgument()).getColumnName());
+                            }
+                            throw new UnsupportedOperationException("Only column expressions supported");
+                        })
+                        .filter(Objects::nonNull)
+                        .collect(Collectors.toList());
+
+                if (function.isDistinct()) {
+                    values = values.stream().distinct().collect(Collectors.toList());
+                }
+                Object aggValue = applyAggregateFunction(aggExpr.getFunction(), values);
+                resultRow.put(colName, aggValue);
+            }
+
+            resultRows.add(resultRow);
+        }
+
+        return new JDataSet(newColumns, resultRows);
+    }
+
+    private static Object applyAggregateFunction(JAggregateFunction function, List<Object> values) {
+        switch (function.getAggregateType()) {
+            case COUNT:
+                return (long) values.size();
+            case SUM:
+                return values.stream()
+                        .mapToDouble(v -> ((Number) v).doubleValue())
+                        .sum();
+            case AVG:
+                return values.stream()
+                        .mapToDouble(v -> ((Number) v).doubleValue())
+                        .average()
+                        .orElse(0);
+            case MIN:
+                return values.stream()
+                        .map(v -> (Comparable) v)
+                        .min(Comparable::compareTo)
+                        .orElse(null);
+            case MAX:
+                return values.stream()
+                        .map(v -> (Comparable) v)
+                        .max(Comparable::compareTo)
+                        .orElse(null);
+            default:
+                throw new UnsupportedOperationException("Unsupported aggregate function");
         }
     }
 
