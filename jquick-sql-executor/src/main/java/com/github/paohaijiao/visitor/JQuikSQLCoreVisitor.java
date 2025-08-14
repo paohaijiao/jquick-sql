@@ -15,7 +15,17 @@
  */
 package com.github.paohaijiao.visitor;
 
+import com.github.paohaijiao.dataset.JDataSet;
+import com.github.paohaijiao.engine.JEntityQueryEngine;
+import com.github.paohaijiao.param.JContext;
 import com.github.paohaijiao.parser.JQuickSQLBaseVisitor;
+import com.github.paohaijiao.parser.JQuickSQLLexer;
+import com.github.paohaijiao.parser.JQuickSQLParser;
+import org.antlr.v4.runtime.CommonTokenStream;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * packageName com.github.paohaijiao.visitor
@@ -25,4 +35,19 @@ import com.github.paohaijiao.parser.JQuickSQLBaseVisitor;
  * @since 2025/8/11
  */
 public class JQuikSQLCoreVisitor extends JQuickSQLBaseVisitor {
+
+    protected JContext context;
+
+    protected JQuickSQLLexer lexer;
+
+    protected CommonTokenStream tokenStream;
+
+    protected JQuickSQLParser parser;
+
+    protected final Map<String, JDataSet> tableRegistry = new HashMap<>();
+
+
+    public void registerDataSet(String tableName, JDataSet dataSet) {
+        tableRegistry.put(tableName, dataSet);
+    }
 }

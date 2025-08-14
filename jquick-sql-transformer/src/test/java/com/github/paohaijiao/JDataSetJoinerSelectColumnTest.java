@@ -4,6 +4,7 @@ import com.github.paohaijiao.condition.JComparisonCondition;
 import com.github.paohaijiao.condition.JCondition;
 import com.github.paohaijiao.dataset.JColumnMeta;
 import com.github.paohaijiao.dataset.JDataSet;
+import com.github.paohaijiao.dataset.JRow;
 import com.github.paohaijiao.enums.*;
 import com.github.paohaijiao.expression.*;
 import com.github.paohaijiao.function.JAggregateFunction;
@@ -39,7 +40,7 @@ public class JDataSetJoinerSelectColumnTest {
                 new JColumnMeta("age", Integer.class, "source1"),
                 new JColumnMeta("city", String.class, "source1")
         );
-        List<Map<String, Object>> rows = Arrays.asList(
+        List<JRow> rows = Arrays.asList(
                 createRow("Alice", 25, "New York"),
                 createRow("Bob", 30, "London"),
                 createRow("Charlie", 35, "Paris")
@@ -48,8 +49,8 @@ public class JDataSetJoinerSelectColumnTest {
         return new JDataSet(columns, rows);
     }
 
-    private Map<String, Object> createRow(String name, int age, String city) {
-        Map<String, Object> row = new HashMap<>();
+    private JRow createRow(String name, int age, String city) {
+        JRow row = new JRow();
         row.put("name", name);
         row.put("age", age);
         row.put("city", city);

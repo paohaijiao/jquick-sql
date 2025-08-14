@@ -16,6 +16,7 @@
 package com.github.paohaijiao;
 
 import com.github.paohaijiao.dataset.JDataSet;
+import com.github.paohaijiao.dataset.JRow;
 import com.github.paohaijiao.support.JDataSetJoiner;
 import org.junit.Test;
 import java.util.HashMap;
@@ -64,8 +65,8 @@ public class JDataSetTest {
                 .build();
     }
 
-    private static Map<String, Object> buildRow(Object... keyValues) {
-        Map<String, Object> row = new HashMap<>();
+    private static JRow buildRow(Object... keyValues) {
+        JRow row = new JRow();
         for (int i = 0; i < keyValues.length; i += 2) {
             row.put((String) keyValues[i], keyValues[i + 1]);
         }

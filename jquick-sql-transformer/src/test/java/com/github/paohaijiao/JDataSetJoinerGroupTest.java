@@ -4,6 +4,7 @@ import com.github.paohaijiao.condition.JComparisonCondition;
 import com.github.paohaijiao.condition.JCondition;
 import com.github.paohaijiao.dataset.JColumnMeta;
 import com.github.paohaijiao.dataset.JDataSet;
+import com.github.paohaijiao.dataset.JRow;
 import com.github.paohaijiao.enums.*;
 import com.github.paohaijiao.expression.*;
 import com.github.paohaijiao.function.JAggregateFunction;
@@ -46,7 +47,7 @@ public class JDataSetJoinerGroupTest {
 
         JDataSet result = JDataSetJoiner.aggregate(testData, groupBy, aggregations);
         assertEquals(3, result.size()); // 3个部门
-        Optional<Map<String, Object>> engDept = result.getRows().stream()
+        Optional<JRow> engDept = result.getRows().stream()
                 .filter(row -> "Engineering".equals(row.get("department")))
                 .findFirst();
         assertTrue(engDept.isPresent());
@@ -65,7 +66,7 @@ public class JDataSetJoinerGroupTest {
                 new JColumnMeta("is_manager", Boolean.class, "hr")
         );
 
-        List<Map<String, Object>> rows = Arrays.asList(
+        List<JRow> rows = Arrays.asList(
                 createEmployeeRow("Engineering", "Alice", 8500.0, 3, true),
                 createEmployeeRow("Engineering", "Bob", 7500.0, 2, false),
                 createEmployeeRow("Marketing", "Charlie", 9200.0, 5, true),
@@ -78,9 +79,9 @@ public class JDataSetJoinerGroupTest {
         return new JDataSet(columns, rows);
     }
 
-    private static Map<String, Object> createEmployeeRow(String department, String name,
+    private static JRow createEmployeeRow(String department, String name,
                                                          double salary, int years, boolean isManager) {
-        Map<String, Object> row = new HashMap<>();
+        JRow row = new JRow();
         row.put("department", department);
         row.put("employee_name", name);
         row.put("salary", salary);

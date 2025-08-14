@@ -30,10 +30,10 @@ public class JDataSet {
 
     private final List<JColumnMeta> columns;
 
-    private final List<Map<String, Object>> rows;
+    private final List<JRow> rows;
 
 
-    public JDataSet(List<JColumnMeta> columns, List<Map<String, Object>> rows) {
+    public JDataSet(List<JColumnMeta> columns, List<JRow> rows) {
         this.columns = Collections.unmodifiableList(new ArrayList<>(columns));
         this.rows = Collections.unmodifiableList(new ArrayList<>(rows));
     }
@@ -41,7 +41,7 @@ public class JDataSet {
     public List<JColumnMeta> getColumns() {
         return columns;
     }
-    public List<Map<String, Object>> getRows() {
+    public List<JRow> getRows() {
         return rows;
     }
 
@@ -67,15 +67,15 @@ public class JDataSet {
 
     public static class Builder {
         private final List<JColumnMeta> columns = new ArrayList<>();
-        private final List<Map<String, Object>> rows = new ArrayList<>();
+        private final List<JRow> rows = new ArrayList<>();
 
         public Builder addColumn(String name, Class<?> type, String source) {
             columns.add(new JColumnMeta(name, type, source));
             return this;
         }
 
-        public Builder addRow(Map<String, Object> row) {
-            rows.add(new HashMap<>(row));
+        public Builder addRow(JRow row) {
+            rows.add(row);
             return this;
         }
 

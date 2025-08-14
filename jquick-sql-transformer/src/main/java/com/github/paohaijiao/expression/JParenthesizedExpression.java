@@ -30,6 +30,7 @@ public class JParenthesizedExpression extends JExpression {
 
     private JExpression expression;
 
+
     public JParenthesizedExpression(JExpression expression) {
         this.type = JExpressionType.PAREN;
         this.expression = expression;

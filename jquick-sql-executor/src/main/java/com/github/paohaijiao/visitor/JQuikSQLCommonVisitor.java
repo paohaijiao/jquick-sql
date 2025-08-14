@@ -15,8 +15,14 @@
  */
 package com.github.paohaijiao.visitor;
 
+import com.github.paohaijiao.dataset.JDataSet;
+import com.github.paohaijiao.param.JContext;
+import com.github.paohaijiao.parser.JQuickSQLLexer;
 import com.github.paohaijiao.parser.JQuickSQLParser;
 import com.github.paohaijiao.plan.JExecutionPlan;
+import org.antlr.v4.runtime.CommonTokenStream;
+
+import java.util.Stack;
 
 /**
  * packageName com.github.paohaijiao.visitor
@@ -27,12 +33,25 @@ import com.github.paohaijiao.plan.JExecutionPlan;
  */
 public class JQuikSQLCommonVisitor extends JQuikSQLCoreVisitor{
 
+    public JQuikSQLCommonVisitor(JContext context, JQuickSQLLexer lexer, CommonTokenStream tokenStream, JQuickSQLParser parser) {
+        this.context = context;
+        this.lexer = lexer;
+        this.tokenStream = tokenStream;
+        this.parser = parser;
+    }
+
+    public JQuikSQLCommonVisitor(JQuickSQLLexer lexer, CommonTokenStream tokenStream,JQuickSQLParser parser) {
+        this.context = new JContext();
+        this.lexer = lexer;
+        this.tokenStream = tokenStream;
+        this.parser = parser;
+    }
     @Override
-    public JExecutionPlan visitQuery(JQuickSQLParser.QueryContext ctx) {
+    public JDataSet visitQuery(JQuickSQLParser.QueryContext ctx) {
         return visitSelectStatement(ctx.selectStatement());
     }
     @Override
-    public JExecutionPlan visitSelectStatement(JQuickSQLParser.SelectStatementContext ctx) {
+    public JDataSet visitSelectStatement(JQuickSQLParser.SelectStatementContext ctx) {
         return null;
     }
 

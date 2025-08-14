@@ -19,6 +19,7 @@ import com.github.paohaijiao.condition.JCondition;
 import com.github.paohaijiao.condition.JConditionEvaluator;
 import com.github.paohaijiao.dataset.JColumnMeta;
 import com.github.paohaijiao.dataset.JDataSet;
+import com.github.paohaijiao.dataset.JRow;
 import com.github.paohaijiao.enums.JAggregateType;
 import com.github.paohaijiao.enums.JExpressionType;
 import com.github.paohaijiao.enums.JNullsOrder;
@@ -49,12 +50,12 @@ public class JDataSetJoiner {
      * @return
      */
     public static JDataSet innerJoin(JDataSet left, JDataSet right, JoinCondition condition) {
-        List<Map<String, Object>> resultRows = new ArrayList<>();
+        List<JRow> resultRows = new ArrayList<>();
         List<JColumnMeta> resultColumns = mergeColumns(left, right);
-        List<Map<String, Object>> list=left.getRows();
-        for (Map<String, Object> leftRow : list) {
-            List<Map<String, Object>> rightRows=right.getRows();
-            for (Map<String, Object> rightRow : rightRows) {
+        List<JRow> list=left.getRows();
+        for (JRow leftRow : list) {
+            List<JRow> rightRows=right.getRows();
+            for (JRow rightRow : rightRows) {
                 if (condition.test(leftRow, rightRow)) {
                     resultRows.add(mergeRows(leftRow, rightRow));
                 }
@@ -71,13 +72,13 @@ public class JDataSetJoiner {
      * @return
      */
     public static JDataSet leftJoin(JDataSet left, JDataSet right, JoinCondition condition) {
-        List<Map<String, Object>> resultRows = new ArrayList<>();
+        List<JRow> resultRows = new ArrayList<>();
         List<JColumnMeta> resultColumns = mergeColumns(left, right);
-        List<Map<String, Object>> list=left.getRows();
-        for (Map<String, Object> leftRow : list) {
+        List<JRow> list=left.getRows();
+        for (JRow leftRow : list) {
             boolean hasMatch = false;
-            List<Map<String, Object>> rightRows=right.getRows();
-            for (Map<String, Object> rightRow : rightRows) {
+            List<JRow> rightRows=right.getRows();
+            for (JRow rightRow : rightRows) {
                 if (condition.test(leftRow, rightRow)) {
                     resultRows.add(mergeRows(leftRow, rightRow));
                     hasMatch = true;
@@ -126,7 +127,7 @@ public class JDataSetJoiner {
         List<JColumnMeta> resultColumns = new ArrayList<>();
         resultColumns.addAll(left.getColumns());
         resultColumns.addAll(right.getColumns());
-        List<Map<String, Object>> resultRows = left.getRows().stream()
+        List<JRow> resultRows = left.getRows().stream()
                 .flatMap(leftRow -> right.getRows().stream()
                         .filter(rightRow -> isMatch(leftRow, rightRow, commonColumns))
                         .map(rightRow -> mergeRows(leftRow, rightRow)))
@@ -134,8 +135,8 @@ public class JDataSetJoiner {
 
         return new JDataSet(resultColumns, resultRows);
     }
-    private static boolean isMatch(Map<String, Object> leftRow,
-                                   Map<String, Object> rightRow,
+    private static boolean isMatch(JRow leftRow,
+                                   JRow rightRow,
                                    Set<String> commonColumns) {
         return commonColumns.stream()
                 .allMatch(col -> Objects.equals(
@@ -144,7 +145,7 @@ public class JDataSetJoiner {
     }
     public static JDataSet union(JDataSet ds1, JDataSet ds2) {
         validateUnionCompatible(ds1, ds2);
-        List<Map<String, Object>> combinedRows = new ArrayList<>();
+        List<JRow> combinedRows = new ArrayList<>();
         combinedRows.addAll(ds1.getRows());
         combinedRows.addAll(ds2.getRows());
         return new JDataSet(ds1.getColumns(), combinedRows);
@@ -152,16 +153,16 @@ public class JDataSetJoiner {
 
     public static JDataSet intersect(JDataSet ds1, JDataSet ds2) {
         validateUnionCompatible(ds1, ds2);
-        Set<Map<String, Object>> set1 = new HashSet<>(ds1.getRows());
-        Set<Map<String, Object>> set2 = new HashSet<>(ds2.getRows());
+        Set<JRow> set1 = new HashSet<>(ds1.getRows());
+        Set<JRow> set2 = new HashSet<>(ds2.getRows());
         set1.retainAll(set2);
         return new JDataSet(ds1.getColumns(), new ArrayList<>(set1));
     }
 
     public static JDataSet minus(JDataSet ds1, JDataSet ds2) {
         validateUnionCompatible(ds1, ds2);
-        Set<Map<String, Object>> set1 = new HashSet<>(ds1.getRows());
-        Set<Map<String, Object>> set2 = new HashSet<>(ds2.getRows());
+        Set<JRow> set1 = new HashSet<>(ds1.getRows());
+        Set<JRow> set2 = new HashSet<>(ds2.getRows());
         set1.removeAll(set2);
         return new JDataSet(ds1.getColumns(), new ArrayList<>(set1));
     }
@@ -171,15 +172,15 @@ public class JDataSetJoiner {
         result.addAll(right.getColumns());
         return result;
     }
-    private static Map<String, Object> mergeRows(Map<String, Object> left, Map<String, Object> right) {
-        Map<String, Object> merged = new HashMap<>(left);
+    private static JRow mergeRows(JRow left,JRow right) {
+        JRow merged = new JRow(left);
         merged.putAll(right);
         return merged;
     }
-    private static Map<String, Object> createNullRow(JDataSet ds) {
+    private static JRow createNullRow(JDataSet ds) {
         System.out.println(ds);
         List<String> list=ds.getColumnNames();
-        Map<String, Object> nullRow = new HashMap<>();
+        JRow nullRow = new JRow();
         List<String> columns = ds.getColumnNames();
         for (int i = 0; i < columns.size(); i++) {
             nullRow.put(columns.get(i), null);
@@ -194,18 +195,19 @@ public class JDataSetJoiner {
     }
     public static JDataSet selectColumns(JDataSet dataset, List<String> columnNames) {
         List<JColumnMeta> currentColumns = dataset.getColumns();
-        List<Map<String, Object>> currentRows = dataset.getRows();
+        List<JRow> currentRows = dataset.getRows();
         List<JColumnMeta> newColumns = currentColumns.stream()
                 .filter(col -> columnNames.contains(col.getName()))
                 .collect(Collectors.toList());
-        List<Map<String, Object>> newRows = currentRows.stream()
-                .map(row -> columnNames.stream()
-                        .collect(Collectors.toMap(
-                                col -> col,
-                                row::get
-                        )))
+        List<JRow> newRows = currentRows.stream()
+                .map(row -> {
+                    JRow jrow = (row instanceof JRow)
+                            ? new JRow(((JRow) row).getTableName())
+                            : new JRow();
+                    columnNames.forEach(col -> jrow.put(col, row.get(col)));
+                    return jrow;
+                })
                 .collect(Collectors.toList());
-
         return new JDataSet(newColumns, newRows);
     }
     /**
@@ -216,8 +218,13 @@ public class JDataSetJoiner {
      */
     public static JDataSet filter(JDataSet dataset, JCondition condition) {
         JConditionEvaluator evaluator = new JConditionEvaluator();
-        List<Map<String, Object>> filteredRows = dataset.getRows().stream()
+        List<JRow> filteredRows = dataset.getRows().stream()
                 .filter(row -> evaluator.evaluate(condition, row))
+                .map(row -> {
+                    JRow jrow = new JRow();
+                    jrow.putAll(row);
+                    return jrow;
+                })
                 .collect(Collectors.toList());
         return new JDataSet(dataset.getColumns(), filteredRows);
     }
@@ -234,13 +241,13 @@ public class JDataSetJoiner {
                 newColumns.add(column);
             }
         }
-        List<Map<String, Object>> newRows = dataset.getRows().stream()
+        List<JRow> newRows = dataset.getRows().stream()
                 .map(row -> transformRow(row, transformations))
                 .collect(Collectors.toList());
         return new JDataSet(newColumns, newRows);
     }
-    private static Map<String, Object> transformRow(Map<String, Object> row, Map<String, JFunctionCallExpression> transformations) {
-        Map<String, Object> newRow = new HashMap<>();
+    private static JRow transformRow(JRow row, Map<String, JFunctionCallExpression> transformations) {
+        JRow newRow = new JRow();
         for (String column : row.keySet()) {
             if (transformations.containsKey(column)) {
                 JFunctionCallExpression function=transformations.get(column);
@@ -265,7 +272,7 @@ public class JDataSetJoiner {
         if (orderByExpressions == null || orderByExpressions.isEmpty()) {
             return dataset; // return original if no sorting specified
         }
-        List<Map<String, Object>> sortedRows = new ArrayList<>(dataset.getRows());
+        List<JRow> sortedRows = new ArrayList<>(dataset.getRows());
         // Create comparator chain
         Comparator<Map<String, Object>> comparator = createComparatorChain(orderByExpressions);
         sortedRows.sort(comparator);
@@ -334,17 +341,15 @@ public class JDataSetJoiner {
             Class<?> type = determineExpressionType(expr);
             newColumns.add(new JColumnMeta(alias, type, "alias"));
         }
-
-        // Create new rows with aliased values
-        List<Map<String, Object>> newRows = dataset.getRows().stream()
+        List<JRow> newRows = dataset.getRows().stream()
                 .map(row -> createAliasedRow(row, aliases))
                 .collect(Collectors.toList());
 
         return new JDataSet(newColumns, newRows);
     }
 
-    private static Map<String, Object> createAliasedRow(Map<String, Object> originalRow, Map<String, JExpression> aliases) {
-        Map<String, Object> newRow = new HashMap<>(originalRow);
+    private static JRow createAliasedRow(JRow originalRow, Map<String, JExpression> aliases) {
+        JRow newRow = new JRow(originalRow);
         for (Map.Entry<String, JExpression> entry : aliases.entrySet()) {
             String alias = entry.getKey();
             JExpression expr = entry.getValue();
@@ -403,9 +408,9 @@ public class JDataSetJoiner {
             newColumns.add(new JColumnMeta(aggCol, Object.class, "aggregate"));
         }
 
-        List<Map<String, Object>> resultRows = new ArrayList<>();
+        List<JRow> resultRows = new ArrayList<>();
         for (Map.Entry<List<Object>, List<Map<String, Object>>> entry : groups.entrySet()) {
-            Map<String, Object> resultRow = new HashMap<>();
+            JRow resultRow = new JRow();
             for (int i = 0; i < groupBy.size(); i++) {
                 resultRow.put(groupBy.get(i), entry.getKey().get(i));
             }
