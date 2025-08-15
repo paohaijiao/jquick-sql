@@ -27,6 +27,8 @@ import com.github.paohaijiao.parser.JQuickSQLParser;
 import com.sun.org.apache.xalan.internal.extensions.ExpressionContext;
 import org.antlr.v4.runtime.CommonTokenStream;
 
+import java.text.NumberFormat;
+import java.text.ParseException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -73,21 +75,23 @@ public class JQuikSQLCoreVisitor extends JQuickSQLBaseVisitor {
         }
         return new JDataSet(newColumns, newRows);
     }
-    private JoinCondition createJoinCondition(ExpressionContext exprCtx, JDataSet left, JDataSet right) {
-        ExpressionEvaluator evaluator = new ExpressionEvaluator();
-        return (leftRow, rightRow) -> {
-            Map<String, Object> combinedRow = new HashMap<>();
-            combinedRow.putAll(leftRow);
-            combinedRow.putAll(rightRow);
-            return evaluator.evaluateAsBoolean(exprCtx, combinedRow);
-        };
-    }
 
-    private JoinCondition createUsingCondition(JQuickSQLParser.UidListContext uidList, JDataSet left, JDataSet right) {
-        List<String> columns = uidList.uid().stream()
-                .map(u -> u.getText())
-                .collect(Collectors.toList());
-        return (leftRow, rightRow) -> columns.stream()
-                .allMatch(col -> Objects.equals(leftRow.get(col), rightRow.get(col)));
+
+    public static String trim(String str) {
+        if(null==str || "".equals(str)) {
+            return str;
+        }
+        String newStr = str.replaceAll("^['\"]|['\"]$", "");
+        return newStr;
+    }
+    protected Number getNumber(String number){
+        NumberFormat format = NumberFormat.getInstance();
+        Number num = null;
+        try {
+            num = format.parse(number);
+        } catch (ParseException e) {
+            throw new RuntimeException(e);
+        }
+        return num;
     }
 }

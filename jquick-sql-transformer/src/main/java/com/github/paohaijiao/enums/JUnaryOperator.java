@@ -1,6 +1,7 @@
 package com.github.paohaijiao.enums;
 
 public enum JUnaryOperator {
+
     PLUS("+"),
 
     MINUS("-"),
@@ -13,6 +14,15 @@ public enum JUnaryOperator {
 
     JUnaryOperator(String symbol) {
         this.symbol = symbol;
+    }
+
+    public static JUnaryOperator symbolOf(String symbol) {
+        for (JUnaryOperator jUnaryOperator : values()) {
+            if (jUnaryOperator.symbol.equals(symbol)) {
+                return jUnaryOperator;
+            }
+        }
+        throw new IllegalArgumentException("Unknown unary operator: " + symbol);
     }
 
     public String getSymbol() {
