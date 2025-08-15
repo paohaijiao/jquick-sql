@@ -29,13 +29,25 @@ public class JQuickSQLBaseListener implements JQuickSQLListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void enterSelectStatement(JQuickSQLParser.SelectStatementContext ctx) { }
+	@Override public void enterCteQuery(JQuickSQLParser.CteQueryContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void exitSelectStatement(JQuickSQLParser.SelectStatementContext ctx) { }
+	@Override public void exitCteQuery(JQuickSQLParser.CteQueryContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterSingleQuery(JQuickSQLParser.SingleQueryContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitSingleQuery(JQuickSQLParser.SingleQueryContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
@@ -444,6 +456,42 @@ public class JQuickSQLBaseListener implements JQuickSQLListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitCommonTableExpression(JQuickSQLParser.CommonTableExpressionContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterColumnNames(JQuickSQLParser.ColumnNamesContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitColumnNames(JQuickSQLParser.ColumnNamesContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterInitialQuery(JQuickSQLParser.InitialQueryContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitInitialQuery(JQuickSQLParser.InitialQueryContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterRecursivePart(JQuickSQLParser.RecursivePartContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitRecursivePart(JQuickSQLParser.RecursivePartContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *

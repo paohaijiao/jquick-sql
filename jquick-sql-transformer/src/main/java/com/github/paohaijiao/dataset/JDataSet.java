@@ -16,6 +16,8 @@
 package com.github.paohaijiao.dataset;
 
 import java.util.*;
+import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -64,7 +66,24 @@ public class JDataSet {
     public static Builder builder() {
         return new Builder();
     }
+    public JDataSet filter(Predicate<JRow> predicate) {
+        List<JRow> filtered = rows.stream()
+                .filter(predicate)
+                .collect(Collectors.toList());
+        return new JDataSet(columns, filtered);
+    }
 
+    public JDataSet map(Function<JRow, JRow> mapper) {
+        List<JRow> mapped = rows.stream()
+                .map(mapper)
+                .collect(Collectors.toList());
+        return new JDataSet(columns, mapped);
+    }
+
+    public <T> Stream<T> mapToColumn(Function<Object, T> mapper, String columnName) {
+        return rows.stream()
+                .map(row -> mapper.apply(row.get(columnName)));
+    }
     public static class Builder {
         private final List<JColumnMeta> columns = new ArrayList<>();
         private final List<JRow> rows = new ArrayList<>();

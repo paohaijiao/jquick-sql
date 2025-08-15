@@ -37,7 +37,6 @@ public class JEntityQueryEngine<T>  {
 
     private final Class<T> entityClass;
 
-    private final JQueryHandlerFactory<T> handlerFactory;
 
     private final Map<String, List<?>> tableRegistry = new HashMap<>();
 
@@ -45,22 +44,16 @@ public class JEntityQueryEngine<T>  {
 
     public JEntityQueryEngine(Class<T> entityClass) {
         this.entityClass = entityClass;
-        this.handlerFactory = new JEntityQueryEngineFactory<>(entityClass);
     }
 
     public List<T> executeQuery(String sql, List<T> dataset) {
-        JExecutionPlan plan = parseSql(sql);
-        List<JQueryHandler<T>> handlers = handlerFactory.createExecutionChain(this,plan);
-        List<T> result = dataset;
-        for (JQueryHandler<T> handler : handlers) {
-            result = handler.handle(result, plan);
-        }
-        return result;
+    return null;
     }
 
     private JExecutionPlan parseSql(String sql) {
         return new JExecutionPlan();
     }
+
     public JEntityQueryEngine<T> registerJdbcTable(String tableName, DataSource dataSource) {
         return this;
     }

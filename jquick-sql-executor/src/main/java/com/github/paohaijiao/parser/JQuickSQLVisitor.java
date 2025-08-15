@@ -17,11 +17,19 @@ public interface JQuickSQLVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitQuery(JQuickSQLParser.QueryContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link JQuickSQLParser#selectStatement}.
+	 * Visit a parse tree produced by the {@code cteQuery}
+	 * labeled alternative in {@link JQuickSQLParser#selectStatement}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitSelectStatement(JQuickSQLParser.SelectStatementContext ctx);
+	T visitCteQuery(JQuickSQLParser.CteQueryContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code singleQuery}
+	 * labeled alternative in {@link JQuickSQLParser#selectStatement}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitSingleQuery(JQuickSQLParser.SingleQueryContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link JQuickSQLParser#selectExpression}.
 	 * @param ctx the parse tree
@@ -226,6 +234,24 @@ public interface JQuickSQLVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitCommonTableExpression(JQuickSQLParser.CommonTableExpressionContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link JQuickSQLParser#columnNames}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitColumnNames(JQuickSQLParser.ColumnNamesContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link JQuickSQLParser#initialQuery}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitInitialQuery(JQuickSQLParser.InitialQueryContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link JQuickSQLParser#recursivePart}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitRecursivePart(JQuickSQLParser.RecursivePartContext ctx);
 	/**
 	 * Visit a parse tree produced by the {@code inExpression}
 	 * labeled alternative in {@link JQuickSQLParser#expression}.

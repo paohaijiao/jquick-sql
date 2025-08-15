@@ -16,6 +16,7 @@
 package com.github.paohaijiao.visitor;
 
 import com.github.paohaijiao.dataset.JDataSet;
+import com.github.paohaijiao.exception.JAssert;
 import com.github.paohaijiao.param.JContext;
 import com.github.paohaijiao.parser.JQuickSQLLexer;
 import com.github.paohaijiao.parser.JQuickSQLParser;
@@ -48,12 +49,24 @@ public class JQuikSQLCommonVisitor extends JQuikSQLCoreVisitor{
     }
     @Override
     public JDataSet visitQuery(JQuickSQLParser.QueryContext ctx) {
-        return visitSelectStatement(ctx.selectStatement());
+        return (JDataSet)visit(ctx.selectStatement());
     }
     @Override
-    public JDataSet visitSelectStatement(JQuickSQLParser.SelectStatementContext ctx) {
+    public JDataSet visitSingleQuery(JQuickSQLParser.SingleQueryContext ctx) {
+        return visitSelectExpression(ctx.selectExpression());
+    }
+    @Override
+    public JDataSet visitSelectExpression(JQuickSQLParser.SelectExpressionContext ctx) {
+        if(ctx.olapOperation()!=null){
+            visitOlapOperation(ctx.olapOperation());
+        }else if(ctx.selectClause()!=null){
+            visitSelectClause(ctx.selectClause());
+        }
+        JAssert.throwNewException("not support this statement");
         return null;
     }
+
+
 
 
 }

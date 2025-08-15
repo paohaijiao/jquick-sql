@@ -18,15 +18,29 @@ public interface JQuickSQLListener extends ParseTreeListener {
 	 */
 	void exitQuery(JQuickSQLParser.QueryContext ctx);
 	/**
-	 * Enter a parse tree produced by {@link JQuickSQLParser#selectStatement}.
+	 * Enter a parse tree produced by the {@code cteQuery}
+	 * labeled alternative in {@link JQuickSQLParser#selectStatement}.
 	 * @param ctx the parse tree
 	 */
-	void enterSelectStatement(JQuickSQLParser.SelectStatementContext ctx);
+	void enterCteQuery(JQuickSQLParser.CteQueryContext ctx);
 	/**
-	 * Exit a parse tree produced by {@link JQuickSQLParser#selectStatement}.
+	 * Exit a parse tree produced by the {@code cteQuery}
+	 * labeled alternative in {@link JQuickSQLParser#selectStatement}.
 	 * @param ctx the parse tree
 	 */
-	void exitSelectStatement(JQuickSQLParser.SelectStatementContext ctx);
+	void exitCteQuery(JQuickSQLParser.CteQueryContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code singleQuery}
+	 * labeled alternative in {@link JQuickSQLParser#selectStatement}.
+	 * @param ctx the parse tree
+	 */
+	void enterSingleQuery(JQuickSQLParser.SingleQueryContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code singleQuery}
+	 * labeled alternative in {@link JQuickSQLParser#selectStatement}.
+	 * @param ctx the parse tree
+	 */
+	void exitSingleQuery(JQuickSQLParser.SingleQueryContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link JQuickSQLParser#selectExpression}.
 	 * @param ctx the parse tree
@@ -367,6 +381,36 @@ public interface JQuickSQLListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitCommonTableExpression(JQuickSQLParser.CommonTableExpressionContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link JQuickSQLParser#columnNames}.
+	 * @param ctx the parse tree
+	 */
+	void enterColumnNames(JQuickSQLParser.ColumnNamesContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link JQuickSQLParser#columnNames}.
+	 * @param ctx the parse tree
+	 */
+	void exitColumnNames(JQuickSQLParser.ColumnNamesContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link JQuickSQLParser#initialQuery}.
+	 * @param ctx the parse tree
+	 */
+	void enterInitialQuery(JQuickSQLParser.InitialQueryContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link JQuickSQLParser#initialQuery}.
+	 * @param ctx the parse tree
+	 */
+	void exitInitialQuery(JQuickSQLParser.InitialQueryContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link JQuickSQLParser#recursivePart}.
+	 * @param ctx the parse tree
+	 */
+	void enterRecursivePart(JQuickSQLParser.RecursivePartContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link JQuickSQLParser#recursivePart}.
+	 * @param ctx the parse tree
+	 */
+	void exitRecursivePart(JQuickSQLParser.RecursivePartContext ctx);
 	/**
 	 * Enter a parse tree produced by the {@code inExpression}
 	 * labeled alternative in {@link JQuickSQLParser#expression}.

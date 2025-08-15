@@ -15,17 +15,20 @@
  */
 package com.github.paohaijiao.visitor;
 
+import com.github.paohaijiao.dataset.JColumnMeta;
 import com.github.paohaijiao.dataset.JDataSet;
+import com.github.paohaijiao.dataset.JRow;
 import com.github.paohaijiao.engine.JEntityQueryEngine;
+import com.github.paohaijiao.func.JoinCondition;
 import com.github.paohaijiao.param.JContext;
 import com.github.paohaijiao.parser.JQuickSQLBaseVisitor;
 import com.github.paohaijiao.parser.JQuickSQLLexer;
 import com.github.paohaijiao.parser.JQuickSQLParser;
+import com.sun.org.apache.xalan.internal.extensions.ExpressionContext;
 import org.antlr.v4.runtime.CommonTokenStream;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * packageName com.github.paohaijiao.visitor
@@ -46,8 +49,45 @@ public class JQuikSQLCoreVisitor extends JQuickSQLBaseVisitor {
 
     protected final Map<String, JDataSet> tableRegistry = new HashMap<>();
 
+    protected JDataSet currentDataset;
 
     public void registerDataSet(String tableName, JDataSet dataSet) {
         tableRegistry.put(tableName, dataSet);
+    }
+    protected JDataSet aliasColumns(JDataSet dataset, String alias) {
+        List<JColumnMeta> newColumns = new ArrayList<>();
+        List<JRow> newRows = new ArrayList<>();
+        for (JColumnMeta column : dataset.getColumns()) {
+            newColumns.add(new JColumnMeta(
+                    alias + "." + column.getName(),
+                    column.getType(),
+                    column.getSource()
+            ));
+        }
+        for (JRow row : dataset.getRows()) {
+            JRow newRow = new JRow();
+            for (String key : row.keySet()) {
+                newRow.put(alias + "." + key, row.get(key));
+            }
+            newRows.add(newRow);
+        }
+        return new JDataSet(newColumns, newRows);
+    }
+    private JoinCondition createJoinCondition(ExpressionContext exprCtx, JDataSet left, JDataSet right) {
+        ExpressionEvaluator evaluator = new ExpressionEvaluator();
+        return (leftRow, rightRow) -> {
+            Map<String, Object> combinedRow = new HashMap<>();
+            combinedRow.putAll(leftRow);
+            combinedRow.putAll(rightRow);
+            return evaluator.evaluateAsBoolean(exprCtx, combinedRow);
+        };
+    }
+
+    private JoinCondition createUsingCondition(JQuickSQLParser.UidListContext uidList, JDataSet left, JDataSet right) {
+        List<String> columns = uidList.uid().stream()
+                .map(u -> u.getText())
+                .collect(Collectors.toList());
+        return (leftRow, rightRow) -> columns.stream()
+                .allMatch(col -> Objects.equals(leftRow.get(col), rightRow.get(col)));
     }
 }
