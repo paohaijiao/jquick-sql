@@ -19,6 +19,7 @@ import com.github.paohaijiao.dataset.JColumnMeta;
 import com.github.paohaijiao.dataset.JDataSet;
 import com.github.paohaijiao.dataset.JRow;
 import com.github.paohaijiao.engine.JEntityQueryEngine;
+import com.github.paohaijiao.exception.JAssert;
 import com.github.paohaijiao.func.JoinCondition;
 import com.github.paohaijiao.param.JContext;
 import com.github.paohaijiao.parser.JQuickSQLBaseVisitor;
@@ -93,5 +94,13 @@ public class JQuikSQLCoreVisitor extends JQuickSQLBaseVisitor {
             throw new RuntimeException(e);
         }
         return num;
+    }
+    protected boolean convertToBoolean(Object value) {
+        if (value instanceof Boolean) {
+            return (Boolean) value;
+        } else {
+            JAssert.throwNewException("Cannot convert to boolean: " + value);
+            return false;
+        }
     }
 }

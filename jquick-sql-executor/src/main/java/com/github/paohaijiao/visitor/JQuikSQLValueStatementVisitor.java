@@ -17,12 +17,10 @@ package com.github.paohaijiao.visitor;
 
 import com.github.paohaijiao.enums.JComparisonOperator;
 import com.github.paohaijiao.enums.JLogicalOperator;
+import com.github.paohaijiao.enums.JMathOperator;
 import com.github.paohaijiao.enums.JUnaryOperator;
 import com.github.paohaijiao.exception.JAssert;
 import com.github.paohaijiao.parser.JQuickSQLParser;
-import com.github.paohaijiao.util.JStringUtils;
-
-import java.text.NumberFormat;
 import java.util.Date;
 
 /**
@@ -94,6 +92,11 @@ public class JQuikSQLValueStatementVisitor extends JQuikSQLCoreVisitor{
     public JUnaryOperator visitUnaryOperator(JQuickSQLParser.UnaryOperatorContext ctx) {
         return JUnaryOperator.symbolOf(ctx.getText());
     }
+    @Override
+    public JMathOperator visitMathOperator(JQuickSQLParser.MathOperatorContext ctx) {
+        return JMathOperator.codeOf(ctx.getText());
+    }
+
 
 
 
