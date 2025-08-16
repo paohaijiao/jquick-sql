@@ -247,38 +247,12 @@ public interface JQuickSQLVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitExpressions(JQuickSQLParser.ExpressionsContext ctx);
 	/**
-	 * Visit a parse tree produced by the {@code aggregateFunctionCall}
-	 * labeled alternative in {@link JQuickSQLParser#functionCall}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitAggregateFunctionCall(JQuickSQLParser.AggregateFunctionCallContext ctx);
-	/**
-	 * Visit a parse tree produced by the {@code scalarFunctionCall}
-	 * labeled alternative in {@link JQuickSQLParser#functionCall}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitScalarFunctionCall(JQuickSQLParser.ScalarFunctionCallContext ctx);
-	/**
 	 * Visit a parse tree produced by the {@code udfFunctionCall}
 	 * labeled alternative in {@link JQuickSQLParser#functionCall}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	T visitUdfFunctionCall(JQuickSQLParser.UdfFunctionCallContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link JQuickSQLParser#aggregateWindowedFunction}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitAggregateWindowedFunction(JQuickSQLParser.AggregateWindowedFunctionContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link JQuickSQLParser#scalarFunctionName}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitScalarFunctionName(JQuickSQLParser.ScalarFunctionNameContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link JQuickSQLParser#fullColumnName}.
 	 * @param ctx the parse tree
@@ -346,48 +320,6 @@ public interface JQuickSQLVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitFunctionArg(JQuickSQLParser.FunctionArgContext ctx);
 	/**
-	 * Visit a parse tree produced by the {@code inExpression}
-	 * labeled alternative in {@link JQuickSQLParser#expression}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitInExpression(JQuickSQLParser.InExpressionContext ctx);
-	/**
-	 * Visit a parse tree produced by the {@code selectResult}
-	 * labeled alternative in {@link JQuickSQLParser#expression}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitSelectResult(JQuickSQLParser.SelectResultContext ctx);
-	/**
-	 * Visit a parse tree produced by the {@code notExpression}
-	 * labeled alternative in {@link JQuickSQLParser#expression}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitNotExpression(JQuickSQLParser.NotExpressionContext ctx);
-	/**
-	 * Visit a parse tree produced by the {@code parenExpression}
-	 * labeled alternative in {@link JQuickSQLParser#expression}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitParenExpression(JQuickSQLParser.ParenExpressionContext ctx);
-	/**
-	 * Visit a parse tree produced by the {@code logicalExpression}
-	 * labeled alternative in {@link JQuickSQLParser#expression}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitLogicalExpression(JQuickSQLParser.LogicalExpressionContext ctx);
-	/**
-	 * Visit a parse tree produced by the {@code predicateExpression}
-	 * labeled alternative in {@link JQuickSQLParser#expression}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitPredicateExpression(JQuickSQLParser.PredicateExpressionContext ctx);
-	/**
 	 * Visit a parse tree produced by the {@code expressionAtomPredicate}
 	 * labeled alternative in {@link JQuickSQLParser#predicate}.
 	 * @param ctx the parse tree
@@ -408,6 +340,13 @@ public interface JQuickSQLVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitInPredicate(JQuickSQLParser.InPredicateContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code exisitsExpression}
+	 * labeled alternative in {@link JQuickSQLParser#predicate}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitExisitsExpression(JQuickSQLParser.ExisitsExpressionContext ctx);
 	/**
 	 * Visit a parse tree produced by the {@code betweenPredicate}
 	 * labeled alternative in {@link JQuickSQLParser#predicate}.
@@ -486,6 +425,41 @@ public interface JQuickSQLVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitMathExpressionAtom(JQuickSQLParser.MathExpressionAtomContext ctx);
 	/**
+	 * Visit a parse tree produced by the {@code selectResult}
+	 * labeled alternative in {@link JQuickSQLParser#expression}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitSelectResult(JQuickSQLParser.SelectResultContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code notExpression}
+	 * labeled alternative in {@link JQuickSQLParser#expression}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitNotExpression(JQuickSQLParser.NotExpressionContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code parenExpression}
+	 * labeled alternative in {@link JQuickSQLParser#expression}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitParenExpression(JQuickSQLParser.ParenExpressionContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code logicalExpression}
+	 * labeled alternative in {@link JQuickSQLParser#expression}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitLogicalExpression(JQuickSQLParser.LogicalExpressionContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code predicateExpression}
+	 * labeled alternative in {@link JQuickSQLParser#expression}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitPredicateExpression(JQuickSQLParser.PredicateExpressionContext ctx);
+	/**
 	 * Visit a parse tree produced by {@link JQuickSQLParser#mathOperator}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
@@ -522,13 +496,6 @@ public interface JQuickSQLVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitDateStringLiteral(JQuickSQLParser.DateStringLiteralContext ctx);
-	/**
-	 * Visit a parse tree produced by the {@code dateExpressionLiteral}
-	 * labeled alternative in {@link JQuickSQLParser#dateLiteral}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitDateExpressionLiteral(JQuickSQLParser.DateExpressionLiteralContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link JQuickSQLParser#format}.
 	 * @param ctx the parse tree

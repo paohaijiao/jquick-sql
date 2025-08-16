@@ -402,30 +402,6 @@ public interface JQuickSQLListener extends ParseTreeListener {
 	 */
 	void exitExpressions(JQuickSQLParser.ExpressionsContext ctx);
 	/**
-	 * Enter a parse tree produced by the {@code aggregateFunctionCall}
-	 * labeled alternative in {@link JQuickSQLParser#functionCall}.
-	 * @param ctx the parse tree
-	 */
-	void enterAggregateFunctionCall(JQuickSQLParser.AggregateFunctionCallContext ctx);
-	/**
-	 * Exit a parse tree produced by the {@code aggregateFunctionCall}
-	 * labeled alternative in {@link JQuickSQLParser#functionCall}.
-	 * @param ctx the parse tree
-	 */
-	void exitAggregateFunctionCall(JQuickSQLParser.AggregateFunctionCallContext ctx);
-	/**
-	 * Enter a parse tree produced by the {@code scalarFunctionCall}
-	 * labeled alternative in {@link JQuickSQLParser#functionCall}.
-	 * @param ctx the parse tree
-	 */
-	void enterScalarFunctionCall(JQuickSQLParser.ScalarFunctionCallContext ctx);
-	/**
-	 * Exit a parse tree produced by the {@code scalarFunctionCall}
-	 * labeled alternative in {@link JQuickSQLParser#functionCall}.
-	 * @param ctx the parse tree
-	 */
-	void exitScalarFunctionCall(JQuickSQLParser.ScalarFunctionCallContext ctx);
-	/**
 	 * Enter a parse tree produced by the {@code udfFunctionCall}
 	 * labeled alternative in {@link JQuickSQLParser#functionCall}.
 	 * @param ctx the parse tree
@@ -437,26 +413,6 @@ public interface JQuickSQLListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitUdfFunctionCall(JQuickSQLParser.UdfFunctionCallContext ctx);
-	/**
-	 * Enter a parse tree produced by {@link JQuickSQLParser#aggregateWindowedFunction}.
-	 * @param ctx the parse tree
-	 */
-	void enterAggregateWindowedFunction(JQuickSQLParser.AggregateWindowedFunctionContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link JQuickSQLParser#aggregateWindowedFunction}.
-	 * @param ctx the parse tree
-	 */
-	void exitAggregateWindowedFunction(JQuickSQLParser.AggregateWindowedFunctionContext ctx);
-	/**
-	 * Enter a parse tree produced by {@link JQuickSQLParser#scalarFunctionName}.
-	 * @param ctx the parse tree
-	 */
-	void enterScalarFunctionName(JQuickSQLParser.ScalarFunctionNameContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link JQuickSQLParser#scalarFunctionName}.
-	 * @param ctx the parse tree
-	 */
-	void exitScalarFunctionName(JQuickSQLParser.ScalarFunctionNameContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link JQuickSQLParser#fullColumnName}.
 	 * @param ctx the parse tree
@@ -568,78 +524,6 @@ public interface JQuickSQLListener extends ParseTreeListener {
 	 */
 	void exitFunctionArg(JQuickSQLParser.FunctionArgContext ctx);
 	/**
-	 * Enter a parse tree produced by the {@code inExpression}
-	 * labeled alternative in {@link JQuickSQLParser#expression}.
-	 * @param ctx the parse tree
-	 */
-	void enterInExpression(JQuickSQLParser.InExpressionContext ctx);
-	/**
-	 * Exit a parse tree produced by the {@code inExpression}
-	 * labeled alternative in {@link JQuickSQLParser#expression}.
-	 * @param ctx the parse tree
-	 */
-	void exitInExpression(JQuickSQLParser.InExpressionContext ctx);
-	/**
-	 * Enter a parse tree produced by the {@code selectResult}
-	 * labeled alternative in {@link JQuickSQLParser#expression}.
-	 * @param ctx the parse tree
-	 */
-	void enterSelectResult(JQuickSQLParser.SelectResultContext ctx);
-	/**
-	 * Exit a parse tree produced by the {@code selectResult}
-	 * labeled alternative in {@link JQuickSQLParser#expression}.
-	 * @param ctx the parse tree
-	 */
-	void exitSelectResult(JQuickSQLParser.SelectResultContext ctx);
-	/**
-	 * Enter a parse tree produced by the {@code notExpression}
-	 * labeled alternative in {@link JQuickSQLParser#expression}.
-	 * @param ctx the parse tree
-	 */
-	void enterNotExpression(JQuickSQLParser.NotExpressionContext ctx);
-	/**
-	 * Exit a parse tree produced by the {@code notExpression}
-	 * labeled alternative in {@link JQuickSQLParser#expression}.
-	 * @param ctx the parse tree
-	 */
-	void exitNotExpression(JQuickSQLParser.NotExpressionContext ctx);
-	/**
-	 * Enter a parse tree produced by the {@code parenExpression}
-	 * labeled alternative in {@link JQuickSQLParser#expression}.
-	 * @param ctx the parse tree
-	 */
-	void enterParenExpression(JQuickSQLParser.ParenExpressionContext ctx);
-	/**
-	 * Exit a parse tree produced by the {@code parenExpression}
-	 * labeled alternative in {@link JQuickSQLParser#expression}.
-	 * @param ctx the parse tree
-	 */
-	void exitParenExpression(JQuickSQLParser.ParenExpressionContext ctx);
-	/**
-	 * Enter a parse tree produced by the {@code logicalExpression}
-	 * labeled alternative in {@link JQuickSQLParser#expression}.
-	 * @param ctx the parse tree
-	 */
-	void enterLogicalExpression(JQuickSQLParser.LogicalExpressionContext ctx);
-	/**
-	 * Exit a parse tree produced by the {@code logicalExpression}
-	 * labeled alternative in {@link JQuickSQLParser#expression}.
-	 * @param ctx the parse tree
-	 */
-	void exitLogicalExpression(JQuickSQLParser.LogicalExpressionContext ctx);
-	/**
-	 * Enter a parse tree produced by the {@code predicateExpression}
-	 * labeled alternative in {@link JQuickSQLParser#expression}.
-	 * @param ctx the parse tree
-	 */
-	void enterPredicateExpression(JQuickSQLParser.PredicateExpressionContext ctx);
-	/**
-	 * Exit a parse tree produced by the {@code predicateExpression}
-	 * labeled alternative in {@link JQuickSQLParser#expression}.
-	 * @param ctx the parse tree
-	 */
-	void exitPredicateExpression(JQuickSQLParser.PredicateExpressionContext ctx);
-	/**
 	 * Enter a parse tree produced by the {@code expressionAtomPredicate}
 	 * labeled alternative in {@link JQuickSQLParser#predicate}.
 	 * @param ctx the parse tree
@@ -675,6 +559,18 @@ public interface JQuickSQLListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitInPredicate(JQuickSQLParser.InPredicateContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code exisitsExpression}
+	 * labeled alternative in {@link JQuickSQLParser#predicate}.
+	 * @param ctx the parse tree
+	 */
+	void enterExisitsExpression(JQuickSQLParser.ExisitsExpressionContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code exisitsExpression}
+	 * labeled alternative in {@link JQuickSQLParser#predicate}.
+	 * @param ctx the parse tree
+	 */
+	void exitExisitsExpression(JQuickSQLParser.ExisitsExpressionContext ctx);
 	/**
 	 * Enter a parse tree produced by the {@code betweenPredicate}
 	 * labeled alternative in {@link JQuickSQLParser#predicate}.
@@ -808,6 +704,66 @@ public interface JQuickSQLListener extends ParseTreeListener {
 	 */
 	void exitMathExpressionAtom(JQuickSQLParser.MathExpressionAtomContext ctx);
 	/**
+	 * Enter a parse tree produced by the {@code selectResult}
+	 * labeled alternative in {@link JQuickSQLParser#expression}.
+	 * @param ctx the parse tree
+	 */
+	void enterSelectResult(JQuickSQLParser.SelectResultContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code selectResult}
+	 * labeled alternative in {@link JQuickSQLParser#expression}.
+	 * @param ctx the parse tree
+	 */
+	void exitSelectResult(JQuickSQLParser.SelectResultContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code notExpression}
+	 * labeled alternative in {@link JQuickSQLParser#expression}.
+	 * @param ctx the parse tree
+	 */
+	void enterNotExpression(JQuickSQLParser.NotExpressionContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code notExpression}
+	 * labeled alternative in {@link JQuickSQLParser#expression}.
+	 * @param ctx the parse tree
+	 */
+	void exitNotExpression(JQuickSQLParser.NotExpressionContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code parenExpression}
+	 * labeled alternative in {@link JQuickSQLParser#expression}.
+	 * @param ctx the parse tree
+	 */
+	void enterParenExpression(JQuickSQLParser.ParenExpressionContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code parenExpression}
+	 * labeled alternative in {@link JQuickSQLParser#expression}.
+	 * @param ctx the parse tree
+	 */
+	void exitParenExpression(JQuickSQLParser.ParenExpressionContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code logicalExpression}
+	 * labeled alternative in {@link JQuickSQLParser#expression}.
+	 * @param ctx the parse tree
+	 */
+	void enterLogicalExpression(JQuickSQLParser.LogicalExpressionContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code logicalExpression}
+	 * labeled alternative in {@link JQuickSQLParser#expression}.
+	 * @param ctx the parse tree
+	 */
+	void exitLogicalExpression(JQuickSQLParser.LogicalExpressionContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code predicateExpression}
+	 * labeled alternative in {@link JQuickSQLParser#expression}.
+	 * @param ctx the parse tree
+	 */
+	void enterPredicateExpression(JQuickSQLParser.PredicateExpressionContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code predicateExpression}
+	 * labeled alternative in {@link JQuickSQLParser#expression}.
+	 * @param ctx the parse tree
+	 */
+	void exitPredicateExpression(JQuickSQLParser.PredicateExpressionContext ctx);
+	/**
 	 * Enter a parse tree produced by {@link JQuickSQLParser#mathOperator}.
 	 * @param ctx the parse tree
 	 */
@@ -869,18 +825,6 @@ public interface JQuickSQLListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitDateStringLiteral(JQuickSQLParser.DateStringLiteralContext ctx);
-	/**
-	 * Enter a parse tree produced by the {@code dateExpressionLiteral}
-	 * labeled alternative in {@link JQuickSQLParser#dateLiteral}.
-	 * @param ctx the parse tree
-	 */
-	void enterDateExpressionLiteral(JQuickSQLParser.DateExpressionLiteralContext ctx);
-	/**
-	 * Exit a parse tree produced by the {@code dateExpressionLiteral}
-	 * labeled alternative in {@link JQuickSQLParser#dateLiteral}.
-	 * @param ctx the parse tree
-	 */
-	void exitDateExpressionLiteral(JQuickSQLParser.DateExpressionLiteralContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link JQuickSQLParser#format}.
 	 * @param ctx the parse tree

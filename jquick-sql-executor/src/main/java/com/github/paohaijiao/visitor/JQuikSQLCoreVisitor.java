@@ -95,6 +95,18 @@ public class JQuikSQLCoreVisitor extends JQuickSQLBaseVisitor {
         }
         return num;
     }
+    protected Number convertToNumber(Object value) {
+        if (value instanceof Number) {
+            return (Number) value;
+        } else if (value instanceof String) {
+            try {
+                return getNumber((String) value);
+            } catch (NumberFormatException e) {
+                throw new RuntimeException("Cannot convert to number: " + value);
+            }
+        }
+        throw new RuntimeException("Unsupported numeric type: " + value.getClass());
+    }
     protected boolean convertToBoolean(Object value) {
         if (value instanceof Boolean) {
             return (Boolean) value;
