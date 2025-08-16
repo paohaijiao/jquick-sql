@@ -23,7 +23,6 @@ public class JConditionEvaluator {
     private boolean evaluateComparison(JComparisonCondition cond, Map<String, Object> row) {
         Object leftVal = evaluateExpression(cond.getLeft(), row);
         Object rightVal = evaluateExpression(cond.getRight(), row);
-
         switch (cond.getOperator()) {
             case EQ: return Objects.equals(leftVal, rightVal);
             case NEQ: return !Objects.equals(leftVal, rightVal);
@@ -53,7 +52,6 @@ public class JConditionEvaluator {
         Object val = evaluateExpression(cond.getExpression(), row);
         Object lower = evaluateExpression(cond.getLowerBound(), row);
         Object upper = evaluateExpression(cond.getUpperBound(), row);
-
         boolean between = compare(val, lower) >= 0 && compare(val, upper) <= 0;
         return cond.isNot() ? !between : between;
     }

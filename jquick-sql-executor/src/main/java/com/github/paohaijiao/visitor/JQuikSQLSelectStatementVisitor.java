@@ -16,8 +16,10 @@
 package com.github.paohaijiao.visitor;
 
 import com.github.paohaijiao.dataset.JDataSet;
+import com.github.paohaijiao.enums.JoinType;
 import com.github.paohaijiao.exception.JAssert;
 import com.github.paohaijiao.func.JoinCondition;
+import com.github.paohaijiao.model.JoinPartModel;
 import com.github.paohaijiao.param.JContext;
 import com.github.paohaijiao.parser.JQuickSQLLexer;
 import com.github.paohaijiao.parser.JQuickSQLParser;
@@ -36,7 +38,7 @@ import java.util.stream.Collectors;
  * @version 1.0.0
  * @since 2025/8/11
  */
-public class JQuikSQLSelectStatementVisitor extends JQuikSQLCoreVisitor{
+public class JQuikSQLSelectStatementVisitor extends JQuikSQLCommonTableExpressionVisitor{
 
     @Override
     public JDataSet visitSelectClause(JQuickSQLParser.SelectClauseContext ctx) {
@@ -45,7 +47,6 @@ public class JQuikSQLSelectStatementVisitor extends JQuikSQLCoreVisitor{
         if(ctx.fromClause()!=null){
             jDataSet=visitFromClause(ctx.fromClause());
         }
-
         return jDataSet;
     }
     @Override
@@ -78,30 +79,36 @@ public class JQuikSQLSelectStatementVisitor extends JQuikSQLCoreVisitor{
         return currentDataset;
     }
     @Override
-    public JDataSet visitJoinPart(JQuickSQLParser.JoinPartContext ctx) {
-        JDataSet leftDataset = this.currentDataset;
-        JDataSet rightDataset =(JDataSet) visit(ctx.tableSourceItem());
-        JoinCondition condition = (l, r) -> true;
-        if (ctx.ON() != null) {
-            condition = createJoinCondition(ctx.expression(), leftDataset, rightDataset);
-        }
-
-        if (ctx.NATURAL() != null) {
-            this.currentDataset = JDataSetJoiner.naturalJoin(leftDataset, rightDataset);
-        } else if (ctx.LEFT() != null) {
-            this.currentDataset = JDataSetJoiner.leftJoin(leftDataset, rightDataset, condition);
-        } else if (ctx.RIGHT() != null) {
-            // RIGHT JOIN 转换为 LEFT JOIN
-            this.currentDataset = JDataSetJoiner.leftJoin(rightDataset, leftDataset, (r, l) -> condition.test(l, r));
-//        } else if (ctx.FULL() != null) {
-//            this.currentDataset = JDataSetJoiner.fullOuterJoin(leftDataset, rightDataset, condition);
-//        }
-        } else {
-            // 默认INNER JOIN
-            this.currentDataset = JDataSetJoiner.innerJoin(leftDataset, rightDataset, condition);
-        }
+    public JoinPartModel visitJoinPart(JQuickSQLParser.JoinPartContext ctx) {
+        JoinPartModel joinPartModel=new JoinPartModel();
+        JDataSet dataset =(JDataSet) visit(ctx.tableSourceItem());
+        joinPartModel.setDataset(dataset);
+        joinPartModel.setJoinType(visitJoinType(ctx.joinType()));
+        joinPartModel.setExpression(null);
+        return joinPartModel;
 
     }
+    @Override
+    public JoinType visitJoinType(JQuickSQLParser.JoinTypeContext ctx) {
+        if(ctx.INNER()!=null){
+            return JoinType.INNER;
+        } else if (ctx.CROSS()!=null) {
+            return JoinType.CROSS;
+        }else if (ctx.LEFT()!=null) {
+            return JoinType.LEFT;
+        }else if (ctx.RIGHT()!=null) {
+            return JoinType.RIGHT;
+        }else if (ctx.NATURAL()!=null) {
+            return JoinType.NATURAL;
+        }else if (ctx.FULL()!=null) {
+            return JoinType.FULL;
+        }else if (ctx.NATURAL()!=null) {
+            return JoinType.NATURAL;
+        }
+        JAssert.throwNewException("the join type require not null");
+        return null;
+    }
+
 
     @Override
     public JDataSet visitTableSourceItem(JQuickSQLParser.TableSourceItemContext ctx) {
@@ -119,12 +126,4 @@ public class JQuikSQLSelectStatementVisitor extends JQuikSQLCoreVisitor{
         }
         throw new UnsupportedOperationException("Unsupported table source item");
     }
-
-
-
-
-
-
-
-
 }

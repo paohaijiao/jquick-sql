@@ -272,6 +272,16 @@ public interface JQuickSQLListener extends ParseTreeListener {
 	 */
 	void exitJoinPart(JQuickSQLParser.JoinPartContext ctx);
 	/**
+	 * Enter a parse tree produced by {@link JQuickSQLParser#joinType}.
+	 * @param ctx the parse tree
+	 */
+	void enterJoinType(JQuickSQLParser.JoinTypeContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link JQuickSQLParser#joinType}.
+	 * @param ctx the parse tree
+	 */
+	void exitJoinType(JQuickSQLParser.JoinTypeContext ctx);
+	/**
 	 * Enter a parse tree produced by {@link JQuickSQLParser#uidList}.
 	 * @param ctx the parse tree
 	 */
@@ -414,46 +424,6 @@ public interface JQuickSQLListener extends ParseTreeListener {
 	 */
 	void exitUdfFunctionCall(JQuickSQLParser.UdfFunctionCallContext ctx);
 	/**
-	 * Enter a parse tree produced by {@link JQuickSQLParser#fullColumnName}.
-	 * @param ctx the parse tree
-	 */
-	void enterFullColumnName(JQuickSQLParser.FullColumnNameContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link JQuickSQLParser#fullColumnName}.
-	 * @param ctx the parse tree
-	 */
-	void exitFullColumnName(JQuickSQLParser.FullColumnNameContext ctx);
-	/**
-	 * Enter a parse tree produced by {@link JQuickSQLParser#uid}.
-	 * @param ctx the parse tree
-	 */
-	void enterUid(JQuickSQLParser.UidContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link JQuickSQLParser#uid}.
-	 * @param ctx the parse tree
-	 */
-	void exitUid(JQuickSQLParser.UidContext ctx);
-	/**
-	 * Enter a parse tree produced by {@link JQuickSQLParser#simpleId}.
-	 * @param ctx the parse tree
-	 */
-	void enterSimpleId(JQuickSQLParser.SimpleIdContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link JQuickSQLParser#simpleId}.
-	 * @param ctx the parse tree
-	 */
-	void exitSimpleId(JQuickSQLParser.SimpleIdContext ctx);
-	/**
-	 * Enter a parse tree produced by {@link JQuickSQLParser#dottedId}.
-	 * @param ctx the parse tree
-	 */
-	void enterDottedId(JQuickSQLParser.DottedIdContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link JQuickSQLParser#dottedId}.
-	 * @param ctx the parse tree
-	 */
-	void exitDottedId(JQuickSQLParser.DottedIdContext ctx);
-	/**
 	 * Enter a parse tree produced by {@link JQuickSQLParser#keyword}.
 	 * @param ctx the parse tree
 	 */
@@ -483,26 +453,6 @@ public interface JQuickSQLListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitAggregateFunction(JQuickSQLParser.AggregateFunctionContext ctx);
-	/**
-	 * Enter a parse tree produced by {@link JQuickSQLParser#tableName}.
-	 * @param ctx the parse tree
-	 */
-	void enterTableName(JQuickSQLParser.TableNameContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link JQuickSQLParser#tableName}.
-	 * @param ctx the parse tree
-	 */
-	void exitTableName(JQuickSQLParser.TableNameContext ctx);
-	/**
-	 * Enter a parse tree produced by {@link JQuickSQLParser#schemaName}.
-	 * @param ctx the parse tree
-	 */
-	void enterSchemaName(JQuickSQLParser.SchemaNameContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link JQuickSQLParser#schemaName}.
-	 * @param ctx the parse tree
-	 */
-	void exitSchemaName(JQuickSQLParser.SchemaNameContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link JQuickSQLParser#functionArgs}.
 	 * @param ctx the parse tree
@@ -857,4 +807,64 @@ public interface JQuickSQLListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitBooleanLiteral(JQuickSQLParser.BooleanLiteralContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link JQuickSQLParser#fullColumnName}.
+	 * @param ctx the parse tree
+	 */
+	void enterFullColumnName(JQuickSQLParser.FullColumnNameContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link JQuickSQLParser#fullColumnName}.
+	 * @param ctx the parse tree
+	 */
+	void exitFullColumnName(JQuickSQLParser.FullColumnNameContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link JQuickSQLParser#tableName}.
+	 * @param ctx the parse tree
+	 */
+	void enterTableName(JQuickSQLParser.TableNameContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link JQuickSQLParser#tableName}.
+	 * @param ctx the parse tree
+	 */
+	void exitTableName(JQuickSQLParser.TableNameContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link JQuickSQLParser#schemaName}.
+	 * @param ctx the parse tree
+	 */
+	void enterSchemaName(JQuickSQLParser.SchemaNameContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link JQuickSQLParser#schemaName}.
+	 * @param ctx the parse tree
+	 */
+	void exitSchemaName(JQuickSQLParser.SchemaNameContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link JQuickSQLParser#uid}.
+	 * @param ctx the parse tree
+	 */
+	void enterUid(JQuickSQLParser.UidContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link JQuickSQLParser#uid}.
+	 * @param ctx the parse tree
+	 */
+	void exitUid(JQuickSQLParser.UidContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link JQuickSQLParser#simpleId}.
+	 * @param ctx the parse tree
+	 */
+	void enterSimpleId(JQuickSQLParser.SimpleIdContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link JQuickSQLParser#simpleId}.
+	 * @param ctx the parse tree
+	 */
+	void exitSimpleId(JQuickSQLParser.SimpleIdContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link JQuickSQLParser#dottedId}.
+	 * @param ctx the parse tree
+	 */
+	void enterDottedId(JQuickSQLParser.DottedIdContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link JQuickSQLParser#dottedId}.
+	 * @param ctx the parse tree
+	 */
+	void exitDottedId(JQuickSQLParser.DottedIdContext ctx);
 }
