@@ -84,27 +84,7 @@ public class JQuikSQLExpressionStatementVisitor extends JQuikSQLValueStatementVi
         JAssert.notNull(ctx.constant(),"constant must not be null");
         return visitConstant(ctx.constant());
     }
-    @Override
-    public JFullColumnModel visitFullColumnNameExpressionAtom(
-            JQuickSQLParser.FullColumnNameExpressionAtomContext ctx) {
-        String columnPath = ctx.fullColumnName().getText();
-        String[] parts = columnPath.split("\\.");
-        JFullColumnModel fullColumnModel = new JFullColumnModel();
-        if(parts.length==1){
-            fullColumnModel.setColumnName(parts[0]);
-        }else if(parts.length==2){
-            fullColumnModel.setColumnName(parts[0]);
-            fullColumnModel.setTableName(parts[1]);
-        } else if (parts.length==3) {
-            fullColumnModel.setColumnName(parts[0]);
-            fullColumnModel.setTableName(parts[1]);
-            fullColumnModel.setSchemaName(parts[2]);
-        }else{
-            JAssert.throwNewException("Invalid column name: " + columnPath);
-            return null;
-        }
-        return fullColumnModel;
-    }
+
     @Override
     public JFunctionCallModel visitFunctionCallExpressionAtom(JQuickSQLParser.FunctionCallExpressionAtomContext ctx) {
         JQuickSQLParser.FunctionCallContext funcCtx = ctx.functionCall();

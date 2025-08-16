@@ -20,6 +20,7 @@ import com.github.paohaijiao.enums.JLogicalOperator;
 import com.github.paohaijiao.enums.JMathOperator;
 import com.github.paohaijiao.enums.JUnaryOperator;
 import com.github.paohaijiao.exception.JAssert;
+import com.github.paohaijiao.model.JFullColumnModel;
 import com.github.paohaijiao.parser.JQuickSQLParser;
 import java.util.Date;
 
@@ -31,6 +32,23 @@ import java.util.Date;
  * @since 2025/8/11
  */
 public class JQuikSQLValueStatementVisitor extends JQuikSQLCoreVisitor{
+    @Override
+    public String visitSchemaName(JQuickSQLParser.SchemaNameContext ctx) {
+        return ctx.getText();
+    }
+    @Override
+    public JFullColumnModel visitTableName(JQuickSQLParser.TableNameContext ctx) {
+        JFullColumnModel jFullColumnModel = new JFullColumnModel();
+        if(ctx.schema!=null){
+            jFullColumnModel.setSchemaName(ctx.schema.getText());
+        }
+        if(ctx.table!=null){
+            jFullColumnModel.setTableName(ctx.table.getText());
+        }
+        return jFullColumnModel;
+    }
+
+
     @Override
     public Boolean visitBooleanLiteral(JQuickSQLParser.BooleanLiteralContext ctx) {
         if(ctx.TRUE() != null){
@@ -62,14 +80,7 @@ public class JQuikSQLValueStatementVisitor extends JQuikSQLCoreVisitor{
     public String visitFormat(JQuickSQLParser.FormatContext ctx) {
         return ctx.STRING_LITERAL().getText();
     }
-    @Override
-    public Date visitDateExpressionLiteral(JQuickSQLParser.DateExpressionLiteralContext ctx) {
-        if(ctx.DATE() != null){
-            String date=ctx.DATE().getText();
-            return date==null?null:new Date(Long.parseLong(date));
-        }
-        return null;
-    }
+
     @Override
     public JComparisonOperator visitComparisonOperator(JQuickSQLParser.ComparisonOperatorContext ctx) {
         return JComparisonOperator.symbolOf(ctx.getText());
@@ -97,7 +108,47 @@ public class JQuikSQLValueStatementVisitor extends JQuikSQLCoreVisitor{
         return JMathOperator.codeOf(ctx.getText());
     }
 
+    @Override
+    public Object visitUid(JQuickSQLParser.UidContext ctx) {
+        if (ctx.STRING_LITERAL() != null) {
+            return trim(ctx.STRING_LITERAL().getText());
+        }
+        return visit(ctx.simpleId());
+    }
 
+    @Override
+    public Object visitSimpleId(JQuickSQLParser.SimpleIdContext ctx) {
+        if (ctx.ID_LITERAL() != null) {
+            return ctx.ID_LITERAL().getText();
+        }
+        return ctx.keyword().getText();
+    }
+
+    @Override
+    public Object visitDottedId(JQuickSQLParser.DottedIdContext ctx) {
+        return "." + visit(ctx.uid());
+    }
+    @Override
+    public JFullColumnModel visitFullColumnNameExpressionAtom(
+            JQuickSQLParser.FullColumnNameExpressionAtomContext ctx) {
+        String columnPath = ctx.fullColumnName().getText();
+        String[] parts = columnPath.split("\\.");
+        JFullColumnModel fullColumnModel = new JFullColumnModel();
+        if(parts.length==1){
+            fullColumnModel.setColumnName(parts[0]);
+        }else if(parts.length==2){
+            fullColumnModel.setColumnName(parts[0]);
+            fullColumnModel.setTableName(parts[1]);
+        } else if (parts.length==3) {
+            fullColumnModel.setColumnName(parts[0]);
+            fullColumnModel.setTableName(parts[1]);
+            fullColumnModel.setSchemaName(parts[2]);
+        }else{
+            JAssert.throwNewException("Invalid column name: " + columnPath);
+            return null;
+        }
+        return fullColumnModel;
+    }
 
 
 
