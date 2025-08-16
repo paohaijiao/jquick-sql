@@ -369,6 +369,13 @@ public interface JQuickSQLVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitLikePredicate(JQuickSQLParser.LikePredicateContext ctx);
 	/**
+	 * Visit a parse tree produced by the {@code expressionAtomPredicateWithLocalId}
+	 * labeled alternative in {@link JQuickSQLParser#predicate}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitExpressionAtomPredicateWithLocalId(JQuickSQLParser.ExpressionAtomPredicateWithLocalIdContext ctx);
+	/**
 	 * Visit a parse tree produced by the {@code regexpPredicate}
 	 * labeled alternative in {@link JQuickSQLParser#predicate}.
 	 * @param ctx the parse tree

@@ -4703,8 +4703,6 @@ public class JQuickSQLParser extends Parser {
 		public ExpressionAtomContext expressionAtom() {
 			return getRuleContext(ExpressionAtomContext.class,0);
 		}
-		public TerminalNode LOCAL_ID() { return getToken(JQuickSQLParser.LOCAL_ID, 0); }
-		public TerminalNode VAR_ASSIGN() { return getToken(JQuickSQLParser.VAR_ASSIGN, 0); }
 		public ExpressionAtomPredicateContext(PredicateContext ctx) { copyFrom(ctx); }
 		@Override
 		public void enterRule(ParseTreeListener listener) {
@@ -4874,6 +4872,28 @@ public class JQuickSQLParser extends Parser {
 		}
 	}
 	@SuppressWarnings("CheckReturnValue")
+	public static class ExpressionAtomPredicateWithLocalIdContext extends PredicateContext {
+		public ExpressionAtomContext expressionAtom() {
+			return getRuleContext(ExpressionAtomContext.class,0);
+		}
+		public TerminalNode LOCAL_ID() { return getToken(JQuickSQLParser.LOCAL_ID, 0); }
+		public TerminalNode VAR_ASSIGN() { return getToken(JQuickSQLParser.VAR_ASSIGN, 0); }
+		public ExpressionAtomPredicateWithLocalIdContext(PredicateContext ctx) { copyFrom(ctx); }
+		@Override
+		public void enterRule(ParseTreeListener listener) {
+			if ( listener instanceof JQuickSQLListener ) ((JQuickSQLListener)listener).enterExpressionAtomPredicateWithLocalId(this);
+		}
+		@Override
+		public void exitRule(ParseTreeListener listener) {
+			if ( listener instanceof JQuickSQLListener ) ((JQuickSQLListener)listener).exitExpressionAtomPredicateWithLocalId(this);
+		}
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof JQuickSQLVisitor ) return ((JQuickSQLVisitor<? extends T>)visitor).visitExpressionAtomPredicateWithLocalId(this);
+			else return visitor.visitChildren(this);
+		}
+	}
+	@SuppressWarnings("CheckReturnValue")
 	public static class RegexpPredicateContext extends PredicateContext {
 		public Token regex;
 		public List<PredicateContext> predicate() {
@@ -4932,7 +4952,7 @@ public class JQuickSQLParser extends Parser {
 				break;
 			case 2:
 				{
-				_localctx = new ExpressionAtomPredicateContext(_localctx);
+				_localctx = new ExpressionAtomPredicateWithLocalIdContext(_localctx);
 				_ctx = _localctx;
 				_prevctx = _localctx;
 				setState(705);

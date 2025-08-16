@@ -608,6 +608,18 @@ public interface JQuickSQLListener extends ParseTreeListener {
 	 */
 	void exitLikePredicate(JQuickSQLParser.LikePredicateContext ctx);
 	/**
+	 * Enter a parse tree produced by the {@code expressionAtomPredicateWithLocalId}
+	 * labeled alternative in {@link JQuickSQLParser#predicate}.
+	 * @param ctx the parse tree
+	 */
+	void enterExpressionAtomPredicateWithLocalId(JQuickSQLParser.ExpressionAtomPredicateWithLocalIdContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code expressionAtomPredicateWithLocalId}
+	 * labeled alternative in {@link JQuickSQLParser#predicate}.
+	 * @param ctx the parse tree
+	 */
+	void exitExpressionAtomPredicateWithLocalId(JQuickSQLParser.ExpressionAtomPredicateWithLocalIdContext ctx);
+	/**
 	 * Enter a parse tree produced by the {@code regexpPredicate}
 	 * labeled alternative in {@link JQuickSQLParser#predicate}.
 	 * @param ctx the parse tree
