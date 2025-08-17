@@ -8,8 +8,10 @@
     <modules>
         <module>jquick-sql-connector</module>
         <module>jquick-sql-metastore</module>
+        <module>jquick-sql-assembler</module>
         <module>jquick-sql-transformer</module>
         <module>jquick-sql-executor</module>
+
     </modules>
     <parent>
         <groupId>io.github.paohaijiao</groupId>
@@ -38,11 +40,11 @@
                 <artifactId>jquick-sql-metastore</artifactId>
                 <version>${jquick-sql}</version>
             </dependency>
-            <dependency>
-                <groupId>io.github.paohaijiao</groupId>
-                <artifactId>jquick-sql-transformer</artifactId>
-                <version>${jquick-sql}</version>
-            </dependency>
+<!--            <dependency>-->
+<!--                <groupId>io.github.paohaijiao</groupId>-->
+<!--                <artifactId>jquick-sql-assembler</artifactId>-->
+<!--                <version>${jquick-sql}</version>-->
+<!--            </dependency>-->
             <dependency>
                 <groupId>io.github.paohaijiao</groupId>
                 <artifactId>jquick-sql-executor</artifactId>

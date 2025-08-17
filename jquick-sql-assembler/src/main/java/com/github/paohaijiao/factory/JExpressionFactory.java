@@ -13,7 +13,7 @@
  *
  * Copyright (c) [2025-2099] Martin (goudingcheng@gmail.com)
  */
-package com.github.paohaijiao.visitor;
+package com.github.paohaijiao.factory;
 
 import com.github.paohaijiao.enums.JBinaryOperator;
 import com.github.paohaijiao.expression.JBinaryExpression;
@@ -28,7 +28,7 @@ import com.github.paohaijiao.expression.JLiteralExpression;
  * @version 1.0.0
  * @since 2025/8/12
  */
-public class JExpressions {
+public class JExpressionFactory {
 
     public static JColumnExpression col(String name) {
         return new JColumnExpression(name);

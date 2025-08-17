@@ -7,10 +7,6 @@
         <version>1.0.0</version>
     </parent>
     <artifactId>jquick-sql-transformer</artifactId>
-    <dependencies>
-        <dependency>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
-        </dependency>
-    </dependencies>
+    <name>Archetype - jquick-sql-transformer</name>
+    <url>http://maven.apache.org</url>
 </project>
