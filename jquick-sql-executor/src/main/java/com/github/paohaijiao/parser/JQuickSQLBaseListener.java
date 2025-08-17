@@ -509,18 +509,6 @@ public class JQuickSQLBaseListener implements JQuickSQLListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void enterKeyword(JQuickSQLParser.KeywordContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void exitKeyword(JQuickSQLParser.KeywordContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
 	@Override public void enterCompOperator(JQuickSQLParser.CompOperatorContext ctx) { }
 	/**
 	 * {@inheritDoc}
@@ -881,13 +869,37 @@ public class JQuickSQLBaseListener implements JQuickSQLListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void enterDateStringLiteral(JQuickSQLParser.DateStringLiteralContext ctx) { }
+	@Override public void enterDecimal_literal(JQuickSQLParser.Decimal_literalContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void exitDateStringLiteral(JQuickSQLParser.DateStringLiteralContext ctx) { }
+	@Override public void exitDecimal_literal(JQuickSQLParser.Decimal_literalContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterNull_literal(JQuickSQLParser.Null_literalContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitNull_literal(JQuickSQLParser.Null_literalContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterDateLiteral(JQuickSQLParser.DateLiteralContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitDateLiteral(JQuickSQLParser.DateLiteralContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
@@ -953,6 +965,18 @@ public class JQuickSQLBaseListener implements JQuickSQLListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
+	@Override public void enterDottedId(JQuickSQLParser.DottedIdContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitDottedId(JQuickSQLParser.DottedIdContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
 	@Override public void enterUid(JQuickSQLParser.UidContext ctx) { }
 	/**
 	 * {@inheritDoc}
@@ -960,6 +984,18 @@ public class JQuickSQLBaseListener implements JQuickSQLListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitUid(JQuickSQLParser.UidContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterStringLiteral(JQuickSQLParser.StringLiteralContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitStringLiteral(JQuickSQLParser.StringLiteralContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
@@ -977,13 +1013,13 @@ public class JQuickSQLBaseListener implements JQuickSQLListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void enterDottedId(JQuickSQLParser.DottedIdContext ctx) { }
+	@Override public void enterKeyword(JQuickSQLParser.KeywordContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void exitDottedId(JQuickSQLParser.DottedIdContext ctx) { }
+	@Override public void exitKeyword(JQuickSQLParser.KeywordContext ctx) { }
 
 	/**
 	 * {@inheritDoc}

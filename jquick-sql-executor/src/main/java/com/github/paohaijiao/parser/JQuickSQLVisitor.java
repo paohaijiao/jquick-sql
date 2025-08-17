@@ -260,12 +260,6 @@ public interface JQuickSQLVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitUdfFunctionCall(JQuickSQLParser.UdfFunctionCallContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link JQuickSQLParser#keyword}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitKeyword(JQuickSQLParser.KeywordContext ctx);
-	/**
 	 * Visit a parse tree produced by {@link JQuickSQLParser#compOperator}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
@@ -467,12 +461,23 @@ public interface JQuickSQLVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitConstant(JQuickSQLParser.ConstantContext ctx);
 	/**
-	 * Visit a parse tree produced by the {@code dateStringLiteral}
-	 * labeled alternative in {@link JQuickSQLParser#dateLiteral}.
+	 * Visit a parse tree produced by {@link JQuickSQLParser#decimal_literal}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitDateStringLiteral(JQuickSQLParser.DateStringLiteralContext ctx);
+	T visitDecimal_literal(JQuickSQLParser.Decimal_literalContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link JQuickSQLParser#null_literal}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitNull_literal(JQuickSQLParser.Null_literalContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link JQuickSQLParser#dateLiteral}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitDateLiteral(JQuickSQLParser.DateLiteralContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link JQuickSQLParser#format}.
 	 * @param ctx the parse tree
@@ -504,11 +509,23 @@ public interface JQuickSQLVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitSchemaName(JQuickSQLParser.SchemaNameContext ctx);
 	/**
+	 * Visit a parse tree produced by {@link JQuickSQLParser#dottedId}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitDottedId(JQuickSQLParser.DottedIdContext ctx);
+	/**
 	 * Visit a parse tree produced by {@link JQuickSQLParser#uid}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	T visitUid(JQuickSQLParser.UidContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link JQuickSQLParser#stringLiteral}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitStringLiteral(JQuickSQLParser.StringLiteralContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link JQuickSQLParser#simpleId}.
 	 * @param ctx the parse tree
@@ -516,9 +533,9 @@ public interface JQuickSQLVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitSimpleId(JQuickSQLParser.SimpleIdContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link JQuickSQLParser#dottedId}.
+	 * Visit a parse tree produced by {@link JQuickSQLParser#keyword}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitDottedId(JQuickSQLParser.DottedIdContext ctx);
+	T visitKeyword(JQuickSQLParser.KeywordContext ctx);
 }

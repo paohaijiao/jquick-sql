@@ -15,6 +15,7 @@
  */
 package com.github.paohaijiao.visitor;
 
+import com.github.paohaijiao.date.JDateUtil;
 import com.github.paohaijiao.enums.JComparisonOperator;
 import com.github.paohaijiao.enums.JLogicalOperator;
 import com.github.paohaijiao.enums.JMathOperator;
@@ -37,7 +38,23 @@ public class JQuikSQLValueStatementVisitor extends JQuikSQLCoreVisitor{
         String text=ctx.getText();
         return text;
     }
+    @Override
+    public String visitSimpleId(JQuickSQLParser.SimpleIdContext ctx) {
+        String text=ctx.getText();
+        return text;
+    }
+    @Override
+    public Object visitUid(JQuickSQLParser.UidContext ctx) {
+        if (ctx.stringLiteral() != null) {
+            return visitStringLiteral(ctx.stringLiteral());
+        }
+        return visitSimpleId(ctx.simpleId());
+    }
 
+    @Override
+    public Object visitDottedId(JQuickSQLParser.DottedIdContext ctx) {
+        return visit(ctx.uid());
+    }
     @Override
     public String visitSchemaName(JQuickSQLParser.SchemaNameContext ctx) {
         return ctx.getText();
@@ -67,24 +84,39 @@ public class JQuikSQLValueStatementVisitor extends JQuikSQLCoreVisitor{
         return false;
     }
     @Override
+    public Date visitDateLiteral(JQuickSQLParser.DateLiteralContext ctx) {
+        JAssert.notNull(ctx.stringLiteral(), "date  literal expected");
+        JAssert.notNull(ctx.format(), "format expected");
+        String format=visitFormat( ctx.format());
+        String dateString=visitStringLiteral( ctx.stringLiteral());
+        return JDateUtil.parse(JDateUtil.getSimpleDateFormat(format),dateString);
+    }
+
+    @Override
     public Object visitConstant(JQuickSQLParser.ConstantContext ctx) {
-        if(null!=ctx.STRING_LITERAL()){
-            return trim(ctx.STRING_LITERAL().getText());
-        } else if (ctx.DECIMAL_LITERAL()!=null) {
-            return getNumber(ctx.DECIMAL_LITERAL().getText());
+        if(null!=ctx.stringLiteral()){
+            return visitStringLiteral(ctx.stringLiteral());
+        } else if (ctx.decimal_literal()!=null) {
+            return getNumber(ctx.decimal_literal().getText());
         } else if (ctx.booleanLiteral()!=null) {
             return visitBooleanLiteral(ctx.booleanLiteral());
-        }else if(null!=ctx.NULL_LITERAL()){
+        }else if(null!=ctx.null_literal()){
             return null;
         }else if(null!=ctx.dateLiteral()){
-            return visit(ctx.dateLiteral());
+            return visitDateLiteral(ctx.dateLiteral());
         }
         JAssert.throwNewException("invalid constant literal");
         return null;
     }
     @Override
     public String visitFormat(JQuickSQLParser.FormatContext ctx) {
-        return ctx.STRING_LITERAL().getText();
+        JAssert.notNull(ctx.stringLiteral(),"string literal expected");
+        return trim(ctx.stringLiteral().getText());
+    }
+    @Override
+    public String visitStringLiteral(JQuickSQLParser.StringLiteralContext ctx) {
+        JAssert.notNull(ctx.STRING_LITERAL(),"string literal expected");
+        return trim(ctx.STRING_LITERAL().getText());
     }
 
     @Override
@@ -114,26 +146,7 @@ public class JQuikSQLValueStatementVisitor extends JQuikSQLCoreVisitor{
         return JMathOperator.codeOf(ctx.getText());
     }
 
-    @Override
-    public Object visitUid(JQuickSQLParser.UidContext ctx) {
-        if (ctx.STRING_LITERAL() != null) {
-            return trim(ctx.STRING_LITERAL().getText());
-        }
-        return visit(ctx.simpleId());
-    }
 
-    @Override
-    public Object visitSimpleId(JQuickSQLParser.SimpleIdContext ctx) {
-        if (ctx.ID_LITERAL() != null) {
-            return ctx.ID_LITERAL().getText();
-        }
-        return ctx.keyword().getText();
-    }
-
-    @Override
-    public Object visitDottedId(JQuickSQLParser.DottedIdContext ctx) {
-        return "." + visit(ctx.uid());
-    }
     @Override
     public JFullColumnModel visitFullColumnNameExpressionAtom(JQuickSQLParser.FullColumnNameExpressionAtomContext ctx) {
         String columnPath = ctx.fullColumnName().getText();

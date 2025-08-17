@@ -424,16 +424,6 @@ public interface JQuickSQLListener extends ParseTreeListener {
 	 */
 	void exitUdfFunctionCall(JQuickSQLParser.UdfFunctionCallContext ctx);
 	/**
-	 * Enter a parse tree produced by {@link JQuickSQLParser#keyword}.
-	 * @param ctx the parse tree
-	 */
-	void enterKeyword(JQuickSQLParser.KeywordContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link JQuickSQLParser#keyword}.
-	 * @param ctx the parse tree
-	 */
-	void exitKeyword(JQuickSQLParser.KeywordContext ctx);
-	/**
 	 * Enter a parse tree produced by {@link JQuickSQLParser#compOperator}.
 	 * @param ctx the parse tree
 	 */
@@ -776,17 +766,35 @@ public interface JQuickSQLListener extends ParseTreeListener {
 	 */
 	void exitConstant(JQuickSQLParser.ConstantContext ctx);
 	/**
-	 * Enter a parse tree produced by the {@code dateStringLiteral}
-	 * labeled alternative in {@link JQuickSQLParser#dateLiteral}.
+	 * Enter a parse tree produced by {@link JQuickSQLParser#decimal_literal}.
 	 * @param ctx the parse tree
 	 */
-	void enterDateStringLiteral(JQuickSQLParser.DateStringLiteralContext ctx);
+	void enterDecimal_literal(JQuickSQLParser.Decimal_literalContext ctx);
 	/**
-	 * Exit a parse tree produced by the {@code dateStringLiteral}
-	 * labeled alternative in {@link JQuickSQLParser#dateLiteral}.
+	 * Exit a parse tree produced by {@link JQuickSQLParser#decimal_literal}.
 	 * @param ctx the parse tree
 	 */
-	void exitDateStringLiteral(JQuickSQLParser.DateStringLiteralContext ctx);
+	void exitDecimal_literal(JQuickSQLParser.Decimal_literalContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link JQuickSQLParser#null_literal}.
+	 * @param ctx the parse tree
+	 */
+	void enterNull_literal(JQuickSQLParser.Null_literalContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link JQuickSQLParser#null_literal}.
+	 * @param ctx the parse tree
+	 */
+	void exitNull_literal(JQuickSQLParser.Null_literalContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link JQuickSQLParser#dateLiteral}.
+	 * @param ctx the parse tree
+	 */
+	void enterDateLiteral(JQuickSQLParser.DateLiteralContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link JQuickSQLParser#dateLiteral}.
+	 * @param ctx the parse tree
+	 */
+	void exitDateLiteral(JQuickSQLParser.DateLiteralContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link JQuickSQLParser#format}.
 	 * @param ctx the parse tree
@@ -838,6 +846,16 @@ public interface JQuickSQLListener extends ParseTreeListener {
 	 */
 	void exitSchemaName(JQuickSQLParser.SchemaNameContext ctx);
 	/**
+	 * Enter a parse tree produced by {@link JQuickSQLParser#dottedId}.
+	 * @param ctx the parse tree
+	 */
+	void enterDottedId(JQuickSQLParser.DottedIdContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link JQuickSQLParser#dottedId}.
+	 * @param ctx the parse tree
+	 */
+	void exitDottedId(JQuickSQLParser.DottedIdContext ctx);
+	/**
 	 * Enter a parse tree produced by {@link JQuickSQLParser#uid}.
 	 * @param ctx the parse tree
 	 */
@@ -847,6 +865,16 @@ public interface JQuickSQLListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitUid(JQuickSQLParser.UidContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link JQuickSQLParser#stringLiteral}.
+	 * @param ctx the parse tree
+	 */
+	void enterStringLiteral(JQuickSQLParser.StringLiteralContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link JQuickSQLParser#stringLiteral}.
+	 * @param ctx the parse tree
+	 */
+	void exitStringLiteral(JQuickSQLParser.StringLiteralContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link JQuickSQLParser#simpleId}.
 	 * @param ctx the parse tree
@@ -858,13 +886,13 @@ public interface JQuickSQLListener extends ParseTreeListener {
 	 */
 	void exitSimpleId(JQuickSQLParser.SimpleIdContext ctx);
 	/**
-	 * Enter a parse tree produced by {@link JQuickSQLParser#dottedId}.
+	 * Enter a parse tree produced by {@link JQuickSQLParser#keyword}.
 	 * @param ctx the parse tree
 	 */
-	void enterDottedId(JQuickSQLParser.DottedIdContext ctx);
+	void enterKeyword(JQuickSQLParser.KeywordContext ctx);
 	/**
-	 * Exit a parse tree produced by {@link JQuickSQLParser#dottedId}.
+	 * Exit a parse tree produced by {@link JQuickSQLParser#keyword}.
 	 * @param ctx the parse tree
 	 */
-	void exitDottedId(JQuickSQLParser.DottedIdContext ctx);
+	void exitKeyword(JQuickSQLParser.KeywordContext ctx);
 }
