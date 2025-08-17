@@ -37,6 +37,7 @@ public class JQuickSQLExecutor {
 
     private JQuickSQLConfig config=new JQuickSQLConfig();
 
+
     public JQuickSQLExecutor(JContext context){
         this.context = context;
     }
