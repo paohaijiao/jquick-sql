@@ -6,5 +6,8 @@ public enum JoinType {
     LEFT,
     RIGHT,
     NATURAL,
+    UNION,
+    INTERSECT,
+    MINUS,
     FULL;
 }

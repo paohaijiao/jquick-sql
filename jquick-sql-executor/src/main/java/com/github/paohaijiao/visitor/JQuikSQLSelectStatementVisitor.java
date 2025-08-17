@@ -19,6 +19,7 @@ import com.github.paohaijiao.dataset.JDataSet;
 import com.github.paohaijiao.enums.JoinType;
 import com.github.paohaijiao.exception.JAssert;
 import com.github.paohaijiao.func.JoinCondition;
+import com.github.paohaijiao.model.JFullColumnModel;
 import com.github.paohaijiao.model.JoinPartModel;
 import com.github.paohaijiao.param.JContext;
 import com.github.paohaijiao.parser.JQuickSQLLexer;
@@ -74,6 +75,31 @@ public class JQuikSQLSelectStatementVisitor extends JQuikSQLCommonTableExpressio
         JDataSet dataSet =(JDataSet) visit(ctx.tableSourceItem());
         for (JQuickSQLParser.JoinPartContext joinPartCtx : ctx.joinPart()) {
             JoinPartModel joinPartModel= visitJoinPart(joinPartCtx);
+            JoinType joinType=joinPartModel.getJoinType();
+            JAssert.notNull(joinType,"the join type require not null");
+            JDataSet rightDataSet=joinPartModel.getDataset();
+            String leftColumn = joinPartModel.getLeft().getColumnName();
+            String rightColumn =joinPartModel.getRight().getColumnName();
+            JoinCondition condition = JoinCondition.equals(leftColumn, rightColumn);
+            if(joinType==JoinType.INNER){
+                joinerStrategy.innerJoin(dataSet,rightDataSet,condition);
+            }else if(joinType==JoinType.LEFT){
+                joinerStrategy.leftJoin(dataSet,rightDataSet,condition);
+            }else if(joinType==JoinType.RIGHT){
+                JAssert.throwNewException("the join type require not supported");
+            }else if(joinType==JoinType.CROSS){
+                joinerStrategy.crossJoin(dataSet,rightDataSet);
+            }else if(joinType==JoinType.FULL){
+                joinerStrategy.fullOuterJoin(dataSet,rightDataSet,condition);
+            }else if(joinType==JoinType.NATURAL){
+                joinerStrategy.naturalJoin(dataSet,rightDataSet);
+            }else if(joinType==JoinType.UNION){
+                joinerStrategy.union(dataSet,rightDataSet);
+            }else if(joinType==JoinType.INTERSECT){
+                joinerStrategy.intersect(dataSet,rightDataSet);
+            }else if(joinType==JoinType.MINUS){
+                joinerStrategy.minus(dataSet,rightDataSet);
+            }
         }
         return dataSet;
     }
@@ -85,8 +111,7 @@ public class JQuikSQLSelectStatementVisitor extends JQuikSQLCommonTableExpressio
         joinPartModel.setJoinType(visitJoinType(ctx.joinType()));
         JAssert.isTrue(ctx.fullColumnName().size()==2,"the full column name require 2 columns");
         joinPartModel.setLeft(visitFullColumnName(ctx.fullColumnName(0)));
-        joinPartModel.setRight(visitFullColumnName(ctx.fullColumnName(0)));
-        visitFullColumnName(ctx.fullColumnName(0));
+        joinPartModel.setRight(visitFullColumnName(ctx.fullColumnName(1)));
         return joinPartModel;
 
     }

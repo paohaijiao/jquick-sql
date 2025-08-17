@@ -15,6 +15,8 @@
  */
 package com.github.paohaijiao.model.table;
 
+import lombok.Data;
+
 import java.util.List;
 import java.util.Map;
 

@@ -18,6 +18,7 @@ package com.github.paohaijiao.model;
 import com.github.paohaijiao.dataset.JDataSet;
 import com.github.paohaijiao.enums.JoinType;
 import com.github.paohaijiao.expression.JExpression;
+import com.github.paohaijiao.func.JoinCondition;
 import lombok.Data;
 
 /**
@@ -37,4 +38,5 @@ public class JoinPartModel {
     private JFullColumnModel left;
 
     private JFullColumnModel right;
+
 }

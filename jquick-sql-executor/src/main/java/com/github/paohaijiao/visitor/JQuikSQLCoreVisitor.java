@@ -20,6 +20,7 @@ import com.github.paohaijiao.dataset.JDataSet;
 import com.github.paohaijiao.dataset.JRow;
 import com.github.paohaijiao.engine.JEntityQueryEngine;
 import com.github.paohaijiao.exception.JAssert;
+import com.github.paohaijiao.factory.JDataSetJoinerStrategy;
 import com.github.paohaijiao.func.JoinCondition;
 import com.github.paohaijiao.param.JContext;
 import com.github.paohaijiao.parser.JQuickSQLBaseVisitor;
@@ -52,7 +53,7 @@ public class JQuikSQLCoreVisitor extends JQuickSQLBaseVisitor {
 
     protected final Map<String, JDataSet> tableRegistry = new HashMap<>();
 
-    protected JDataSet currentDataset;
+    protected JDataSetJoinerStrategy joinerStrategy;
 
     public void registerDataSet(String tableName, JDataSet dataSet) {
         tableRegistry.put(tableName, dataSet);
