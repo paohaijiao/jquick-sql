@@ -32,7 +32,7 @@ import java.util.Stack;
  * @version 1.0.0
  * @since 2025/8/11
  */
-public class JQuikSQLCommonVisitor extends JQuikSQLCoreVisitor{
+public class JQuikSQLCommonVisitor extends JQuickSQLOlapVisitor{
 
     public JQuikSQLCommonVisitor(JContext context, JQuickSQLLexer lexer, CommonTokenStream tokenStream, JQuickSQLParser parser) {
         this.context = context;
@@ -46,6 +46,9 @@ public class JQuikSQLCommonVisitor extends JQuikSQLCoreVisitor{
         this.lexer = lexer;
         this.tokenStream = tokenStream;
         this.parser = parser;
+    }
+    public JQuikSQLCommonVisitor() {
+        this.context = new JContext();
     }
     @Override
     public JDataSet visitQuery(JQuickSQLParser.QueryContext ctx) {

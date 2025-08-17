@@ -226,16 +226,16 @@ public class JQuikSQLPredictStatementVisitor extends JQuikSQLExpressionStatement
         return false;
     }
 
-    private int compareValues(Object a, Object b) {
-        if (a instanceof Number && b instanceof Number) {
-            double d1 = ((Number) a).doubleValue();
-            double d2 = ((Number) b).doubleValue();
-            return Double.compare(d1, d2);
-        } else if (a instanceof Comparable && b instanceof Comparable) {
-            return ((Comparable) a).compareTo(b);
-        }
-        return a.toString().compareTo(b.toString());
-    }
+//    private int compareValues(Object a, Object b) {
+//        if (a instanceof Number && b instanceof Number) {
+//            double d1 = ((Number) a).doubleValue();
+//            double d2 = ((Number) b).doubleValue();
+//            return Double.compare(d1, d2);
+//        } else if (a instanceof Comparable && b instanceof Comparable) {
+//            return ((Comparable) a).compareTo(b);
+//        }
+//        return a.toString().compareTo(b.toString());
+//    }
 
     private Boolean handleNullComparison(String operator, Object left, Object right) {
         if ("<=>".equals(operator)) {

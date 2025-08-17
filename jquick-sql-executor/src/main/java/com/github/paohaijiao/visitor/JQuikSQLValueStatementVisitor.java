@@ -33,6 +33,12 @@ import java.util.Date;
  */
 public class JQuikSQLValueStatementVisitor extends JQuikSQLCoreVisitor{
     @Override
+    public String visitKeyword(JQuickSQLParser.KeywordContext ctx) {
+        String text=ctx.getText();
+        return text;
+    }
+
+    @Override
     public String visitSchemaName(JQuickSQLParser.SchemaNameContext ctx) {
         return ctx.getText();
     }

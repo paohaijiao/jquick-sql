@@ -13,25 +13,14 @@
  *
  * Copyright (c) [2025-2099] Martin (goudingcheng@gmail.com)
  */
-package com.github.paohaijiao.model;
-
-import lombok.Data;
-
-import java.util.List;
+package com.github.paohaijiao.visitor;
 
 /**
- * packageName com.github.paohaijiao.model
+ * packageName com.github.paohaijiao.visitor
  *
  * @author Martin
  * @version 1.0.0
- * @since 2025/8/16
+ * @since 2025/8/17
  */
-@Data
-public class JDistinctArgument {
-
-    final List<Object> args;
-
-    public JDistinctArgument(List<Object> args) {
-        this.args = args;
-    }
+public class JQuickSQLOlapVisitor extends JQuikSQLSelectStatementVisitor{
 }

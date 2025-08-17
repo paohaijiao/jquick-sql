@@ -14,6 +14,14 @@
  * Copyright (c) [2025-2099] Martin (goudingcheng@gmail.com)
  */
 package com.github.paohaijiao.value;
+import com.github.paohaijiao.dataset.JDataSet;
+import com.github.paohaijiao.param.JContext;
+import com.github.paohaijiao.parser.JQuickSQLLexer;
+import com.github.paohaijiao.parser.JQuickSQLParser;
+import com.github.paohaijiao.visitor.JQuikSQLCommonVisitor;
+import org.antlr.v4.runtime.CharStreams;
+import org.antlr.v4.runtime.CommonTokenStream;
+import org.junit.Test;
 
 /**
  * packageName com.github.paohaijiao.value
@@ -23,5 +31,15 @@ package com.github.paohaijiao.value;
  * @since 2025/8/17
  */
 public class JValueTest {
-
+    @Test
+    public void keyword() {
+        String rule="select";
+        JQuickSQLLexer lexer = new JQuickSQLLexer(CharStreams.fromString(rule));
+        CommonTokenStream tokens = new CommonTokenStream(lexer);
+        JQuickSQLParser parser = new JQuickSQLParser(tokens);
+        JQuickSQLParser.KeywordContext tree = parser.keyword();
+        JQuikSQLCommonVisitor tv = new JQuikSQLCommonVisitor();
+        Object object = tv.visit(tree);
+        System.out.println(object);
+    }
 }
