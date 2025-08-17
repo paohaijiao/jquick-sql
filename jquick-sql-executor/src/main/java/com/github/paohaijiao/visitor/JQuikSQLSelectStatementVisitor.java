@@ -59,24 +59,23 @@ public class JQuikSQLSelectStatementVisitor extends JQuikSQLCommonTableExpressio
     }
     @Override
     public JDataSet visitTableSources(JQuickSQLParser.TableSourcesContext ctx) {
-        JDataSet result = null;
-        for (JQuickSQLParser.TableSourceContext tableSourceCtx : ctx.tableSource()) {
-            JDataSet current = visitTableSource(tableSourceCtx);
-            if (result == null) {
-                result = current;
-            } else {
-                result = JDataSetJoiner.crossJoin(result, current);
-            }
+        JAssert.isFalse(ctx.tableSource().isEmpty(),"the table sources require not empty");
+        JDataSet leftDataset = visitTableSource(ctx.tableSource(0));
+        if (ctx.tableSource().size() == 1) {
+            return leftDataset;
         }
-        return result;
+        for (int i = 1; i < ctx.tableSource().size(); i++) {
+            JDataSet rightDataset = visitTableSource(ctx.tableSource(i));
+        }
+        return null;
     }
     @Override
     public JDataSet visitTableSource(JQuickSQLParser.TableSourceContext ctx) {
-        currentDataset =(JDataSet) visit(ctx.tableSourceItem());
+        JDataSet dataSet =(JDataSet) visit(ctx.tableSourceItem());
         for (JQuickSQLParser.JoinPartContext joinPartCtx : ctx.joinPart()) {
-            visitJoinPart(joinPartCtx);
+            JoinPartModel joinPartModel= visitJoinPart(joinPartCtx);
         }
-        return currentDataset;
+        return dataSet;
     }
     @Override
     public JoinPartModel visitJoinPart(JQuickSQLParser.JoinPartContext ctx) {
@@ -84,7 +83,10 @@ public class JQuikSQLSelectStatementVisitor extends JQuikSQLCommonTableExpressio
         JDataSet dataset =(JDataSet) visit(ctx.tableSourceItem());
         joinPartModel.setDataset(dataset);
         joinPartModel.setJoinType(visitJoinType(ctx.joinType()));
-        joinPartModel.setExpression(null);
+        JAssert.isTrue(ctx.fullColumnName().size()==2,"the full column name require 2 columns");
+        joinPartModel.setLeft(visitFullColumnName(ctx.fullColumnName(0)));
+        joinPartModel.setRight(visitFullColumnName(ctx.fullColumnName(0)));
+        visitFullColumnName(ctx.fullColumnName(0));
         return joinPartModel;
 
     }

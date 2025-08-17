@@ -34,5 +34,7 @@ public class JoinPartModel {
 
     private JoinType joinType;
 
-    private JExpression expression;
+    private JFullColumnModel left;
+
+    private JFullColumnModel right;
 }
