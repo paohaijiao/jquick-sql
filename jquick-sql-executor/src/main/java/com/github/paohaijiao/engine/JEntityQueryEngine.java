@@ -15,8 +15,6 @@
  */
 package com.github.paohaijiao.engine;
 
-import com.github.paohaijiao.handler.JQueryHandler;
-import com.github.paohaijiao.handler.JQueryHandlerFactory;
 import com.github.paohaijiao.plan.JExecutionPlan;
 
 import javax.sql.DataSource;
