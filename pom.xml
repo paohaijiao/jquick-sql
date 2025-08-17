@@ -2,7 +2,7 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <artifactId>jquick-sql</artifactId>
-    <version>1.0.0</version>
+    <version>1.3.0</version>
     <packaging>pom</packaging>
     <name>jquick-sql</name>
     <modules>
@@ -11,7 +11,6 @@
         <module>jquick-sql-assembler</module>
         <module>jquick-sql-transformer</module>
         <module>jquick-sql-executor</module>
-
     </modules>
     <parent>
         <groupId>io.github.paohaijiao</groupId>
@@ -38,6 +37,21 @@
             <dependency>
                 <groupId>io.github.paohaijiao</groupId>
                 <artifactId>jquick-sql-metastore</artifactId>
+                <version>${jquick-sql}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.paohaijiao</groupId>
+                <artifactId>jquick-sql-assembler</artifactId>
+                <version>${jquick-sql}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.paohaijiao</groupId>
+                <artifactId>jquick-sql-transformer</artifactId>
+                <version>${jquick-sql}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.paohaijiao</groupId>
+                <artifactId>jquick-sql-executor</artifactId>
                 <version>${jquick-sql}</version>
             </dependency>
 <!--            <dependency>-->
