@@ -8,6 +8,8 @@ public enum JUnaryOperator {
 
     NOT("NOT"),
 
+    NT("!"),
+
     BIT_NOT("~");
 
     private final String symbol;
@@ -18,7 +20,7 @@ public enum JUnaryOperator {
 
     public static JUnaryOperator symbolOf(String symbol) {
         for (JUnaryOperator jUnaryOperator : values()) {
-            if (jUnaryOperator.symbol.equals(symbol)) {
+            if (jUnaryOperator.symbol.equalsIgnoreCase(symbol)) {
                 return jUnaryOperator;
             }
         }

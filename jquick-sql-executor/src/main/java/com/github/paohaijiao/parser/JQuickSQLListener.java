@@ -412,17 +412,15 @@ public interface JQuickSQLListener extends ParseTreeListener {
 	 */
 	void exitExpressions(JQuickSQLParser.ExpressionsContext ctx);
 	/**
-	 * Enter a parse tree produced by the {@code udfFunctionCall}
-	 * labeled alternative in {@link JQuickSQLParser#functionCall}.
+	 * Enter a parse tree produced by {@link JQuickSQLParser#functionCall}.
 	 * @param ctx the parse tree
 	 */
-	void enterUdfFunctionCall(JQuickSQLParser.UdfFunctionCallContext ctx);
+	void enterFunctionCall(JQuickSQLParser.FunctionCallContext ctx);
 	/**
-	 * Exit a parse tree produced by the {@code udfFunctionCall}
-	 * labeled alternative in {@link JQuickSQLParser#functionCall}.
+	 * Exit a parse tree produced by {@link JQuickSQLParser#functionCall}.
 	 * @param ctx the parse tree
 	 */
-	void exitUdfFunctionCall(JQuickSQLParser.UdfFunctionCallContext ctx);
+	void exitFunctionCall(JQuickSQLParser.FunctionCallContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link JQuickSQLParser#compOperator}.
 	 * @param ctx the parse tree

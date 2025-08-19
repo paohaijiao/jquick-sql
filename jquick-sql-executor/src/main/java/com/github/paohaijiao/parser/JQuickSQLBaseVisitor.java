@@ -298,7 +298,7 @@ public class JQuickSQLBaseVisitor<T> extends AbstractParseTreeVisitor<T> impleme
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitUdfFunctionCall(JQuickSQLParser.UdfFunctionCallContext ctx) { return visitChildren(ctx); }
+	@Override public T visitFunctionCall(JQuickSQLParser.FunctionCallContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *

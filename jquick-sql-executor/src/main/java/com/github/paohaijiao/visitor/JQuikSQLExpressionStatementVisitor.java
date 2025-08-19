@@ -60,8 +60,7 @@ public class JQuikSQLExpressionStatementVisitor extends JQuikSQLValueStatementVi
             default:
                 JAssert.throwNewException("Unknown operator: " + operator);
         }
-        JAssert
-                .throwNewException("Unknown operator: " + operator);
+        JAssert.throwNewException("Unknown operator: " + operator);
         return null;
     }
     @Override
@@ -90,9 +89,8 @@ public class JQuikSQLExpressionStatementVisitor extends JQuikSQLValueStatementVi
         JQuickSQLParser.FunctionCallContext funcCtx = ctx.functionCall();
         return (JFunctionCallModel)visit(funcCtx);
     }
-
     @Override
-    public JFunctionCallModel visitUdfFunctionCall(JQuickSQLParser.UdfFunctionCallContext ctx) {
+    public JFunctionCallModel visitFunctionCall(JQuickSQLParser.FunctionCallContext ctx) {
         JFunctionCallModel jFunctionCallModel = new JFunctionCallModel();
         String funcName = ctx.uid().getText();
         jFunctionCallModel.setFunctionName(funcName);

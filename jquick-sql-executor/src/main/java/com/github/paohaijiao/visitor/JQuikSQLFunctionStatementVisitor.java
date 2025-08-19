@@ -35,7 +35,7 @@ import java.util.regex.PatternSyntaxException;
  * @version 1.0.0
  * @since 2025/8/11
  */
-public class JQuikSQLFunctionStatementVisitor extends JQuikSQLExpressionStatementVisitor {
+public class JQuikSQLFunctionStatementVisitor extends JQuikSQLPredictStatementVisitor {
     @Override
     public Object visitFunctionArg(JQuickSQLParser.FunctionArgContext ctx) {
         JAssert.notNull(ctx.expression(), "expression not  null");
@@ -47,7 +47,6 @@ public class JQuikSQLFunctionStatementVisitor extends JQuikSQLExpressionStatemen
         if (ctx.getText().equals("*")) {
             return new JStarArgumentModel();
         }
-
         if (ctx.DISTINCT() != null) {
             List<Object> distinctArgs = new ArrayList<>();
             for (JQuickSQLParser.FunctionArgContext argCtx : ctx.functionArg()) {

@@ -27,9 +27,9 @@ public class JConditionEvaluator {
             case EQ: return Objects.equals(leftVal, rightVal);
             case NEQ: return !Objects.equals(leftVal, rightVal);
             case GT: return compare(leftVal, rightVal) > 0;
-            case GTE: return compare(leftVal, rightVal) >= 0;
+            case GE: return compare(leftVal, rightVal) >= 0;
             case LT: return compare(leftVal, rightVal) < 0;
-            case LTE: return compare(leftVal, rightVal) <= 0;
+            case LE: return compare(leftVal, rightVal) <= 0;
             default:
                 throw new UnsupportedOperationException("Unsupported operator: " + cond.getOperator());
         }

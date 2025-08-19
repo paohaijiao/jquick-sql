@@ -497,13 +497,13 @@ public class JQuickSQLBaseListener implements JQuickSQLListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void enterUdfFunctionCall(JQuickSQLParser.UdfFunctionCallContext ctx) { }
+	@Override public void enterFunctionCall(JQuickSQLParser.FunctionCallContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void exitUdfFunctionCall(JQuickSQLParser.UdfFunctionCallContext ctx) { }
+	@Override public void exitFunctionCall(JQuickSQLParser.FunctionCallContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *

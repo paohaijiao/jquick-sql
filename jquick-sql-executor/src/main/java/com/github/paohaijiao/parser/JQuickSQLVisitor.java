@@ -253,12 +253,11 @@ public interface JQuickSQLVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitExpressions(JQuickSQLParser.ExpressionsContext ctx);
 	/**
-	 * Visit a parse tree produced by the {@code udfFunctionCall}
-	 * labeled alternative in {@link JQuickSQLParser#functionCall}.
+	 * Visit a parse tree produced by {@link JQuickSQLParser#functionCall}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitUdfFunctionCall(JQuickSQLParser.UdfFunctionCallContext ctx);
+	T visitFunctionCall(JQuickSQLParser.FunctionCallContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link JQuickSQLParser#compOperator}.
 	 * @param ctx the parse tree
