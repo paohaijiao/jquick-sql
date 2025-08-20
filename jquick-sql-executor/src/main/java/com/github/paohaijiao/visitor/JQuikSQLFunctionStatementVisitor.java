@@ -104,14 +104,7 @@ public class JQuikSQLFunctionStatementVisitor extends JQuikSQLPredictStatementVi
         jFunctionCallModel.setType(JFunctionCallType.Scalar);
         return jFunctionCallModel;
     }
-    @Override
-    public List<Object> visitExpressions(JQuickSQLParser.ExpressionsContext ctx) {
-        List<Object> results = new ArrayList<>();
-        for (JQuickSQLParser.ExpressionContext exprCtx : ctx.expression()) {
-            results.add(visit(exprCtx));
-        }
-        return results;
-    }
+
 
     private Boolean handleNullComparison(String operator, Object left, Object right) {
         if ("<=>".equals(operator)) {

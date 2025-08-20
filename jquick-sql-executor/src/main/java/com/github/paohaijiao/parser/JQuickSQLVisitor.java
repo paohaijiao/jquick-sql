@@ -247,12 +247,6 @@ public interface JQuickSQLVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitRecursivePart(JQuickSQLParser.RecursivePartContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link JQuickSQLParser#expressions}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitExpressions(JQuickSQLParser.ExpressionsContext ctx);
-	/**
 	 * Visit a parse tree produced by {@link JQuickSQLParser#functionCall}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
@@ -326,13 +320,6 @@ public interface JQuickSQLVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitLikePredicate(JQuickSQLParser.LikePredicateContext ctx);
 	/**
-	 * Visit a parse tree produced by the {@code expressionAtomPredicateWithLocalId}
-	 * labeled alternative in {@link JQuickSQLParser#predicate}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitExpressionAtomPredicateWithLocalId(JQuickSQLParser.ExpressionAtomPredicateWithLocalIdContext ctx);
-	/**
 	 * Visit a parse tree produced by the {@code regexpPredicate}
 	 * labeled alternative in {@link JQuickSQLParser#predicate}.
 	 * @param ctx the parse tree
@@ -388,6 +375,12 @@ public interface JQuickSQLVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitMathExpressionAtom(JQuickSQLParser.MathExpressionAtomContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link JQuickSQLParser#expressions}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitExpressions(JQuickSQLParser.ExpressionsContext ctx);
 	/**
 	 * Visit a parse tree produced by the {@code selectResult}
 	 * labeled alternative in {@link JQuickSQLParser#expression}.

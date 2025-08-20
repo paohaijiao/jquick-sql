@@ -485,18 +485,6 @@ public class JQuickSQLBaseListener implements JQuickSQLListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void enterExpressions(JQuickSQLParser.ExpressionsContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void exitExpressions(JQuickSQLParser.ExpressionsContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
 	@Override public void enterFunctionCall(JQuickSQLParser.FunctionCallContext ctx) { }
 	/**
 	 * {@inheritDoc}
@@ -629,18 +617,6 @@ public class JQuickSQLBaseListener implements JQuickSQLListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void enterExpressionAtomPredicateWithLocalId(JQuickSQLParser.ExpressionAtomPredicateWithLocalIdContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void exitExpressionAtomPredicateWithLocalId(JQuickSQLParser.ExpressionAtomPredicateWithLocalIdContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
 	@Override public void enterRegexpPredicate(JQuickSQLParser.RegexpPredicateContext ctx) { }
 	/**
 	 * {@inheritDoc}
@@ -732,6 +708,18 @@ public class JQuickSQLBaseListener implements JQuickSQLListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitMathExpressionAtom(JQuickSQLParser.MathExpressionAtomContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterExpressions(JQuickSQLParser.ExpressionsContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitExpressions(JQuickSQLParser.ExpressionsContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *

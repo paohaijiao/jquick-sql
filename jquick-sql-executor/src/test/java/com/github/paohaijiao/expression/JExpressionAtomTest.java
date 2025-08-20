@@ -29,7 +29,7 @@ import org.junit.Test;
  * @version 1.0.0
  * @since 2025/8/17
  */
-public class JExpressionAtom {
+public class JExpressionAtomTest {
     @Test
     public void selectCAULSE() {
         String rule="1";
@@ -63,4 +63,49 @@ public class JExpressionAtom {
         Object object = tv.visit(tree);
         System.out.println(object);
     }
+    @Test
+    public void nestedExpressionAtom() {
+        String rule="(1,2)";
+        JQuickSQLLexer lexer = new JQuickSQLLexer(CharStreams.fromString(rule));
+        CommonTokenStream tokens = new CommonTokenStream(lexer);
+        JQuickSQLParser parser = new JQuickSQLParser(tokens);
+        JQuickSQLParser.ExpressionAtomContext tree = parser.expressionAtom();
+        JQuikSQLCommonVisitor tv = new JQuikSQLCommonVisitor();
+        Object object = tv.visit(tree);
+        System.out.println(object);
+    }
+    @Test
+    public void subqueryExperssionAtom() {
+        String rule="(select 1 from a)";
+        JQuickSQLLexer lexer = new JQuickSQLLexer(CharStreams.fromString(rule));
+        CommonTokenStream tokens = new CommonTokenStream(lexer);
+        JQuickSQLParser parser = new JQuickSQLParser(tokens);
+        JQuickSQLParser.ExpressionAtomContext tree = parser.expressionAtom();
+        JQuikSQLCommonVisitor tv = new JQuikSQLCommonVisitor();
+        Object object = tv.visit(tree);
+        System.out.println(object);
+    }
+    @Test
+    public void mathExpressionAtom() {
+        String rule="1+3";
+        JQuickSQLLexer lexer = new JQuickSQLLexer(CharStreams.fromString(rule));
+        CommonTokenStream tokens = new CommonTokenStream(lexer);
+        JQuickSQLParser parser = new JQuickSQLParser(tokens);
+        JQuickSQLParser.ExpressionAtomContext tree = parser.expressionAtom();
+        JQuikSQLCommonVisitor tv = new JQuikSQLCommonVisitor();
+        Object object = tv.visit(tree);
+        System.out.println(object);
+    }
+    @Test
+    public void unaryExpressionAtom() {
+        String rule="!true";
+        JQuickSQLLexer lexer = new JQuickSQLLexer(CharStreams.fromString(rule));
+        CommonTokenStream tokens = new CommonTokenStream(lexer);
+        JQuickSQLParser parser = new JQuickSQLParser(tokens);
+        JQuickSQLParser.ExpressionAtomContext tree = parser.expressionAtom();
+        JQuikSQLCommonVisitor tv = new JQuikSQLCommonVisitor();
+        Object object = tv.visit(tree);
+        System.out.println(object);
+    }
+
 }

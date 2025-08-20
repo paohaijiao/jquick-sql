@@ -17,6 +17,7 @@ package com.github.paohaijiao.visitor;
 
 import com.github.paohaijiao.exception.JAssert;
 import com.github.paohaijiao.parser.JQuickSQLParser;
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -114,22 +115,21 @@ public class JQuikSQLPredictStatementVisitor extends JQuikSQLExpressionStatement
     }
 
     @Override
-    public Object visitLikePredicate(JQuickSQLParser.LikePredicateContext ctx) {
+    public Boolean visitLikePredicate(JQuickSQLParser.LikePredicateContext ctx) {
         Object left = visit(ctx.predicate(0));
         Object right = visit(ctx.predicate(1));
         boolean isNot = ctx.NOT() != null;
-        String escapeChar = ctx.STRING_LITERAL() != null ? ctx.STRING_LITERAL().getText().replaceAll("^'|'$", "") : null;
         if (left == null || right == null) {
             return null;
         }
         String input = left.toString();
         String pattern = right.toString();
-        boolean matches = likeMatch(input, pattern, escapeChar);
+        boolean matches = likeMatch(input, pattern);
         return isNot != matches;
     }
 
     @Override
-    public Object visitRegexpPredicate(JQuickSQLParser.RegexpPredicateContext ctx) {
+    public Boolean visitRegexpPredicate(JQuickSQLParser.RegexpPredicateContext ctx) {
         Object inputObj = visit(ctx.predicate(0));
         Object patternObj = visit(ctx.predicate(1));
         boolean isNot = ctx.NOT() != null;
@@ -138,7 +138,6 @@ public class JQuikSQLPredictStatementVisitor extends JQuikSQLExpressionStatement
         }
         String input = inputObj.toString();
         String regex = patternObj.toString();
-
         boolean matches;
         try {
             matches = input.matches(regex);
@@ -148,34 +147,6 @@ public class JQuikSQLPredictStatementVisitor extends JQuikSQLExpressionStatement
         return isNot != matches;
     }
 
-    @Override
-    public Object visitExpressionAtomPredicateWithLocalId(JQuickSQLParser.ExpressionAtomPredicateWithLocalIdContext ctx) {
-        /**
-         * SELECT
-         *     @discount := 0.9,
-         *     price * @discount AS discounted_price
-         * FROM products;
-         */
-        /**
-         * SELECT
-         *     @row := @row + 1 AS row_number,
-         *     name
-         * FROM users, (SELECT @row := 0) r;
-         */
-        if (ctx.LOCAL_ID() != null) {
-            String varName = ctx.LOCAL_ID().getText();
-            if (varName.startsWith("@@")) {
-                throw new RuntimeException("System variable cannot be assigned: " + varName);
-            }
-            Object value = visit(ctx.expressionAtom());
-            if (value == null && null != context.get(varName)) {
-                throw new RuntimeException("NULL cannot be assigned to " + varName);
-            }
-            context.put(varName, value);
-            return value;
-        }
-        return visit(ctx.expressionAtom());
-    }
 
     @Override
     public Object visitExisitsExpression(JQuickSQLParser.ExisitsExpressionContext ctx) {
@@ -185,33 +156,37 @@ public class JQuikSQLPredictStatementVisitor extends JQuikSQLExpressionStatement
         }
         throw new RuntimeException("EXISTS must be followed by a subquery");
     }
-
-    private boolean likeMatch(String input, String pattern, String escapeChar) {
-        StringBuilder regex = new StringBuilder();
-        boolean escaping = false;
-        for (int i = 0; i < pattern.length(); i++) {
-            char c = pattern.charAt(i);
-
-            if (escaping) {
-                regex.append(Pattern.quote(String.valueOf(c)));
-                escaping = false;
-            } else if (String.valueOf(c).equals(escapeChar)) {
-                escaping = true;
-            } else {
-                switch (c) {
-                    case '%':
-                        regex.append(".*");
-                        break;
-                    case '_':
-                        regex.append(".");
-                        break;
-                    default:
-                        regex.append(Pattern.quote(String.valueOf(c)));
-                }
-            }
+    private String removeQuotes(String str) {
+        if (str == null || str.length() < 2) {
+            return str;
         }
-
-        return input.matches(regex.toString());
+        char firstChar = str.charAt(0);
+        char lastChar = str.charAt(str.length() - 1);
+        if ((firstChar == '\'' && lastChar == '\'') ||
+                (firstChar == '"' && lastChar == '"')) {
+            return str.substring(1, str.length() - 1);
+        }
+        return str;
+    }
+    private boolean likeMatch(String input, String pattern) {
+        String cleanInput = removeQuotes(input);
+        String cleanPattern = removeQuotes(pattern);
+        if (cleanPattern.equals("%")) {
+            return !cleanInput.isEmpty();
+        }
+        if (cleanPattern.startsWith("%") && cleanPattern.endsWith("%")) {
+            String middle = cleanPattern.substring(1, cleanPattern.length() - 1);
+            return cleanInput.contains(middle);
+        }
+        if (cleanPattern.endsWith("%")) {
+            String prefix = cleanPattern.substring(0, cleanPattern.length() - 1);
+            return cleanInput.startsWith(prefix);
+        }
+        if (cleanPattern.startsWith("%")) {
+            String suffix = cleanPattern.substring(1);
+            return cleanInput.endsWith(suffix);
+        }
+        return cleanInput.equals(cleanPattern);
     }
 
     private boolean checkValueInList(Object target, List<Object> list) {

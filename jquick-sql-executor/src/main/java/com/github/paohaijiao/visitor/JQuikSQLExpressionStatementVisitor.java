@@ -34,6 +34,14 @@ import java.util.List;
  */
 public class JQuikSQLExpressionStatementVisitor extends JQuikSQLValueStatementVisitor{
     @Override
+    public List<Object> visitExpressions(JQuickSQLParser.ExpressionsContext ctx) {
+        List<Object> results = new ArrayList<>();
+        for (JQuickSQLParser.ExpressionContext exprCtx : ctx.expression()) {
+            results.add(visit(exprCtx));
+        }
+        return results;
+    }
+    @Override
     public Object visitNotExpression(JQuickSQLParser.NotExpressionContext ctx) {
         Object childResult = visit(ctx.expression());
         if (childResult instanceof Boolean) {
