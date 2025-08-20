@@ -45,9 +45,7 @@ public class JQuikSQLValueStatementVisitor extends JQuikSQLCoreVisitor{
     }
     @Override
     public Object visitUid(JQuickSQLParser.UidContext ctx) {
-        if (ctx.stringLiteral() != null) {
-            return visitStringLiteral(ctx.stringLiteral());
-        }
+        JAssert.notNull(ctx.simpleId(),"not null");
         return visitSimpleId(ctx.simpleId());
     }
 

@@ -15,8 +15,10 @@
  */
 package com.github.paohaijiao.visitor;
 
+import com.github.paohaijiao.enums.JFunctionCallType;
 import com.github.paohaijiao.exception.JAssert;
 import com.github.paohaijiao.model.JDistinctArgument;
+import com.github.paohaijiao.model.JFunctionCallModel;
 import com.github.paohaijiao.model.JStarArgumentModel;
 import com.github.paohaijiao.parser.JQuickSQLParser;
 import org.antlr.v4.runtime.tree.ParseTree;
@@ -43,29 +45,13 @@ public class JQuikSQLFunctionStatementVisitor extends JQuikSQLPredictStatementVi
     }
 
     @Override
-    public Object visitFunctionArgs(JQuickSQLParser.FunctionArgsContext ctx) {
-        if (ctx.getText().equals("*")) {
-            return new JStarArgumentModel();
-        }
-        if (ctx.DISTINCT() != null) {
-            List<Object> distinctArgs = new ArrayList<>();
-            for (JQuickSQLParser.FunctionArgContext argCtx : ctx.functionArg()) {
-                distinctArgs.add(visit(argCtx));
-            }
-            return new JDistinctArgument(distinctArgs);
-        }
+    public List<Object> visitFunctionArgs(JQuickSQLParser.FunctionArgsContext ctx) {
         List<Object> args = new ArrayList<>();
-        for (int i = 0; i < ctx.getChildCount(); i++) {
-            ParseTree child = ctx.getChild(i);
-            if (child instanceof TerminalNode) continue;
-            args.add(visit(child));
+        for (int i = 0; i < ctx.functionArg().size(); i++) {
+            Object obj=visitFunctionArg(ctx.functionArg(i));
+            args.add(obj);
         }
         return args;
-    }
-
-    @Override
-    public Object visitAggregateFunction(JQuickSQLParser.AggregateFunctionContext ctx) {
-        return null;
     }
 
     @Override
@@ -74,13 +60,9 @@ public class JQuikSQLFunctionStatementVisitor extends JQuikSQLPredictStatementVi
         Object left = visit(ctx.predicate(0));
         Object right = visit(ctx.predicate(1));
         String operator = ctx.comparisonOperator().getText();
-
-        // NULL处理（标准SQL规则）
         if (left == null || right == null) {
             return handleNullComparison(operator, left, right);
         }
-
-        // 根据运算符类型比较
         switch (operator) {
             case "=":
                 return compareValues(left, right) == 0;
@@ -108,7 +90,20 @@ public class JQuikSQLFunctionStatementVisitor extends JQuikSQLPredictStatementVi
                 throw new UnsupportedOperationException("Unsupported operator: " + operator);
         }
     }
-
+    @Override
+    public JFunctionCallModel visitFunctionCall(JQuickSQLParser.FunctionCallContext ctx) {
+        JAssert.notNull(ctx.uid(),"uid must not be null");
+        JFunctionCallModel jFunctionCallModel = new JFunctionCallModel();
+        String funcName = ctx.uid().getText();
+        jFunctionCallModel.setFunctionName(funcName);
+        List<Object> args = new ArrayList<>();
+        if (ctx.functionArgs() != null) {
+            args=visitFunctionArgs(ctx.functionArgs());
+        }
+        jFunctionCallModel.setArgument(args);
+        jFunctionCallModel.setType(JFunctionCallType.Scalar);
+        return jFunctionCallModel;
+    }
     @Override
     public List<Object> visitExpressions(JQuickSQLParser.ExpressionsContext ctx) {
         List<Object> results = new ArrayList<>();

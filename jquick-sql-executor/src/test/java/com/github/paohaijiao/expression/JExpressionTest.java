@@ -15,6 +15,13 @@
  */
 package com.github.paohaijiao.expression;
 
+import com.github.paohaijiao.parser.JQuickSQLLexer;
+import com.github.paohaijiao.parser.JQuickSQLParser;
+import com.github.paohaijiao.visitor.JQuikSQLCommonVisitor;
+import org.antlr.v4.runtime.CharStreams;
+import org.antlr.v4.runtime.CommonTokenStream;
+import org.junit.Test;
+
 /**
  * packageName com.github.paohaijiao.expression
  *
@@ -23,4 +30,59 @@ package com.github.paohaijiao.expression;
  * @since 2025/8/17
  */
 public class JExpressionTest {
+    @Test
+    public void expression() {
+        String rule="!true";
+        JQuickSQLLexer lexer = new JQuickSQLLexer(CharStreams.fromString(rule));
+        CommonTokenStream tokens = new CommonTokenStream(lexer);
+        JQuickSQLParser parser = new JQuickSQLParser(tokens);
+        JQuickSQLParser.ExpressionContext tree = parser.expression();
+        JQuikSQLCommonVisitor tv = new JQuikSQLCommonVisitor();
+        Object object = tv.visit(tree);
+        System.out.println(object);
+    }
+    @Test
+    public void expression1() {
+        String rule="false and false";
+        JQuickSQLLexer lexer = new JQuickSQLLexer(CharStreams.fromString(rule));
+        CommonTokenStream tokens = new CommonTokenStream(lexer);
+        JQuickSQLParser parser = new JQuickSQLParser(tokens);
+        JQuickSQLParser.ExpressionContext tree = parser.expression();
+        JQuikSQLCommonVisitor tv = new JQuikSQLCommonVisitor();
+        Object object = tv.visit(tree);
+        System.out.println(object);
+    }
+    @Test
+    public void expression2() {
+        String rule="false";
+        JQuickSQLLexer lexer = new JQuickSQLLexer(CharStreams.fromString(rule));
+        CommonTokenStream tokens = new CommonTokenStream(lexer);
+        JQuickSQLParser parser = new JQuickSQLParser(tokens);
+        JQuickSQLParser.ExpressionContext tree = parser.expression();
+        JQuikSQLCommonVisitor tv = new JQuikSQLCommonVisitor();
+        Object object = tv.visit(tree);
+        System.out.println(object);
+    }
+    @Test
+    public void expression3() {
+        String rule="(false)";
+        JQuickSQLLexer lexer = new JQuickSQLLexer(CharStreams.fromString(rule));
+        CommonTokenStream tokens = new CommonTokenStream(lexer);
+        JQuickSQLParser parser = new JQuickSQLParser(tokens);
+        JQuickSQLParser.ExpressionContext tree = parser.expression();
+        JQuikSQLCommonVisitor tv = new JQuikSQLCommonVisitor();
+        Object object = tv.visit(tree);
+        System.out.println(object);
+    }
+    @Test
+    public void selectCAULSE() {
+        String rule="select true from foo";
+        JQuickSQLLexer lexer = new JQuickSQLLexer(CharStreams.fromString(rule));
+        CommonTokenStream tokens = new CommonTokenStream(lexer);
+        JQuickSQLParser parser = new JQuickSQLParser(tokens);
+        JQuickSQLParser.ExpressionContext tree = parser.expression();
+        JQuikSQLCommonVisitor tv = new JQuikSQLCommonVisitor();
+        Object object = tv.visit(tree);
+        System.out.println(object);
+    }
 }

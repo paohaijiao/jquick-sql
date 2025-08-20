@@ -15,6 +15,13 @@
  */
 package com.github.paohaijiao.expression;
 
+import com.github.paohaijiao.parser.JQuickSQLLexer;
+import com.github.paohaijiao.parser.JQuickSQLParser;
+import com.github.paohaijiao.visitor.JQuikSQLCommonVisitor;
+import org.antlr.v4.runtime.CharStreams;
+import org.antlr.v4.runtime.CommonTokenStream;
+import org.junit.Test;
+
 /**
  * packageName com.github.paohaijiao.expression
  *
@@ -23,4 +30,37 @@ package com.github.paohaijiao.expression;
  * @since 2025/8/17
  */
 public class JExpressionAtom {
+    @Test
+    public void selectCAULSE() {
+        String rule="1";
+        JQuickSQLLexer lexer = new JQuickSQLLexer(CharStreams.fromString(rule));
+        CommonTokenStream tokens = new CommonTokenStream(lexer);
+        JQuickSQLParser parser = new JQuickSQLParser(tokens);
+        JQuickSQLParser.ExpressionAtomContext tree = parser.expressionAtom();
+        JQuikSQLCommonVisitor tv = new JQuikSQLCommonVisitor();
+        Object object = tv.visit(tree);
+        System.out.println(object);
+    }
+    @Test
+    public void fullColumnName() {
+        String rule="a.b.c";
+        JQuickSQLLexer lexer = new JQuickSQLLexer(CharStreams.fromString(rule));
+        CommonTokenStream tokens = new CommonTokenStream(lexer);
+        JQuickSQLParser parser = new JQuickSQLParser(tokens);
+        JQuickSQLParser.ExpressionAtomContext tree = parser.expressionAtom();
+        JQuikSQLCommonVisitor tv = new JQuikSQLCommonVisitor();
+        Object object = tv.visit(tree);
+        System.out.println(object);
+    }
+    @Test
+    public void functionCall() {
+        String rule="sum1(1,2)";
+        JQuickSQLLexer lexer = new JQuickSQLLexer(CharStreams.fromString(rule));
+        CommonTokenStream tokens = new CommonTokenStream(lexer);
+        JQuickSQLParser parser = new JQuickSQLParser(tokens);
+        JQuickSQLParser.ExpressionAtomContext tree = parser.expressionAtom();
+        JQuikSQLCommonVisitor tv = new JQuikSQLCommonVisitor();
+        Object object = tv.visit(tree);
+        System.out.println(object);
+    }
 }

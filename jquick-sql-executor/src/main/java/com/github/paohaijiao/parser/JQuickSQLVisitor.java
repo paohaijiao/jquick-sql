@@ -265,12 +265,6 @@ public interface JQuickSQLVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitCompOperator(JQuickSQLParser.CompOperatorContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link JQuickSQLParser#aggregateFunction}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitAggregateFunction(JQuickSQLParser.AggregateFunctionContext ctx);
-	/**
 	 * Visit a parse tree produced by {@link JQuickSQLParser#functionArgs}.
 	 * @param ctx the parse tree
 	 * @return the visitor result

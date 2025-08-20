@@ -432,16 +432,6 @@ public interface JQuickSQLListener extends ParseTreeListener {
 	 */
 	void exitCompOperator(JQuickSQLParser.CompOperatorContext ctx);
 	/**
-	 * Enter a parse tree produced by {@link JQuickSQLParser#aggregateFunction}.
-	 * @param ctx the parse tree
-	 */
-	void enterAggregateFunction(JQuickSQLParser.AggregateFunctionContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link JQuickSQLParser#aggregateFunction}.
-	 * @param ctx the parse tree
-	 */
-	void exitAggregateFunction(JQuickSQLParser.AggregateFunctionContext ctx);
-	/**
 	 * Enter a parse tree produced by {@link JQuickSQLParser#functionArgs}.
 	 * @param ctx the parse tree
 	 */

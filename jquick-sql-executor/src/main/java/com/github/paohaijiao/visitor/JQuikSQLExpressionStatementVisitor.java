@@ -89,21 +89,7 @@ public class JQuikSQLExpressionStatementVisitor extends JQuikSQLValueStatementVi
         JQuickSQLParser.FunctionCallContext funcCtx = ctx.functionCall();
         return (JFunctionCallModel)visit(funcCtx);
     }
-    @Override
-    public JFunctionCallModel visitFunctionCall(JQuickSQLParser.FunctionCallContext ctx) {
-        JFunctionCallModel jFunctionCallModel = new JFunctionCallModel();
-        String funcName = ctx.uid().getText();
-        jFunctionCallModel.setFunctionName(funcName);
-        List<Object> args = new ArrayList<>();
-        if (ctx.functionArgs() != null) {
-            for (JQuickSQLParser.ExpressionContext argCtx : ctx.functionArgs().expression()) {
-                args.add(visit(argCtx));
-            }
-        }
-        jFunctionCallModel.setArgument(args);
-        jFunctionCallModel.setType(JFunctionCallType.Scalar);
-        return jFunctionCallModel;
-    }
+
     @Override
     public List<Object> visitNestedExpressionAtom(JQuickSQLParser.NestedExpressionAtomContext ctx) {
         List<Object> list=new ArrayList<>();
