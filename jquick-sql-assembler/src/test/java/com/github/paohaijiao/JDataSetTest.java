@@ -17,12 +17,11 @@ package com.github.paohaijiao;
 
 import com.github.paohaijiao.dataset.JDataSet;
 import com.github.paohaijiao.dataset.JRow;
+import com.github.paohaijiao.func.JoinCondition;
 import com.github.paohaijiao.support.JDataSetJoiner;
 import org.junit.Test;
-import java.util.HashMap;
-import java.util.Map;
 
-import com.github.paohaijiao.func.JoinCondition;
+import java.util.Map;
 
 /**
  * packageName com.github.paohaijiao

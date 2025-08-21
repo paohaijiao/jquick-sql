@@ -20,8 +20,6 @@ import com.github.paohaijiao.condition.JConditionEvaluator;
 import com.github.paohaijiao.dataset.JColumnMeta;
 import com.github.paohaijiao.dataset.JDataSet;
 import com.github.paohaijiao.dataset.JRow;
-import com.github.paohaijiao.enums.JAggregateType;
-import com.github.paohaijiao.enums.JExpressionType;
 import com.github.paohaijiao.enums.JNullsOrder;
 import com.github.paohaijiao.enums.JSortDirection;
 import com.github.paohaijiao.expression.*;
@@ -30,9 +28,6 @@ import com.github.paohaijiao.function.JAggregateFunction;
 
 import java.util.*;
 import java.util.stream.Collectors;
-
-import static com.github.paohaijiao.enums.JAggregateType.*;
-import static com.github.paohaijiao.evalue.JEvaluator.evaluateFunction;
 
 /**
  * packageName com.github.paohaijiao.support

@@ -15,10 +15,8 @@
  */
 package com.github.paohaijiao.visitor;
 
-import com.github.paohaijiao.enums.JFunctionCallType;
 import com.github.paohaijiao.enums.JLogicalOperator;
 import com.github.paohaijiao.exception.JAssert;
-import com.github.paohaijiao.model.JFullColumnModel;
 import com.github.paohaijiao.model.JFunctionCallModel;
 import com.github.paohaijiao.parser.JQuickSQLParser;
 

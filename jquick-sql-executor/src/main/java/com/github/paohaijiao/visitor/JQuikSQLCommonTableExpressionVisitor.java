@@ -18,20 +18,11 @@ package com.github.paohaijiao.visitor;
 import com.github.paohaijiao.dataset.JColumnMeta;
 import com.github.paohaijiao.dataset.JDataSet;
 import com.github.paohaijiao.dataset.JRow;
-import com.github.paohaijiao.exception.JAssert;
-import com.github.paohaijiao.model.JDistinctArgument;
-import com.github.paohaijiao.model.JStarArgumentModel;
 import com.github.paohaijiao.parser.JQuickSQLParser;
 import org.antlr.v4.runtime.RuleContext;
-import org.antlr.v4.runtime.tree.ParseTree;
-import org.antlr.v4.runtime.tree.TerminalNode;
 
 import java.util.*;
-import java.util.regex.Pattern;
-import java.util.regex.PatternSyntaxException;
 import java.util.stream.Collectors;
-
-import static com.sun.org.apache.xerces.internal.impl.xs.opti.SchemaDOM.indent;
 
 /**
  * packageName com.github.paohaijiao.visitor

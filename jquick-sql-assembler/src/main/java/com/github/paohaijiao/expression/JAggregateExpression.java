@@ -19,8 +19,6 @@ import com.github.paohaijiao.enums.JExpressionType;
 import com.github.paohaijiao.function.JAggregateFunction;
 import lombok.Getter;
 
-import java.util.List;
-
 /**
  * packageName com.github.paohaijiao.expression
  *

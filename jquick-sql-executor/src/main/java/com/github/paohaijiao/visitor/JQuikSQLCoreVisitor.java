@@ -18,21 +18,20 @@ package com.github.paohaijiao.visitor;
 import com.github.paohaijiao.dataset.JColumnMeta;
 import com.github.paohaijiao.dataset.JDataSet;
 import com.github.paohaijiao.dataset.JRow;
-import com.github.paohaijiao.engine.JEntityQueryEngine;
 import com.github.paohaijiao.exception.JAssert;
 import com.github.paohaijiao.factory.JDataSetJoinerStrategy;
-import com.github.paohaijiao.func.JoinCondition;
 import com.github.paohaijiao.param.JContext;
 import com.github.paohaijiao.parser.JQuickSQLBaseVisitor;
 import com.github.paohaijiao.parser.JQuickSQLLexer;
 import com.github.paohaijiao.parser.JQuickSQLParser;
-import com.sun.org.apache.xalan.internal.extensions.ExpressionContext;
 import org.antlr.v4.runtime.CommonTokenStream;
 
 import java.text.NumberFormat;
 import java.text.ParseException;
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * packageName com.github.paohaijiao.visitor

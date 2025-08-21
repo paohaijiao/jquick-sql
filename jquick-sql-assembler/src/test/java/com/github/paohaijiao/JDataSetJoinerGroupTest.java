@@ -1,20 +1,19 @@
 package com.github.paohaijiao;
 
-import com.github.paohaijiao.condition.JComparisonCondition;
-import com.github.paohaijiao.condition.JCondition;
 import com.github.paohaijiao.dataset.JColumnMeta;
 import com.github.paohaijiao.dataset.JDataSet;
 import com.github.paohaijiao.dataset.JRow;
-import com.github.paohaijiao.enums.*;
-import com.github.paohaijiao.expression.*;
+import com.github.paohaijiao.enums.JAggregateType;
+import com.github.paohaijiao.expression.JAggregateExpression;
+import com.github.paohaijiao.expression.JColumnExpression;
 import com.github.paohaijiao.function.JAggregateFunction;
 import com.github.paohaijiao.support.JDataSetJoiner;
 import org.junit.Test;
 
-import java.io.IOException;
 import java.util.*;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public class JDataSetJoinerGroupTest {
     @Test

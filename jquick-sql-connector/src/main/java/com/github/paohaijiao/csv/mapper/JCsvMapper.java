@@ -1,17 +1,17 @@
 package com.github.paohaijiao.csv.mapper;
 
+import com.github.paohaijiao.csv.schema.JCsvSchema;
 import com.github.paohaijiao.enums.JErrorCode;
 import com.github.paohaijiao.exception.JDataAccessException;
-import com.github.paohaijiao.csv.schema.JCsvSchema;
 
 import java.io.*;
-import java.util.Map;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class JCsvMapper {
 

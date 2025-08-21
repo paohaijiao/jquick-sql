@@ -17,12 +17,8 @@ package com.github.paohaijiao.visitor;
 
 import com.github.paohaijiao.enums.JFunctionCallType;
 import com.github.paohaijiao.exception.JAssert;
-import com.github.paohaijiao.model.JDistinctArgument;
 import com.github.paohaijiao.model.JFunctionCallModel;
-import com.github.paohaijiao.model.JStarArgumentModel;
 import com.github.paohaijiao.parser.JQuickSQLParser;
-import org.antlr.v4.runtime.tree.ParseTree;
-import org.antlr.v4.runtime.tree.TerminalNode;
 
 import java.util.ArrayList;
 import java.util.List;

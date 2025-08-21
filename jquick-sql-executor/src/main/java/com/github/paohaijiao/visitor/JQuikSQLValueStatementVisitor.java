@@ -23,6 +23,7 @@ import com.github.paohaijiao.enums.JUnaryOperator;
 import com.github.paohaijiao.exception.JAssert;
 import com.github.paohaijiao.model.JFullColumnModel;
 import com.github.paohaijiao.parser.JQuickSQLParser;
+
 import java.util.Date;
 
 /**

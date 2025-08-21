@@ -2,9 +2,9 @@ package com.github.paohaijiao.adaptor;
 
 import com.github.paohaijiao.config.JDataSourceConfig;
 import com.github.paohaijiao.csv.schema.JCsvSchema;
+import com.github.paohaijiao.enums.JDataType;
 import com.github.paohaijiao.enums.JErrorCode;
 import com.github.paohaijiao.exception.JDataAccessException;
-import com.github.paohaijiao.enums.JDataType;
 import com.github.paohaijiao.model.JEntityMetadata;
 import com.github.paohaijiao.model.JFieldMetadata;
 import com.github.paohaijiao.model.JMetadata;

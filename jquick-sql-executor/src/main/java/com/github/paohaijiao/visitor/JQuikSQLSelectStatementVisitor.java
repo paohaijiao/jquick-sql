@@ -19,18 +19,10 @@ import com.github.paohaijiao.dataset.JDataSet;
 import com.github.paohaijiao.enums.JoinType;
 import com.github.paohaijiao.exception.JAssert;
 import com.github.paohaijiao.func.JoinCondition;
-import com.github.paohaijiao.model.JFullColumnModel;
 import com.github.paohaijiao.model.JoinPartModel;
-import com.github.paohaijiao.param.JContext;
-import com.github.paohaijiao.parser.JQuickSQLLexer;
 import com.github.paohaijiao.parser.JQuickSQLParser;
-import com.github.paohaijiao.support.JDataSetJoiner;
-import com.sun.org.apache.xalan.internal.extensions.ExpressionContext;
-import org.antlr.v4.runtime.CommonTokenStream;
 
 import java.util.Collections;
-import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * packageName com.github.paohaijiao.visitor
