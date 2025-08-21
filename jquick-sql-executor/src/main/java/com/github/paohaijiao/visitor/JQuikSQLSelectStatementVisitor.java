@@ -16,8 +16,11 @@
 package com.github.paohaijiao.visitor;
 
 import com.github.paohaijiao.dataset.JDataSet;
+import com.github.paohaijiao.enums.JSortDirection;
 import com.github.paohaijiao.enums.JoinType;
 import com.github.paohaijiao.exception.JAssert;
+import com.github.paohaijiao.expression.JExpression;
+import com.github.paohaijiao.expression.JOrderByExpression;
 import com.github.paohaijiao.factory.JDataSetJoinerFactory;
 import com.github.paohaijiao.factory.JDataSetJoinerStrategy;
 import com.github.paohaijiao.func.JoinCondition;
@@ -26,7 +29,9 @@ import com.github.paohaijiao.model.JLimitModel;
 import com.github.paohaijiao.model.JoinPartModel;
 import com.github.paohaijiao.parser.JQuickSQLParser;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 
 /**
  * packageName com.github.paohaijiao.visitor
@@ -46,6 +51,10 @@ public class JQuikSQLSelectStatementVisitor extends JQuikSQLFunctionStatementVis
             jDataSet=visitFromClause(ctx.fromClause());
         }
         JAssert.notNull(jDataSet," the from dataset require not null");
+        if(ctx.orderByClause()!=null){
+            List<JOrderByExpression>  orderByExpressions= visitOrderByClause(ctx.orderByClause());
+            jDataSet=strategy.sort(jDataSet,orderByExpressions);
+        }
         if(ctx.limitClause()!=null){
             JLimitModel limitModel= visitLimitClause(ctx.limitClause());
             jDataSet=strategy.limit(jDataSet,limitModel.getLimit(),limitModel.getOffset());
@@ -174,7 +183,33 @@ public class JQuikSQLSelectStatementVisitor extends JQuikSQLFunctionStatementVis
             return jLimitModel;
         }
         return null;
-
     }
+    @Override
+    public List<JOrderByExpression> visitOrderByClause(JQuickSQLParser.OrderByClauseContext ctx) {
+        List<JOrderByExpression> list=new ArrayList<>();
+        for (int i = 0; i < ctx.orderByExpression().size(); i++) {
+            list.add(visitOrderByExpression(ctx.orderByExpression().get(i)));
+        }
+        return list;
+    }
+    @Override
+    public JOrderByExpression visitOrderByExpression(JQuickSQLParser.OrderByExpressionContext ctx) {
+        JSortDirection sortDirection=JSortDirection.ASC;
+        if(ctx.ASC()!=null){
+            sortDirection=JSortDirection.ASC;
+        }
+        if(ctx.DESC()!=null){
+            sortDirection=JSortDirection.DESC;
+        }
+        JExpression jExpression=null;
+        if(ctx.expression()!=null){
+            jExpression=(JExpression)visit(ctx.expression());
+        }
+        JAssert.notNull(jExpression,"the expression required");
+        JOrderByExpression orderByExpression=new JOrderByExpression(jExpression,sortDirection);
+        return orderByExpression;
+    }
+
+
 
 }

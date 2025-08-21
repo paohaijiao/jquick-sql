@@ -73,6 +73,18 @@ public class JSelectTest {
             System.out.println(row);
         }
     }
+    @Test
+    public void orderBy() {
+        String rule="select * from orders order by order_id desc";
+        JQuickSQLExecutor executor=new JQuickSQLExecutor();
+        JDataSetHolder dataSetContainer=new JDataSetHolder();
+        dataSetContainer.addDataSet("orders",createOrdersDataSet());
+        executor.dataSet(dataSetContainer);
+        JDataSet dataSet=executor.execute(rule, JEngineEnums.LAMBDA);
+        for (JRow row : dataSet.getRows()) {
+            System.out.println(row);
+        }
+    }
 
 
 
