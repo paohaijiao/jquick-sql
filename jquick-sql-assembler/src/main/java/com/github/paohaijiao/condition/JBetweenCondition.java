@@ -28,9 +28,13 @@ import lombok.Getter;
  */
 @Getter
 public class JBetweenCondition extends JCondition {
+
     private JExpression expression;
+
     private JExpression lowerBound;
+
     private JExpression upperBound;
+
     private boolean not;
 
     public JBetweenCondition(JExpression expr, JExpression lower, JExpression upper, boolean not) {

@@ -15,7 +15,6 @@
  */
 package com.github.paohaijiao.join;
 
-import com.github.paohaijiao.plan.JExecutionPlan;
 import lombok.Getter;
 
 /**

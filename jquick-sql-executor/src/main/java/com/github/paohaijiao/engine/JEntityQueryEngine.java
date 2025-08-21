@@ -15,8 +15,6 @@
  */
 package com.github.paohaijiao.engine;
 
-import com.github.paohaijiao.plan.JExecutionPlan;
-
 import javax.sql.DataSource;
 import java.nio.file.Path;
 import java.util.HashMap;

@@ -16,7 +16,6 @@
 package com.github.paohaijiao.expression;
 
 import com.github.paohaijiao.enums.JExpressionType;
-import com.github.paohaijiao.plan.JExecutionPlan;
 
 /**
  * packageName com.github.paohaijiao.expression

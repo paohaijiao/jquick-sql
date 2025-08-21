@@ -29,8 +29,11 @@ import lombok.Getter;
  */
 @Getter
 public class JComparisonCondition extends JCondition {
+
     private JExpression left;
+
     private JExpression right;
+
     private JComparisonOperator operator;
 
     public JComparisonCondition(JExpression left, JComparisonOperator operator, JExpression right) {

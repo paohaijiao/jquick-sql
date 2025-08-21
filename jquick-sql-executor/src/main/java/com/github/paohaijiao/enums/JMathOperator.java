@@ -1,5 +1,8 @@
 package com.github.paohaijiao.enums;
 
+import lombok.Getter;
+
+@Getter
 public enum JMathOperator {
     MULTIPLY("*", "Multiply"),
     DIVIDE("/", "Divide"),
@@ -16,14 +19,6 @@ public enum JMathOperator {
     JMathOperator(String code, String name) {
         this.code = code;
         this.name = name;
-    }
-
-    public String getCode() {
-        return code;
-    }
-
-    public String getName() {
-        return name;
     }
 
     public static JMathOperator codeOf(String code) {

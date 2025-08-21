@@ -20,10 +20,7 @@ import com.github.paohaijiao.exception.JAssert;
 import com.github.paohaijiao.param.JContext;
 import com.github.paohaijiao.parser.JQuickSQLLexer;
 import com.github.paohaijiao.parser.JQuickSQLParser;
-import com.github.paohaijiao.plan.JExecutionPlan;
 import org.antlr.v4.runtime.CommonTokenStream;
-
-import java.util.Stack;
 
 /**
  * packageName com.github.paohaijiao.visitor
