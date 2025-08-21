@@ -18,7 +18,11 @@ package com.github.paohaijiao.visitor;
 import com.github.paohaijiao.dataset.JDataSet;
 import com.github.paohaijiao.enums.JoinType;
 import com.github.paohaijiao.exception.JAssert;
+import com.github.paohaijiao.factory.JDataSetJoinerFactory;
+import com.github.paohaijiao.factory.JDataSetJoinerStrategy;
 import com.github.paohaijiao.func.JoinCondition;
+import com.github.paohaijiao.lamda.JLamdaJoinJoinerHandler;
+import com.github.paohaijiao.model.JLimitModel;
 import com.github.paohaijiao.model.JoinPartModel;
 import com.github.paohaijiao.parser.JQuickSQLParser;
 
@@ -31,14 +35,20 @@ import java.util.Collections;
  * @version 1.0.0
  * @since 2025/8/11
  */
-public class JQuikSQLSelectStatementVisitor extends JQuikSQLCommonTableExpressionVisitor{
+public class JQuikSQLSelectStatementVisitor extends JQuikSQLFunctionStatementVisitor{
 
     @Override
     public JDataSet visitSelectClause(JQuickSQLParser.SelectClauseContext ctx) {
+        JDataSetJoinerStrategy strategy= JDataSetJoinerFactory.createJoiner(engine);
         JAssert.notNull(ctx.fromClause()," the from dataset require not null");
         JDataSet jDataSet=null;
         if(ctx.fromClause()!=null){
             jDataSet=visitFromClause(ctx.fromClause());
+        }
+        JAssert.notNull(jDataSet," the from dataset require not null");
+        if(ctx.limitClause()!=null){
+            JLimitModel limitModel= visitLimitClause(ctx.limitClause());
+            jDataSet=strategy.limit(jDataSet,limitModel.getLimit(),limitModel.getOffset());
         }
         return jDataSet;
     }
@@ -145,4 +155,26 @@ public class JQuikSQLSelectStatementVisitor extends JQuikSQLCommonTableExpressio
         }
         throw new UnsupportedOperationException("Unsupported table source item");
     }
+    @Override
+    public JLimitModel visitLimitClause(JQuickSQLParser.LimitClauseContext ctx) {
+        JLimitModel jLimitModel=new JLimitModel();
+        if(ctx.limitWithOffset()!=null){
+            JAssert.notNull(ctx.limitWithOffset().limit,"the limit required");
+            JAssert.notNull(ctx.limitWithOffset().offset,"the offset required");
+            String limit=ctx.limitWithOffset().limit.getText();
+            String offset=ctx.limitWithOffset().offset.getText();
+            jLimitModel.setLimit(Integer.parseInt(limit));
+            jLimitModel.setOffset(Integer.parseInt(offset));
+            return jLimitModel;
+        }
+        if(ctx.limitOnly()!=null){
+            JAssert.notNull(ctx.limitOnly().limit,"the limit required");
+            String limit=ctx.limitOnly().limit.getText();
+            jLimitModel.setLimit(Integer.parseInt(limit));
+            return jLimitModel;
+        }
+        return null;
+
+    }
+
 }

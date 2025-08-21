@@ -234,4 +234,19 @@ public class JLamdaJoinJoinerHandler extends JBaseHandler implements JDataSetJoi
         return new JDataSet(newColumns, newRows);
     }
 
+    @Override
+    public JDataSet limit(JDataSet dataset, Integer limit, Integer offset) {
+        int finalLimit = limit != null ? limit : Integer.MAX_VALUE;
+        int finalOffset = offset != null ? offset : 0;
+        if (finalLimit <= 0 || finalOffset < 0) {
+            return new JDataSet(dataset.getColumns(), Collections.emptyList());
+        }
+        List<JRow> processedRows = dataset.getRows().stream()
+                .skip(finalOffset)
+                .limit(finalLimit)
+                .collect(Collectors.toList());
+
+        return new JDataSet(dataset.getColumns(), processedRows);
+    }
+
 }

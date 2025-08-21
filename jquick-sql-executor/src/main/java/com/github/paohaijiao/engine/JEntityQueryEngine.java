@@ -46,9 +46,6 @@ public class JEntityQueryEngine<T>  {
     return null;
     }
 
-    private JExecutionPlan parseSql(String sql) {
-        return new JExecutionPlan();
-    }
 
     public JEntityQueryEngine<T> registerJdbcTable(String tableName, DataSource dataSource) {
         return this;

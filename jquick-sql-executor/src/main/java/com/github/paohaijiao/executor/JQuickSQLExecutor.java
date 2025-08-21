@@ -21,6 +21,7 @@ import com.github.paohaijiao.enums.JEngineEnums;
 import com.github.paohaijiao.param.JContext;
 import com.github.paohaijiao.parser.JQuickSQLLexer;
 import com.github.paohaijiao.parser.JQuickSQLParser;
+import com.github.paohaijiao.support.JDataSetHolder;
 import com.github.paohaijiao.visitor.JQuikSQLCommonVisitor;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -38,20 +39,21 @@ public class JQuickSQLExecutor {
 
     private JQuickSQLConfig config=new JQuickSQLConfig();
 
+    private JDataSetHolder dataSetContainer=new JDataSetHolder();
 
-    public JQuickSQLExecutor(JContext context){
-        this.context = context;
+
+    public JQuickSQLExecutor config( JQuickSQLConfig config){
+        this.config = config;
+        return this;
     }
-    public JQuickSQLExecutor(JQuickSQLConfig config){
+    public JQuickSQLExecutor context( JContext context){
         this.context = context;
-        this.config =  config;
+        return this;
     }
-    public JQuickSQLExecutor(JContext context,JQuickSQLConfig config){
-        this.context = context;
-        this.config =  config;
-    }
-    public JQuickSQLExecutor(){
-        this.context = new JContext();
+
+    public JQuickSQLExecutor dataSet(JDataSetHolder container){
+        this.dataSetContainer=container;
+        return this;
     }
 
     public JDataSet execute(String sql, JEngineEnums engine){
@@ -60,7 +62,8 @@ public class JQuickSQLExecutor {
         JQuickSQLParser parser = new JQuickSQLParser(tokens);
         JQuickSQLParser.QueryContext tree = parser.query();
         JContext params = new JContext();
-        JQuikSQLCommonVisitor tv = new JQuikSQLCommonVisitor(params,lexer,tokens,parser);
+        JQuikSQLCommonVisitor tv = new JQuikSQLCommonVisitor(dataSetContainer,lexer,tokens,parser);
+        tv.engine(engine);
         Object object = tv.visit(tree);
         return (JDataSet)object;
     }

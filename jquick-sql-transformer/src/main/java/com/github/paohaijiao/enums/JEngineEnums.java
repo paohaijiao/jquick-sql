@@ -1,9 +1,6 @@
 package com.github.paohaijiao.enums;
 
-
-
-public enum JoinerType {
-    SEQUENTIAL,
+public enum JEngineEnums {
     MULTI_THREADED,
     LAMBDA,
     SPARK,

@@ -104,4 +104,9 @@ public class JForkJoinJoiner implements JDataSetJoinerStrategy {
     public JDataSet alias(JDataSet dataset, Map<String, JExpression> aliases) {
         return null;
     }
+
+    @Override
+    public JDataSet limit(JDataSet dataset, Integer limit, Integer offset) {
+        return null;
+    }
 }

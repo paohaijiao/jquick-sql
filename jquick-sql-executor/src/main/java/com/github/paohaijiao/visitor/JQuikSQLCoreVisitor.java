@@ -18,12 +18,14 @@ package com.github.paohaijiao.visitor;
 import com.github.paohaijiao.dataset.JColumnMeta;
 import com.github.paohaijiao.dataset.JDataSet;
 import com.github.paohaijiao.dataset.JRow;
+import com.github.paohaijiao.enums.JEngineEnums;
 import com.github.paohaijiao.exception.JAssert;
 import com.github.paohaijiao.factory.JDataSetJoinerStrategy;
 import com.github.paohaijiao.param.JContext;
 import com.github.paohaijiao.parser.JQuickSQLBaseVisitor;
 import com.github.paohaijiao.parser.JQuickSQLLexer;
 import com.github.paohaijiao.parser.JQuickSQLParser;
+import com.github.paohaijiao.support.JDataSetHolder;
 import org.antlr.v4.runtime.CommonTokenStream;
 
 import java.text.NumberFormat;
@@ -53,6 +55,9 @@ public class JQuikSQLCoreVisitor extends JQuickSQLBaseVisitor {
     protected final Map<String, JDataSet> tableRegistry = new HashMap<>();
 
     protected JDataSetJoinerStrategy joinerStrategy;
+    protected JEngineEnums engine=JEngineEnums.LAMBDA;
+
+    protected JDataSetHolder dataSetHolder=new JDataSetHolder();
 
     public void registerDataSet(String tableName, JDataSet dataSet) {
         tableRegistry.put(tableName, dataSet);

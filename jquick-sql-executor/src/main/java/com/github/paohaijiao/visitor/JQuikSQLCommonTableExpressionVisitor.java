@@ -31,7 +31,7 @@ import java.util.stream.Collectors;
  * @version 1.0.0
  * @since 2025/8/11
  */
-public class JQuikSQLCommonTableExpressionVisitor extends JQuikSQLFunctionStatementVisitor {
+public class JQuikSQLCommonTableExpressionVisitor extends JQuikSQLSelectStatementVisitor {
 
     private final Map<String, JDataSet> cteRegistry = new HashMap<>();
 
@@ -156,10 +156,9 @@ public class JQuikSQLCommonTableExpressionVisitor extends JQuikSQLFunctionStatem
     public JDataSet visitTableSourceItem(JQuickSQLParser.TableSourceItemContext ctx) {
         if (ctx.tableName() != null) {
             String tableName = ctx.tableName().getText();
-            if (cteRegistry.containsKey(tableName)) { // check if this is a CTE reference
-                return cteRegistry.get(tableName);
+            if (dataSetHolder.containsDataSet(tableName)) {
+                return dataSetHolder.getDataSet(tableName);
             }
-            //lookup  table
             throw new UnsupportedOperationException("Actual table lookup not implemented");
         } else if (ctx.selectStatement() != null) {
             return (JDataSet)visit(ctx.selectStatement());

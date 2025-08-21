@@ -16,10 +16,12 @@
 package com.github.paohaijiao.visitor;
 
 import com.github.paohaijiao.dataset.JDataSet;
+import com.github.paohaijiao.enums.JEngineEnums;
 import com.github.paohaijiao.exception.JAssert;
 import com.github.paohaijiao.param.JContext;
 import com.github.paohaijiao.parser.JQuickSQLLexer;
 import com.github.paohaijiao.parser.JQuickSQLParser;
+import com.github.paohaijiao.support.JDataSetHolder;
 import org.antlr.v4.runtime.CommonTokenStream;
 
 /**
@@ -31,21 +33,31 @@ import org.antlr.v4.runtime.CommonTokenStream;
  */
 public class JQuikSQLCommonVisitor extends JQuickSQLOlapVisitor{
 
-    public JQuikSQLCommonVisitor(JContext context, JQuickSQLLexer lexer, CommonTokenStream tokenStream, JQuickSQLParser parser) {
+    public JQuikSQLCommonVisitor(JDataSetHolder dataSetHolder, JContext context, JQuickSQLLexer lexer, CommonTokenStream tokenStream, JQuickSQLParser parser) {
         this.context = context;
         this.lexer = lexer;
         this.tokenStream = tokenStream;
         this.parser = parser;
+        this.dataSetHolder = dataSetHolder;
     }
 
-    public JQuikSQLCommonVisitor(JQuickSQLLexer lexer, CommonTokenStream tokenStream,JQuickSQLParser parser) {
+    public JQuikSQLCommonVisitor(JDataSetHolder dataSetHolder, JQuickSQLLexer lexer, CommonTokenStream tokenStream, JQuickSQLParser parser) {
         this.context = new JContext();
+        this.dataSetHolder = dataSetHolder;
         this.lexer = lexer;
         this.tokenStream = tokenStream;
         this.parser = parser;
     }
     public JQuikSQLCommonVisitor() {
         this.context = new JContext();
+    }
+    public JQuikSQLCommonVisitor engine(JEngineEnums engine) {
+        this.engine=engine;
+        return this;
+    }
+    public JQuikSQLCommonVisitor engine(JDataSetHolder holder) {
+        this.dataSetHolder=holder;
+        return this;
     }
     @Override
     public JDataSet visitQuery(JQuickSQLParser.QueryContext ctx) {
@@ -57,10 +69,11 @@ public class JQuikSQLCommonVisitor extends JQuickSQLOlapVisitor{
     }
     @Override
     public JDataSet visitSelectExpression(JQuickSQLParser.SelectExpressionContext ctx) {
+        String text=ctx.getText();
         if(ctx.olapOperation()!=null){
-            visitOlapOperation(ctx.olapOperation());
+           return (JDataSet)visitOlapOperation(ctx.olapOperation());
         }else if(ctx.selectClause()!=null){
-            visitSelectClause(ctx.selectClause());
+            return visitSelectClause(ctx.selectClause());
         }
         JAssert.throwNewException("not support this statement");
         return null;

@@ -13,14 +13,21 @@
  *
  * Copyright (c) [2025-2099] Martin (goudingcheng@gmail.com)
  */
-package com.github.paohaijiao.visitor;
+package com.github.paohaijiao.model;
+
+import lombok.Data;
 
 /**
- * packageName com.github.paohaijiao.visitor
+ * packageName com.github.paohaijiao.model
  *
  * @author Martin
  * @version 1.0.0
- * @since 2025/8/17
+ * @since 2025/8/21
  */
-public class JQuickSQLOlapVisitor extends JQuikSQLCommonTableExpressionVisitor{
+@Data
+public class JLimitModel {
+
+    private Integer limit;
+
+    private Integer offset;
 }

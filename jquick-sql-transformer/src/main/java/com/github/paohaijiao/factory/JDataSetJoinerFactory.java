@@ -16,7 +16,7 @@
 package com.github.paohaijiao.factory;
 
 
-import com.github.paohaijiao.enums.JoinerType;
+import com.github.paohaijiao.enums.JEngineEnums;
 import com.github.paohaijiao.flink.JFlinkJoiner;
 import com.github.paohaijiao.forkjoin.JForkJoinJoiner;
 import com.github.paohaijiao.lamda.JLamdaJoinJoinerHandler;
@@ -33,7 +33,7 @@ import com.github.paohaijiao.thread.JMultiThreadedJoiner;
  */
 public class JDataSetJoinerFactory {
 
-    public static JDataSetJoinerStrategy createJoiner(JoinerType type) {
+    public static JDataSetJoinerStrategy createJoiner(JEngineEnums type) {
         switch (type) {
             case MULTI_THREADED:
                 return new JMultiThreadedJoiner();
