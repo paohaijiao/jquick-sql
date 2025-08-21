@@ -37,107 +37,11 @@ import static org.junit.Assert.assertTrue;
  * @since 2025/8/20
  */
 public class JDataSetRecursiveQueryTest {
-    @Test
-    public void testEmployeeHierarchy() {
-        JDataSet allEmployees = createEmployeeDataSet();
-        JDataSet ceo = allEmployees.filter(row -> row.get("manager_id") == null);
-        assertEquals(1, ceo.size());
-        assertEquals("Alice", ceo.getRows().get(0).get("name"));
-        Function<JDataSet, JDataSet> findSubordinates = currentEmployees -> {
-            Set<Integer> managerIds = currentEmployees.getRows().stream()
-                    .map(row -> (Integer) row.get("id"))
-                    .collect(Collectors.toSet());
-            List<JRow> subordinates = allEmployees.getRows().stream()
-                    .filter(row -> {
-                        Integer managerId = (Integer) row.get("manager_id");
-                        return managerId != null && managerIds.contains(managerId);
-                    })
-                    .collect(Collectors.toList());
-
-            return new JDataSet(allEmployees.getColumns(), subordinates);
-        };
-        JDataSet allSubordinates = JDataSetRecursiveQuery.withRecursive(
-                ceo, findSubordinates, 10, true);
-        assertEquals(5, allSubordinates.size());
-        assertTrue(allSubordinates.getRows().stream()
-                .anyMatch(row -> "Charlie".equals(row.get("name"))));
-        assertTrue(allSubordinates.getRows().stream()
-                .anyMatch(row -> "Eve".equals(row.get("name"))));
-    }
-
-    @Test
-    public void testFullOrganizationHierarchy() {
-        JDataSet allEmployees = createEmployeeDataSet();
-        Function<JDataSet, JDataSet> recursiveFunction =
-                JDataSetRecursiveQuery.buildHierarchicalRecursiveFunction(
-                        allEmployees,
-                        parent -> row -> {
-                            Integer parentId = (Integer) parent.get("id");
-                            Integer managerId = (Integer) row.get("manager_id");
-                            return parentId != null && parentId.equals(managerId);
-                        },
-                        "id", "manager_id");
-        JDataSet ceo = allEmployees.filter(row -> row.get("manager_id") == null);
-        JDataSet fullHierarchy = JDataSetRecursiveQuery.withRecursive(ceo, recursiveFunction, 10);
-        assertEquals(5, fullHierarchy.size());
-        List<String> names = fullHierarchy.getRows().stream()
-                .map(row -> (String) row.get("name"))
-                .sorted()
-                .collect(Collectors.toList());
-
-        assertEquals(Arrays.asList("Bob", "Charlie", "David", "Eve"), names);
-    }
-
-    /**
-     * 测试无限递归保护
-     */
-    @Test
-    public void testMaxDepthProtection() {
-        JDataSet allEmployees = createEmployeeDataSet();
-        JRow cyclicEmployee = new JRow();
-        cyclicEmployee.put("id", 99);
-        cyclicEmployee.put("name", "Cyclic");
-        cyclicEmployee.put("manager_id", 99); // 自己管理自己
-        JDataSet cyclicDataSet = JDataSet.builder()
-                .addColumn("id", Integer.class, "test")
-                .addColumn("name", String.class, "test")
-                .addColumn("manager_id", Integer.class, "test")
-                .addRow(cyclicEmployee)
-                .build();
-        Function<JDataSet, JDataSet> recursiveFunction = current -> {
-            Integer currentId = (Integer) current.getRows().get(0).get("id");
-            return cyclicDataSet.filter(row ->
-                    ((Integer) row.get("manager_id")).equals(currentId));
-        };
-        JDataSet result = JDataSetRecursiveQuery.withRecursive(
-                cyclicDataSet, recursiveFunction, 3);
-        assertEquals(3, result.size());
-    }
-
-    /**
-     * 测试不去重的情况
-     */
-    @Test
-    public void testWithoutDistinct() {
-        JDataSet data = createLinearHierarchyDataSet();
-        Function<JDataSet, JDataSet> recursiveFunction = current -> {
-            Integer currentValue = (Integer) current.getRows().get(0).get("value");
-            return data.filter(row ->
-                    ((Integer) row.get("parent")).equals(currentValue));
-        };
-
-        JDataSet result = JDataSetRecursiveQuery.withRecursive(
-                data.filter(row -> ((Integer) row.get("value")) == 1),
-                recursiveFunction, 5, false);
-        assertTrue(result.size() > 5);
-    }
-
     private JDataSet createEmployeeDataSet() {
         JRow ceo = new JRow();
         ceo.put("id", 1);
         ceo.put("name", "Alice");
         ceo.put("manager_id", null);
-
         JRow manager1 = new JRow();
         manager1.put("id", 2);
         manager1.put("name", "Bob");
@@ -174,7 +78,6 @@ public class JDataSetRecursiveQueryTest {
         JDataSet.Builder builder = JDataSet.builder()
                 .addColumn("value", Integer.class, "hierarchy")
                 .addColumn("parent", Integer.class, "hierarchy");
-
         for (int i = 1; i <= 5; i++) {
             JRow row = new JRow();
             row.put("value", i);
@@ -184,6 +87,92 @@ public class JDataSetRecursiveQueryTest {
 
         return builder.build();
     }
+    @Test
+    public void testEmployeeHierarchy() {
+        JDataSet allEmployees = createEmployeeDataSet();
+        JDataSet ceo = allEmployees.filter(row -> row.get("manager_id") == null);
+        assertEquals(1, ceo.size());
+        assertEquals("Alice", ceo.getRows().get(0).get("name"));
+        Function<JDataSet, JDataSet> findSubordinates = currentEmployees -> {
+            Set<Integer> managerIds = currentEmployees.getRows().stream()
+                    .map(row -> (Integer) row.get("id"))
+                    .collect(Collectors.toSet());
+            List<JRow> subordinates = allEmployees.getRows().stream()
+                    .filter(row -> {
+                        Integer managerId = (Integer) row.get("manager_id");
+                        return managerId != null && managerIds.contains(managerId);
+                    })
+                    .collect(Collectors.toList());
+
+            return new JDataSet(allEmployees.getColumns(), subordinates);
+        };
+        JDataSet allSubordinates = JDataSetRecursiveQuery.withRecursive(
+                ceo, findSubordinates, 10, true);
+        assertEquals(5, allSubordinates.size());
+        assertTrue(allSubordinates.getRows().stream()
+                .anyMatch(row -> "Charlie".equals(row.get("name"))));
+        assertTrue(allSubordinates.getRows().stream()
+                .anyMatch(row -> "Eve".equals(row.get("name"))));
+    }
+
+    @Test
+    public void testFullOrganizationHierarchy() {
+        JDataSet allEmployees = createEmployeeDataSet();
+        Function<JDataSet, JDataSet> recursiveFunction = JDataSetRecursiveQuery.buildHierarchicalRecursiveFunction(
+                        allEmployees,
+                        "manager_id", "id");
+        JDataSet ceo = allEmployees.filter(row -> row.get("manager_id") == null);
+        JDataSet fullHierarchy = JDataSetRecursiveQuery.withRecursive(ceo, recursiveFunction, 10);
+        assertEquals(5, fullHierarchy.size());
+        List<String> names = fullHierarchy.getRows().stream()
+                .map(row -> (String) row.get("name"))
+                .sorted()
+                .collect(Collectors.toList());
+
+        assertEquals(Arrays.asList("Alice","Bob", "Charlie", "David", "Eve"), names);
+    }
+
+    /**
+     * 测试无限递归保护
+     */
+    @Test
+    public void testMaxDepthProtection() {
+        JDataSet allEmployees = createEmployeeDataSet();
+        JRow cyclicEmployee = new JRow();
+        cyclicEmployee.put("id", 99);
+        cyclicEmployee.put("name", "Cyclic");
+        cyclicEmployee.put("manager_id", 99); // 自己管理自己
+        JDataSet cyclicDataSet = JDataSet.builder()
+                .addColumn("id", Integer.class, "test")
+                .addColumn("name", String.class, "test")
+                .addColumn("manager_id", Integer.class, "test")
+                .addRow(cyclicEmployee)
+                .build();
+        Function<JDataSet, JDataSet> recursiveFunction = current -> {
+            Integer currentId = (Integer) current.getRows().get(0).get("id");
+            return cyclicDataSet.filter(row -> ((Integer) row.get("manager_id")).equals(currentId));
+        };
+        JDataSet result = JDataSetRecursiveQuery.withRecursive(cyclicDataSet, recursiveFunction, 3);
+        assertEquals(3, result.size());
+    }
+
+    /**
+     * 测试不去重的情况
+     */
+    @Test
+    public void testWithoutDistinct() {
+        JDataSet data = createLinearHierarchyDataSet();
+        Function<JDataSet, JDataSet> recursiveFunction = current -> {
+            Integer currentValue = (Integer) current.getRows().get(0).get("value");
+            return data.filter(row ->null!= row.get("parent")&&((Integer) row.get("parent")).equals(currentValue));
+        };
+        JDataSet result = JDataSetRecursiveQuery.withRecursive(
+                data.filter(row -> ((Integer) row.get("value")) == 1),
+                recursiveFunction, 5, false);
+        assertTrue(result.size() > 5);
+    }
+
+
 
     @Test
     public void testEmptyDataSet() {
@@ -208,26 +197,22 @@ public class JDataSetRecursiveQueryTest {
             Set<Integer> managerIds = current.getRows().stream()
                     .map(row -> (Integer) row.get("id"))
                     .collect(Collectors.toSet());
-
             List<JRow> subordinates = data.getRows().stream()
                     .filter(row -> {
                         Integer managerId = (Integer) row.get("manager_id");
                         return managerId != null && managerIds.contains(managerId);
                     })
                     .collect(Collectors.toList());
-
             return new JDataSet(data.getColumns(), subordinates);
         };
-
         JDataSet ceo = data.filter(row -> row.get("manager_id") == null);
         JDataSet directSubordinates = JDataSetRecursiveQuery.withRecursive(
                 ceo, findDirectSubordinates, 2);
-        assertEquals(2, directSubordinates.size());
+        assertEquals(3, directSubordinates.size());
         List<String> names = directSubordinates.getRows().stream()
                 .map(row -> (String) row.get("name"))
                 .sorted()
                 .collect(Collectors.toList());
-
-        assertEquals(Arrays.asList("Bob", "Charlie"), names);
+        assertEquals(Arrays.asList("Alice","Bob", "Charlie"), names);
     }
 }

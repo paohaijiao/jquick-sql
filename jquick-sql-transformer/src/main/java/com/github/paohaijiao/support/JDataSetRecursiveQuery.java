@@ -83,7 +83,7 @@ public class JDataSetRecursiveQuery {
         return withRecursive(initialDataSet, recursiveFunction, 100, true);
     }
 
-    public static Function<JDataSet, JDataSet> buildHierarchicalRecursiveFunction(JDataSet fullDataSet, Function<JRow, Predicate<JRow>> parentChildJoin, String parentKeyColumn, String childKeyColumn) {
+    public static Function<JDataSet, JDataSet> buildHierarchicalRecursiveFunction(JDataSet fullDataSet,  String parentKeyColumn, String childKeyColumn) {
         return currentDataSet -> {
             Set<Object> childKeys = currentDataSet.getRows().stream()
                     .map(row -> row.get(childKeyColumn))
