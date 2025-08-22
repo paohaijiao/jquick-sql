@@ -75,7 +75,19 @@ public class JSelectTest {
     }
     @Test
     public void orderBy() {
-        String rule="select * from orders order by order_id desc";
+        String rule="select * from orders order by order_id asc";
+        JQuickSQLExecutor executor=new JQuickSQLExecutor();
+        JDataSetHolder dataSetContainer=new JDataSetHolder();
+        dataSetContainer.addDataSet("orders",createOrdersDataSet());
+        executor.dataSet(dataSetContainer);
+        JDataSet dataSet=executor.execute(rule, JEngineEnums.LAMBDA);
+        for (JRow row : dataSet.getRows()) {
+            System.out.println(row);
+        }
+    }
+    @Test
+    public void groupByItem() {
+        String rule="select * from orders group  by order_id ";
         JQuickSQLExecutor executor=new JQuickSQLExecutor();
         JDataSetHolder dataSetContainer=new JDataSetHolder();
         dataSetContainer.addDataSet("orders",createOrdersDataSet());

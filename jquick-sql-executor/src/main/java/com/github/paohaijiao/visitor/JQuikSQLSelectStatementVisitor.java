@@ -51,6 +51,10 @@ public class JQuikSQLSelectStatementVisitor extends JQuikSQLFunctionStatementVis
             jDataSet=visitFromClause(ctx.fromClause());
         }
         JAssert.notNull(jDataSet," the from dataset require not null");
+        if(ctx.groupByItem()!=null){
+//            List<JOrderByExpression>  orderByExpressions= visitOrderByClause(ctx.orderByClause());
+//            jDataSet=strategy.aggregate(jDataSet,orderByExpressions);
+        }
         if(ctx.orderByClause()!=null){
             List<JOrderByExpression>  orderByExpressions= visitOrderByClause(ctx.orderByClause());
             jDataSet=strategy.sort(jDataSet,orderByExpressions);

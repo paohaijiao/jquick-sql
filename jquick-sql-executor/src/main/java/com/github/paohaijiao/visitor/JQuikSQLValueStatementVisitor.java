@@ -21,6 +21,7 @@ import com.github.paohaijiao.enums.JLogicalOperator;
 import com.github.paohaijiao.enums.JMathOperator;
 import com.github.paohaijiao.enums.JUnaryOperator;
 import com.github.paohaijiao.exception.JAssert;
+import com.github.paohaijiao.expression.JColumnExpression;
 import com.github.paohaijiao.model.JFullColumnModel;
 import com.github.paohaijiao.parser.JQuickSQLParser;
 
@@ -147,24 +148,10 @@ public class JQuikSQLValueStatementVisitor extends JQuikSQLCoreVisitor{
 
 
     @Override
-    public JFullColumnModel visitFullColumnNameExpressionAtom(JQuickSQLParser.FullColumnNameExpressionAtomContext ctx) {
-        String columnPath = ctx.fullColumnName().getText();
-        String[] parts = columnPath.split("\\.");
-        JFullColumnModel fullColumnModel = new JFullColumnModel();
-        if(parts.length==1){
-            fullColumnModel.setColumnName(parts[0]);
-        }else if(parts.length==2){
-            fullColumnModel.setColumnName(parts[0]);
-            fullColumnModel.setTableName(parts[1]);
-        } else if (parts.length==3) {
-            fullColumnModel.setColumnName(parts[0]);
-            fullColumnModel.setTableName(parts[1]);
-            fullColumnModel.setSchemaName(parts[2]);
-        }else{
-            JAssert.throwNewException("Invalid column name: " + columnPath);
-            return null;
-        }
-        return fullColumnModel;
+    public JColumnExpression visitFullColumnNameExpressionAtom(JQuickSQLParser.FullColumnNameExpressionAtomContext ctx) {
+        String  column= ctx.fullColumnName().getText();
+        JColumnExpression columnExpression = new JColumnExpression(column);
+        return columnExpression;
     }
     @Override
     public JFullColumnModel visitFullColumnName(JQuickSQLParser.FullColumnNameContext ctx) {

@@ -142,6 +142,16 @@ public interface JQuickSQLListener extends ParseTreeListener {
 	 */
 	void exitDiceCondition(JQuickSQLParser.DiceConditionContext ctx);
 	/**
+	 * Enter a parse tree produced by {@link JQuickSQLParser#compOperator}.
+	 * @param ctx the parse tree
+	 */
+	void enterCompOperator(JQuickSQLParser.CompOperatorContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link JQuickSQLParser#compOperator}.
+	 * @param ctx the parse tree
+	 */
+	void exitCompOperator(JQuickSQLParser.CompOperatorContext ctx);
+	/**
 	 * Enter a parse tree produced by {@link JQuickSQLParser#pivot}.
 	 * @param ctx the parse tree
 	 */
@@ -282,16 +292,6 @@ public interface JQuickSQLListener extends ParseTreeListener {
 	 */
 	void exitJoinType(JQuickSQLParser.JoinTypeContext ctx);
 	/**
-	 * Enter a parse tree produced by {@link JQuickSQLParser#uidList}.
-	 * @param ctx the parse tree
-	 */
-	void enterUidList(JQuickSQLParser.UidListContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link JQuickSQLParser#uidList}.
-	 * @param ctx the parse tree
-	 */
-	void exitUidList(JQuickSQLParser.UidListContext ctx);
-	/**
 	 * Enter a parse tree produced by {@link JQuickSQLParser#groupByItem}.
 	 * @param ctx the parse tree
 	 */
@@ -301,16 +301,6 @@ public interface JQuickSQLListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitGroupByItem(JQuickSQLParser.GroupByItemContext ctx);
-	/**
-	 * Enter a parse tree produced by {@link JQuickSQLParser#havingExpr}.
-	 * @param ctx the parse tree
-	 */
-	void enterHavingExpr(JQuickSQLParser.HavingExprContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link JQuickSQLParser#havingExpr}.
-	 * @param ctx the parse tree
-	 */
-	void exitHavingExpr(JQuickSQLParser.HavingExprContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link JQuickSQLParser#orderByClause}.
 	 * @param ctx the parse tree
@@ -411,16 +401,6 @@ public interface JQuickSQLListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitFunctionCall(JQuickSQLParser.FunctionCallContext ctx);
-	/**
-	 * Enter a parse tree produced by {@link JQuickSQLParser#compOperator}.
-	 * @param ctx the parse tree
-	 */
-	void enterCompOperator(JQuickSQLParser.CompOperatorContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link JQuickSQLParser#compOperator}.
-	 * @param ctx the parse tree
-	 */
-	void exitCompOperator(JQuickSQLParser.CompOperatorContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link JQuickSQLParser#functionArgs}.
 	 * @param ctx the parse tree
@@ -811,16 +791,6 @@ public interface JQuickSQLListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitTableName(JQuickSQLParser.TableNameContext ctx);
-	/**
-	 * Enter a parse tree produced by {@link JQuickSQLParser#schemaName}.
-	 * @param ctx the parse tree
-	 */
-	void enterSchemaName(JQuickSQLParser.SchemaNameContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link JQuickSQLParser#schemaName}.
-	 * @param ctx the parse tree
-	 */
-	void exitSchemaName(JQuickSQLParser.SchemaNameContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link JQuickSQLParser#dottedId}.
 	 * @param ctx the parse tree

@@ -173,6 +173,18 @@ public class JQuickSQLBaseListener implements JQuickSQLListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
+	@Override public void enterCompOperator(JQuickSQLParser.CompOperatorContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitCompOperator(JQuickSQLParser.CompOperatorContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
 	@Override public void enterPivot(JQuickSQLParser.PivotContext ctx) { }
 	/**
 	 * {@inheritDoc}
@@ -341,18 +353,6 @@ public class JQuickSQLBaseListener implements JQuickSQLListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void enterUidList(JQuickSQLParser.UidListContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void exitUidList(JQuickSQLParser.UidListContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
 	@Override public void enterGroupByItem(JQuickSQLParser.GroupByItemContext ctx) { }
 	/**
 	 * {@inheritDoc}
@@ -360,18 +360,6 @@ public class JQuickSQLBaseListener implements JQuickSQLListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitGroupByItem(JQuickSQLParser.GroupByItemContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void enterHavingExpr(JQuickSQLParser.HavingExprContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void exitHavingExpr(JQuickSQLParser.HavingExprContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
@@ -492,18 +480,6 @@ public class JQuickSQLBaseListener implements JQuickSQLListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitFunctionCall(JQuickSQLParser.FunctionCallContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void enterCompOperator(JQuickSQLParser.CompOperatorContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void exitCompOperator(JQuickSQLParser.CompOperatorContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
@@ -924,18 +900,6 @@ public class JQuickSQLBaseListener implements JQuickSQLListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitTableName(JQuickSQLParser.TableNameContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void enterSchemaName(JQuickSQLParser.SchemaNameContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void exitSchemaName(JQuickSQLParser.SchemaNameContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *

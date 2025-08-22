@@ -91,6 +91,12 @@ public interface JQuickSQLVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitDiceCondition(JQuickSQLParser.DiceConditionContext ctx);
 	/**
+	 * Visit a parse tree produced by {@link JQuickSQLParser#compOperator}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitCompOperator(JQuickSQLParser.CompOperatorContext ctx);
+	/**
 	 * Visit a parse tree produced by {@link JQuickSQLParser#pivot}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
@@ -175,23 +181,11 @@ public interface JQuickSQLVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitJoinType(JQuickSQLParser.JoinTypeContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link JQuickSQLParser#uidList}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitUidList(JQuickSQLParser.UidListContext ctx);
-	/**
 	 * Visit a parse tree produced by {@link JQuickSQLParser#groupByItem}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	T visitGroupByItem(JQuickSQLParser.GroupByItemContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link JQuickSQLParser#havingExpr}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitHavingExpr(JQuickSQLParser.HavingExprContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link JQuickSQLParser#orderByClause}.
 	 * @param ctx the parse tree
@@ -252,12 +246,6 @@ public interface JQuickSQLVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitFunctionCall(JQuickSQLParser.FunctionCallContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link JQuickSQLParser#compOperator}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitCompOperator(JQuickSQLParser.CompOperatorContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link JQuickSQLParser#functionArgs}.
 	 * @param ctx the parse tree
@@ -488,12 +476,6 @@ public interface JQuickSQLVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitTableName(JQuickSQLParser.TableNameContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link JQuickSQLParser#schemaName}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitSchemaName(JQuickSQLParser.SchemaNameContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link JQuickSQLParser#dottedId}.
 	 * @param ctx the parse tree
