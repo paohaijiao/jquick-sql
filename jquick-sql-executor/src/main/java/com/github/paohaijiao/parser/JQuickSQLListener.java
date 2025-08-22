@@ -202,6 +202,36 @@ public interface JQuickSQLListener extends ParseTreeListener {
 	 */
 	void exitSelectClause(JQuickSQLParser.SelectClauseContext ctx);
 	/**
+	 * Enter a parse tree produced by {@link JQuickSQLParser#whereClause}.
+	 * @param ctx the parse tree
+	 */
+	void enterWhereClause(JQuickSQLParser.WhereClauseContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link JQuickSQLParser#whereClause}.
+	 * @param ctx the parse tree
+	 */
+	void exitWhereClause(JQuickSQLParser.WhereClauseContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link JQuickSQLParser#groupByClause}.
+	 * @param ctx the parse tree
+	 */
+	void enterGroupByClause(JQuickSQLParser.GroupByClauseContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link JQuickSQLParser#groupByClause}.
+	 * @param ctx the parse tree
+	 */
+	void exitGroupByClause(JQuickSQLParser.GroupByClauseContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link JQuickSQLParser#havingClause}.
+	 * @param ctx the parse tree
+	 */
+	void enterHavingClause(JQuickSQLParser.HavingClauseContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link JQuickSQLParser#havingClause}.
+	 * @param ctx the parse tree
+	 */
+	void exitHavingClause(JQuickSQLParser.HavingClauseContext ctx);
+	/**
 	 * Enter a parse tree produced by {@link JQuickSQLParser#selectSpec}.
 	 * @param ctx the parse tree
 	 */

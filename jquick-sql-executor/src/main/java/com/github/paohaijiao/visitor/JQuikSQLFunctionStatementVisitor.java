@@ -17,6 +17,8 @@ package com.github.paohaijiao.visitor;
 
 import com.github.paohaijiao.enums.JFunctionCallType;
 import com.github.paohaijiao.exception.JAssert;
+import com.github.paohaijiao.expression.JExpression;
+import com.github.paohaijiao.expression.JFunctionCallExpression;
 import com.github.paohaijiao.model.JFunctionCallModel;
 import com.github.paohaijiao.parser.JQuickSQLParser;
 
@@ -35,16 +37,16 @@ import java.util.regex.PatternSyntaxException;
  */
 public class JQuikSQLFunctionStatementVisitor extends JQuikSQLPredictStatementVisitor {
     @Override
-    public Object visitFunctionArg(JQuickSQLParser.FunctionArgContext ctx) {
+    public JExpression visitFunctionArg(JQuickSQLParser.FunctionArgContext ctx) {
         JAssert.notNull(ctx.expression(), "expression not  null");
-        return visit(ctx.expression());
+        return (JExpression)visit(ctx.expression());
     }
 
     @Override
-    public List<Object> visitFunctionArgs(JQuickSQLParser.FunctionArgsContext ctx) {
-        List<Object> args = new ArrayList<>();
+    public List<JExpression> visitFunctionArgs(JQuickSQLParser.FunctionArgsContext ctx) {
+        List<JExpression> args = new ArrayList<>();
         for (int i = 0; i < ctx.functionArg().size(); i++) {
-            Object obj=visitFunctionArg(ctx.functionArg(i));
+            JExpression obj=visitFunctionArg(ctx.functionArg(i));
             args.add(obj);
         }
         return args;
@@ -87,17 +89,14 @@ public class JQuikSQLFunctionStatementVisitor extends JQuikSQLPredictStatementVi
         }
     }
     @Override
-    public JFunctionCallModel visitFunctionCall(JQuickSQLParser.FunctionCallContext ctx) {
+    public JFunctionCallExpression visitFunctionCall(JQuickSQLParser.FunctionCallContext ctx) {
         JAssert.notNull(ctx.uid(),"uid must not be null");
-        JFunctionCallModel jFunctionCallModel = new JFunctionCallModel();
         String funcName = ctx.uid().getText();
-        jFunctionCallModel.setFunctionName(funcName);
-        List<Object> args = new ArrayList<>();
+        List<JExpression> args = new ArrayList<>();
         if (ctx.functionArgs() != null) {
             args=visitFunctionArgs(ctx.functionArgs());
         }
-        jFunctionCallModel.setArgument(args);
-        jFunctionCallModel.setType(JFunctionCallType.Scalar);
+        JFunctionCallExpression jFunctionCallModel = new JFunctionCallExpression(funcName,args);
         return jFunctionCallModel;
     }
 

@@ -37,10 +37,6 @@ public class JFunctionCallExpression extends JExpression {
 
     private boolean distinct;
 
-    private boolean isWindowFunction;
-
-    private JWindowSpecification windowSpec;
-
 
     public JFunctionCallExpression(String functionName, List<JExpression> arguments) {
         this.type = JExpressionType.FUNCTION;

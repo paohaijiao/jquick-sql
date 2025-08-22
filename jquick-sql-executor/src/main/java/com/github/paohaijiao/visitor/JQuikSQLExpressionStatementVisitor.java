@@ -17,6 +17,7 @@ package com.github.paohaijiao.visitor;
 
 import com.github.paohaijiao.enums.JLogicalOperator;
 import com.github.paohaijiao.exception.JAssert;
+import com.github.paohaijiao.expression.JFunctionCallExpression;
 import com.github.paohaijiao.model.JFunctionCallModel;
 import com.github.paohaijiao.parser.JQuickSQLParser;
 
@@ -91,9 +92,9 @@ public class JQuikSQLExpressionStatementVisitor extends JQuikSQLValueStatementVi
     }
 
     @Override
-    public JFunctionCallModel visitFunctionCallExpressionAtom(JQuickSQLParser.FunctionCallExpressionAtomContext ctx) {
+    public JFunctionCallExpression visitFunctionCallExpressionAtom(JQuickSQLParser.FunctionCallExpressionAtomContext ctx) {
         JQuickSQLParser.FunctionCallContext funcCtx = ctx.functionCall();
-        return (JFunctionCallModel)visit(funcCtx);
+        return (JFunctionCallExpression)visit(funcCtx);
     }
 
     @Override

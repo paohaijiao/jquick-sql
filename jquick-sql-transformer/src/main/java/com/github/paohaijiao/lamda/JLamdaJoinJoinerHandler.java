@@ -20,12 +20,16 @@ import com.github.paohaijiao.condition.JConditionEvaluator;
 import com.github.paohaijiao.dataset.JColumnMeta;
 import com.github.paohaijiao.dataset.JDataSet;
 import com.github.paohaijiao.dataset.JRow;
+import com.github.paohaijiao.exception.JAssert;
 import com.github.paohaijiao.expression.*;
 import com.github.paohaijiao.factory.JDataSetJoinerStrategy;
 import com.github.paohaijiao.func.JoinCondition;
+import com.github.paohaijiao.function.JAggregateFunction;
+import com.github.paohaijiao.function.JAggregateFunctionFactory;
 import com.github.paohaijiao.handler.JBaseHandler;
 
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -66,7 +70,6 @@ public class JLamdaJoinJoinerHandler extends JBaseHandler implements JDataSetJoi
                     hasMatch = true;
                 }
             }
-
             if (!hasMatch) {
                 resultRows.add(mergeRows(leftRow, createNullRow(right)));
             }
@@ -105,7 +108,6 @@ public class JLamdaJoinJoinerHandler extends JBaseHandler implements JDataSetJoi
                         .filter(rightRow -> isMatch(leftRow, rightRow, commonColumns))
                         .map(rightRow -> mergeRows(leftRow, rightRow)))
                 .collect(Collectors.toList());
-
         return new JDataSet(resultColumns, resultRows);
     }
 
@@ -192,38 +194,80 @@ public class JLamdaJoinJoinerHandler extends JBaseHandler implements JDataSetJoi
     @Override
     public JDataSet sort(JDataSet dataset, List<JOrderByExpression> orderByExpressions) {
         if (orderByExpressions == null || orderByExpressions.isEmpty()) {
-            return dataset; // return original if no sorting specified
+            return dataset;
         }
         List<JRow> sortedRows = new ArrayList<>(dataset.getRows());
-        // Create comparator chain
         Comparator<Map<String, Object>> comparator = createComparatorChain(orderByExpressions);
         sortedRows.sort(comparator);
         return new JDataSet(dataset.getColumns(), sortedRows);
     }
 
     @Override
-    public JDataSet aggregate(JDataSet dataset, List<String> groupBy, Map<String, JAggregateExpression> aggregations) {
-        return null;
+    public JDataSet aggregate(JDataSet dataset, List<String> groupBy, Map<String, JFunctionCallExpression> aggregations) {
+        Map<List<Object>, List<Map<String, Object>>> groups = dataset.getRows().stream()
+                .collect(Collectors.groupingBy(
+                        row -> groupBy.stream()
+                                .map(row::get)
+                                .collect(Collectors.toList())
+                ));
+        List<JColumnMeta> newColumns = new ArrayList<>();
+        for (String col : groupBy) {
+            Class<?> type = dataset.getColumns().stream()
+                    .filter(c -> c.getName().equals(col))
+                    .findFirst()
+                    .<Class<?>>map(JColumnMeta::getType)
+                    .orElse(Object.class);
+            newColumns.add(new JColumnMeta(col, type, "group_by"));
+        }
+        for (String aggCol : aggregations.keySet()) {
+            newColumns.add(new JColumnMeta(aggCol, Object.class, "aggregate"));
+        }
+        List<JRow> resultRows = new ArrayList<>();
+        for (Map.Entry<List<Object>, List<Map<String, Object>>> entry : groups.entrySet()) {
+            JRow resultRow = new JRow();
+            for (int i = 0; i < groupBy.size(); i++) {
+                resultRow.put(groupBy.get(i), entry.getKey().get(i));
+            }
+            for (Map.Entry<String, JFunctionCallExpression> aggEntry : aggregations.entrySet()) {
+                String colName = aggEntry.getKey();
+                JFunctionCallExpression function = aggEntry.getValue();
+                JAssert.isTrue(function.getArguments().size()==1,"the aggregation function must have exactly one argument");
+                JExpression jExpression=function.getArguments().get(0);
+                List<Object> values = entry.getValue().stream()
+                        .map(row -> {
+                            if (jExpression instanceof JColumnExpression) {
+                                return row.get(((JColumnExpression) jExpression).getColumnName());
+                            }
+                            throw new UnsupportedOperationException("only column expressions supported");
+                        })
+                        .filter(Objects::nonNull)
+                        .collect(Collectors.toList());
+
+                if (function.isDistinct()) {
+                    values = values.stream().distinct().collect(Collectors.toList());
+                }
+                Function<List<Object>, Object>  func=JAggregateFunctionFactory.getFunction(function.getFunctionName());
+                JAssert.notNull(func, "function not supported");
+                Object aggValue=func.apply(values);
+//                Object aggValue = applyAggregateFunction(aggExpr.getFunction(), values);
+                resultRow.put(colName, aggValue);
+            }
+            resultRows.add(resultRow);
+        }
+        return new JDataSet(newColumns, resultRows);
     }
 
     @Override
     public JDataSet alias(JDataSet dataset, Map<String, JExpression> aliases) {
-        // Create new column metadata
         List<JColumnMeta> newColumns = new ArrayList<>();
-
-        // 1. First add all original columns that aren't being aliased
         for (JColumnMeta column : dataset.getColumns()) {
             if (!aliases.containsValue(new JColumnExpression(column.getName()))) {
                 newColumns.add(column);
             }
         }
-
-        // 2. Add new aliased columns
         for (Map.Entry<String, JExpression> entry : aliases.entrySet()) {
             String alias = entry.getKey();
             JExpression expr = entry.getValue();
-
-            // Determine the type (simplified as Object.class - should derive from expression in real implementation)
             Class<?> type = determineExpressionType(expr);
             newColumns.add(new JColumnMeta(alias, type, "alias"));
         }
@@ -245,7 +289,6 @@ public class JLamdaJoinJoinerHandler extends JBaseHandler implements JDataSetJoi
                 .skip(finalOffset)
                 .limit(finalLimit)
                 .collect(Collectors.toList());
-
         return new JDataSet(dataset.getColumns(), processedRows);
     }
 

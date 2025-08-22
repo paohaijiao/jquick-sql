@@ -17,12 +17,12 @@ package com.github.paohaijiao.factory;
 
 
 import com.github.paohaijiao.enums.JEngineEnums;
-import com.github.paohaijiao.flink.JFlinkJoiner;
-import com.github.paohaijiao.forkjoin.JForkJoinJoiner;
+//import com.github.paohaijiao.flink.JFlinkJoiner;
+//import com.github.paohaijiao.forkjoin.JForkJoinJoiner;
 import com.github.paohaijiao.lamda.JLamdaJoinJoinerHandler;
-import com.github.paohaijiao.mr.JMapReduceJoiner;
-import com.github.paohaijiao.spark.JSparkJoiner;
-import com.github.paohaijiao.thread.JMultiThreadedJoiner;
+//import com.github.paohaijiao.mr.JMapReduceJoiner;
+//import com.github.paohaijiao.spark.JSparkJoiner;
+//import com.github.paohaijiao.thread.JMultiThreadedJoiner;
 
 /**
  * packageName com.github.paohaijiao.factory
@@ -35,18 +35,18 @@ public class JDataSetJoinerFactory {
 
     public static JDataSetJoinerStrategy createJoiner(JEngineEnums type) {
         switch (type) {
-            case MULTI_THREADED:
-                return new JMultiThreadedJoiner();
+//            case MULTI_THREADED:
+//                return new JMultiThreadedJoiner();
             case LAMBDA:
                 return new JLamdaJoinJoinerHandler();
-            case SPARK:
-                return new JSparkJoiner();
-            case MAP_REDUCE:
-                return new JMapReduceJoiner();
-            case FORK_JOIN:
-                return new JForkJoinJoiner();
-            case FLINK:
-                return new JFlinkJoiner();
+//            case SPARK:
+//                return new JSparkJoiner();
+//            case MAP_REDUCE:
+//                return new JMapReduceJoiner();
+//            case FORK_JOIN:
+//                return new JForkJoinJoiner();
+//            case FLINK:
+//                return new JFlinkJoiner();
             default:
                 return new JLamdaJoinJoinerHandler();
         }

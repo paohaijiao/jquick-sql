@@ -127,6 +127,24 @@ public interface JQuickSQLVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitSelectClause(JQuickSQLParser.SelectClauseContext ctx);
 	/**
+	 * Visit a parse tree produced by {@link JQuickSQLParser#whereClause}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitWhereClause(JQuickSQLParser.WhereClauseContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link JQuickSQLParser#groupByClause}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitGroupByClause(JQuickSQLParser.GroupByClauseContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link JQuickSQLParser#havingClause}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitHavingClause(JQuickSQLParser.HavingClauseContext ctx);
+	/**
 	 * Visit a parse tree produced by {@link JQuickSQLParser#selectSpec}.
 	 * @param ctx the parse tree
 	 * @return the visitor result

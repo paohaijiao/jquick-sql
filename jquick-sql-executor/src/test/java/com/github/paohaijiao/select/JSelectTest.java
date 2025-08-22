@@ -15,12 +15,16 @@
  */
 package com.github.paohaijiao.select;
 
+import com.github.paohaijiao.dataset.JColumnMeta;
 import com.github.paohaijiao.dataset.JDataSet;
 import com.github.paohaijiao.dataset.JRow;
 import com.github.paohaijiao.enums.JEngineEnums;
 import com.github.paohaijiao.executor.JQuickSQLExecutor;
 import com.github.paohaijiao.support.JDataSetHolder;
 import org.junit.Test;
+
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * packageName com.github.paohaijiao.value
@@ -48,6 +52,37 @@ public class JSelectTest {
 
         builder.addRow(row1).addRow(row2);
         return builder.build();
+    }
+    public static JDataSet createAggregationTestData() {
+        List<JColumnMeta> columns = Arrays.asList(
+                new JColumnMeta("department", String.class, "hr"),
+                new JColumnMeta("employee_name", String.class, "hr"),
+                new JColumnMeta("salary", Double.class, "finance"),
+                new JColumnMeta("years_of_service", Integer.class, "hr"),
+                new JColumnMeta("is_manager", Boolean.class, "hr")
+        );
+
+        List<JRow> rows = Arrays.asList(
+                createEmployeeRow("Engineering", "Alice", 8500.0, 3, true),
+                createEmployeeRow("Engineering", "Bob", 7500.0, 2, false),
+                createEmployeeRow("Marketing", "Charlie", 9200.0, 5, true),
+                createEmployeeRow("Marketing", "David", 6800.0, 1, false),
+                createEmployeeRow("Finance", "Eve", 10500.0, 7, true),
+                createEmployeeRow("Finance", "Frank", 7800.0, 2, false),
+                createEmployeeRow("Engineering", "Grace", 8800.0, 4, false)
+        );
+
+        return new JDataSet(columns, rows);
+    }
+    private static JRow createEmployeeRow(String department, String name,
+                                          double salary, int years, boolean isManager) {
+        JRow row = new JRow();
+        row.put("department", department);
+        row.put("employee_name", name);
+        row.put("salary", salary);
+        row.put("years_of_service", years);
+        row.put("is_manager", isManager);
+        return row;
     }
     @Test
     public void limit() {
@@ -87,16 +122,18 @@ public class JSelectTest {
     }
     @Test
     public void groupByItem() {
-        String rule="select * from orders group  by order_id ";
+        String rule="select department, count(department) as cnt from orders group  by department ";
+        System.out.println(rule);
         JQuickSQLExecutor executor=new JQuickSQLExecutor();
         JDataSetHolder dataSetContainer=new JDataSetHolder();
-        dataSetContainer.addDataSet("orders",createOrdersDataSet());
+        dataSetContainer.addDataSet("orders",createAggregationTestData());
         executor.dataSet(dataSetContainer);
         JDataSet dataSet=executor.execute(rule, JEngineEnums.LAMBDA);
         for (JRow row : dataSet.getRows()) {
             System.out.println(row);
         }
     }
+
 
 
 

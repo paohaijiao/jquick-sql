@@ -56,10 +56,6 @@ public class JQuikSQLValueStatementVisitor extends JQuikSQLCoreVisitor{
         return visit(ctx.uid());
     }
     @Override
-    public String visitSchemaName(JQuickSQLParser.SchemaNameContext ctx) {
-        return ctx.getText();
-    }
-    @Override
     public JFullColumnModel visitTableName(JQuickSQLParser.TableNameContext ctx) {
         JFullColumnModel jFullColumnModel = new JFullColumnModel();
         if(ctx.schema!=null){

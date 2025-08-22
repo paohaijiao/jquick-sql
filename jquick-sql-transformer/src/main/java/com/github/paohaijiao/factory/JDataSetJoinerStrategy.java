@@ -2,11 +2,11 @@ package com.github.paohaijiao.factory;
 
 import com.github.paohaijiao.condition.JCondition;
 import com.github.paohaijiao.dataset.JDataSet;
-import com.github.paohaijiao.expression.JAggregateExpression;
 import com.github.paohaijiao.expression.JExpression;
 import com.github.paohaijiao.expression.JFunctionCallExpression;
 import com.github.paohaijiao.expression.JOrderByExpression;
 import com.github.paohaijiao.func.JoinCondition;
+import com.github.paohaijiao.function.JAggregateFunction;
 
 import java.util.List;
 import java.util.Map;
@@ -37,7 +37,7 @@ public interface JDataSetJoinerStrategy {
 
     public  JDataSet sort(JDataSet dataset, List<JOrderByExpression> orderByExpressions);
 
-    public  JDataSet aggregate(JDataSet dataset, List<String> groupBy, Map<String, JAggregateExpression> aggregations);
+    public  JDataSet aggregate(JDataSet dataset, List<String> groupBy, Map<String, JFunctionCallExpression> aggregations);
 
     public  JDataSet alias(JDataSet dataset, Map<String, JExpression> aliases) ;
 

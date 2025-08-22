@@ -13,14 +13,30 @@
  *
  * Copyright (c) [2025-2099] Martin (goudingcheng@gmail.com)
  */
-package com.github.paohaijiao.function;
+package com.github.paohaijiao.model;
+
+import com.github.paohaijiao.expression.JExpression;
+import lombok.Data;
 
 /**
- * packageName com.github.paohaijiao.function
+ * packageName com.github.paohaijiao.model
  *
  * @author Martin
  * @version 1.0.0
- * @since 2025/8/17
+ * @since 2025/8/22
  */
-public class JaggregateFunction {
+@Data
+public class JSelectElementModel {
+
+    private final JExpression expression;
+    private final String alias;
+    private final boolean isAggregate;
+    private final String aggregateFunctionName;
+
+    public JSelectElementModel(JExpression expression, String alias, boolean isAggregate, String aggregateFunctionName) {
+        this.expression = expression;
+        this.alias = alias;
+        this.isAggregate = isAggregate;
+        this.aggregateFunctionName = aggregateFunctionName;
+    }
 }

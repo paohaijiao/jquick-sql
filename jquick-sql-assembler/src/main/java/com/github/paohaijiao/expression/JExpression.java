@@ -32,5 +32,4 @@ public abstract  class JExpression {
         return type;
     }
 
-//    public abstract <T> T accept(ExpressionVisitor<T> visitor);
 }

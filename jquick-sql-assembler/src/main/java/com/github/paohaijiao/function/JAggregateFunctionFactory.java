@@ -180,7 +180,7 @@ public class JAggregateFunctionFactory {
      */
     public static void registerFunction(String name, Function<List<Object>, Object> function) {
         if (name == null || function == null) {
-            throw new IllegalArgumentException("Function name and implementation cannot be null");
+            throw new IllegalArgumentException("function name and implementation cannot be null");
         }
         FUNCTION_REGISTRY.put(name.toUpperCase(), function);
     }
@@ -195,7 +195,7 @@ public class JAggregateFunctionFactory {
     public static Function<List<Object>, Object> getFunction(String name) {
         Function<List<Object>, Object> function = FUNCTION_REGISTRY.get(name.toUpperCase());
         if (function == null) {
-            throw new IllegalArgumentException("Unknown aggregate function: " + name);
+            throw new IllegalArgumentException("unknown aggregate function: " + name);
         }
         return function;
     }
