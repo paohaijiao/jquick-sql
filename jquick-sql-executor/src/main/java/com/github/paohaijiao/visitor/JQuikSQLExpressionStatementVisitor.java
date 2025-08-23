@@ -19,6 +19,7 @@ import com.github.paohaijiao.enums.JLogicalOperator;
 import com.github.paohaijiao.exception.JAssert;
 import com.github.paohaijiao.expression.JExpression;
 import com.github.paohaijiao.expression.JFunctionCallExpression;
+import com.github.paohaijiao.expression.JLiteralExpression;
 import com.github.paohaijiao.parser.JQuickSQLParser;
 
 import java.util.ArrayList;
@@ -86,7 +87,7 @@ public class JQuikSQLExpressionStatementVisitor extends JQuikSQLValueStatementVi
         return visit(ctx.expression());
     }
     @Override
-    public Object visitConstantExpressionAtom(JQuickSQLParser.ConstantExpressionAtomContext ctx) {
+    public JLiteralExpression visitConstantExpressionAtom(JQuickSQLParser.ConstantExpressionAtomContext ctx) {
         JAssert.notNull(ctx.constant(),"constant must not be null");
         return visitConstant(ctx.constant());
     }
@@ -111,34 +112,34 @@ public class JQuikSQLExpressionStatementVisitor extends JQuikSQLValueStatementVi
         return visit(ctx.selectStatement());
     }
     @Override
-    public Object visitMathExpressionAtom(JQuickSQLParser.MathExpressionAtomContext ctx) {
-        Object left = visit(ctx.expressionAtom(0));
-        Object right = visit(ctx.expressionAtom(1));
+    public JExpression visitMathExpressionAtom(JQuickSQLParser.MathExpressionAtomContext ctx) {
+        JAssert.isTrue(ctx.expressionAtom().size()==2,"mathExpressionAtom must have 2 expressions");
+        Object valLeft=visit(ctx.expressionAtom(0));
+        Object valRight=visit(ctx.expressionAtom(1));
+        JAssert.isTrue( valLeft instanceof JLiteralExpression,"expression[0] must is literal");
+        JAssert.isTrue( valRight instanceof JLiteralExpression,"expression[1] must is literal");
+        JLiteralExpression left = (JLiteralExpression)valLeft;
+        JLiteralExpression right = (JLiteralExpression)valRight;
         String operator = ctx.mathOperator().getText();
         if (left == null || right == null) {
             return null;
         }
-        Number leftNum = convertToNumber(left);
-        Number rightNum = convertToNumber(right);
+        Number leftNum = convertToNumber(left.getValue());
+        Number rightNum = convertToNumber(right.getValue());
         switch (operator) {
             case "+":
-                return leftNum.doubleValue() + rightNum.doubleValue();
+                return JLiteralExpression.number(leftNum.doubleValue() + rightNum.doubleValue());
             case "-":
-                return leftNum.doubleValue() - rightNum.doubleValue();
+                return JLiteralExpression.number(leftNum.doubleValue() - rightNum.doubleValue());
             case "*":
-                return leftNum.doubleValue() * rightNum.doubleValue();
+                return JLiteralExpression.number(leftNum.doubleValue() * rightNum.doubleValue());
             case "/":
                 if (rightNum.doubleValue() == 0) {
                     throw new ArithmeticException("Division by zero");
                 }
-                return leftNum.doubleValue() / rightNum.doubleValue();
-            case "%":
-            case "MOD":
-                return leftNum.doubleValue() % rightNum.doubleValue();
-            case "DIV":
-                return leftNum.longValue() / rightNum.longValue();
+                return JLiteralExpression.number(leftNum.doubleValue() / rightNum.doubleValue());
             case "--":
-                return leftNum.doubleValue() - 1;
+                return JLiteralExpression.number(leftNum.doubleValue() - 1);
             default:
                 throw new UnsupportedOperationException("Unknown operator: " + operator);
         }

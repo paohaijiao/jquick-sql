@@ -19,6 +19,8 @@ import com.github.paohaijiao.enums.JDataType;
 import com.github.paohaijiao.enums.JExpressionType;
 import lombok.Getter;
 
+import java.util.Date;
+
 /**
  * packageName com.github.paohaijiao.expression
  *
@@ -55,6 +57,9 @@ public class JLiteralExpression extends JExpression {
 
     public static JLiteralExpression nullValue() {
         return new JLiteralExpression(null, JDataType.NULL);
+    }
+    public static JLiteralExpression date(Date value) {
+        return new JLiteralExpression(value, JDataType.DATE);
     }
 
 //    @Override

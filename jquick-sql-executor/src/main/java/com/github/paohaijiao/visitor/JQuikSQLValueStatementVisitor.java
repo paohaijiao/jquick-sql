@@ -22,6 +22,7 @@ import com.github.paohaijiao.enums.JMathOperator;
 import com.github.paohaijiao.enums.JUnaryOperator;
 import com.github.paohaijiao.exception.JAssert;
 import com.github.paohaijiao.expression.JColumnExpression;
+import com.github.paohaijiao.expression.JLiteralExpression;
 import com.github.paohaijiao.model.JFullColumnModel;
 import com.github.paohaijiao.parser.JQuickSQLParser;
 
@@ -89,17 +90,17 @@ public class JQuikSQLValueStatementVisitor extends JQuikSQLCoreVisitor{
     }
 
     @Override
-    public Object visitConstant(JQuickSQLParser.ConstantContext ctx) {
+    public JLiteralExpression visitConstant(JQuickSQLParser.ConstantContext ctx) {
         if(null!=ctx.stringLiteral()){
-            return visitStringLiteral(ctx.stringLiteral());
+            return JLiteralExpression.string(visitStringLiteral(ctx.stringLiteral()));
         } else if (ctx.decimal_literal()!=null) {
-            return getNumber(ctx.decimal_literal().getText());
+            return JLiteralExpression.number(getNumber(ctx.decimal_literal().getText()));
         } else if (ctx.booleanLiteral()!=null) {
-            return visitBooleanLiteral(ctx.booleanLiteral());
+            return JLiteralExpression.bool(visitBooleanLiteral(ctx.booleanLiteral()));
         }else if(null!=ctx.null_literal()){
-            return null;
+            return JLiteralExpression.nullValue();
         }else if(null!=ctx.dateLiteral()){
-            return visitDateLiteral(ctx.dateLiteral());
+            return JLiteralExpression.date(visitDateLiteral(ctx.dateLiteral()));
         }
         JAssert.throwNewException("invalid constant literal");
         return null;

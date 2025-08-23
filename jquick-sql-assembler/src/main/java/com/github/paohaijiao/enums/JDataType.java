@@ -5,7 +5,5 @@ public enum JDataType {
     NUMBER,
     BOOLEAN,
     DATE,
-    TIME,
-    TIMESTAMP,
     NULL
 }
