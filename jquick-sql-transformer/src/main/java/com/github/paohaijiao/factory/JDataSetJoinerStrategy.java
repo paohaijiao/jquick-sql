@@ -5,8 +5,7 @@ import com.github.paohaijiao.dataset.JDataSet;
 import com.github.paohaijiao.expression.JExpression;
 import com.github.paohaijiao.expression.JFunctionCallExpression;
 import com.github.paohaijiao.expression.JOrderByExpression;
-import com.github.paohaijiao.func.JoinCondition;
-import com.github.paohaijiao.function.JAggregateFunction;
+import com.github.paohaijiao.join.JoinCondition;
 
 import java.util.List;
 import java.util.Map;

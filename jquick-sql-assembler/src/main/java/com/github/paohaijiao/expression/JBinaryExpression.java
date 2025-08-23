@@ -28,6 +28,7 @@ import lombok.Getter;
  */
 @Getter
 public class JBinaryExpression extends JExpression {
+
     private JExpression left;
 
     private JExpression right;
@@ -41,11 +42,5 @@ public class JBinaryExpression extends JExpression {
         this.operator = operator;
         this.right = right;
     }
-
-
-//    @Override
-//    public <T> T accept(ExpressionVisitor<T> visitor) {
-//        return visitor.visit(this);
-//    }
 
 }

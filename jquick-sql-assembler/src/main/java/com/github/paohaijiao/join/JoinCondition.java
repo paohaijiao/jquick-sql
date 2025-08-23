@@ -1,4 +1,4 @@
-package com.github.paohaijiao.func;
+package com.github.paohaijiao.join;
 
 import java.util.Map;
 import java.util.Objects;

@@ -15,11 +15,19 @@
  */
 package com.github.paohaijiao.visitor;
 
+import com.github.paohaijiao.condition.JComparisonCondition;
+import com.github.paohaijiao.condition.JCondition;
+import com.github.paohaijiao.condition.JLogicalCondition;
+import com.github.paohaijiao.console.JConsole;
 import com.github.paohaijiao.dataset.JColumnMeta;
 import com.github.paohaijiao.dataset.JDataSet;
 import com.github.paohaijiao.dataset.JRow;
+import com.github.paohaijiao.enums.JComparisonOperator;
 import com.github.paohaijiao.enums.JEngineEnums;
 import com.github.paohaijiao.exception.JAssert;
+import com.github.paohaijiao.expression.JBinaryExpression;
+import com.github.paohaijiao.expression.JExpression;
+import com.github.paohaijiao.expression.JLogicalExpression;
 import com.github.paohaijiao.factory.JDataSetJoinerStrategy;
 import com.github.paohaijiao.param.JContext;
 import com.github.paohaijiao.parser.JQuickSQLBaseVisitor;
@@ -58,6 +66,8 @@ public class JQuikSQLCoreVisitor extends JQuickSQLBaseVisitor {
     protected JEngineEnums engine=JEngineEnums.LAMBDA;
 
     protected JDataSetHolder dataSetHolder=new JDataSetHolder();
+
+    protected JConsole console=new JConsole();
 
     public void registerDataSet(String tableName, JDataSet dataSet) {
         tableRegistry.put(tableName, dataSet);
@@ -129,5 +139,11 @@ public class JQuikSQLCoreVisitor extends JQuickSQLBaseVisitor {
             return ((Comparable) a).compareTo(b);
         }
         return a.toString().compareTo(b.toString());
+    }
+    protected JCondition convertExpressionToCondition(JExpression expression) {
+      JAssert.isTrue(expression instanceof JBinaryExpression,"the expression is not a JBinaryExpression");
+      JBinaryExpression compExpr = (JBinaryExpression) expression;
+      JComparisonOperator comparisonOperator=JComparisonOperator.symbolOf(compExpr.getOperator().getSymbol());
+      return new JComparisonCondition(compExpr.getLeft(), comparisonOperator, compExpr.getRight());
     }
 }

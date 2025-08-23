@@ -133,6 +133,19 @@ public class JSelectTest {
             System.out.println(row);
         }
     }
+    @Test
+    public void groupByHaving() {
+        String rule="select department, count(department) as cnt from orders group  by department having cnt>2 ";
+        System.out.println(rule);
+        JQuickSQLExecutor executor=new JQuickSQLExecutor();
+        JDataSetHolder dataSetContainer=new JDataSetHolder();
+        dataSetContainer.addDataSet("orders",createAggregationTestData());
+        executor.dataSet(dataSetContainer);
+        JDataSet dataSet=executor.execute(rule, JEngineEnums.LAMBDA);
+        for (JRow row : dataSet.getRows()) {
+            System.out.println(row);
+        }
+    }
 
 
 

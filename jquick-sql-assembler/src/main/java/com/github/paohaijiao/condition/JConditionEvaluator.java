@@ -6,6 +6,8 @@ import com.github.paohaijiao.expression.JLiteralExpression;
 
 import java.util.Map;
 import java.util.Objects;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 public class JConditionEvaluator {
 
@@ -19,7 +21,30 @@ public class JConditionEvaluator {
         }
         throw new UnsupportedOperationException("Unsupported condition type: " + condition.getType());
     }
-
+    private boolean patternMatch(String input, String pattern, boolean isRegex) {
+        if (isRegex) {
+            return input.matches(pattern);
+        } else {
+            String regex = pattern.replace("%", ".*").replace("_", ".");
+            return input.matches(regex);
+        }
+    }
+    private boolean evaluateStringComparison(JComparisonCondition cond, Map<String, Object> row) {
+        Object leftVal = evaluateExpression(cond.getLeft(), row);
+        Object rightVal = evaluateExpression(cond.getRight(), row);
+        String type=cond.getOperator().getSymbol();
+        switch (type) {
+            case "LIKE":
+                return likeMatch(leftVal.toString(), rightVal.toString(), null);
+            case "NOT LIKE":
+                return !likeMatch(leftVal.toString(), rightVal.toString(), null);
+            case "REGEXP":
+            case "RLIKE":
+                return regexpMatch(leftVal.toString(), rightVal.toString(), false);
+           default:
+                throw new UnsupportedOperationException("Unsupported operator: " + cond.getOperator());
+        }
+    }
     private boolean evaluateComparison(JComparisonCondition cond, Map<String, Object> row) {
         Object leftVal = evaluateExpression(cond.getLeft(), row);
         Object rightVal = evaluateExpression(cond.getRight(), row);
@@ -34,7 +59,6 @@ public class JConditionEvaluator {
                 throw new UnsupportedOperationException("Unsupported operator: " + cond.getOperator());
         }
     }
-
     private boolean evaluateLogical(JLogicalCondition cond, Map<String, Object> row) {
         switch (cond.getType()) {
             case AND:
@@ -74,5 +98,47 @@ public class JConditionEvaluator {
             return ((JLiteralExpression) expr).getValue();
         }
         throw new UnsupportedOperationException("Unsupported expression type: " + expr.getType());
+    }
+    public boolean likeMatch(String input, String pattern, Character escapeChar) {
+        StringBuilder regex = new StringBuilder();
+        boolean escaping = false;
+        for (int i = 0; i < pattern.length(); i++) {
+            char c = pattern.charAt(i);
+            if (escaping) {
+                regex.append(Pattern.quote(String.valueOf(c)));
+                escaping = false;
+            } else {
+                if (escapeChar != null && c == escapeChar) {
+                    escaping = true;
+                    continue;
+                }
+                switch (c) {
+                    case '%':
+                        regex.append(".*");
+                        break;
+                    case '_':
+                        regex.append(".");
+                        break;
+                    default:
+                        regex.append(Pattern.quote(String.valueOf(c)));
+                }
+            }
+        }
+        String regexPattern = "^" + regex + "$";
+        return input.matches(regexPattern);
+    }
+
+    public boolean regexpMatch(String input, String pattern, boolean caseSensitive) {
+        String javaPattern = pattern
+                .replace("[[:<:]]", "\\b")
+                .replace("[[:>:]]", "\\b");
+        int flags = caseSensitive ? 0 : Pattern.CASE_INSENSITIVE;
+        Pattern compiledPattern;
+        try {
+            compiledPattern = Pattern.compile(javaPattern, flags);
+        } catch (PatternSyntaxException e) {
+            throw new RuntimeException("Invalid regex pattern: " + pattern, e);
+        }
+        return compiledPattern.matcher(input).find();
     }
 }

@@ -16,7 +16,6 @@
 package com.github.paohaijiao.expression;
 
 import com.github.paohaijiao.enums.JExpressionType;
-import com.github.paohaijiao.window.JWindowSpecification;
 import lombok.Data;
 
 import java.util.List;

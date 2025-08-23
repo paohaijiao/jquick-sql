@@ -17,8 +17,8 @@ package com.github.paohaijiao.visitor;
 
 import com.github.paohaijiao.enums.JLogicalOperator;
 import com.github.paohaijiao.exception.JAssert;
+import com.github.paohaijiao.expression.JExpression;
 import com.github.paohaijiao.expression.JFunctionCallExpression;
-import com.github.paohaijiao.model.JFunctionCallModel;
 import com.github.paohaijiao.parser.JQuickSQLParser;
 
 import java.util.ArrayList;
@@ -33,10 +33,10 @@ import java.util.List;
  */
 public class JQuikSQLExpressionStatementVisitor extends JQuikSQLValueStatementVisitor{
     @Override
-    public List<Object> visitExpressions(JQuickSQLParser.ExpressionsContext ctx) {
-        List<Object> results = new ArrayList<>();
+    public List<JExpression> visitExpressions(JQuickSQLParser.ExpressionsContext ctx) {
+        List<JExpression> results = new ArrayList<>();
         for (JQuickSQLParser.ExpressionContext exprCtx : ctx.expression()) {
-            results.add(visit(exprCtx));
+            results.add((JExpression)visit(exprCtx));
         }
         return results;
     }

@@ -15,13 +15,10 @@
  */
 package com.github.paohaijiao.executor;
 
-import com.github.paohaijiao.config.JQuickSQLConfig;
 import com.github.paohaijiao.dataset.JDataSet;
 import com.github.paohaijiao.enums.JEngineEnums;
-import com.github.paohaijiao.param.JContext;
 import com.github.paohaijiao.parser.JQuickSQLLexer;
 import com.github.paohaijiao.parser.JQuickSQLParser;
-import com.github.paohaijiao.support.JDataSetHolder;
 import com.github.paohaijiao.visitor.JQuikSQLCommonVisitor;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;

@@ -15,15 +15,18 @@
  */
 package com.github.paohaijiao.visitor;
 
+import com.github.paohaijiao.condition.JCondition;
 import com.github.paohaijiao.dataset.JDataSet;
 import com.github.paohaijiao.enums.JSortDirection;
 import com.github.paohaijiao.enums.JoinType;
 import com.github.paohaijiao.exception.JAssert;
-import com.github.paohaijiao.expression.*;
+import com.github.paohaijiao.expression.JColumnExpression;
+import com.github.paohaijiao.expression.JExpression;
+import com.github.paohaijiao.expression.JFunctionCallExpression;
+import com.github.paohaijiao.expression.JOrderByExpression;
 import com.github.paohaijiao.factory.JDataSetJoinerFactory;
 import com.github.paohaijiao.factory.JDataSetJoinerStrategy;
-import com.github.paohaijiao.func.JoinCondition;
-import com.github.paohaijiao.function.JAggregateFunction;
+import com.github.paohaijiao.join.JoinCondition;
 import com.github.paohaijiao.function.JAggregateFunctionFactory;
 import com.github.paohaijiao.model.JLimitModel;
 import com.github.paohaijiao.model.JSelectElementModel;
@@ -32,7 +35,6 @@ import com.github.paohaijiao.model.JoinPartModel;
 import com.github.paohaijiao.parser.JQuickSQLParser;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * packageName com.github.paohaijiao.visitor
@@ -64,6 +66,10 @@ public class JQuikSQLSelectStatementVisitor extends JQuikSQLFunctionStatementVis
             List<JSelectElementModel> aggreateFunction=selectElementsResultModel.getAggregateFunction();
             aggreateFunction.forEach(e->{
                 JFunctionCallExpression aggregateFunction=(JFunctionCallExpression)e.getExpression();
+                List<JExpression> list=aggregateFunction.getArguments();
+                JAssert.isTrue(!list.isEmpty(),"the aggregate function must have arguments");
+                JColumnExpression columnExpression=(JColumnExpression)list.get(0);
+                JAssert.notNull(e.getAlias()," the aggregate [ "+aggregateFunction.getFunctionName()+"("+columnExpression.getColumnName()+")"+" ] function must own the alias column ");
                 aggregations.put(e.getAlias(), aggregateFunction);
             });
             List<String> groupByField=new ArrayList<>();
@@ -75,7 +81,15 @@ public class JQuikSQLSelectStatementVisitor extends JQuikSQLFunctionStatementVis
                 }
             });
             jDataSet=strategy.aggregate(jDataSet,groupByField,aggregations);
+            if(ctx.havingClause()!=null){
+                List<JExpression> expressionList = visitHavingClause(ctx.havingClause());
+                for (JExpression expression:expressionList){
+                    JCondition condition= convertExpressionToCondition(expression);
+                    jDataSet=strategy.filter(jDataSet,condition);
+                }
+            }
         }
+
         if(ctx.orderByClause()!=null){
             List<JOrderByExpression>  orderByExpressions= visitOrderByClause(ctx.orderByClause());
             jDataSet=strategy.sort(jDataSet,orderByExpressions);
@@ -88,14 +102,15 @@ public class JQuikSQLSelectStatementVisitor extends JQuikSQLFunctionStatementVis
     }
     @Override
     public List<JExpression> visitGroupByClause(JQuickSQLParser.GroupByClauseContext ctx) {
-        List<JExpression> list=new ArrayList<>();
-        for (int i = 0; i < ctx.expression().size(); i++) {
-            Object object= visit(ctx.expression().get(i));
-           JAssert.isTrue(object instanceof JExpression," the group by expression require String type");
-            list.add((JExpression)object);
-        }
-        return list;
+        JAssert.notNull(ctx.expressions()," the expressions require not null");
+        return visitExpressions(ctx.expressions());
     }
+    @Override
+    public List<JExpression> visitHavingClause(JQuickSQLParser.HavingClauseContext ctx) {
+        JAssert.notNull(ctx.expressions()," the expressions require not null");
+        return visitExpressions(ctx.expressions());
+    }
+
 
     @Override
     public JDataSet visitFromClause(JQuickSQLParser.FromClauseContext ctx) {

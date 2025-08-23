@@ -16,15 +16,7 @@ public enum JBinaryOperator {
 
     OR("OR"),
 
-    CONCAT("||"),
-
-    IS("IS"),
-
-    NOT("NOT"),
-
-    LIKE("LIKE"),
-
-    NOT_LIKE("NOT LIKE");
+    CONCAT("||");
 
 
     private final String symbol;
@@ -35,5 +27,14 @@ public enum JBinaryOperator {
 
     public String getSymbol() {
         return symbol;
+    }
+
+    public static JBinaryOperator of(String symbol) {
+        for (JBinaryOperator op : values()) {
+            if (op.getSymbol().equals(symbol)) {
+                return op;
+            }
+        }
+        throw new IllegalArgumentException(symbol + " is not a valid binary operator");
     }
 }

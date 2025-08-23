@@ -15,11 +15,9 @@
  */
 package com.github.paohaijiao.visitor;
 
-import com.github.paohaijiao.enums.JFunctionCallType;
 import com.github.paohaijiao.exception.JAssert;
 import com.github.paohaijiao.expression.JExpression;
 import com.github.paohaijiao.expression.JFunctionCallExpression;
-import com.github.paohaijiao.model.JFunctionCallModel;
 import com.github.paohaijiao.parser.JQuickSQLParser;
 
 import java.util.ArrayList;
@@ -53,42 +51,6 @@ public class JQuikSQLFunctionStatementVisitor extends JQuikSQLPredictStatementVi
     }
 
     @Override
-    public Object visitBinaryComparisonPredicate(
-            JQuickSQLParser.BinaryComparisonPredicateContext ctx) {
-        Object left = visit(ctx.predicate(0));
-        Object right = visit(ctx.predicate(1));
-        String operator = ctx.comparisonOperator().getText();
-        if (left == null || right == null) {
-            return handleNullComparison(operator, left, right);
-        }
-        switch (operator) {
-            case "=":
-                return compareValues(left, right) == 0;
-            case "<>":
-            case "!=":
-                return compareValues(left, right) != 0;
-            case "<":
-                return compareValues(left, right) < 0;
-            case "<=":
-                return compareValues(left, right) <= 0;
-            case ">":
-                return compareValues(left, right) > 0;
-            case ">=":
-                return compareValues(left, right) >= 0;
-            case "<=>":
-                return Objects.equals(left, right);
-            case "LIKE":
-                return likeMatch(left.toString(), right.toString(), null);
-            case "NOT LIKE":
-                return !likeMatch(left.toString(), right.toString(), null);
-            case "REGEXP":
-            case "RLIKE":
-                return regexpMatch(left.toString(), right.toString(), false);
-            default:
-                throw new UnsupportedOperationException("Unsupported operator: " + operator);
-        }
-    }
-    @Override
     public JFunctionCallExpression visitFunctionCall(JQuickSQLParser.FunctionCallContext ctx) {
         JAssert.notNull(ctx.uid(),"uid must not be null");
         String funcName = ctx.uid().getText();
@@ -98,63 +60,6 @@ public class JQuikSQLFunctionStatementVisitor extends JQuikSQLPredictStatementVi
         }
         JFunctionCallExpression jFunctionCallModel = new JFunctionCallExpression(funcName,args);
         return jFunctionCallModel;
-    }
-
-
-    private Boolean handleNullComparison(String operator, Object left, Object right) {
-        if ("<=>".equals(operator)) {
-            return left == right; // MySQL特殊处理
-        }
-        if (operator.equalsIgnoreCase("IS")) {
-            return left == null && right == null;
-        }
-        if (operator.equalsIgnoreCase("IS NOT")) {
-            return left != null || right != null;
-        }
-        return null;
-    }
-
-    public boolean likeMatch(String input, String pattern, Character escapeChar) {
-        StringBuilder regex = new StringBuilder();
-        boolean escaping = false;
-        for (int i = 0; i < pattern.length(); i++) {
-            char c = pattern.charAt(i);
-            if (escaping) {
-                regex.append(Pattern.quote(String.valueOf(c)));
-                escaping = false;
-            } else {
-                if (escapeChar != null && c == escapeChar) {
-                    escaping = true;
-                    continue;
-                }
-                switch (c) {
-                    case '%':
-                        regex.append(".*");
-                        break;
-                    case '_':
-                        regex.append(".");
-                        break;
-                    default:
-                        regex.append(Pattern.quote(String.valueOf(c)));
-                }
-            }
-        }
-        String regexPattern = "^" + regex + "$";
-        return input.matches(regexPattern);
-    }
-
-    public boolean regexpMatch(String input, String pattern, boolean caseSensitive) {
-        String javaPattern = pattern
-                .replace("[[:<:]]", "\\b")
-                .replace("[[:>:]]", "\\b");
-        int flags = caseSensitive ? 0 : Pattern.CASE_INSENSITIVE;
-        Pattern compiledPattern;
-        try {
-            compiledPattern = Pattern.compile(javaPattern, flags);
-        } catch (PatternSyntaxException e) {
-            throw new RuntimeException("Invalid regex pattern: " + pattern, e);
-        }
-        return compiledPattern.matcher(input).find();
     }
 
 

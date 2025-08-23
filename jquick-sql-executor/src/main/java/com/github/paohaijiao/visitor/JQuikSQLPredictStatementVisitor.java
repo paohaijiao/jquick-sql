@@ -15,7 +15,10 @@
  */
 package com.github.paohaijiao.visitor;
 
+import com.github.paohaijiao.enums.JBinaryOperator;
 import com.github.paohaijiao.exception.JAssert;
+import com.github.paohaijiao.expression.JBinaryExpression;
+import com.github.paohaijiao.expression.JExpression;
 import com.github.paohaijiao.parser.JQuickSQLParser;
 
 import java.util.ArrayList;
@@ -45,38 +48,12 @@ public class JQuikSQLPredictStatementVisitor extends JQuikSQLExpressionStatement
     }
 
     @Override
-    public Object visitBinaryComparisonPredicate(JQuickSQLParser.BinaryComparisonPredicateContext ctx) {
-        Object left = visit(ctx.predicate(0));
-        Object right = visit(ctx.predicate(1));
+    public JBinaryExpression visitBinaryComparisonPredicate(JQuickSQLParser.BinaryComparisonPredicateContext ctx) {
+        JExpression left = (JExpression)visit(ctx.predicate(0));
+        JExpression right = (JExpression)visit(ctx.predicate(1));
         String operator = ctx.comparisonOperator().getText();
-        if (left == null || right == null) {
-            return handleNullComparison(operator, left, right);
-        }
-        switch (operator) {
-            case "=":
-            case "<=>":
-                return compareValues(left, right) == 0;
-            case "<>":
-            case "!=":
-                return compareValues(left, right) != 0;
-            case ">":
-                return compareValues(left, right) > 0;
-            case "<":
-                return compareValues(left, right) < 0;
-            case ">=":
-                return compareValues(left, right) >= 0;
-            case "<=":
-                return compareValues(left, right) <= 0;
-            case "LIKE":
-                return patternMatch(left.toString(), right.toString(), false);
-            case "NOT LIKE":
-                return !patternMatch(left.toString(), right.toString(), false);
-            case "REGEXP":
-            case "RLIKE":
-                return patternMatch(left.toString(), right.toString(), true);
-            default:
-                throw new UnsupportedOperationException("Unsupported operator: " + operator);
-        }
+        JBinaryExpression expression=new JBinaryExpression(left,JBinaryOperator.of(operator),right);
+        return expression;
     }
 
     @Override
@@ -217,13 +194,6 @@ public class JQuikSQLPredictStatementVisitor extends JQuikSQLExpressionStatement
         return null;
     }
 
-    private boolean patternMatch(String input, String pattern, boolean isRegex) {
-        if (isRegex) {
-            return input.matches(pattern);
-        } else {
-            String regex = pattern.replace("%", ".*").replace("_", ".");
-            return input.matches(regex);
-        }
-    }
+
 
 }
