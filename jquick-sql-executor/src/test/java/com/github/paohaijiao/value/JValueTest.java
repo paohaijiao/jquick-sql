@@ -75,17 +75,6 @@ public class JValueTest {
         System.out.println(object);
     }
     @Test
-    public void tableName() {
-        String rule="public.t_event";
-        JQuickSQLLexer lexer = new JQuickSQLLexer(CharStreams.fromString(rule));
-        CommonTokenStream tokens = new CommonTokenStream(lexer);
-        JQuickSQLParser parser = new JQuickSQLParser(tokens);
-        JQuickSQLParser.TableNameContext tree = parser.tableName();
-        JQuikSQLCommonVisitor tv = new JQuikSQLCommonVisitor();
-        Object object = tv.visit(tree);
-        System.out.println(object);
-    }
-    @Test
     public void columnName() {
         String rule="public.t_event.id";
         JQuickSQLLexer lexer = new JQuickSQLLexer(CharStreams.fromString(rule));

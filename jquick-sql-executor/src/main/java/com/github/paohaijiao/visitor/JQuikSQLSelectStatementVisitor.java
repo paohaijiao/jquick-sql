@@ -64,23 +64,23 @@ public class JQuikSQLSelectStatementVisitor extends JQuikSQLFilterStatementVisit
                 String rightColumn =joinPartModel.getRight().getColumnName();
                 JoinCondition condition = JoinCondition.equals(leftColumn, rightColumn);
                 if(joinType==JoinType.INNER){
-                    joinerStrategy.innerJoin(jDataSet,rightDataSet,condition);
+                    jDataSet= strategy.innerJoin(jDataSet,rightDataSet,condition);
                 }else if(joinType==JoinType.LEFT){
-                    joinerStrategy.leftJoin(jDataSet,rightDataSet,condition);
+                    jDataSet=  strategy.leftJoin(jDataSet,rightDataSet,condition);
                 }else if(joinType==JoinType.RIGHT){
                     JAssert.throwNewException("the join type require not supported");
                 }else if(joinType==JoinType.CROSS){
-                    joinerStrategy.crossJoin(jDataSet,rightDataSet);
+                    jDataSet=  strategy.crossJoin(jDataSet,rightDataSet);
                 }else if(joinType==JoinType.FULL){
-                    joinerStrategy.fullOuterJoin(jDataSet,rightDataSet,condition);
+                    jDataSet=  strategy.fullOuterJoin(jDataSet,rightDataSet,condition);
                 }else if(joinType==JoinType.NATURAL){
-                    joinerStrategy.naturalJoin(jDataSet,rightDataSet);
+                    jDataSet=  strategy.naturalJoin(jDataSet,rightDataSet);
                 }else if(joinType==JoinType.UNION){
-                    joinerStrategy.union(jDataSet,rightDataSet);
+                    jDataSet=   strategy.union(jDataSet,rightDataSet);
                 }else if(joinType==JoinType.INTERSECT){
-                    joinerStrategy.intersect(jDataSet,rightDataSet);
+                    jDataSet=  strategy.intersect(jDataSet,rightDataSet);
                 }else if(joinType==JoinType.MINUS){
-                    joinerStrategy.minus(jDataSet,rightDataSet);
+                    jDataSet=  strategy.minus(jDataSet,rightDataSet);
                 }
             }
         }

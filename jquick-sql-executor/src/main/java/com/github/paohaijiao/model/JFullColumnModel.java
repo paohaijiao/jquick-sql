@@ -31,5 +31,4 @@ public class JFullColumnModel {
 
     private String tableName;
 
-    private String schemaName;
 }

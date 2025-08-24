@@ -172,16 +172,6 @@ public interface JQuickSQLListener extends ParseTreeListener {
 	 */
 	void exitJoinType(JQuickSQLParser.JoinTypeContext ctx);
 	/**
-	 * Enter a parse tree produced by {@link JQuickSQLParser#groupByItem}.
-	 * @param ctx the parse tree
-	 */
-	void enterGroupByItem(JQuickSQLParser.GroupByItemContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link JQuickSQLParser#groupByItem}.
-	 * @param ctx the parse tree
-	 */
-	void exitGroupByItem(JQuickSQLParser.GroupByItemContext ctx);
-	/**
 	 * Enter a parse tree produced by {@link JQuickSQLParser#orderByClause}.
 	 * @param ctx the parse tree
 	 */
@@ -659,16 +649,6 @@ public interface JQuickSQLListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitFullColumnName(JQuickSQLParser.FullColumnNameContext ctx);
-	/**
-	 * Enter a parse tree produced by {@link JQuickSQLParser#tableName}.
-	 * @param ctx the parse tree
-	 */
-	void enterTableName(JQuickSQLParser.TableNameContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link JQuickSQLParser#tableName}.
-	 * @param ctx the parse tree
-	 */
-	void exitTableName(JQuickSQLParser.TableNameContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link JQuickSQLParser#dottedId}.
 	 * @param ctx the parse tree

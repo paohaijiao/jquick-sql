@@ -209,18 +209,6 @@ public class JQuickSQLBaseListener implements JQuickSQLListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void enterGroupByItem(JQuickSQLParser.GroupByItemContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void exitGroupByItem(JQuickSQLParser.GroupByItemContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
 	@Override public void enterOrderByClause(JQuickSQLParser.OrderByClauseContext ctx) { }
 	/**
 	 * {@inheritDoc}
@@ -744,18 +732,6 @@ public class JQuickSQLBaseListener implements JQuickSQLListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitFullColumnName(JQuickSQLParser.FullColumnNameContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void enterTableName(JQuickSQLParser.TableNameContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void exitTableName(JQuickSQLParser.TableNameContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *

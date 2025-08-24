@@ -61,7 +61,6 @@ public class JSelectTest {
                 new JColumnMeta("years_of_service", Integer.class, "hr"),
                 new JColumnMeta("is_manager", Boolean.class, "hr")
         );
-
         List<JRow> rows = Arrays.asList(
                 createEmployeeRow("Engineering", "Alice", 8500.0, 3, true),
                 createEmployeeRow("Engineering", "Bob", 7500.0, 2, false),
@@ -146,8 +145,4 @@ public class JSelectTest {
             System.out.println(row);
         }
     }
-
-
-
-
 }

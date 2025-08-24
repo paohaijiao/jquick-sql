@@ -52,19 +52,9 @@ public class JQuikSQLValueStatementVisitor extends JQuikSQLCoreVisitor{
     }
 
     @Override
-    public Object visitDottedId(JQuickSQLParser.DottedIdContext ctx) {
-        return visit(ctx.uid());
-    }
-    @Override
-    public JFullColumnModel visitTableName(JQuickSQLParser.TableNameContext ctx) {
-        JFullColumnModel jFullColumnModel = new JFullColumnModel();
-        if(ctx.schema!=null){
-            jFullColumnModel.setSchemaName(ctx.schema.getText());
-        }
-        if(ctx.table!=null){
-            jFullColumnModel.setTableName(ctx.table.getText());
-        }
-        return jFullColumnModel;
+    public String visitDottedId(JQuickSQLParser.DottedIdContext ctx) {
+        JAssert.notNull(ctx.uid(),"variable not null");
+        return ctx.uid().getText();
     }
 
 
@@ -141,26 +131,16 @@ public class JQuikSQLValueStatementVisitor extends JQuikSQLCoreVisitor{
     public JMathOperator visitMathOperator(JQuickSQLParser.MathOperatorContext ctx) {
         return JMathOperator.codeOf(ctx.getText());
     }
-
-
-
     @Override
     public JFullColumnModel visitFullColumnName(JQuickSQLParser.FullColumnNameContext ctx) {
         String columnPath =ctx.getText();
         String[] parts = columnPath.split("\\.");
         JFullColumnModel fullColumnModel = new JFullColumnModel();
-        if(parts.length==1){
-            fullColumnModel.setColumnName(parts[0]);
-        }else if(parts.length==2){
-            fullColumnModel.setColumnName(parts[0]);
-            fullColumnModel.setTableName(parts[1]);
-        } else if (parts.length==3) {
-            fullColumnModel.setColumnName(parts[0]);
-            fullColumnModel.setTableName(parts[1]);
-            fullColumnModel.setSchemaName(parts[2]);
+        if(ctx.dottedId()!=null){
+            fullColumnModel.setTableName(ctx.uid().getText());
+            fullColumnModel.setColumnName(visitDottedId(ctx.dottedId()));
         }else{
-            JAssert.throwNewException("Invalid column name: " + columnPath);
-            return null;
+            fullColumnModel.setColumnName(ctx.uid().getText());
         }
         return fullColumnModel;
     }

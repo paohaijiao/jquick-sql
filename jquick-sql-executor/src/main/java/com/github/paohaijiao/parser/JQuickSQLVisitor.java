@@ -109,12 +109,6 @@ public interface JQuickSQLVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitJoinType(JQuickSQLParser.JoinTypeContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link JQuickSQLParser#groupByItem}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitGroupByItem(JQuickSQLParser.GroupByItemContext ctx);
-	/**
 	 * Visit a parse tree produced by {@link JQuickSQLParser#orderByClause}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
@@ -397,12 +391,6 @@ public interface JQuickSQLVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitFullColumnName(JQuickSQLParser.FullColumnNameContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link JQuickSQLParser#tableName}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitTableName(JQuickSQLParser.TableNameContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link JQuickSQLParser#dottedId}.
 	 * @param ctx the parse tree
