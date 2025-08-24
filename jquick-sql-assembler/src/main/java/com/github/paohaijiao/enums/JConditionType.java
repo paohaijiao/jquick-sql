@@ -20,6 +20,8 @@ public enum JConditionType {
 
     REGEX,
 
+    ATOM,
+
     IS_NULL
 
 }

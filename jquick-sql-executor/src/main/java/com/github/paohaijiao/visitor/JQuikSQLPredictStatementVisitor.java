@@ -17,16 +17,17 @@ package com.github.paohaijiao.visitor;
 
 import com.github.paohaijiao.condition.*;
 import com.github.paohaijiao.dataset.JDataSet;
-import com.github.paohaijiao.enums.JBinaryOperator;
+import com.github.paohaijiao.enums.JComparisonOperator;
 import com.github.paohaijiao.exception.JAssert;
-import com.github.paohaijiao.expression.*;
+import com.github.paohaijiao.expression.JColumnExpression;
+import com.github.paohaijiao.expression.JExpression;
+import com.github.paohaijiao.expression.JLiteralExpression;
 import com.github.paohaijiao.parser.JQuickSQLParser;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.regex.PatternSyntaxException;
 
 /**
  * packageName com.github.paohaijiao.visitor
@@ -37,11 +38,11 @@ import java.util.regex.PatternSyntaxException;
  */
 public class JQuikSQLPredictStatementVisitor extends JQuikSQLExpressionStatementVisitor {
     @Override
-    public JExpression visitExpressionAtomPredicate(JQuickSQLParser.ExpressionAtomPredicateContext ctx) {
+    public JCondition visitExpressionAtomPredicate(JQuickSQLParser.ExpressionAtomPredicateContext ctx) {
         JAssert.notNull(ctx.expressionAtom(), "expressionAtom not null");
         Object value=visit(ctx.expressionAtom());
         JAssert.isTrue(value instanceof JExpression,"the value must to be expression");
-        return (JExpression)value;
+        return new JExpressionAtomPredicateCondition((JExpression)value);
     }
 
     @Override
@@ -53,11 +54,11 @@ public class JQuikSQLPredictStatementVisitor extends JQuikSQLExpressionStatement
     }
 
     @Override
-    public JBinaryExpression visitBinaryComparisonPredicate(JQuickSQLParser.BinaryComparisonPredicateContext ctx) {
+    public JCondition visitBinaryComparisonPredicate(JQuickSQLParser.BinaryComparisonPredicateContext ctx) {
         JExpression left = (JExpression)visit(ctx.predicate(0));
         JExpression right = (JExpression)visit(ctx.predicate(1));
         String operator = ctx.comparisonOperator().getText();
-        JBinaryExpression expression=new JBinaryExpression(left,JBinaryOperator.of(operator),right);
+        JComparisonCondition expression=new JComparisonCondition(left, JComparisonOperator.symbolOf(operator),right);
         return expression;
     }
 

@@ -21,7 +21,6 @@ import com.github.paohaijiao.enums.JLogicalOperator;
 import com.github.paohaijiao.enums.JMathOperator;
 import com.github.paohaijiao.enums.JUnaryOperator;
 import com.github.paohaijiao.exception.JAssert;
-import com.github.paohaijiao.expression.JColumnExpression;
 import com.github.paohaijiao.expression.JLiteralExpression;
 import com.github.paohaijiao.model.JFullColumnModel;
 import com.github.paohaijiao.parser.JQuickSQLParser;
@@ -144,12 +143,7 @@ public class JQuikSQLValueStatementVisitor extends JQuikSQLCoreVisitor{
     }
 
 
-    @Override
-    public JColumnExpression visitFullColumnNameExpressionAtom(JQuickSQLParser.FullColumnNameExpressionAtomContext ctx) {
-        String  column= ctx.fullColumnName().getText();
-        JColumnExpression columnExpression = new JColumnExpression(column);
-        return columnExpression;
-    }
+
     @Override
     public JFullColumnModel visitFullColumnName(JQuickSQLParser.FullColumnNameContext ctx) {
         String columnPath =ctx.getText();

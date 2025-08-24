@@ -15,14 +15,11 @@
  */
 package com.github.paohaijiao.visitor;
 
-import com.github.paohaijiao.condition.JCondition;
-import com.github.paohaijiao.condition.JNotCondtion;
 import com.github.paohaijiao.enums.JLogicalOperator;
 import com.github.paohaijiao.exception.JAssert;
 import com.github.paohaijiao.expression.JColumnExpression;
 import com.github.paohaijiao.expression.JExpression;
-import com.github.paohaijiao.expression.JFunctionCallExpression;
-import com.github.paohaijiao.expression.JLiteralExpression;
+import com.github.paohaijiao.expression.JNotExpression;
 import com.github.paohaijiao.parser.JQuickSQLParser;
 
 import java.util.ArrayList;
@@ -35,7 +32,7 @@ import java.util.List;
  * @version 1.0.0
  * @since 2025/8/11
  */
-public class JQuikSQLExpressionStatementVisitor extends JQuikSQLValueStatementVisitor{
+public class JQuikSQLExpressionStatementVisitor extends JQuikSQLExpressionStatementAtomVisitor{
     @Override
     public List<JExpression> visitExpressions(JQuickSQLParser.ExpressionsContext ctx) {
         List<JExpression> results = new ArrayList<>();
@@ -45,15 +42,24 @@ public class JQuikSQLExpressionStatementVisitor extends JQuikSQLValueStatementVi
         return results;
     }
     @Override
-    public JCondition  visitNotExpression(JQuickSQLParser.NotExpressionContext ctx) {
-        Object columnExpression = visit(ctx.expression());
-        JAssert.isTrue(columnExpression instanceof JColumnExpression,"the expression is not a condition");
-        return new JNotCondtion((JColumnExpression)columnExpression);
+    public JExpression visitParenExpression(JQuickSQLParser.ParenExpressionContext ctx) {
+        JAssert.notNull(ctx.expression(),"parenExpression must not be null");
+        Object value=visit(ctx.expression());
+        JAssert.isTrue( value instanceof  JExpression,"parenExpression must not be instance of JExpression");
+        return (JExpression)value;
     }
     @Override
-    public JCondition visitLogicalExpression(JQuickSQLParser.LogicalExpressionContext ctx) {
+    public JExpression  visitNotExpression(JQuickSQLParser.NotExpressionContext ctx) {
+        Object columnExpression = visit(ctx.expression());
+        JAssert.isTrue(columnExpression instanceof JColumnExpression,"the expression is not a condition");
+        return new JNotExpression((JColumnExpression)columnExpression);
+    }
+    @Override
+    public JExpression visitLogicalExpression(JQuickSQLParser.LogicalExpressionContext ctx) {
         Object left = visit(ctx.expression(0));
+        JAssert.isTrue(left instanceof JExpression,"the expression is not a condition");
         Object right = visit(ctx.expression(1));
+        JAssert.isTrue(right instanceof JExpression,"the expression is not a condition");
         JLogicalOperator operator = visitLogicalOperator(ctx.logicalOperator());
         boolean leftBool = convertToBoolean(left);
         boolean rightBool = convertToBoolean(right);
@@ -70,129 +76,18 @@ public class JQuikSQLExpressionStatementVisitor extends JQuikSQLValueStatementVi
         JAssert.throwNewException("Unknown operator: " + operator);
         return null;
     }
+
     @Override
-    public Object visitPredicateExpression(JQuickSQLParser.PredicateExpressionContext ctx) {
+    public JExpression visitPredicateExpression(JQuickSQLParser.PredicateExpressionContext ctx) {
         JAssert.notNull(ctx.predicate(),"Predicate expression must not be null");
-        return visit(ctx.predicate());
+        Object value= visit(ctx.predicate());
+        JAssert.isTrue(value instanceof JExpression,"the expression is not a condition");
+        return (JExpression)value;
     }
     @Override
-    public Object visitSelectResult(JQuickSQLParser.SelectResultContext ctx) {
+    public JExpression visitSelectResult(JQuickSQLParser.SelectResultContext ctx) {
         JAssert.notNull(ctx.selectClause(),"select clause must not be null");
-       return  visitSelectClause(ctx.selectClause());
+        Object  value=visitSelectClause(ctx.selectClause());
+        return (JExpression)value;
     }
-    @Override
-    public JCondition visitParenExpression(JQuickSQLParser.ParenExpressionContext ctx) {
-        JAssert.notNull(ctx.expression(),"parenExpression must not be null");
-        Object value=visit(ctx.expression());
-        JAssert.isTrue( value instanceof  JCondition,"parenExpression must not be null");
-        return (JCondition)value;
-    }
-    @Override
-    public JLiteralExpression visitConstantExpressionAtom(JQuickSQLParser.ConstantExpressionAtomContext ctx) {
-        JAssert.notNull(ctx.constant(),"constant must not be null");
-        return visitConstant(ctx.constant());
-    }
-
-    @Override
-    public JFunctionCallExpression visitFunctionCallExpressionAtom(JQuickSQLParser.FunctionCallExpressionAtomContext ctx) {
-        JQuickSQLParser.FunctionCallContext funcCtx = ctx.functionCall();
-        return (JFunctionCallExpression)visit(funcCtx);
-    }
-
-    @Override
-    public List<Object> visitNestedExpressionAtom(JQuickSQLParser.NestedExpressionAtomContext ctx) {
-        List<Object> list=new ArrayList<>();
-        for (int i = 0; i < ctx.expression().size(); i++) {
-            Object object=visit(ctx.expression(i));
-            list.add(object);
-        }
-        return list;
-    }
-    @Override
-    public Object visitSubqueryExperssionAtom(JQuickSQLParser.SubqueryExperssionAtomContext ctx) {
-        return visit(ctx.selectStatement());
-    }
-    @Override
-    public JExpression visitMathExpressionAtom(JQuickSQLParser.MathExpressionAtomContext ctx) {
-        JAssert.isTrue(ctx.expressionAtom().size()==2,"mathExpressionAtom must have 2 expressions");
-        Object valLeft=visit(ctx.expressionAtom(0));
-        Object valRight=visit(ctx.expressionAtom(1));
-        JAssert.isTrue( valLeft instanceof JLiteralExpression,"expression[0] must is literal");
-        JAssert.isTrue( valRight instanceof JLiteralExpression,"expression[1] must is literal");
-        JLiteralExpression left = (JLiteralExpression)valLeft;
-        JLiteralExpression right = (JLiteralExpression)valRight;
-        String operator = ctx.mathOperator().getText();
-        if (left == null || right == null) {
-            return null;
-        }
-        Number leftNum = convertToNumber(left.getValue());
-        Number rightNum = convertToNumber(right.getValue());
-        switch (operator) {
-            case "+":
-                return JLiteralExpression.number(leftNum.doubleValue() + rightNum.doubleValue());
-            case "-":
-                return JLiteralExpression.number(leftNum.doubleValue() - rightNum.doubleValue());
-            case "*":
-                return JLiteralExpression.number(leftNum.doubleValue() * rightNum.doubleValue());
-            case "/":
-                if (rightNum.doubleValue() == 0) {
-                    throw new ArithmeticException("Division by zero");
-                }
-                return JLiteralExpression.number(leftNum.doubleValue() / rightNum.doubleValue());
-            case "--":
-                return JLiteralExpression.number(leftNum.doubleValue() - 1);
-            default:
-                throw new UnsupportedOperationException("Unknown operator: " + operator);
-        }
-    }
-    @Override
-    public Object visitUnaryExpressionAtom(JQuickSQLParser.UnaryExpressionAtomContext ctx) {
-        Object operand = visit(ctx.expressionAtom());
-        JAssert.isTrue( operand instanceof JLiteralExpression,"expression[1] must is literal");
-        String operator = ctx.unaryOperator().getText();
-        JLiteralExpression value=(JLiteralExpression)operand;
-        if (operand == null) {
-            return null;
-        }
-        switch (operator) {
-            case "+":
-                return convertToNumber(value.getValue());
-            case "-":
-                return negateNumber(value.getValue());
-            case "!":
-            case "NOT":
-                return logicalNot(value.getValue());
-            case "~":
-                return bitwiseNot(value.getValue());
-            default:
-                throw new UnsupportedOperationException("unknown unary operator: " + operator);
-        }
-    }
-    private Number negateNumber(Object value) {
-        Number num = convertToNumber(value);
-        if (num instanceof Integer) {
-            return -num.intValue();
-        } else if (num instanceof Long) {
-            return -num.longValue();
-        }
-        return -num.doubleValue();
-    }
-    private Boolean logicalNot(Object value) {
-        if (value instanceof Boolean) {
-            return !((Boolean) value);
-        } else if (value instanceof Number) {
-            return ((Number) value).doubleValue() == 0;
-        }
-        throw new RuntimeException("NOT operator requires boolean or numeric operand");
-    }
-    private Number bitwiseNot(Object value) {
-        if (value instanceof Integer) {
-            return ~((Integer) value);
-        } else if (value instanceof Long) {
-            return ~((Long) value);
-        }
-        throw new RuntimeException("Bitwise NOT requires integer operand");
-    }
-
-
 }

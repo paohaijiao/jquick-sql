@@ -10,7 +10,6 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
 public class JConditionEvaluator {
@@ -35,8 +34,18 @@ public class JConditionEvaluator {
         }else if (condition instanceof JNotCondtion) {
             return evaluateNot((JNotCondtion) condition, row);
         }
-
+        else if (condition instanceof JExpressionAtomPredicateCondition) {
+            return evaluateAtomPredicate((JExpressionAtomPredicateCondition) condition, row);
+        }
         throw new UnsupportedOperationException("Unsupported condition type: " + condition.getType());
+    }
+    private boolean evaluateAtomPredicate(JExpressionAtomPredicateCondition cond, Map<String, Object> row) {
+        Object val = evaluateExpression(cond.getExpression(), row);
+        if(val==null){
+            return false;
+        }
+        JAssert.isTrue(val instanceof Boolean,"the expression is not a boolean type");
+        return (Boolean)val;
     }
     private boolean evaluateExists(JExistsCondition cond, Map<String, Object> row) {
         return !cond.getDataSet().isEmpty();
