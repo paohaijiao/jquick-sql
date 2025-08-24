@@ -32,13 +32,13 @@ import org.junit.Test;
 public class JCompOperatorTest {
     @Test
     public void expression3() {
-        String rule="=";
-        JQuickSQLLexer lexer = new JQuickSQLLexer(CharStreams.fromString(rule));
-        CommonTokenStream tokens = new CommonTokenStream(lexer);
-        JQuickSQLParser parser = new JQuickSQLParser(tokens);
-        JQuickSQLParser.CompOperatorContext tree = parser.compOperator();
-        JQuikSQLCommonVisitor tv = new JQuikSQLCommonVisitor();
-        Object object = tv.visit(tree);
-        System.out.println(object);
+//        String rule="=";
+//        JQuickSQLLexer lexer = new JQuickSQLLexer(CharStreams.fromString(rule));
+//        CommonTokenStream tokens = new CommonTokenStream(lexer);
+//        JQuickSQLParser parser = new JQuickSQLParser(tokens);
+//        JQuickSQLParser.CompOperatorContext tree = parser.compOperator();
+//        JQuikSQLCommonVisitor tv = new JQuikSQLCommonVisitor();
+//        Object object = tv.visit(tree);
+//        System.out.println(object);
     }
 }

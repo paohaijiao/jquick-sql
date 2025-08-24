@@ -44,6 +44,27 @@ public class JConditionEvaluator {
         }
         throw new UnsupportedOperationException("Unsupported condition type: " + condition.getType());
     }
+    public  boolean evaluateCondition( JCondition condition, Map<String, Object> row) {
+        if (condition instanceof JAndCondition) {
+            JAndCondition andExpr = (JAndCondition) condition;
+            return andExpr.getConditions().stream()
+                    .allMatch(cond -> evaluateCondition( cond, row));
+        }
+        if (condition instanceof JOrCondition) {
+            JOrCondition orExpr = (JOrCondition) condition;
+            return orExpr.getConditions().stream()
+                    .anyMatch(cond -> evaluateCondition( cond, row));
+        }
+
+        if (condition instanceof JParenthesesCondition) {
+            JParenthesesCondition parenExpr = (JParenthesesCondition) condition;
+            if (parenExpr.hasInnerCondition()) {
+                return evaluateCondition(parenExpr.getInnerCondition(), row);
+            }
+            return false;
+        }
+        return evaluate(condition, row);
+    }
     private boolean evaluateParentheses(JParenthesesCondition cond, Map<String, Object> row) {
         if (!cond.hasInnerCondition()) {
             throw new IllegalArgumentException("Parentheses condition must have an inner condition");

@@ -38,11 +38,11 @@ import java.util.List;
  */
 public class JQuikSQLPredictStatementVisitor extends JQuikSQLFunctionStatementVisitor {
     @Override
-    public JCondition visitExpressionAtomPredicate(JQuickSQLParser.ExpressionAtomPredicateContext ctx) {
+    public JExpression visitExpressionAtomPredicate(JQuickSQLParser.ExpressionAtomPredicateContext ctx) {
         JAssert.notNull(ctx.expressionAtom(), "expressionAtom not null");
         Object value=visit(ctx.expressionAtom());
         JAssert.isTrue(value instanceof JExpression,"the value must to be expression");
-        return new JExpressionAtomPredicateCondition((JExpression)value);
+        return (JExpression)value;
     }
 
     @Override

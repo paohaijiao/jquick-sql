@@ -84,7 +84,6 @@ public class JQuikSQLSelectStatementVisitor extends JQuikSQLFilterStatementVisit
                 }
             }
         }
-
         if(ctx.whereClause()!=null){
             JCondition condition = visitWhereClause(ctx.whereClause());
             jDataSet=strategy.filter(jDataSet,condition);
@@ -117,11 +116,8 @@ public class JQuikSQLSelectStatementVisitor extends JQuikSQLFilterStatementVisit
             });
             jDataSet=strategy.aggregate(jDataSet,groupByField,aggregations);
             if(ctx.havingClause()!=null){
-                List<JExpression> expressionList = visitHavingClause(ctx.havingClause());
-                for (JExpression expression:expressionList){
-                    JCondition condition= convertExpressionToCondition(expression);
-                    jDataSet=strategy.filter(jDataSet,condition);
-                }
+                JCondition condition = visitHavingClause(ctx.havingClause());
+                jDataSet=strategy.filter(jDataSet,condition);
             }
         }
         if(ctx.orderByClause()!=null){
@@ -153,9 +149,9 @@ public class JQuikSQLSelectStatementVisitor extends JQuikSQLFilterStatementVisit
         return visitExpressions(ctx.expressions());
     }
     @Override
-    public List<JExpression> visitHavingClause(JQuickSQLParser.HavingClauseContext ctx) {
-        JAssert.notNull(ctx.expressions()," the expressions require not null");
-        return visitExpressions(ctx.expressions());
+    public JCondition visitHavingClause(JQuickSQLParser.HavingClauseContext ctx) {
+        JAssert.notNull(ctx.filterCondition()," the expressions require not null");
+        return visitFilterCondition(ctx.filterCondition());
     }
 
 
@@ -288,8 +284,8 @@ public class JQuikSQLSelectStatementVisitor extends JQuikSQLFilterStatementVisit
     }
     @Override
     public JCondition  visitWhereClause(JQuickSQLParser.WhereClauseContext ctx) {
-        JAssert.notNull(ctx.expression()," the expressions require not null");
-        return (JCondition)visit(ctx.expression());
+        JAssert.notNull(ctx.filterCondition()," the expressions require not null");
+        return (JCondition)visitFilterCondition(ctx.filterCondition());
     }
 
 }
