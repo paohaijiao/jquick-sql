@@ -54,6 +54,10 @@ public class JQuikSQLSelectStatementVisitor extends JQuikSQLFunctionStatementVis
             jDataSet=visitFromClause(ctx.fromClause());
         }
         JAssert.notNull(jDataSet," the from dataset require not null");
+        if(ctx.whereClause()!=null){
+            JCondition condition = visitWhereClause(ctx.whereClause());
+            jDataSet=strategy.filter(jDataSet,condition);
+        }
         JSelectElementsResultModel selectElementsResultModel=null;
         if(ctx.selectElements()!=null){
             selectElementsResultModel=visitSelectElements(ctx.selectElements());
@@ -296,8 +300,10 @@ public class JQuikSQLSelectStatementVisitor extends JQuikSQLFunctionStatementVis
         }
         return new JSelectElementModel(expression, alias, isAggregate, aggregateFunctionName);
     }
-
-
-
+    @Override
+    public JCondition  visitWhereClause(JQuickSQLParser.WhereClauseContext ctx) {
+        JAssert.notNull(ctx.expression()," the expressions require not null");
+        return (JCondition)visit(ctx.expression());
+    }
 
 }

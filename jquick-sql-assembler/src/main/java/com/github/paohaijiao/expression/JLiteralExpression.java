@@ -35,8 +35,6 @@ public class JLiteralExpression extends JExpression {
 
     private JDataType dataType;
 
-
-
     public JLiteralExpression(Object value, JDataType dataType) {
         this.type = JExpressionType.LITERAL;
         this.value = value;

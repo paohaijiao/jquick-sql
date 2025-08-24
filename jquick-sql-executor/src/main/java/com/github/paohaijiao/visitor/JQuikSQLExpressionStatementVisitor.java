@@ -15,8 +15,11 @@
  */
 package com.github.paohaijiao.visitor;
 
+import com.github.paohaijiao.condition.JCondition;
+import com.github.paohaijiao.condition.JNotCondtion;
 import com.github.paohaijiao.enums.JLogicalOperator;
 import com.github.paohaijiao.exception.JAssert;
+import com.github.paohaijiao.expression.JColumnExpression;
 import com.github.paohaijiao.expression.JExpression;
 import com.github.paohaijiao.expression.JFunctionCallExpression;
 import com.github.paohaijiao.expression.JLiteralExpression;
@@ -42,17 +45,13 @@ public class JQuikSQLExpressionStatementVisitor extends JQuikSQLValueStatementVi
         return results;
     }
     @Override
-    public Object visitNotExpression(JQuickSQLParser.NotExpressionContext ctx) {
-        Object childResult = visit(ctx.expression());
-        if (childResult instanceof Boolean) {
-            return !((Boolean) childResult);
-        } else {
-            JAssert.throwNewException("NOT operator can only be applied to boolean expressions");
-            return null;
-        }
+    public JCondition  visitNotExpression(JQuickSQLParser.NotExpressionContext ctx) {
+        Object columnExpression = visit(ctx.expression());
+        JAssert.isTrue(columnExpression instanceof JColumnExpression,"the expression is not a condition");
+        return new JNotCondtion((JColumnExpression)columnExpression);
     }
     @Override
-    public Object visitLogicalExpression(JQuickSQLParser.LogicalExpressionContext ctx) {
+    public JCondition visitLogicalExpression(JQuickSQLParser.LogicalExpressionContext ctx) {
         Object left = visit(ctx.expression(0));
         Object right = visit(ctx.expression(1));
         JLogicalOperator operator = visitLogicalOperator(ctx.logicalOperator());
@@ -82,9 +81,11 @@ public class JQuikSQLExpressionStatementVisitor extends JQuikSQLValueStatementVi
        return  visitSelectClause(ctx.selectClause());
     }
     @Override
-    public Object visitParenExpression(JQuickSQLParser.ParenExpressionContext ctx) {
+    public JCondition visitParenExpression(JQuickSQLParser.ParenExpressionContext ctx) {
         JAssert.notNull(ctx.expression(),"parenExpression must not be null");
-        return visit(ctx.expression());
+        Object value=visit(ctx.expression());
+        JAssert.isTrue( value instanceof  JCondition,"parenExpression must not be null");
+        return (JCondition)value;
     }
     @Override
     public JLiteralExpression visitConstantExpressionAtom(JQuickSQLParser.ConstantExpressionAtomContext ctx) {
@@ -147,22 +148,24 @@ public class JQuikSQLExpressionStatementVisitor extends JQuikSQLValueStatementVi
     @Override
     public Object visitUnaryExpressionAtom(JQuickSQLParser.UnaryExpressionAtomContext ctx) {
         Object operand = visit(ctx.expressionAtom());
+        JAssert.isTrue( operand instanceof JLiteralExpression,"expression[1] must is literal");
         String operator = ctx.unaryOperator().getText();
+        JLiteralExpression value=(JLiteralExpression)operand;
         if (operand == null) {
             return null;
         }
         switch (operator) {
             case "+":
-                return convertToNumber(operand);
+                return convertToNumber(value.getValue());
             case "-":
-                return negateNumber(operand);
+                return negateNumber(value.getValue());
             case "!":
             case "NOT":
-                return logicalNot(operand);
+                return logicalNot(value.getValue());
             case "~":
-                return bitwiseNot(operand);
+                return bitwiseNot(value.getValue());
             default:
-                throw new UnsupportedOperationException("Unknown unary operator: " + operator);
+                throw new UnsupportedOperationException("unknown unary operator: " + operator);
         }
     }
     private Number negateNumber(Object value) {

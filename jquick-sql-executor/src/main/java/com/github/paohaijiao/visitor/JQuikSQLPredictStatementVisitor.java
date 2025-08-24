@@ -15,12 +15,15 @@
  */
 package com.github.paohaijiao.visitor;
 
+import com.github.paohaijiao.condition.*;
+import com.github.paohaijiao.dataset.JDataSet;
 import com.github.paohaijiao.enums.JBinaryOperator;
 import com.github.paohaijiao.exception.JAssert;
-import com.github.paohaijiao.expression.JBinaryExpression;
-import com.github.paohaijiao.expression.JExpression;
+import com.github.paohaijiao.expression.*;
 import com.github.paohaijiao.parser.JQuickSQLParser;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.PatternSyntaxException;
@@ -34,17 +37,19 @@ import java.util.regex.PatternSyntaxException;
  */
 public class JQuikSQLPredictStatementVisitor extends JQuikSQLExpressionStatementVisitor {
     @Override
-    public Object visitExpressionAtomPredicate(JQuickSQLParser.ExpressionAtomPredicateContext ctx) {
+    public JExpression visitExpressionAtomPredicate(JQuickSQLParser.ExpressionAtomPredicateContext ctx) {
         JAssert.notNull(ctx.expressionAtom(), "expressionAtom not null");
-        return visit(ctx.expressionAtom());
+        Object value=visit(ctx.expressionAtom());
+        JAssert.isTrue(value instanceof JExpression,"the value must to be expression");
+        return (JExpression)value;
     }
 
     @Override
-    public Object visitIsNullPredicate(JQuickSQLParser.IsNullPredicateContext ctx) {
+    public JCondition visitIsNullPredicate(JQuickSQLParser.IsNullPredicateContext ctx) {
         Object value = visit(ctx.predicate());
+        JAssert.isTrue(value instanceof JColumnExpression,"the value must to be column expression");
         boolean isNot = ctx.NOT() != null;
-        boolean isNull = (value == null);
-        return isNot != isNull;
+        return new JIsNullCondition((JColumnExpression)value,isNot);
     }
 
     @Override
@@ -57,143 +62,98 @@ public class JQuikSQLPredictStatementVisitor extends JQuikSQLExpressionStatement
     }
 
     @Override
-    public Object visitBetweenPredicate(JQuickSQLParser.BetweenPredicateContext ctx) {
+    public JCondition visitBetweenPredicate(JQuickSQLParser.BetweenPredicateContext ctx) {
         Object target = visit(ctx.predicate(0));
+        JAssert.isTrue(target instanceof JColumnExpression,"the value must to be column expression");
         Object lowerBound = visit(ctx.predicate(1));
+        JAssert.isTrue(lowerBound instanceof JLiteralExpression,"the value must is literalExpression");
         Object upperBound = visit(ctx.predicate(2));
+        JAssert.isTrue(upperBound instanceof JLiteralExpression,"the value must is literalExpression");
         boolean isNot = ctx.NOT() != null;
         if (target == null || lowerBound == null || upperBound == null) {
             return null;
         }
-        boolean isBetween = compareValues(target, lowerBound) >= 0 && compareValues(target, upperBound) <= 0;
-        return isNot != isBetween;
+        return new JBetweenCondition((JColumnExpression)target,(JLiteralExpression)lowerBound,(JLiteralExpression)upperBound,isNot);
     }
 
     @Override
-    public Object visitInPredicate(JQuickSQLParser.InPredicateContext ctx) {
-        Object leftValue = visit(ctx.predicate());
+    public JCondition visitInPredicate(JQuickSQLParser.InPredicateContext ctx) {
+        Object target = visit(ctx.predicate());
+        JAssert.isTrue(target instanceof JColumnExpression,"the value must to be column expression");
         boolean isNot = ctx.NOT() != null;
-        if (leftValue == null) {
-            return null;
-        }
-        List<Object> rightValues;
+        List<Object> inList=new ArrayList<>();
         if (ctx.selectStatement() != null) {
-            rightValues = (List<Object>) visit(ctx.selectStatement());
+            inList = (List<Object>) visit(ctx.selectStatement());
+            for (Object item : inList) {
+                if (!isLiteral(item)) {
+                    throw new IllegalArgumentException("IN predicate requires scalar values, not complex objects");
+                }
+            }
         } else {
-            rightValues = new ArrayList<>();
             for (JQuickSQLParser.ExpressionContext exprCtx : ctx.expressions().expression()) {
-                rightValues.add(visit(exprCtx));
+                Object exp =  visit(exprCtx);
+                JAssert.isTrue(exp instanceof JLiteralExpression,"the value must to be literal expression");
+                JLiteralExpression literal=(JLiteralExpression)exp;
+                inList.add(literal.getValue());
             }
         }
-        boolean isIn = checkValueInList(leftValue, rightValues);
-        return isNot != isIn;
+        return new JInCondition((JColumnExpression)target,isNot,inList);
     }
 
     @Override
-    public Boolean visitLikePredicate(JQuickSQLParser.LikePredicateContext ctx) {
-        Object left = visit(ctx.predicate(0));
+    public JCondition visitLikePredicate(JQuickSQLParser.LikePredicateContext ctx) {
+        Object target = visit(ctx.predicate(0));
+        JAssert.isTrue(target instanceof JColumnExpression,"the value must to be column expression");
         Object right = visit(ctx.predicate(1));
+        JAssert.notNull(right,"the pattern not null");
         boolean isNot = ctx.NOT() != null;
-        if (left == null || right == null) {
-            return null;
-        }
-        String input = left.toString();
         String pattern = right.toString();
-        boolean matches = likeMatch(input, pattern);
-        return isNot != matches;
+        return new JLikeCondition((JColumnExpression)target,isNot,pattern);
     }
 
     @Override
-    public Boolean visitRegexpPredicate(JQuickSQLParser.RegexpPredicateContext ctx) {
-        Object inputObj = visit(ctx.predicate(0));
-        Object patternObj = visit(ctx.predicate(1));
+    public JCondition visitRegexpPredicate(JQuickSQLParser.RegexpPredicateContext ctx) {
+        Object target = visit(ctx.predicate(0));
+        JAssert.isTrue(target instanceof JColumnExpression,"the value must to be column expression");
+        Object right = visit(ctx.predicate(1));
+        JAssert.notNull(right,"the pattern not null");
         boolean isNot = ctx.NOT() != null;
-        if (inputObj == null || patternObj == null) {
-            return null;
-        }
-        String input = inputObj.toString();
-        String regex = patternObj.toString();
-        boolean matches;
-        try {
-            matches = input.matches(regex);
-        } catch (PatternSyntaxException e) {
-            throw new RuntimeException("Invalid regex pattern: " + regex);
-        }
-        return isNot != matches;
+        JRegexCondition jRegexCondition=new JRegexCondition((JColumnExpression)target,isNot,right.toString());
+        return  jRegexCondition;
     }
 
 
     @Override
-    public Object visitExisitsExpression(JQuickSQLParser.ExisitsExpressionContext ctx) {
+    public JCondition visitExisitsExpression(JQuickSQLParser.ExisitsExpressionContext ctx) {
         Object subqueryResult = visit(ctx.expression());
-        if (subqueryResult instanceof List) {
-            return !((List<?>) subqueryResult).isEmpty();
-        }
-        throw new RuntimeException("EXISTS must be followed by a subquery");
-    }
-    private String removeQuotes(String str) {
-        if (str == null || str.length() < 2) {
-            return str;
-        }
-        char firstChar = str.charAt(0);
-        char lastChar = str.charAt(str.length() - 1);
-        if ((firstChar == '\'' && lastChar == '\'') ||
-                (firstChar == '"' && lastChar == '"')) {
-            return str.substring(1, str.length() - 1);
-        }
-        return str;
-    }
-    private boolean likeMatch(String input, String pattern) {
-        String cleanInput = removeQuotes(input);
-        String cleanPattern = removeQuotes(pattern);
-        if (cleanPattern.equals("%")) {
-            return !cleanInput.isEmpty();
-        }
-        if (cleanPattern.startsWith("%") && cleanPattern.endsWith("%")) {
-            String middle = cleanPattern.substring(1, cleanPattern.length() - 1);
-            return cleanInput.contains(middle);
-        }
-        if (cleanPattern.endsWith("%")) {
-            String prefix = cleanPattern.substring(0, cleanPattern.length() - 1);
-            return cleanInput.startsWith(prefix);
-        }
-        if (cleanPattern.startsWith("%")) {
-            String suffix = cleanPattern.substring(1);
-            return cleanInput.endsWith(suffix);
-        }
-        return cleanInput.equals(cleanPattern);
+        JAssert.isTrue(subqueryResult instanceof JDataSet,"the type should be DataSet");
+        return new JExistsCondition((JDataSet)subqueryResult);
     }
 
-    private boolean checkValueInList(Object target, List<Object> list) {
-        for (Object item : list) {
-            if (item == null) {
-                continue;
-            }
-            if (compareValues(target, item) == 0) {
-                return true;
-            }
+    private boolean isLiteral(Object value) {
+        if (value == null) return true;
+        Class<?> clazz = value.getClass();
+        if (clazz.isPrimitive() ||
+                clazz.equals(String.class) ||
+                clazz.equals(Integer.class) ||
+                clazz.equals(Long.class) ||
+                clazz.equals(Double.class) ||
+                clazz.equals(Float.class) ||
+                clazz.equals(Boolean.class) ||
+                clazz.equals(Short.class) ||
+                clazz.equals(Byte.class) ||
+                clazz.equals(Character.class) ||
+                clazz.equals(BigDecimal.class) ||
+                clazz.equals(BigInteger.class) ||
+                clazz.equals(java.util.Date.class) ||
+                clazz.equals(java.sql.Date.class) ||
+                clazz.equals(java.sql.Timestamp.class)) {
+            return true;
+        }
+        if (clazz.isEnum()) {
+            return true;
         }
         return false;
     }
-
-//    private int compareValues(Object a, Object b) {
-//        if (a instanceof Number && b instanceof Number) {
-//            double d1 = ((Number) a).doubleValue();
-//            double d2 = ((Number) b).doubleValue();
-//            return Double.compare(d1, d2);
-//        } else if (a instanceof Comparable && b instanceof Comparable) {
-//            return ((Comparable) a).compareTo(b);
-//        }
-//        return a.toString().compareTo(b.toString());
-//    }
-
-    private Boolean handleNullComparison(String operator, Object left, Object right) {
-        if ("<=>".equals(operator)) {
-            return left == right;
-        }
-        return null;
-    }
-
-
 
 }

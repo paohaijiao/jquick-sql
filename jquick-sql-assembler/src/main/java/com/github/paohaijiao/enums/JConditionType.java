@@ -12,9 +12,13 @@ public enum JConditionType {
 
     BETWEEN,
 
+    EXISTS,
+
     IN,
 
     LIKE,
+
+    REGEX,
 
     IS_NULL
 
