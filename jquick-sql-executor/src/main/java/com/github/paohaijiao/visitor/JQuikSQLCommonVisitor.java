@@ -67,15 +67,7 @@ public class JQuikSQLCommonVisitor extends JQuickSQLOlapVisitor{
     public JDataSet visitSingleQuery(JQuickSQLParser.SingleQueryContext ctx) {
         return visitSelectExpression(ctx.selectExpression());
     }
-    @Override
-    public JDataSet visitSelectExpression(JQuickSQLParser.SelectExpressionContext ctx) {
-        String text=ctx.getText();
-       if(ctx.selectClause()!=null){
-            return visitSelectClause(ctx.selectClause());
-        }
-        JAssert.throwNewException("not support this statement");
-        return null;
-    }
+
 
 
 

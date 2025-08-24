@@ -44,7 +44,15 @@ import java.util.*;
  * @since 2025/8/11
  */
 public class JQuikSQLSelectStatementVisitor extends JQuikSQLFilterStatementVisitor{
-
+    @Override
+    public JDataSet visitSelectExpression(JQuickSQLParser.SelectExpressionContext ctx) {
+        String text=ctx.getText();
+        if(ctx.selectClause()!=null){
+            return visitSelectClause(ctx.selectClause());
+        }
+        JAssert.throwNewException("not support this statement");
+        return null;
+    }
     @Override
     public JDataSet visitSelectClause(JQuickSQLParser.SelectClauseContext ctx) {
         JDataSetJoinerStrategy strategy= JDataSetJoinerFactory.createJoiner(engine);
@@ -127,6 +135,9 @@ public class JQuikSQLSelectStatementVisitor extends JQuikSQLFilterStatementVisit
         if(ctx.limitClause()!=null){
             JLimitModel limitModel= visitLimitClause(ctx.limitClause());
             jDataSet=strategy.limit(jDataSet,limitModel.getLimit(),limitModel.getOffset());
+        }
+        if(ctx.selectElements()!=null){
+//            jDataSet=strategy.alias(jDataSet,);
         }
         return jDataSet;
     }

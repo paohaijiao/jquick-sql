@@ -19,9 +19,11 @@ import com.github.paohaijiao.dataset.JColumnMeta;
 import com.github.paohaijiao.dataset.JDataSet;
 import com.github.paohaijiao.dataset.JRow;
 import com.github.paohaijiao.parser.JQuickSQLParser;
+import com.github.paohaijiao.support.JDataSetRecursiveQuery;
 import org.antlr.v4.runtime.RuleContext;
 
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -33,123 +35,54 @@ import java.util.stream.Collectors;
  */
 public class JQuikSQLCommonTableExpressionVisitor extends JQuikSQLSelectStatementVisitor {
 
-    private final Map<String, JDataSet> cteRegistry = new HashMap<>();
-
-    private int recursionDepth = 0;
-
-    private final int maxRecursionDepth = 100; //recurse limit
-
+    private Map<String, JDataSet> cteCache = new HashMap<>();
     @Override
-    public JDataSet visitCommonTableExpression(JQuickSQLParser.CommonTableExpressionContext ctx) {
-        String cteName = ctx.uid().getText();
-        List<String> columnNames = null;
-        if (ctx.columnNames() != null) {
-            columnNames = ctx.columnNames().uid().stream().map(RuleContext::getText).collect(Collectors.toList());
-        }
-        if (ctx.UNION() != null) {
-            return processRecursiveCTE(ctx, cteName, columnNames);
-        } else {
-            return processNonRecursiveCTE(ctx, cteName, columnNames);
-        }
-    }
-    @Override
-    public JDataSet visitQuery(JQuickSQLParser.QueryContext ctx) {
-        return (JDataSet)visit(ctx.selectStatement());
+    public JDataSet visitCteQuery(JQuickSQLParser.CteQueryContext ctx) {
+        parseCteDefinitions(ctx);
+        return visitSelectExpression(ctx.selectExpression());
     }
 
-
-    private JDataSet processNonRecursiveCTE(JQuickSQLParser.CommonTableExpressionContext ctx, String cteName, List<String> columnNames) {
-        JDataSet result = (JDataSet)visit(ctx.selectStatement());
-        // apply column aliases if specified
-        if (columnNames != null && !columnNames.isEmpty()) {
-            result = renameColumns(result, columnNames);
-        }
-        return result;
-    }
-
-    private JDataSet processRecursiveCTE(JQuickSQLParser.CommonTableExpressionContext ctx, String cteName, List<String> columnNames) {
-        JDataSet anchorResult = (JDataSet)visit(ctx.initialQuery().selectStatement());
-        if (columnNames != null && !columnNames.isEmpty()) {
-            anchorResult = renameColumns(anchorResult, columnNames);
-        }
-        cteRegistry.put(cteName, anchorResult);    //register the CTE name for recursive reference
-        //recursive part
-        JDataSet recursiveResult = (JDataSet)visit(ctx.recursivePart().selectStatement());
-        // union the results
-        JDataSet combined = unionDataSets(anchorResult, recursiveResult, ctx.ALL() != null);
-        // keep applying recursion until no new rows are added
-        JDataSet previous;
-        JDataSet current = combined;
-        int iteration = 0;
-        do {
-            previous = current;
-            cteRegistry.put(cteName, previous);  // Re-evaluate the recursive part with the updated CTE
-            recursiveResult =(JDataSet) visit(ctx.recursivePart().selectStatement());
-            current = unionDataSets(previous, recursiveResult, ctx.ALL() != null);       // Union with previous results
-            if (++iteration > maxRecursionDepth) {// Safety check
-                throw new RuntimeException("Maximum recursion depth exceeded for CTE: " + cteName);
+    private void parseCteDefinitions(JQuickSQLParser.CteQueryContext ctx) {
+        for (JQuickSQLParser.CommonTableExpressionContext cteCtx : ctx.commonTableExpression()) {
+            String cteName = cteCtx.uid().getText();
+            JDataSet cteDataSet;
+            if (cteCtx.selectStatement() != null) {
+                cteDataSet =(JDataSet) visit(cteCtx.selectStatement());
+            } else {
+                cteDataSet = processRecursiveCte(cteCtx, ctx.RECURSIVE() != null);
             }
-        } while (current.size() > previous.size());
-        return current;
+            cteCache.put(cteName, cteDataSet);
+            dataSetHolder.addDataSet(cteName, cteDataSet);
+        }
     }
 
-    private JDataSet renameColumns(JDataSet dataset, List<String> newNames) {
-        List<JColumnMeta> originalColumns = dataset.getColumns();
-        if (newNames.size() != originalColumns.size()) {
-            throw new IllegalArgumentException("Column count mismatch in CTE");
-        }// create new column metadata
-        List<JColumnMeta> newColumns = new ArrayList<>();
-        for (int i = 0; i < originalColumns.size(); i++) {
-            JColumnMeta original = originalColumns.get(i);
-            newColumns.add(new JColumnMeta(
-                    newNames.get(i),
-                    original.getType(),
-                    original.getSource()
-            ));
-        }
-        // create new rows with the same data but potentially renamed columns
-        List<JRow> newRows = dataset.getRows().stream()
-                .map(row -> {
-                    JRow newRow = new JRow();
-                    for (int i = 0; i < originalColumns.size(); i++) {
-                        String originalName = originalColumns.get(i).getName();
-                        newRow.put(newNames.get(i), row.get(originalName));
-                    }
-                    return newRow;
-                })
-                .collect(Collectors.toList());
-
-        return new JDataSet(newColumns, newRows);
+    private JDataSet processRecursiveCte(JQuickSQLParser.CommonTableExpressionContext cteCtx, boolean isRecursive) {
+        JDataSet initialDataSet = (JDataSet)visit(cteCtx.initialQuery());
+        Function<JDataSet, JDataSet> recursiveFunction = buildRecursiveFunction(cteCtx.recursivePart());
+        return JDataSetRecursiveQuery.withRecursive(
+                initialDataSet,
+                recursiveFunction,
+                100,
+                true
+        );
     }
 
-    private JDataSet unionDataSets(JDataSet ds1, JDataSet ds2, boolean all) {
-        if (!areSchemasCompatible(ds1, ds2)) { // validate schema compatibility
-            throw new IllegalArgumentException("Incompatible schemas for UNION operation");
-        }
-        List<JRow> combinedRows = new ArrayList<>(ds1.getRows());
-        if (all) {
-            combinedRows.addAll(ds2.getRows());
-        } else {
-            // for union distinct, we need to remove duplicates
-            Set<JRow> uniqueRows = new HashSet<>(ds1.getRows());
-            uniqueRows.addAll(ds2.getRows());
-            combinedRows = new ArrayList<>(uniqueRows);
-        }
-
-        return new JDataSet(ds1.getColumns(), combinedRows);
-    }
-    private boolean areSchemasCompatible(JDataSet ds1, JDataSet ds2) {
-        if (ds1.getColumns().size() != ds2.getColumns().size()) {
-            return false;
-        }
-        for (int i = 0; i < ds1.getColumns().size(); i++) {
-            JColumnMeta col1 = ds1.getColumns().get(i);
-            JColumnMeta col2 = ds2.getColumns().get(i);
-            if (!col1.getType().equals(col2.getType())) {
-                return false;
+    private Function<JDataSet, JDataSet> buildRecursiveFunction(JQuickSQLParser.RecursivePartContext ctx) {
+        return currentDataSet -> {
+            String tempRecursiveTable = "__current_recursive__";
+            dataSetHolder.addDataSet(tempRecursiveTable, currentDataSet);
+            try {
+                return (JDataSet)visit(ctx.selectStatement());
+            } finally {
+                dataSetHolder.removeDataSet(tempRecursiveTable);
             }
-        }
-        return true;
+        };
     }
+
+    public void cleanup() {
+        cteCache.keySet().forEach(dataSetHolder::removeDataSet);
+        cteCache.clear();
+    }
+
 
 }

@@ -89,7 +89,6 @@ public class JDataSet {
     public static class Builder {
         private final List<JColumnMeta> columns = new ArrayList<>();
         private final List<JRow> rows = new ArrayList<>();
-
         public Builder addColumn(String name, Class<?> type, String source) {
             columns.add(new JColumnMeta(name, type, source));
             return this;
