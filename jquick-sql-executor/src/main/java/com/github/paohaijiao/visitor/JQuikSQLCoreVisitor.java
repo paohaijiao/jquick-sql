@@ -27,7 +27,6 @@ import com.github.paohaijiao.enums.JEngineEnums;
 import com.github.paohaijiao.exception.JAssert;
 import com.github.paohaijiao.expression.JBinaryExpression;
 import com.github.paohaijiao.expression.JExpression;
-import com.github.paohaijiao.expression.JLogicalExpression;
 import com.github.paohaijiao.factory.JDataSetJoinerStrategy;
 import com.github.paohaijiao.param.JContext;
 import com.github.paohaijiao.parser.JQuickSQLBaseVisitor;

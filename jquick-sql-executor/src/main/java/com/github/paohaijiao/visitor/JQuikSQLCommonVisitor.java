@@ -70,9 +70,7 @@ public class JQuikSQLCommonVisitor extends JQuickSQLOlapVisitor{
     @Override
     public JDataSet visitSelectExpression(JQuickSQLParser.SelectExpressionContext ctx) {
         String text=ctx.getText();
-        if(ctx.olapOperation()!=null){
-           return (JDataSet)visitOlapOperation(ctx.olapOperation());
-        }else if(ctx.selectClause()!=null){
+       if(ctx.selectClause()!=null){
             return visitSelectClause(ctx.selectClause());
         }
         JAssert.throwNewException("not support this statement");

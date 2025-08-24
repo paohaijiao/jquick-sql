@@ -1,5 +1,6 @@
 package com.github.paohaijiao.expression;
 
+import com.github.paohaijiao.enums.JLogicalOperator;
 import lombok.Getter;
 
 import java.util.Objects;
@@ -11,9 +12,9 @@ public class JLogicalExpression extends JExpression {
 
     protected final JExpression right;
 
-    protected final String operator;
+    protected final JLogicalOperator operator;
 
-    protected JLogicalExpression(JExpression left, String operator, JExpression right) {
+    public JLogicalExpression(JExpression left, JLogicalOperator operator, JExpression right) {
         this.left = Objects.requireNonNull(left);
         this.operator = Objects.requireNonNull(operator);
         this.right = right;

@@ -152,19 +152,4 @@ public class JQuikSQLCommonTableExpressionVisitor extends JQuikSQLSelectStatemen
         return true;
     }
 
-    @Override
-    public JDataSet visitTableSourceItem(JQuickSQLParser.TableSourceItemContext ctx) {
-        if (ctx.tableName() != null) {
-            String tableName = ctx.tableName().getText();
-            if (dataSetHolder.containsDataSet(tableName)) {
-                return dataSetHolder.getDataSet(tableName);
-            }
-            throw new UnsupportedOperationException("Actual table lookup not implemented");
-        } else if (ctx.selectStatement() != null) {
-            return (JDataSet)visit(ctx.selectStatement());
-        } else {
-            return (JDataSet)visitTableSources(ctx.tableSources());
-        }
-    }
-
 }

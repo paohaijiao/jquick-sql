@@ -124,12 +124,15 @@ public class JQuikSQLPredictStatementVisitor extends JQuikSQLExpressionStatement
     }
 
 
+
     @Override
-    public JCondition visitExisitsExpression(JQuickSQLParser.ExisitsExpressionContext ctx) {
+    public JCondition visitExisitsPredicate(JQuickSQLParser.ExisitsPredicateContext ctx) {
         Object subqueryResult = visit(ctx.expression());
         JAssert.isTrue(subqueryResult instanceof JDataSet,"the type should be DataSet");
         return new JExistsCondition((JDataSet)subqueryResult);
     }
+
+
 
     private boolean isLiteral(Object value) {
         if (value == null) return true;

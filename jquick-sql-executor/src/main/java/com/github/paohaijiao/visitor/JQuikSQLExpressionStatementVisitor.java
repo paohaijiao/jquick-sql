@@ -19,6 +19,7 @@ import com.github.paohaijiao.enums.JLogicalOperator;
 import com.github.paohaijiao.exception.JAssert;
 import com.github.paohaijiao.expression.JColumnExpression;
 import com.github.paohaijiao.expression.JExpression;
+import com.github.paohaijiao.expression.JLogicalExpression;
 import com.github.paohaijiao.expression.JNotExpression;
 import com.github.paohaijiao.parser.JQuickSQLParser;
 
@@ -55,26 +56,14 @@ public class JQuikSQLExpressionStatementVisitor extends JQuikSQLExpressionStatem
         return new JNotExpression((JColumnExpression)columnExpression);
     }
     @Override
-    public JExpression visitLogicalExpression(JQuickSQLParser.LogicalExpressionContext ctx) {
+    public JLogicalExpression visitLogicalExpression(JQuickSQLParser.LogicalExpressionContext ctx) {
         Object left = visit(ctx.expression(0));
         JAssert.isTrue(left instanceof JExpression,"the expression is not a condition");
         Object right = visit(ctx.expression(1));
         JAssert.isTrue(right instanceof JExpression,"the expression is not a condition");
         JLogicalOperator operator = visitLogicalOperator(ctx.logicalOperator());
-        boolean leftBool = convertToBoolean(left);
-        boolean rightBool = convertToBoolean(right);
-        switch (operator) {
-            case And:
-                return leftBool && rightBool;
-            case Or:
-                return leftBool || rightBool;
-            case XOR:
-                return leftBool ^ rightBool;
-            default:
-                JAssert.throwNewException("Unknown operator: " + operator);
-        }
-        JAssert.throwNewException("Unknown operator: " + operator);
-        return null;
+        JAssert.notNull(operator,"unknown operator: " + operator);
+        return new JLogicalExpression((JExpression)left,operator,(JExpression)right);
     }
 
     @Override
@@ -90,4 +79,5 @@ public class JQuikSQLExpressionStatementVisitor extends JQuikSQLExpressionStatem
         Object  value=visitSelectClause(ctx.selectClause());
         return (JExpression)value;
     }
+
 }
