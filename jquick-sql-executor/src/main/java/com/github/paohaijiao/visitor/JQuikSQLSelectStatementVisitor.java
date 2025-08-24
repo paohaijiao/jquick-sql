@@ -43,7 +43,7 @@ import java.util.*;
  * @version 1.0.0
  * @since 2025/8/11
  */
-public class JQuikSQLSelectStatementVisitor extends JQuikSQLFunctionStatementVisitor{
+public class JQuikSQLSelectStatementVisitor extends JQuikSQLFilterStatementVisitor{
 
     @Override
     public JDataSet visitSelectClause(JQuickSQLParser.SelectClauseContext ctx) {

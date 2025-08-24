@@ -36,7 +36,7 @@ import java.util.List;
  * @version 1.0.0
  * @since 2025/8/11
  */
-public class JQuikSQLPredictStatementVisitor extends JQuikSQLExpressionStatementVisitor {
+public class JQuikSQLPredictStatementVisitor extends JQuikSQLFunctionStatementVisitor {
     @Override
     public JCondition visitExpressionAtomPredicate(JQuickSQLParser.ExpressionAtomPredicateContext ctx) {
         JAssert.notNull(ctx.expressionAtom(), "expressionAtom not null");

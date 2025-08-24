@@ -55,21 +55,12 @@ public class JQuikSQLExpressionStatementVisitor extends JQuikSQLExpressionStatem
         JAssert.isTrue(columnExpression instanceof JColumnExpression,"the expression is not a condition");
         return new JNotExpression((JColumnExpression)columnExpression);
     }
-    @Override
-    public JLogicalExpression visitLogicalExpression(JQuickSQLParser.LogicalExpressionContext ctx) {
-        Object left = visit(ctx.expression(0));
-        JAssert.isTrue(left instanceof JExpression,"the expression is not a condition");
-        Object right = visit(ctx.expression(1));
-        JAssert.isTrue(right instanceof JExpression,"the expression is not a condition");
-        JLogicalOperator operator = visitLogicalOperator(ctx.logicalOperator());
-        JAssert.notNull(operator,"unknown operator: " + operator);
-        return new JLogicalExpression((JExpression)left,operator,(JExpression)right);
-    }
+
 
     @Override
     public JExpression visitPredicateExpression(JQuickSQLParser.PredicateExpressionContext ctx) {
-        JAssert.notNull(ctx.predicate(),"Predicate expression must not be null");
-        Object value= visit(ctx.predicate());
+        JAssert.notNull(ctx.expressionAtom(),"Predicate expression must not be null");
+        Object value= visit(ctx.expressionAtom());
         JAssert.isTrue(value instanceof JExpression,"the expression is not a condition");
         return (JExpression)value;
     }

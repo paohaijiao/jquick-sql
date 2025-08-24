@@ -33,11 +33,37 @@ public class JConditionEvaluator {
             return evaluateExists((JExistsCondition) condition, row);
         }else if (condition instanceof JNotCondtion) {
             return evaluateNot((JNotCondtion) condition, row);
-        }
-        else if (condition instanceof JExpressionAtomPredicateCondition) {
+        } else if (condition instanceof JExpressionAtomPredicateCondition) {
             return evaluateAtomPredicate((JExpressionAtomPredicateCondition) condition, row);
+        }else if (condition instanceof JParenthesesCondition) {
+            return evaluateParentheses((JParenthesesCondition) condition, row);
+        } else if (condition instanceof JAndCondition) {
+            return evaluateAnd((JAndCondition) condition, row);
+        } else if (condition instanceof JOrCondition) {
+            return evaluateOr((JOrCondition) condition, row);
         }
         throw new UnsupportedOperationException("Unsupported condition type: " + condition.getType());
+    }
+    private boolean evaluateParentheses(JParenthesesCondition cond, Map<String, Object> row) {
+        if (!cond.hasInnerCondition()) {
+            throw new IllegalArgumentException("Parentheses condition must have an inner condition");
+        }
+        return evaluate(cond.getInnerCondition(), row);
+    }
+    private boolean evaluateAnd(JAndCondition cond, Map<String, Object> row) {
+        if (cond.isEmpty()) {
+            throw new IllegalArgumentException("AND expression must have at least one condition");
+        }
+        return cond.getConditions().stream()
+                .allMatch(c -> evaluate(c, row));
+    }
+
+    private boolean evaluateOr(JOrCondition cond, Map<String, Object> row) {
+        if (cond.isEmpty()) {
+            throw new IllegalArgumentException("OR expression must have at least one condition");
+        }
+        return cond.getConditions().stream()
+                .anyMatch(c -> evaluate(c, row));
     }
     private boolean evaluateAtomPredicate(JExpressionAtomPredicateCondition cond, Map<String, Object> row) {
         Object val = evaluateExpression(cond.getExpression(), row);

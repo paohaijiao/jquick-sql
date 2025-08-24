@@ -33,7 +33,7 @@ import java.util.regex.PatternSyntaxException;
  * @version 1.0.0
  * @since 2025/8/11
  */
-public class JQuikSQLFunctionStatementVisitor extends JQuikSQLPredictStatementVisitor {
+public class JQuikSQLFunctionStatementVisitor extends JQuikSQLExpressionStatementVisitor {
     @Override
     public JExpression visitFunctionArg(JQuickSQLParser.FunctionArgContext ctx) {
         JAssert.notNull(ctx.expression(), "expression not  null");

@@ -22,6 +22,8 @@ public enum JConditionType {
 
     ATOM,
 
+    PARENTHESES,
+
     IS_NULL
 
 }
