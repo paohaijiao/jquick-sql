@@ -31,12 +31,12 @@ public class JSelectElementModel {
     private final JExpression expression;
     private final String alias;
     private final boolean isAggregate;
-    private final String aggregateFunctionName;
+    private final String functionName;
 
-    public JSelectElementModel(JExpression expression, String alias, boolean isAggregate, String aggregateFunctionName) {
+    public JSelectElementModel(JExpression expression, String alias, boolean isAggregate, String functionName) {
         this.expression = expression;
         this.alias = alias;
         this.isAggregate = isAggregate;
-        this.aggregateFunctionName = aggregateFunctionName;
+        this.functionName = functionName;
     }
 }

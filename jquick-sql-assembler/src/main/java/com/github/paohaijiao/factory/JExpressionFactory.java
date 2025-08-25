@@ -58,8 +58,4 @@ public class JExpressionFactory {
     public static JBinaryExpression gt(JExpression left, JExpression right) {
         return new JBinaryExpression(left, JBinaryOperator.GT, right);
     }
-//    Expression ageCondition = Expressions.gt(
-//            Expressions.col("age"),
-//            Expressions.val(18)
-//    );
 }

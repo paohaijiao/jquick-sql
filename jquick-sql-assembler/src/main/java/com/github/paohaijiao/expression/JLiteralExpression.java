@@ -60,8 +60,4 @@ public class JLiteralExpression extends JExpression {
         return new JLiteralExpression(value, JDataType.DATE);
     }
 
-//    @Override
-//    public <T> T accept(ExpressionVisitor<T> visitor) {
-//        return visitor.visit(this);
-//    }
 }

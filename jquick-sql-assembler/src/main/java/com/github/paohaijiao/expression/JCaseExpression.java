@@ -47,8 +47,4 @@ public class JCaseExpression extends JExpression {
         this.base = base;
     }
 
-//    @Override
-//    public <T> T accept(ExpressionVisitor<T> visitor) {
-//        return visitor.visit(this);
-//    }
 }

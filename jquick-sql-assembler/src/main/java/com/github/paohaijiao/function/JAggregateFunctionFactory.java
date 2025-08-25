@@ -193,11 +193,12 @@ public class JAggregateFunctionFactory {
      * @throws IllegalArgumentException Exception
      */
     public static Function<List<Object>, Object> getFunction(String name) {
-        Function<List<Object>, Object> function = FUNCTION_REGISTRY.get(name.toUpperCase());
-        if (function == null) {
-            throw new IllegalArgumentException("unknown aggregate function: " + name);
+        for(String method:FUNCTION_REGISTRY.keySet()){
+            if(method.equalsIgnoreCase(name)){
+                return FUNCTION_REGISTRY.get(method);
+            }
         }
-        return function;
+        throw new IllegalArgumentException("unknown aggregate function: " + name);
     }
 
     /**
@@ -207,7 +208,12 @@ public class JAggregateFunctionFactory {
      * @return exists or not
      */
     public static boolean containsFunction(String name) {
-        return FUNCTION_REGISTRY.containsKey(name.toUpperCase());
+        for(String method:FUNCTION_REGISTRY.keySet()){
+            if(method.equalsIgnoreCase(name)){
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

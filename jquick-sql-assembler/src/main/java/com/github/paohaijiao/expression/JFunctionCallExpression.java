@@ -42,10 +42,4 @@ public class JFunctionCallExpression extends JExpression {
         this.functionName = functionName;
         this.arguments = arguments;
     }
-
-
-//    @Override
-//    public <T> T accept(ExpressionVisitor<T> visitor) {
-//        return visitor.visit(this);
-//    }
 }

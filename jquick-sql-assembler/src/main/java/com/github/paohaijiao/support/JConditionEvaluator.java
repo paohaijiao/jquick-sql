@@ -2,9 +2,6 @@ package com.github.paohaijiao.support;
 
 import com.github.paohaijiao.condition.*;
 import com.github.paohaijiao.exception.JAssert;
-import com.github.paohaijiao.expression.JColumnExpression;
-import com.github.paohaijiao.expression.JExpression;
-import com.github.paohaijiao.expression.JLiteralExpression;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -12,9 +9,9 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.regex.PatternSyntaxException;
 
-public class JConditionEvaluator {
+public class JConditionEvaluator extends JBaseEvaluator implements JEvaluator<JCondition,Boolean>{
 
-    public boolean evaluate(JCondition condition, Map<String, Object> row) {
+    public Boolean evaluate(JCondition condition, Map<String, Object> row) {
         if (condition instanceof JComparisonCondition) {
             return evaluateComparison((JComparisonCondition) condition, row);
         } else if (condition instanceof JLogicalCondition) {
@@ -197,14 +194,7 @@ public class JConditionEvaluator {
         throw new IllegalArgumentException("Values are not comparable: " + left.getClass() + " and " + right.getClass());
     }
 
-    private Object evaluateExpression(JExpression expr, Map<String, Object> row) {
-        if (expr instanceof JColumnExpression) {
-            return row.get(((JColumnExpression) expr).getColumnName());
-        } else if (expr instanceof JLiteralExpression) {
-            return ((JLiteralExpression) expr).getValue();
-        }
-        throw new UnsupportedOperationException("Unsupported expression type: " + expr.getType());
-    }
+
 
 
     private int compareValues(Object a, Object b) {

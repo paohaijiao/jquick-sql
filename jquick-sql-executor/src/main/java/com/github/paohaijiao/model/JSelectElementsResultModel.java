@@ -49,4 +49,8 @@ public class JSelectElementsResultModel {
         List<JSelectElementModel> list=elements.stream().filter(JSelectElementModel::isAggregate).collect(Collectors.toList());
         return list;
     }
+    public List<JSelectElementModel> getNonAggregateFunction() {
+        List<JSelectElementModel> list=elements.stream().filter(e->!e.isAggregate()).collect(Collectors.toList());
+        return list;
+    }
 }

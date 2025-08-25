@@ -43,8 +43,4 @@ public class JColumnExpression extends JExpression {
         this.tableAlias = tableAlias;
     }
 
-//    @Override
-//    public <T> T accept(ExpressionVisitor<T> visitor) {
-//        return visitor.visit(this);
-//    }
 }

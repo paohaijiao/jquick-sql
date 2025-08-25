@@ -10,8 +10,8 @@ public enum JBinaryOperator {
     NEQ("<>"),
     GT(">"),
     LT("<"),
-    GTE(">="),
-    LTE("<="),
+    GE(">="),
+    LE("<="),
     AND("AND"),
 
     OR("OR"),

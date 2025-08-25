@@ -36,9 +36,4 @@ public class JParenthesizedExpression extends JExpression {
         this.expression = expression;
     }
 
-
-//    @Override
-//    public <T> T accept(ExpressionVisitor<T> visitor) {
-//        return visitor.visit(this);
-//    }
 }

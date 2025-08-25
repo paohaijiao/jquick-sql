@@ -28,6 +28,7 @@ import com.github.paohaijiao.enums.JExpressionType;
 public class JDataSetExpression  extends JExpression {
 
     private JDataSet dataSet;
+
     public JDataSetExpression(JDataSet dataSet) {
         this.type = JExpressionType.SUBQUERY;
         this.dataSet = dataSet;

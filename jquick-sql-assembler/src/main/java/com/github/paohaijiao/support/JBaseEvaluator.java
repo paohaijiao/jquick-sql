@@ -13,23 +13,29 @@
  *
  * Copyright (c) [2025-2099] Martin (goudingcheng@gmail.com)
  */
-package com.github.paohaijiao.window;
+package com.github.paohaijiao.support;
 
-import com.github.paohaijiao.enums.JFrameType;
+import com.github.paohaijiao.expression.JColumnExpression;
 import com.github.paohaijiao.expression.JExpression;
-import lombok.Data;
+import com.github.paohaijiao.expression.JLiteralExpression;
+
+import java.util.Map;
 
 /**
- * packageName com.github.paohaijiao.window
+ * packageName com.github.paohaijiao.support
  *
  * @author Martin
  * @version 1.0.0
- * @since 2025/8/12
+ * @since 2025/8/25
  */
-@Data
-public class JWindowFrame {
-    private JFrameType type;
+public abstract class JBaseEvaluator {
 
-    private JExpression start;
-    private JExpression end;
+    protected Object evaluateExpression(JExpression expr, Map<String, Object> row) {
+        if (expr instanceof JColumnExpression) {
+            return row.get(((JColumnExpression) expr).getColumnName());
+        } else if (expr instanceof JLiteralExpression) {
+            return ((JLiteralExpression) expr).getValue();
+        }
+        throw new UnsupportedOperationException("Unsupported expression type: " + expr.getType());
+    }
 }

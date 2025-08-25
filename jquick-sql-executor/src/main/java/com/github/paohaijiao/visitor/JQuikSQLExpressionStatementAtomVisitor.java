@@ -16,6 +16,8 @@
 package com.github.paohaijiao.visitor;
 
 import com.github.paohaijiao.dataset.JDataSet;
+import com.github.paohaijiao.enums.JBinaryOperator;
+import com.github.paohaijiao.enums.JUnaryOperator;
 import com.github.paohaijiao.exception.JAssert;
 import com.github.paohaijiao.expression.*;
 import com.github.paohaijiao.parser.JQuickSQLParser;
@@ -38,9 +40,18 @@ public class JQuikSQLExpressionStatementAtomVisitor extends JQuikSQLValueStateme
     }
     @Override
     public JColumnExpression visitFullColumnNameExpressionAtom(JQuickSQLParser.FullColumnNameExpressionAtomContext ctx) {
+        JAssert.notNull(ctx.fullColumnName(),"fullColumnName must not be null");
         String  column= ctx.fullColumnName().getText();
-        JColumnExpression columnExpression = new JColumnExpression(column);
-        return columnExpression;
+        if(column.contains(".")){
+            String[] array= column.split("\\.");
+            JAssert.isTrue(array.length==2,"the column must have table alias and column");
+            JColumnExpression columnExpression = new JColumnExpression(array[0],array[1]);
+            return columnExpression;
+        }else{
+            JColumnExpression columnExpression = new JColumnExpression(column);
+            return columnExpression;
+        }
+
     }
     @Override
     public JFunctionCallExpression visitFunctionCallExpressionAtom(JQuickSQLParser.FunctionCallExpressionAtomContext ctx) {
@@ -69,81 +80,22 @@ public class JQuikSQLExpressionStatementAtomVisitor extends JQuikSQLValueStateme
         JAssert.isTrue(ctx.expressionAtom().size()==2,"mathExpressionAtom must have 2 expressions");
         Object valLeft=visit(ctx.expressionAtom(0));
         Object valRight=visit(ctx.expressionAtom(1));
-        JAssert.isTrue( valLeft instanceof JLiteralExpression,"expression[0] must is literal");
-        JAssert.isTrue( valRight instanceof JLiteralExpression,"expression[1] must is literal");
-        JLiteralExpression left = (JLiteralExpression)valLeft;
-        JLiteralExpression right = (JLiteralExpression)valRight;
+        JAssert.isTrue( valLeft instanceof JExpression,"expression[0] must is literal");
+        JAssert.isTrue( valRight instanceof JExpression,"expression[1] must is literal");
         String operator = ctx.mathOperator().getText();
-        if (left == null || right == null) {
-            return null;
-        }
-        Number leftNum = convertToNumber(left.getValue());
-        Number rightNum = convertToNumber(right.getValue());
-        switch (operator) {
-            case "+":
-                return JLiteralExpression.number(leftNum.doubleValue() + rightNum.doubleValue());
-            case "-":
-                return JLiteralExpression.number(leftNum.doubleValue() - rightNum.doubleValue());
-            case "*":
-                return JLiteralExpression.number(leftNum.doubleValue() * rightNum.doubleValue());
-            case "/":
-                if (rightNum.doubleValue() == 0) {
-                    throw new ArithmeticException("Division by zero");
-                }
-                return JLiteralExpression.number(leftNum.doubleValue() / rightNum.doubleValue());
-            case "--":
-                return JLiteralExpression.number(leftNum.doubleValue() - 1);
-            default:
-                throw new UnsupportedOperationException("Unknown operator: " + operator);
-        }
+        JBinaryOperator op= JBinaryOperator.of(operator);
+        JBinaryExpression binaryExpression=new JBinaryExpression((JExpression)valLeft,op,(JExpression)valRight);
+        return binaryExpression;
     }
     @Override
     public JExpression visitUnaryExpressionAtom(JQuickSQLParser.UnaryExpressionAtomContext ctx) {
         Object operand = visit(ctx.expressionAtom());
-        JAssert.isTrue( operand instanceof JLiteralExpression,"expression[1] must is literal");
+        JAssert.isTrue( operand instanceof JExpression,"expression[1] must is literal");
         String operator = ctx.unaryOperator().getText();
-        JLiteralExpression value=(JLiteralExpression)operand;
-        if (operand == null) {
-            return null;
-        }
-        switch (operator) {
-            case "+":
-                return JLiteralExpression.number(convertToNumber(value.getValue()));
-            case "-":
-                return JLiteralExpression.number(negateNumber(value.getValue()));
-            case "!":
-            case "NOT":
-                return JLiteralExpression.bool(logicalNot(value.getValue()));
-            case "~":
-                return JLiteralExpression.number(bitwiseNot(value.getValue()));
-            default:
-                throw new UnsupportedOperationException("unknown unary operator: " + operator);
-        }
+        JUnaryOperator unaryOperator=JUnaryOperator.symbolOf(operator);
+        JUnaryExpression jUnaryExpression=new JUnaryExpression(unaryOperator,(JExpression)operand);
+        return jUnaryExpression;
     }
-    private Number negateNumber(Object value) {
-        Number num = convertToNumber(value);
-        if (num instanceof Integer) {
-            return -num.intValue();
-        } else if (num instanceof Long) {
-            return -num.longValue();
-        }
-        return -num.doubleValue();
-    }
-    private Boolean logicalNot(Object value) {
-        if (value instanceof Boolean) {
-            return !((Boolean) value);
-        } else if (value instanceof Number) {
-            return ((Number) value).doubleValue() == 0;
-        }
-        throw new RuntimeException("NOT operator requires boolean or numeric operand");
-    }
-    private Number bitwiseNot(Object value) {
-        if (value instanceof Integer) {
-            return ~((Integer) value);
-        } else if (value instanceof Long) {
-            return ~((Long) value);
-        }
-        throw new RuntimeException("Bitwise NOT requires integer operand");
-    }
+
 
 }

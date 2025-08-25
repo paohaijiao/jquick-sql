@@ -17,6 +17,7 @@ package com.github.paohaijiao.visitor;
 
 import com.github.paohaijiao.condition.JCondition;
 import com.github.paohaijiao.dataset.JDataSet;
+import com.github.paohaijiao.dataset.JRow;
 import com.github.paohaijiao.enums.JSortDirection;
 import com.github.paohaijiao.enums.JoinType;
 import com.github.paohaijiao.exception.JAssert;
@@ -33,6 +34,7 @@ import com.github.paohaijiao.model.JSelectElementModel;
 import com.github.paohaijiao.model.JSelectElementsResultModel;
 import com.github.paohaijiao.model.JoinPartModel;
 import com.github.paohaijiao.parser.JQuickSQLParser;
+import com.github.paohaijiao.support.JExpressionEvaluator;
 
 import java.util.*;
 
@@ -96,38 +98,54 @@ public class JQuikSQLSelectStatementVisitor extends JQuikSQLFilterStatementVisit
             JCondition condition = visitWhereClause(ctx.whereClause());
             jDataSet=strategy.filter(jDataSet,condition);
         }
-        JSelectElementsResultModel selectElementsResultModel=null;
         if(ctx.selectElements()!=null){
-            selectElementsResultModel=visitSelectElements(ctx.selectElements());
-        }
-        JAssert.notNull(selectElementsResultModel," the select elements require not null");
-        if(ctx.groupByClause()!=null){
-            JAssert.isTrue(selectElementsResultModel.hasAggregateFunction(),"groupBy clause must have aggregateFunction");
-            List<JExpression>  groupByClauses= visitGroupByClause(ctx.groupByClause());
-            Map<String, JFunctionCallExpression> aggregations = new HashMap<>();
-            List<JSelectElementModel> aggreateFunction=selectElementsResultModel.getAggregateFunction();
-            aggreateFunction.forEach(e->{
-                JFunctionCallExpression aggregateFunction=(JFunctionCallExpression)e.getExpression();
-                List<JExpression> list=aggregateFunction.getArguments();
-                JAssert.isTrue(!list.isEmpty(),"the aggregate function must have arguments");
-                JColumnExpression columnExpression=(JColumnExpression)list.get(0);
-                JAssert.notNull(e.getAlias()," the aggregate [ "+aggregateFunction.getFunctionName()+"("+columnExpression.getColumnName()+")"+" ] function must own the alias column ");
-                aggregations.put(e.getAlias(), aggregateFunction);
-            });
-            List<String> groupByField=new ArrayList<>();
-            groupByClauses.forEach(e->{
-                if(e instanceof JColumnExpression){
-                    groupByField.add(((JColumnExpression)e).getColumnName());
-                }else{
-                    JAssert.throwNewException("the groupBy clause must have column expression");
+            JSelectElementsResultModel   selectElementsResultModel=visitSelectElements(ctx.selectElements());
+            JAssert.notNull(selectElementsResultModel," the select elements require not null");
+            if(selectElementsResultModel.hasStar()){
+                return jDataSet;
+            }else{
+                if(ctx.groupByClause()!=null&&selectElementsResultModel.hasAggregateFunction()){
+                    List<JExpression>  groupByClauses= visitGroupByClause(ctx.groupByClause());
+                    JAssert.isTrue(selectElementsResultModel.hasAggregateFunction(),"groupBy clause must have aggregateFunction");
+                    Map<String, JFunctionCallExpression> aggregations = new HashMap<>();
+                    List<JSelectElementModel> aggreateFunction=selectElementsResultModel.getAggregateFunction();
+                    aggreateFunction.forEach(e->{
+                        JFunctionCallExpression aggregateFunction=(JFunctionCallExpression)e.getExpression();
+                        List<JExpression> list=aggregateFunction.getArguments();
+                        JAssert.isTrue(!list.isEmpty(),"the aggregate function must have arguments");
+                        JColumnExpression columnExpression=(JColumnExpression)list.get(0);
+                        JAssert.notNull(e.getAlias()," the aggregate [ "+aggregateFunction.getFunctionName()+"("+columnExpression.getColumnName()+")"+" ] function must own the alias column ");
+                        aggregations.put(e.getAlias(), aggregateFunction);
+                    });
+                    List<String> groupByField=new ArrayList<>();
+                    groupByClauses.forEach(e->{
+                        if(e instanceof JColumnExpression){
+                            groupByField.add(((JColumnExpression)e).getColumnName());
+                        }else{
+                            JAssert.throwNewException("the groupBy clause must have column expression");
+                        }
+                    });
+                    jDataSet=strategy.aggregate(jDataSet,groupByField,aggregations);
+                    if(ctx.havingClause()!=null){
+                        JCondition condition = visitHavingClause(ctx.havingClause());
+                        jDataSet=strategy.filter(jDataSet,condition);
+                    }
                 }
-            });
-            jDataSet=strategy.aggregate(jDataSet,groupByField,aggregations);
-            if(ctx.havingClause()!=null){
-                JCondition condition = visitHavingClause(ctx.havingClause());
-                jDataSet=strategy.filter(jDataSet,condition);
+            }
+            if(!selectElementsResultModel.getNonAggregateFunction().isEmpty()){
+                JExpressionEvaluator expressionEvaluator=new JExpressionEvaluator();
+                for (int i = 0; i < selectElementsResultModel.getNonAggregateFunction().size(); i++) {
+                    for (int j=0;j<jDataSet.size();j++){
+                        JSelectElementModel selectElementModel= selectElementsResultModel.getNonAggregateFunction().get(i);
+                        JRow row=jDataSet.getRows().get(j);
+                        Object value= expressionEvaluator.evaluate(selectElementModel.getExpression(),row);
+
+                    }
+
+                }
             }
         }
+
         if(ctx.orderByClause()!=null){
             List<JOrderByExpression>  orderByExpressions= visitOrderByClause(ctx.orderByClause());
             jDataSet=strategy.sort(jDataSet,orderByExpressions);
@@ -136,9 +154,7 @@ public class JQuikSQLSelectStatementVisitor extends JQuikSQLFilterStatementVisit
             JLimitModel limitModel= visitLimitClause(ctx.limitClause());
             jDataSet=strategy.limit(jDataSet,limitModel.getLimit(),limitModel.getOffset());
         }
-        if(ctx.selectElements()!=null){
-//            jDataSet=strategy.alias(jDataSet,);
-        }
+
         return jDataSet;
     }
 

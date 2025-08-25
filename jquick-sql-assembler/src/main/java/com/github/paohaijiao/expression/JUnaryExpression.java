@@ -17,6 +17,7 @@ package com.github.paohaijiao.expression;
 
 import com.github.paohaijiao.enums.JExpressionType;
 import com.github.paohaijiao.enums.JUnaryOperator;
+import lombok.Getter;
 
 /**
  * packageName com.github.paohaijiao.expression
@@ -25,6 +26,7 @@ import com.github.paohaijiao.enums.JUnaryOperator;
  * @version 1.0.0
  * @since 2025/8/12
  */
+@Getter
 public class JUnaryExpression extends JExpression {
 
     private JExpression expression;
@@ -37,8 +39,4 @@ public class JUnaryExpression extends JExpression {
         this.operator = operator;
         this.expression = expression;
     }
-//    @Override
-//    public <T> T accept(ExpressionVisitor<T> visitor) {
-//        return visitor.visit(this);
-//    }
 }
