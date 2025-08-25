@@ -88,7 +88,7 @@ public class JRow implements Map<String, Object> {
         this.tableName = tableName;
     }
 
-    // Map interface implementation
+
     @Override
     public int size() {
         return data.size();

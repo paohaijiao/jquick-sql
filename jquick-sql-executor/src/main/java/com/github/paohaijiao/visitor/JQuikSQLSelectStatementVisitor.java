@@ -139,9 +139,8 @@ public class JQuikSQLSelectStatementVisitor extends JQuikSQLFilterStatementVisit
                         JSelectElementModel selectElementModel= selectElementsResultModel.getNonAggregateFunction().get(i);
                         JRow row=jDataSet.getRows().get(j);
                         Object value= expressionEvaluator.evaluate(selectElementModel.getExpression(),row);
-
+                        row.put(selectElementModel.getAlias(),value);
                     }
-
                 }
             }
         }
