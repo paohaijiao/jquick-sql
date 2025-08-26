@@ -16,18 +16,7 @@
 package com.github.paohaijiao.visitor;
 
 import com.github.paohaijiao.condition.*;
-import com.github.paohaijiao.dataset.JDataSet;
-import com.github.paohaijiao.enums.JComparisonOperator;
-import com.github.paohaijiao.exception.JAssert;
-import com.github.paohaijiao.expression.JColumnExpression;
-import com.github.paohaijiao.expression.JExpression;
-import com.github.paohaijiao.expression.JLiteralExpression;
 import com.github.paohaijiao.parser.JQuickSQLParser;
-
-import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * packageName com.github.paohaijiao.visitor

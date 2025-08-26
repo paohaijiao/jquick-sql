@@ -1,7 +1,6 @@
 package com.github.paohaijiao.core;
 
 import com.github.paohaijiao.exception.JMetadataException;
-import com.github.paohaijiao.model.database.JDatabase;
 import com.github.paohaijiao.model.function.JFunction;
 import com.github.paohaijiao.model.table.JPartition;
 import com.github.paohaijiao.model.table.JTable;

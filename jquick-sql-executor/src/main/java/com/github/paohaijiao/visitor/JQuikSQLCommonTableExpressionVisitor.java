@@ -15,16 +15,12 @@
  */
 package com.github.paohaijiao.visitor;
 
-import com.github.paohaijiao.dataset.JColumnMeta;
 import com.github.paohaijiao.dataset.JDataSet;
-import com.github.paohaijiao.dataset.JRow;
 import com.github.paohaijiao.parser.JQuickSQLParser;
 import com.github.paohaijiao.support.JDataSetRecursiveQuery;
-import org.antlr.v4.runtime.RuleContext;
 
 import java.util.*;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 /**
  * packageName com.github.paohaijiao.visitor

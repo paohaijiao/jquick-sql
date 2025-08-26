@@ -1,7 +1,6 @@
 package com.github.paohaijiao.example;
 
-import com.github.paohaijiao.adaptor.JCsvAdapter;
-import com.github.paohaijiao.config.JDataSourceConfig;
+import com.github.paohaijiao.config.JConnectorConfig;
 import com.github.paohaijiao.model.JMetadata;
 import com.github.paohaijiao.plan.JDataSet;
 import com.github.paohaijiao.plan.JQuery;
@@ -12,7 +11,7 @@ import java.io.IOException;
 public class JExampleTest {
     @Test
     public void length() throws IOException {
-        JDataSourceConfig config = new JDataSourceConfig();
+        JConnectorConfig config = new JConnectorConfig();
         config.setType("csv");
         config.setPath("D:\\my\\jquick-sql\\jquick-sql-connector\\src\\main\\resources\\data\\products.csv");
         config.put("hasHeader", "true");

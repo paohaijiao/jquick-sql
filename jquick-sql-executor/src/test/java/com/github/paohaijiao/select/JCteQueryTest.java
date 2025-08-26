@@ -18,14 +18,8 @@ import com.github.paohaijiao.dataset.JDataSet;
 import com.github.paohaijiao.dataset.JRow;
 import com.github.paohaijiao.enums.JEngineEnums;
 import com.github.paohaijiao.executor.JQuickSQLExecutor;
-import com.github.paohaijiao.model.JDataSetFactory;
-import com.github.paohaijiao.parser.JQuickSQLParser;
 import com.github.paohaijiao.support.JDataSetHolder;
-import com.github.paohaijiao.visitor.JQuikSQLCommonTableExpressionVisitor;
-import org.junit.Before;
 import org.junit.Test;
-
-import java.util.Arrays;
 
 /**
  * packageName com.github.paohaijiao.select

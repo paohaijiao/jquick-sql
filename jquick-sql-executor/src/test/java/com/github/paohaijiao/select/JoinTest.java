@@ -15,7 +15,6 @@
  */
 package com.github.paohaijiao.select;
 
-import com.github.paohaijiao.dataset.JColumnMeta;
 import com.github.paohaijiao.dataset.JDataSet;
 import com.github.paohaijiao.dataset.JRow;
 import com.github.paohaijiao.enums.JEngineEnums;
@@ -23,9 +22,6 @@ import com.github.paohaijiao.executor.JQuickSQLExecutor;
 import com.github.paohaijiao.model.JDataSetFactory;
 import com.github.paohaijiao.support.JDataSetHolder;
 import org.junit.Test;
-
-import java.util.Arrays;
-import java.util.List;
 
 /**
  * packageName com.github.paohaijiao.value

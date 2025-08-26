@@ -17,7 +17,6 @@ package com.github.paohaijiao.visitor;
 
 import com.github.paohaijiao.condition.JComparisonCondition;
 import com.github.paohaijiao.condition.JCondition;
-import com.github.paohaijiao.condition.JLogicalCondition;
 import com.github.paohaijiao.console.JConsole;
 import com.github.paohaijiao.dataset.JColumnMeta;
 import com.github.paohaijiao.dataset.JDataSet;

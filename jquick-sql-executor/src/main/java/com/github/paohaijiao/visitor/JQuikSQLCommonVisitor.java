@@ -17,7 +17,6 @@ package com.github.paohaijiao.visitor;
 
 import com.github.paohaijiao.dataset.JDataSet;
 import com.github.paohaijiao.enums.JEngineEnums;
-import com.github.paohaijiao.exception.JAssert;
 import com.github.paohaijiao.param.JContext;
 import com.github.paohaijiao.parser.JQuickSQLLexer;
 import com.github.paohaijiao.parser.JQuickSQLParser;

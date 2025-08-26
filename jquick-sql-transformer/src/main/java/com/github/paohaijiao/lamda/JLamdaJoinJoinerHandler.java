@@ -15,10 +15,7 @@
  */
 package com.github.paohaijiao.lamda;
 
-import com.github.paohaijiao.condition.JAndCondition;
 import com.github.paohaijiao.condition.JCondition;
-import com.github.paohaijiao.condition.JOrCondition;
-import com.github.paohaijiao.condition.JParenthesesCondition;
 import com.github.paohaijiao.support.JConditionEvaluator;
 import com.github.paohaijiao.dataset.JColumnMeta;
 import com.github.paohaijiao.dataset.JDataSet;
