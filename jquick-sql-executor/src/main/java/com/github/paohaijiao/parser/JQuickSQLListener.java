@@ -1,4 +1,4 @@
-// Generated from D:/idea/jthornruleGrammer/sql/JQuickSQL.g4 by ANTLR 4.13.2
+// Generated from D:/my/jthornruleGrammer/sql/JQuickSQL.g4 by ANTLR 4.13.2
 package com.github.paohaijiao.parser;
 import org.antlr.v4.runtime.tree.ParseTreeListener;
 
@@ -51,6 +51,146 @@ public interface JQuickSQLListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitSelectExpression(JQuickSQLParser.SelectExpressionContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link JQuickSQLParser#olapOperation}.
+	 * @param ctx the parse tree
+	 */
+	void enterOlapOperation(JQuickSQLParser.OlapOperationContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link JQuickSQLParser#olapOperation}.
+	 * @param ctx the parse tree
+	 */
+	void exitOlapOperation(JQuickSQLParser.OlapOperationContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link JQuickSQLParser#olapClause}.
+	 * @param ctx the parse tree
+	 */
+	void enterOlapClause(JQuickSQLParser.OlapClauseContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link JQuickSQLParser#olapClause}.
+	 * @param ctx the parse tree
+	 */
+	void exitOlapClause(JQuickSQLParser.OlapClauseContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code rollupOperation}
+	 * labeled alternative in {@link JQuickSQLParser#olapClauseItem}.
+	 * @param ctx the parse tree
+	 */
+	void enterRollupOperation(JQuickSQLParser.RollupOperationContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code rollupOperation}
+	 * labeled alternative in {@link JQuickSQLParser#olapClauseItem}.
+	 * @param ctx the parse tree
+	 */
+	void exitRollupOperation(JQuickSQLParser.RollupOperationContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code drilldownOperation}
+	 * labeled alternative in {@link JQuickSQLParser#olapClauseItem}.
+	 * @param ctx the parse tree
+	 */
+	void enterDrilldownOperation(JQuickSQLParser.DrilldownOperationContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code drilldownOperation}
+	 * labeled alternative in {@link JQuickSQLParser#olapClauseItem}.
+	 * @param ctx the parse tree
+	 */
+	void exitDrilldownOperation(JQuickSQLParser.DrilldownOperationContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code sliceOperation}
+	 * labeled alternative in {@link JQuickSQLParser#olapClauseItem}.
+	 * @param ctx the parse tree
+	 */
+	void enterSliceOperation(JQuickSQLParser.SliceOperationContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code sliceOperation}
+	 * labeled alternative in {@link JQuickSQLParser#olapClauseItem}.
+	 * @param ctx the parse tree
+	 */
+	void exitSliceOperation(JQuickSQLParser.SliceOperationContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code diceOperation}
+	 * labeled alternative in {@link JQuickSQLParser#olapClauseItem}.
+	 * @param ctx the parse tree
+	 */
+	void enterDiceOperation(JQuickSQLParser.DiceOperationContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code diceOperation}
+	 * labeled alternative in {@link JQuickSQLParser#olapClauseItem}.
+	 * @param ctx the parse tree
+	 */
+	void exitDiceOperation(JQuickSQLParser.DiceOperationContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code pivotOperation}
+	 * labeled alternative in {@link JQuickSQLParser#olapClauseItem}.
+	 * @param ctx the parse tree
+	 */
+	void enterPivotOperation(JQuickSQLParser.PivotOperationContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code pivotOperation}
+	 * labeled alternative in {@link JQuickSQLParser#olapClauseItem}.
+	 * @param ctx the parse tree
+	 */
+	void exitPivotOperation(JQuickSQLParser.PivotOperationContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link JQuickSQLParser#rollupDimensions}.
+	 * @param ctx the parse tree
+	 */
+	void enterRollupDimensions(JQuickSQLParser.RollupDimensionsContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link JQuickSQLParser#rollupDimensions}.
+	 * @param ctx the parse tree
+	 */
+	void exitRollupDimensions(JQuickSQLParser.RollupDimensionsContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link JQuickSQLParser#drilldownDimensions}.
+	 * @param ctx the parse tree
+	 */
+	void enterDrilldownDimensions(JQuickSQLParser.DrilldownDimensionsContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link JQuickSQLParser#drilldownDimensions}.
+	 * @param ctx the parse tree
+	 */
+	void exitDrilldownDimensions(JQuickSQLParser.DrilldownDimensionsContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link JQuickSQLParser#sliceCondition}.
+	 * @param ctx the parse tree
+	 */
+	void enterSliceCondition(JQuickSQLParser.SliceConditionContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link JQuickSQLParser#sliceCondition}.
+	 * @param ctx the parse tree
+	 */
+	void exitSliceCondition(JQuickSQLParser.SliceConditionContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link JQuickSQLParser#diceConditions}.
+	 * @param ctx the parse tree
+	 */
+	void enterDiceConditions(JQuickSQLParser.DiceConditionsContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link JQuickSQLParser#diceConditions}.
+	 * @param ctx the parse tree
+	 */
+	void exitDiceConditions(JQuickSQLParser.DiceConditionsContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link JQuickSQLParser#diceCondition}.
+	 * @param ctx the parse tree
+	 */
+	void enterDiceCondition(JQuickSQLParser.DiceConditionContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link JQuickSQLParser#diceCondition}.
+	 * @param ctx the parse tree
+	 */
+	void exitDiceCondition(JQuickSQLParser.DiceConditionContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link JQuickSQLParser#pivotSpec}.
+	 * @param ctx the parse tree
+	 */
+	void enterPivotSpec(JQuickSQLParser.PivotSpecContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link JQuickSQLParser#pivotSpec}.
+	 * @param ctx the parse tree
+	 */
+	void exitPivotSpec(JQuickSQLParser.PivotSpecContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link JQuickSQLParser#selectClause}.
 	 * @param ctx the parse tree
@@ -271,6 +411,16 @@ public interface JQuickSQLListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitFunctionCall(JQuickSQLParser.FunctionCallContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link JQuickSQLParser#arg}.
+	 * @param ctx the parse tree
+	 */
+	void enterArg(JQuickSQLParser.ArgContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link JQuickSQLParser#arg}.
+	 * @param ctx the parse tree
+	 */
+	void exitArg(JQuickSQLParser.ArgContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link JQuickSQLParser#functionArgs}.
 	 * @param ctx the parse tree

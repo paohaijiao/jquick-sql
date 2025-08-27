@@ -1,4 +1,4 @@
-// Generated from D:/idea/jthornruleGrammer/sql/JQuickSQL.g4 by ANTLR 4.13.2
+// Generated from D:/my/jthornruleGrammer/sql/JQuickSQL.g4 by ANTLR 4.13.2
 package com.github.paohaijiao.parser;
 import org.antlr.v4.runtime.tree.ParseTreeVisitor;
 
@@ -36,6 +36,89 @@ public interface JQuickSQLVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitSelectExpression(JQuickSQLParser.SelectExpressionContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link JQuickSQLParser#olapOperation}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitOlapOperation(JQuickSQLParser.OlapOperationContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link JQuickSQLParser#olapClause}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitOlapClause(JQuickSQLParser.OlapClauseContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code rollupOperation}
+	 * labeled alternative in {@link JQuickSQLParser#olapClauseItem}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitRollupOperation(JQuickSQLParser.RollupOperationContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code drilldownOperation}
+	 * labeled alternative in {@link JQuickSQLParser#olapClauseItem}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitDrilldownOperation(JQuickSQLParser.DrilldownOperationContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code sliceOperation}
+	 * labeled alternative in {@link JQuickSQLParser#olapClauseItem}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitSliceOperation(JQuickSQLParser.SliceOperationContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code diceOperation}
+	 * labeled alternative in {@link JQuickSQLParser#olapClauseItem}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitDiceOperation(JQuickSQLParser.DiceOperationContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code pivotOperation}
+	 * labeled alternative in {@link JQuickSQLParser#olapClauseItem}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitPivotOperation(JQuickSQLParser.PivotOperationContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link JQuickSQLParser#rollupDimensions}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitRollupDimensions(JQuickSQLParser.RollupDimensionsContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link JQuickSQLParser#drilldownDimensions}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitDrilldownDimensions(JQuickSQLParser.DrilldownDimensionsContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link JQuickSQLParser#sliceCondition}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitSliceCondition(JQuickSQLParser.SliceConditionContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link JQuickSQLParser#diceConditions}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitDiceConditions(JQuickSQLParser.DiceConditionsContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link JQuickSQLParser#diceCondition}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitDiceCondition(JQuickSQLParser.DiceConditionContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link JQuickSQLParser#pivotSpec}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitPivotSpec(JQuickSQLParser.PivotSpecContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link JQuickSQLParser#selectClause}.
 	 * @param ctx the parse tree
@@ -168,6 +251,12 @@ public interface JQuickSQLVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitFunctionCall(JQuickSQLParser.FunctionCallContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link JQuickSQLParser#arg}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitArg(JQuickSQLParser.ArgContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link JQuickSQLParser#functionArgs}.
 	 * @param ctx the parse tree

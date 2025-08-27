@@ -34,7 +34,7 @@ import com.github.paohaijiao.model.JSelectElementModel;
 import com.github.paohaijiao.model.JSelectElementsResultModel;
 import com.github.paohaijiao.model.JoinPartModel;
 import com.github.paohaijiao.parser.JQuickSQLParser;
-import com.github.paohaijiao.support.JExpressionEvaluator;
+import com.github.paohaijiao.evalue.JExpressionEvaluator;
 
 import java.util.*;
 

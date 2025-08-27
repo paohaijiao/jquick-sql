@@ -81,9 +81,7 @@ public class JOLAPOperations {
      * @param aggregations aggregations (column -> aggregations)
      * @return dataset
      */
-    public static JDataSet drillDown(JDataSet dataset, List<String> additionalDimensions,
-                                     Map<String, Function<List<Object>, Object>> aggregations) {
-
+    public static JDataSet drillDown(JDataSet dataset, List<String> additionalDimensions, Map<String, Function<List<Object>, Object>> aggregations) {
         List<String> currentGroupBy = Collections.singletonList(dataset.getColumns().get(0).getName());
         List<String> newGroupBy = new ArrayList<>(currentGroupBy);
         newGroupBy.addAll(additionalDimensions);

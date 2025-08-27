@@ -18,8 +18,14 @@ import com.github.paohaijiao.dataset.JDataSet;
 import com.github.paohaijiao.dataset.JRow;
 import com.github.paohaijiao.enums.JEngineEnums;
 import com.github.paohaijiao.executor.JQuickSQLExecutor;
+import com.github.paohaijiao.model.JDataSetFactory;
+import com.github.paohaijiao.parser.JQuickSQLParser;
 import com.github.paohaijiao.support.JDataSetHolder;
+import com.github.paohaijiao.visitor.JQuikSQLCommonTableExpressionVisitor;
+import org.junit.Before;
 import org.junit.Test;
+
+import java.util.Arrays;
 
 /**
  * packageName com.github.paohaijiao.select
@@ -90,7 +96,7 @@ public class JCteQueryTest {
                 "  WHERE manager_id IS NOT NULL " +
                 "  GROUP BY manager_id" +
                 ") " +
-                "SELECT e.name as manager_name, ds.emp_count " +
+                "SELECT e.id as id,e.name as manager_name, ds.emp_count " +
                 "FROM employees e " +
                 "JOIN department_stats ds ON e.id = ds.dept_id " +
                 "ORDER BY ds.emp_count DESC";
@@ -110,13 +116,13 @@ public class JCteQueryTest {
     @Test
     public void testRecursiveCte() {
         String sql = "WITH RECURSIVE employee_hierarchy AS (" +
-                "  SELECT id, name, manager_id, 1 as level " +
+                "  SELECT id, name, manager_id " +
                 "  FROM employees " +
                 "  WHERE manager_id IS NULL " +
                 "  " +
                 "  UNION ALL " +
                 "  " +
-                "  SELECT e.id, e.name, e.manager_id, eh.level + 1 as level"+
+                "  SELECT e.id as id, e.name as name, e.manager_id"+
                 "  FROM employees e " +
                 "  INNER JOIN employee_hierarchy eh ON e.manager_id = eh.id" +
                 ") " +

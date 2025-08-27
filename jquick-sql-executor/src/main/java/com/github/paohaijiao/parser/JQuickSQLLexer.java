@@ -1,4 +1,4 @@
-// Generated from D:/idea/jthornruleGrammer/sql/JQuickSQL.g4 by ANTLR 4.13.2
+// Generated from D:/my/jthornruleGrammer/sql/JQuickSQL.g4 by ANTLR 4.13.2
 package com.github.paohaijiao.parser;
 
 import org.antlr.v4.runtime.*;
@@ -54,7 +54,7 @@ public class JQuickSQLLexer extends Lexer {
 
 	private static String[] makeLiteralNames() {
 		return new String[] {
-			null, "';'", "','", "'*'", "'='", "'('", "')'", "'!'", "'/'", "'%'", 
+			null, "';'", "','", "'('", "')'", "'='", "'*'", "'!'", "'/'", "'%'", 
 			"'+'", "'-'", "'--'", "'~'", "'>'", "'<'", "'<='", "'>='", "'<>'", "'!='", 
 			"'::'", "'.'"
 		};
@@ -315,10 +315,10 @@ public class JQuickSQLLexer extends Lexer {
 		"\u0000\u00cb\u028f\u0001\u0000\u0000\u0000\u00cd\u0295\u0001\u0000\u0000"+
 		"\u0000\u00cf\u02a3\u0001\u0000\u0000\u0000\u00d1\u00d2\u0005;\u0000\u0000"+
 		"\u00d2\u0002\u0001\u0000\u0000\u0000\u00d3\u00d4\u0005,\u0000\u0000\u00d4"+
-		"\u0004\u0001\u0000\u0000\u0000\u00d5\u00d6\u0005*\u0000\u0000\u00d6\u0006"+
-		"\u0001\u0000\u0000\u0000\u00d7\u00d8\u0005=\u0000\u0000\u00d8\b\u0001"+
-		"\u0000\u0000\u0000\u00d9\u00da\u0005(\u0000\u0000\u00da\n\u0001\u0000"+
-		"\u0000\u0000\u00db\u00dc\u0005)\u0000\u0000\u00dc\f\u0001\u0000\u0000"+
+		"\u0004\u0001\u0000\u0000\u0000\u00d5\u00d6\u0005(\u0000\u0000\u00d6\u0006"+
+		"\u0001\u0000\u0000\u0000\u00d7\u00d8\u0005)\u0000\u0000\u00d8\b\u0001"+
+		"\u0000\u0000\u0000\u00d9\u00da\u0005=\u0000\u0000\u00da\n\u0001\u0000"+
+		"\u0000\u0000\u00db\u00dc\u0005*\u0000\u0000\u00dc\f\u0001\u0000\u0000"+
 		"\u0000\u00dd\u00de\u0005!\u0000\u0000\u00de\u000e\u0001\u0000\u0000\u0000"+
 		"\u00df\u00e0\u0005/\u0000\u0000\u00e0\u0010\u0001\u0000\u0000\u0000\u00e1"+
 		"\u00e2\u0005%\u0000\u0000\u00e2\u0012\u0001\u0000\u0000\u0000\u00e3\u00e4"+

@@ -1,4 +1,4 @@
-package com.github.paohaijiao.support;
+package com.github.paohaijiao.evalue;
 
 import com.github.paohaijiao.condition.*;
 import com.github.paohaijiao.exception.JAssert;
@@ -9,7 +9,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.regex.PatternSyntaxException;
 
-public class JConditionEvaluator extends JBaseEvaluator implements JEvaluator<JCondition,Boolean>{
+public class JConditionEvaluator extends JBaseEvaluator implements JSqlEvaluator<JCondition,Boolean> {
 
     public Boolean evaluate(JCondition condition, Map<String, Object> row) {
         if (condition instanceof JComparisonCondition) {

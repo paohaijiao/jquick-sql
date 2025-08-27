@@ -9,5 +9,6 @@ public enum JExpressionType {
     AGGREGATE,
     CASE,
     SUBQUERY,
+    OLAP,
     PAREN
 }

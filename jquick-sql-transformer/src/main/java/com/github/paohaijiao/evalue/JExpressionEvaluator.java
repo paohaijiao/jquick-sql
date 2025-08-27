@@ -1,4 +1,4 @@
-package com.github.paohaijiao.support;
+package com.github.paohaijiao.evalue;
 
 import com.github.paohaijiao.enums.JLogicalOperator;
 import com.github.paohaijiao.exception.JAssert;
@@ -11,7 +11,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
 
-public class JExpressionEvaluator extends JBaseEvaluator implements JEvaluator<JExpression,Object>{
+public class JExpressionEvaluator extends JBaseEvaluator implements JSqlEvaluator<JExpression,Object> {
 
     public Object evaluate(JExpression expression, Map<String, Object> row) {
         if (expression instanceof JColumnExpression) {
@@ -93,7 +93,7 @@ public class JExpressionEvaluator extends JBaseEvaluator implements JEvaluator<J
             Function<List<Object>, Object> function= JAggregateFunctionFactory.getFunction(functionName);
             return function.apply(list);
         }else{//normal function
-            Object object=com.github.paohaijiao.evalue.JEvaluator.evaluateFunction(functionName, list);
+            Object object= JEvaluator.evaluateFunction(functionName, list);
             return object;
         }
 
