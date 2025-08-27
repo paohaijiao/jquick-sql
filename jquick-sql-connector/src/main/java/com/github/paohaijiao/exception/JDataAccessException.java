@@ -10,8 +10,9 @@ public class JDataAccessException  extends RuntimeException {
 
     private final JErrorCode errorCode;
 
-    private final String originalSql; // 原始SQL语句(如果是SQL异常)
-    private final Map<String, Object> context; // 异常上下文信息
+    private final String originalSql;
+
+    private final Map<String, Object> context;
 
     public JDataAccessException(JErrorCode errorCode, String message) {
         super(message);
@@ -77,25 +78,5 @@ public class JDataAccessException  extends RuntimeException {
 
     public static JDataAccessException transactionError(String message, Throwable cause) {
         return new JDataAccessException(JErrorCode.TRANSACTION_ERROR, message, cause);
-    }
-
-    @Override
-    public String toString() {
-        StringBuilder sb = new StringBuilder();
-        sb.append("DataAccessException{errorCode=").append(errorCode)
-                .append(", message=").append(getMessage())
-                .append(", originalSql=").append(originalSql);
-
-        if (!context.isEmpty()) {
-            sb.append(", context=").append(context);
-        }
-
-        if (getCause() != null) {
-            sb.append(", cause=").append(getCause().getClass().getName())
-                    .append(": ").append(getCause().getMessage());
-        }
-
-        sb.append('}');
-        return sb.toString();
     }
 }
