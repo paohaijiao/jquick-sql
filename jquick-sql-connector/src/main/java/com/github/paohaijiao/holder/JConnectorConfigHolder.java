@@ -28,11 +28,9 @@ import java.util.HashMap;
  * @since 2025/8/26
  */
 @Data
-public class JConnectorConfigHolder  {
+public abstract  class JConnectorConfigHolder  {
 
     protected  String type;
-
-
 
 
     public JConnectorConfig createJsonConfig(String filePath) {
