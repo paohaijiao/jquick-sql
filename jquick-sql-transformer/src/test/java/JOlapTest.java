@@ -54,7 +54,6 @@ public class JOlapTest {
         rows.add(new JRow(createRow( "East",  "B", "Q1",  200.0)));
         rows.add(new JRow(createRow( "West",  "A",  "Q1",  120.0)));
         rows.add(new JRow(createRow( "West",  "B", "Q2",  180.0)));
-
         JDataSet dataset = new JDataSet(columns, rows);
         return dataset;
     }

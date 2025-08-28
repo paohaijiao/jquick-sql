@@ -21,13 +21,14 @@ import com.github.paohaijiao.dataset.JDataSet;
 import com.github.paohaijiao.dataset.JRow;
 import com.github.paohaijiao.ds.JDBCBaseConnectionConfig;
 import com.github.paohaijiao.enums.JConnectorType;
+import com.github.paohaijiao.jdbc.conf.JDbcConnectorConfig;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+
 /**
  * packageName com.github.paohaijiao.jdbc
  *
@@ -44,37 +45,46 @@ public class JdbcDataSetConnector implements JDataSetConnector {
 
     @Override
     public JDataSet load(Object source) {
-        if (source instanceof JDBCBaseConnectionConfig) {
-            return loadFromJdbcSource((JDBCBaseConnectionConfig) source);
+        if (source instanceof JDbcConnectorConfig) {
+            return loadFromJdbcSource((JDbcConnectorConfig) source);
         } else {
             throw new IllegalArgumentException("Unsupported JDBC source type: " + source.getClass());
         }
     }
-    private JDataSet loadFromJdbcSource(JDBCBaseConnectionConfig source) {
-        try (Connection conn = DriverManager.getConnection(source.getUrl(), source.getUsername(), source.getPassword())) {
-            try (var stmt = conn.createStatement();
-                 ResultSet rs = stmt.executeQuery(source.getSql())) {
-                ResultSetMetaData metaData = rs.getMetaData();
-                int columnCount = metaData.getColumnCount();
-                List<JColumnMeta> columns = new ArrayList<>();
-                for (int i = 1; i <= columnCount; i++) {
-                    String columnName = metaData.getColumnName(i);
-                    String className = metaData.getColumnClassName(i);
-                    Class<?> columnType = Class.forName(className);
-                    columns.add(new JColumnMeta(columnName, columnType, "jdbc"));
-                }
-                List<JRow> rows = new ArrayList<>();
-                while (rs.next()) {
-                    JRow row = new JRow();
-                    for (int i = 1; i <= columnCount; i++) {
-                        String columnName = metaData.getColumnName(i);
-                        Object value = rs.getObject(i);
-                        row.put(columnName, value);
-                    }
-                    rows.add(row);
-                }
-                return new JDataSet(columns, rows);
+    private JDataSet loadFromJdbcSource(JDbcConnectorConfig source) {
+        try (Connection conn = DriverManager.getConnection(source.getUrl(), source.getUsername(), source.getPassword());
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(source.getSql())) {
+            ResultSetMetaData metaData = rs.getMetaData();
+            int columnCount = metaData.getColumnCount();
+            List<JColumnMeta> columns = IntStream.rangeClosed(1, columnCount)
+                    .mapToObj(i -> {
+                        try {
+                            String columnName = metaData.getColumnName(i);
+                            String className = metaData.getColumnClassName(i);
+                            Class<?> columnType = Class.forName(className);
+                            return new JColumnMeta(columnName, columnType, "jdbc");
+                        } catch (Exception e) {
+                            throw new RuntimeException("Failed to process column metadata", e);
+                        }
+                    })
+                    .collect(Collectors.toList());
+            List<JRow> rows = new ArrayList<>();
+            while (rs.next()) {
+                JRow row = new JRow();
+                IntStream.rangeClosed(1, columnCount)
+                        .forEach(i -> {
+                            try {
+                                String columnName = metaData.getColumnName(i);
+                                Object value = rs.getObject(i);
+                                row.put(columnName, value);
+                            } catch (Exception e) {
+                                throw new RuntimeException("Failed to process row data", e);
+                            }
+                        });
+                rows.add(row);
             }
+            return new JDataSet(columns, rows);
         } catch (Exception e) {
             throw new RuntimeException("Failed to execute JDBC query", e);
         }

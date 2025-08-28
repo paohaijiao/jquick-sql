@@ -137,7 +137,6 @@ public class JDataSetRecursiveQueryTest {
      */
     @Test
     public void testMaxDepthProtection() {
-        JDataSet allEmployees = createEmployeeDataSet();
         JRow cyclicEmployee = new JRow();
         cyclicEmployee.put("id", 99);
         cyclicEmployee.put("name", "Cyclic");
