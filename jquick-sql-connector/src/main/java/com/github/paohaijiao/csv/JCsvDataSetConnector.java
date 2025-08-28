@@ -26,6 +26,7 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.Reader;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -47,7 +48,7 @@ public class JCsvDataSetConnector implements JDataSetConnector {
         if (source instanceof Path) {
             return convertFromPath((Path) source);
         } else if (source instanceof String) {
-            return convertFromPath(Path.of((String) source));
+            return convertFromPath(Paths.get((String) source));
         } else if (source instanceof Reader) {
             return convertFromReader((Reader) source);
         } else {
