@@ -2,12 +2,11 @@ package com.github.paohaijiao.enums;
 
 public enum JComparisonOperator {
     EQ("="),
-    NEQ("<>"),
     GT(">"),
     LT("<"),
     GE(">="),
     LE("<="),
-    NotEqual("!="),
+    NEQ("!="),
     LIKE("LIKE"),
     NOT_LIKE("NOT LIKE"),
     IS("IS"),

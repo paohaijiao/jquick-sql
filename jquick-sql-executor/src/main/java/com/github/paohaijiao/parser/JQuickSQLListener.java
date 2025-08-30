@@ -1,4 +1,4 @@
-// Generated from D:/my/jthornruleGrammer/sql/JQuickSQL.g4 by ANTLR 4.13.2
+// Generated from D:/idea/jthornruleGrammer/sql/JQuickSQL.g4 by ANTLR 4.13.2
 package com.github.paohaijiao.parser;
 import org.antlr.v4.runtime.tree.ParseTreeListener;
 

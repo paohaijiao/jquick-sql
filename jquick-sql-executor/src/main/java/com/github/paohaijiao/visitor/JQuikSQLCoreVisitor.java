@@ -32,6 +32,7 @@ import com.github.paohaijiao.parser.JQuickSQLBaseVisitor;
 import com.github.paohaijiao.parser.JQuickSQLLexer;
 import com.github.paohaijiao.parser.JQuickSQLParser;
 import com.github.paohaijiao.support.JDataSetHolder;
+import com.github.paohaijiao.util.JStringUtils;
 import org.antlr.v4.runtime.CommonTokenStream;
 
 import java.text.NumberFormat;
@@ -95,7 +96,8 @@ public class JQuikSQLCoreVisitor extends JQuickSQLBaseVisitor {
         if(null==str || "".equals(str)) {
             return str;
         }
-        String newStr = str.replaceAll("^['\"]|['\"]$", "");
+        String newStr = str.replaceAll("\"", "");
+        newStr= str.replaceAll("'", "");
         return newStr;
     }
     protected Number getNumber(String number){

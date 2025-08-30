@@ -133,8 +133,6 @@ public class JQuikSQLValueStatementVisitor extends JQuikSQLCoreVisitor{
     }
     @Override
     public JFullColumnModel visitFullColumnName(JQuickSQLParser.FullColumnNameContext ctx) {
-        String columnPath =ctx.getText();
-        String[] parts = columnPath.split("\\.");
         JFullColumnModel fullColumnModel = new JFullColumnModel();
         if(ctx.dottedId()!=null){
             fullColumnModel.setTableName(ctx.uid().getText());

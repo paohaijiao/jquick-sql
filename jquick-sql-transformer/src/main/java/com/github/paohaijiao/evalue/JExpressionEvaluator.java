@@ -71,7 +71,6 @@ public class JExpressionEvaluator extends JBaseEvaluator implements JSqlEvaluato
             case PLUS: return value;
             case MINUS: return negate(value);
             case NOT: return !convertToBoolean(value);
-            case NT: return !convertToBoolean(value);
             case BIT_NOT: return bitwiseNot(value);
             default:
                 throw new UnsupportedOperationException("unsupported unary operator: " + expr.getOperator());

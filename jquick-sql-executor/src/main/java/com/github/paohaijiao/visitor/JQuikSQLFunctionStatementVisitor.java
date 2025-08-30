@@ -18,6 +18,7 @@ package com.github.paohaijiao.visitor;
 import com.github.paohaijiao.exception.JAssert;
 import com.github.paohaijiao.expression.JExpression;
 import com.github.paohaijiao.expression.JFunctionCallExpression;
+import com.github.paohaijiao.expression.JStarExpression;
 import com.github.paohaijiao.parser.JQuickSQLParser;
 
 import java.util.ArrayList;
@@ -55,11 +56,21 @@ public class JQuikSQLFunctionStatementVisitor extends JQuikSQLExpressionStatemen
         JAssert.notNull(ctx.uid(),"uid must not be null");
         String funcName = ctx.uid().getText();
         List<JExpression> args = new ArrayList<>();
-        if (ctx.functionArgs() != null) {
-            args=visitFunctionArgs(ctx.functionArgs());
+        if (ctx.arg() != null) {
+            args=visitArg(ctx.arg());
         }
         JFunctionCallExpression jFunctionCallModel = new JFunctionCallExpression(funcName,args);
         return jFunctionCallModel;
+    }
+    @Override
+    public List<JExpression> visitArg(JQuickSQLParser.ArgContext ctx) {
+        List<JExpression> args = new ArrayList<>();
+        if(null!= ctx.functionArgs()){
+            args= visitFunctionArgs(ctx.functionArgs());
+        }else if("*".equalsIgnoreCase( ctx.getText())){
+            args.add(new JStarExpression());
+        }
+        return args;
     }
 
 
