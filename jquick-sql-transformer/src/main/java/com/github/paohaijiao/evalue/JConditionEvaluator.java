@@ -2,6 +2,7 @@ package com.github.paohaijiao.evalue;
 
 import com.github.paohaijiao.condition.*;
 import com.github.paohaijiao.exception.JAssert;
+import com.github.paohaijiao.expression.JExpression;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -126,12 +127,13 @@ public class JConditionEvaluator extends JBaseEvaluator implements JSqlEvaluator
 
     private boolean evaluateValueInList(JInCondition cond, Map<String, Object> row) {
         Object val = evaluateExpression(cond.getExpression(), row);
-        List<Object> list=cond.getList();
-        for (Object item : list) {
-            if (item == null) {
+        List<JExpression> list=cond.getList();
+        for (JExpression item : list) {
+            Object value = evaluateExpression(item, row);
+            if (value == null) {
                 continue;
             }
-            if (compareValues(val, item) == 0) {
+            if (compareValues(val, value) == 0) {
                 return true;
             }
         }

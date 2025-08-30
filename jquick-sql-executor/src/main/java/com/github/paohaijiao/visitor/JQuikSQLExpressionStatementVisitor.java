@@ -51,9 +51,9 @@ public class JQuikSQLExpressionStatementVisitor extends JQuikSQLExpressionStatem
     }
     @Override
     public JExpression  visitNotExpression(JQuickSQLParser.NotExpressionContext ctx) {
-        Object columnExpression = visit(ctx.expression());
-        JAssert.isTrue(columnExpression instanceof JColumnExpression,"the expression is not a condition");
-        return new JNotExpression((JColumnExpression)columnExpression);
+        Object expression = visit(ctx.expression());
+        JAssert.isTrue(expression instanceof JExpression,"the expression is not a condition");
+        return new JNotExpression((JExpression)expression);
     }
 
 

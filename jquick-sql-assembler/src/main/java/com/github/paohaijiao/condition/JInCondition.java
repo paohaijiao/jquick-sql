@@ -33,14 +33,14 @@ import java.util.List;
 @Getter
 public class JInCondition extends JCondition {
 
-    private JColumnExpression expression;
+    private JExpression expression;
 
     private Boolean not;
 
-    private List<Object> list;
+    private List<JExpression> list;
 
 
-    public JInCondition(JColumnExpression expression, Boolean not, List<Object> list) {
+    public JInCondition(JExpression expression, Boolean not, List<JExpression> list) {
         this.type = JConditionType.IN;
         this.expression = expression;
         this.not = not;

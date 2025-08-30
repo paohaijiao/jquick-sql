@@ -31,13 +31,13 @@ import lombok.Getter;
 @Getter
 public class JRegexCondition extends JCondition {
 
-    private JColumnExpression expression;
+    private JExpression expression;
 
     private Boolean not;
 
     private String regex;
 
-    public JRegexCondition(JColumnExpression expression, Boolean not, String regex) {
+    public JRegexCondition(JExpression expression, Boolean not, String regex) {
         this.type = JConditionType.REGEX;
         this.expression = expression;
         this.not = not;

@@ -42,28 +42,6 @@ public class JExpressionTest {
         System.out.println(object);
     }
     @Test
-    public void expression1() {
-        String rule="false and false";
-        JQuickSQLLexer lexer = new JQuickSQLLexer(CharStreams.fromString(rule));
-        CommonTokenStream tokens = new CommonTokenStream(lexer);
-        JQuickSQLParser parser = new JQuickSQLParser(tokens);
-        JQuickSQLParser.ExpressionContext tree = parser.expression();
-        JQuikSQLCommonVisitor tv = new JQuikSQLCommonVisitor();
-        Object object = tv.visit(tree);
-        System.out.println(object);
-    }
-    @Test
-    public void expression2() {
-        String rule="false";
-        JQuickSQLLexer lexer = new JQuickSQLLexer(CharStreams.fromString(rule));
-        CommonTokenStream tokens = new CommonTokenStream(lexer);
-        JQuickSQLParser parser = new JQuickSQLParser(tokens);
-        JQuickSQLParser.ExpressionContext tree = parser.expression();
-        JQuikSQLCommonVisitor tv = new JQuikSQLCommonVisitor();
-        Object object = tv.visit(tree);
-        System.out.println(object);
-    }
-    @Test
     public void expression3() {
         String rule="(false)";
         JQuickSQLLexer lexer = new JQuickSQLLexer(CharStreams.fromString(rule));

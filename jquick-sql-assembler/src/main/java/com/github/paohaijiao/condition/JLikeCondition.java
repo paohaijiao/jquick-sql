@@ -31,13 +31,13 @@ import lombok.Getter;
 @Getter
 public class JLikeCondition extends JCondition {
 
-    private JColumnExpression expression;
+    private JExpression expression;
 
     private Boolean not;
 
     private String pattern;
 
-    public JLikeCondition(JColumnExpression expression, Boolean not, String pattern) {
+    public JLikeCondition(JExpression expression, Boolean not, String pattern) {
         this.type = JConditionType.LIKE;
         this.expression = expression;
         this.not = not;

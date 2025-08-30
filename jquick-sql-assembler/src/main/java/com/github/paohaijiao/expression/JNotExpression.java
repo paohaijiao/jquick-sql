@@ -31,7 +31,7 @@ public class JNotExpression extends JExpression{
     private JExpression expression;
 
     public JNotExpression(JExpression expression) {
-        this.type = JExpressionType.FUNCTION;
+        this.type = JExpressionType.UNARY;
         this.expression = expression;
     }
 

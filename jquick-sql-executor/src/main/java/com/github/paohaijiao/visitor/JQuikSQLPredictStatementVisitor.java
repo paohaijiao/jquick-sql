@@ -65,7 +65,7 @@ public class JQuikSQLPredictStatementVisitor extends JQuikSQLFunctionStatementVi
     @Override
     public JCondition visitBetweenPredicate(JQuickSQLParser.BetweenPredicateContext ctx) {
         Object target = visit(ctx.predicate(0));
-        JAssert.isTrue(target instanceof JColumnExpression,"the value must to be column expression");
+        JAssert.isTrue(target instanceof JExpression,"the value must to be  expression");
         Object lowerBound = visit(ctx.predicate(1));
         JAssert.isTrue(lowerBound instanceof JLiteralExpression,"the value must is literalExpression");
         Object upperBound = visit(ctx.predicate(2));
@@ -74,52 +74,50 @@ public class JQuikSQLPredictStatementVisitor extends JQuikSQLFunctionStatementVi
         if (target == null || lowerBound == null || upperBound == null) {
             return null;
         }
-        return new JBetweenCondition((JColumnExpression)target,(JLiteralExpression)lowerBound,(JLiteralExpression)upperBound,isNot);
+        return new JBetweenCondition((JExpression)target,(JLiteralExpression)lowerBound,(JLiteralExpression)upperBound,isNot);
     }
 
     @Override
     public JCondition visitInPredicate(JQuickSQLParser.InPredicateContext ctx) {
         Object target = visit(ctx.predicate());
-        JAssert.isTrue(target instanceof JColumnExpression,"the value must to be column expression");
+        JAssert.isTrue(target instanceof JExpression,"the value must to be  expression");
         boolean isNot = ctx.NOT() != null;
-        List<Object> inList=new ArrayList<>();
+        List<JExpression> inList=new ArrayList<>();
         if (ctx.selectStatement() != null) {
-            inList = (List<Object>) visit(ctx.selectStatement());
-            for (Object item : inList) {
-                if (!isLiteral(item)) {
-                    throw new IllegalArgumentException("IN predicate requires scalar values, not complex objects");
-                }
-            }
+            inList = (List<JExpression>) visit(ctx.selectStatement());
         } else {
             for (JQuickSQLParser.ExpressionContext exprCtx : ctx.expressions().expression()) {
                 Object exp =  visit(exprCtx);
-                JAssert.isTrue(exp instanceof JLiteralExpression,"the value must to be literal expression");
-                JLiteralExpression literal=(JLiteralExpression)exp;
-                inList.add(literal.getValue());
+                JAssert.isTrue(exp instanceof JExpression,"the value must to be  expression");
+                JExpression expression=(JExpression)exp;
+                inList.add(expression);
             }
         }
-        return new JInCondition((JColumnExpression)target,isNot,inList);
+        return new JInCondition((JExpression)target,isNot,inList);
     }
 
     @Override
     public JCondition visitLikePredicate(JQuickSQLParser.LikePredicateContext ctx) {
         Object target = visit(ctx.predicate(0));
-        JAssert.isTrue(target instanceof JColumnExpression,"the value must to be column expression");
+        JAssert.isTrue(target instanceof JExpression,"the value must to be  expression");
         Object right = visit(ctx.predicate(1));
         JAssert.notNull(right,"the pattern not null");
+        JAssert.isTrue(right instanceof JLiteralExpression,"the pattern is String type");
         boolean isNot = ctx.NOT() != null;
-        String pattern = right.toString();
-        return new JLikeCondition((JColumnExpression)target,isNot,pattern);
+        JLiteralExpression pattern = (JLiteralExpression)right;
+        return new JLikeCondition((JExpression)target,isNot,(String)pattern.getValue());
     }
 
     @Override
     public JCondition visitRegexpPredicate(JQuickSQLParser.RegexpPredicateContext ctx) {
         Object target = visit(ctx.predicate(0));
-        JAssert.isTrue(target instanceof JColumnExpression,"the value must to be column expression");
+        JAssert.isTrue(target instanceof JExpression,"the value must to be column expression");
         Object right = visit(ctx.predicate(1));
         JAssert.notNull(right,"the pattern not null");
+        JAssert.isTrue(right instanceof JLiteralExpression,"the pattern is String type");
         boolean isNot = ctx.NOT() != null;
-        JRegexCondition jRegexCondition=new JRegexCondition((JColumnExpression)target,isNot,right.toString());
+        JLiteralExpression val=(JLiteralExpression)right;
+        JRegexCondition jRegexCondition=new JRegexCondition((JExpression)target,isNot,(String)val.getValue());
         return  jRegexCondition;
     }
 

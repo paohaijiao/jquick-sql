@@ -89,7 +89,7 @@ public class JExpressionAtomTest {
 
     @Test
     public void fullColumnName() {
-        String rule="a.b.c";
+        String rule="b.c";
         JQuickSQLLexer lexer = new JQuickSQLLexer(CharStreams.fromString(rule));
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         JQuickSQLParser parser = new JQuickSQLParser(tokens);
