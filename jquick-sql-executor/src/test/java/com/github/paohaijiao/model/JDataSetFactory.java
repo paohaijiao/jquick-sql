@@ -43,6 +43,25 @@ public class JDataSetFactory {
         );
         List<JRow> rows = Arrays.asList(
                 createUserRow(1, "张三", 25, "北京", 8000.0),
+                createUserRow(2, "李四", 30, "上海", 12000.0)
+//                createUserRow(3, "王五", 28, "广州", 9500.0),
+//                createUserRow(4, "赵六", 35, "深圳", 15000.0),
+//                createUserRow(5, "钱七", 22, "杭州", 7000.0),
+//                createUserRow(6, "孙八", 40, "北京", 18000.0),
+//                createUserRow(7, "周九", 26, "上海", 8500.0),
+//                createUserRow(8, "吴十", 33, "成都", 11000.0)
+        );
+        return new JDataSet(columns, rows);
+    }
+    public static JDataSet createUsersDataSet1() {
+        List<JColumnMeta> columns = Arrays.asList(
+                new JColumnMeta("id", Integer.class, "users"),
+                new JColumnMeta("name", String.class, "users"),
+                new JColumnMeta("age", Integer.class, "users"),
+                new JColumnMeta("city", String.class, "users"),
+                new JColumnMeta("salary", Double.class, "users")
+        );
+        List<JRow> rows = Arrays.asList(
                 createUserRow(2, "李四", 30, "上海", 12000.0),
                 createUserRow(3, "王五", 28, "广州", 9500.0),
                 createUserRow(4, "赵六", 35, "深圳", 15000.0),
@@ -67,14 +86,14 @@ public class JDataSetFactory {
                 createOrderRow(101, 1, "笔记本电脑", 1, 5999.0, "2024-01-15"),
                 createOrderRow(102, 1, "鼠标", 2, 199.0, "2024-01-16"),
                 createOrderRow(103, 2, "手机", 1, 3999.0, "2024-01-17"),
-                createOrderRow(104, 3, "耳机", 3, 299.0, "2024-01-18"),
-                createOrderRow(105, 4, "平板电脑", 1, 2999.0, "2024-01-19"),
-                createOrderRow(106, 5, "键盘", 1, 499.0, "2024-01-20"),
-                createOrderRow(107, 6, "显示器", 2, 1999.0, "2024-01-21"),
-                createOrderRow(108, 7, "打印机", 1, 899.0, "2024-01-22"),
-                createOrderRow(109, 8, "扫描仪", 1, 699.0, "2024-01-23"),
-                createOrderRow(110, 2, "充电宝", 2, 199.0, "2024-01-24"),
-                createOrderRow(111, 9, "智能手表", 1, 1299.0, "2024-01-25") // 用户9不存在，用于测试LEFT JOIN
+                createOrderRow(104, 3, "耳机", 3, 299.0, "2024-01-18")
+//                createOrderRow(105, 4, "平板电脑", 1, 2999.0, "2024-01-19"),
+//                createOrderRow(106, 5, "键盘", 1, 499.0, "2024-01-20"),
+//                createOrderRow(107, 6, "显示器", 2, 1999.0, "2024-01-21"),
+//                createOrderRow(108, 7, "打印机", 1, 899.0, "2024-01-22"),
+//                createOrderRow(109, 8, "扫描仪", 1, 699.0, "2024-01-23"),
+//                createOrderRow(110, 2, "充电宝", 2, 199.0, "2024-01-24"),
+//                createOrderRow(111, 9, "智能手表", 1, 1299.0, "2024-01-25") // 用户9不存在，用于测试LEFT JOIN
         );
         return new JDataSet(columns, rows);
     }

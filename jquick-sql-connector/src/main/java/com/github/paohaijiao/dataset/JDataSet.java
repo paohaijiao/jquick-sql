@@ -36,6 +36,10 @@ public class JDataSet {
 
     private final List<JRow> rows;
 
+    private  String alias;
+
+    private  String tableName;
+
 
     public JDataSet(List<JColumnMeta> columns, List<JRow> rows) {
         this.columns = Collections.unmodifiableList(new ArrayList<>(columns));
@@ -102,5 +106,18 @@ public class JDataSet {
         public JDataSet build() {
             return new JDataSet(columns, rows);
         }
+    }
+
+    public void setAlias(String alias) {
+        this.alias = alias;
+    }
+    public String getAlias() {
+        return alias;
+    }
+    public void setTableName(String tableName) {
+        this.tableName = tableName;
+    }
+    public String getTableName() {
+        return tableName;
     }
 }

@@ -39,9 +39,9 @@ public abstract class JBaseHandler implements JDataSetJoinerStrategy {
         merged.putAll(right);
         return merged;
     }
-    protected static List<JColumnMeta> mergeColumns(JDataSet left, JDataSet right) {
-        List<JColumnMeta> result = new ArrayList<>(left.getColumns());
-        result.addAll(right.getColumns());
+    protected static List<JColumnMeta> mergeColumns(JDataSet right, JDataSet left) {
+        List<JColumnMeta> result = new ArrayList<>(right.getColumns());
+        result.addAll(left.getColumns());
         return result;
     }
     protected static JRow createNullRow(JDataSet ds) {

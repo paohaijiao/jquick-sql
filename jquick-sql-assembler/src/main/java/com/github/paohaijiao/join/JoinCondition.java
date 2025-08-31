@@ -17,7 +17,12 @@ public interface JoinCondition {
         return (l, r) -> this.test(l, r) || other.test(l, r);
     }
     static JoinCondition equals(String leftColumn, String rightColumn) {
-        return (l, r) -> Objects.equals(l.get(leftColumn), r.get(rightColumn));
+        return (l, r) -> {
+            Object leftVal = l.get(leftColumn);
+            Object rightVal = r.get(rightColumn);
+            boolean result = Objects.equals(leftVal, rightVal);
+            return result;
+        };
     }
     static JoinCondition of(BiPredicate<Map<String, Object>, Map<String, Object>> predicate) {
         return predicate::test;

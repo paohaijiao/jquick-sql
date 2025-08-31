@@ -52,6 +52,16 @@ public interface JQuickSQLListener extends ParseTreeListener {
 	 */
 	void exitSelectExpression(JQuickSQLParser.SelectExpressionContext ctx);
 	/**
+	 * Enter a parse tree produced by {@link JQuickSQLParser#datasetOp}.
+	 * @param ctx the parse tree
+	 */
+	void enterDatasetOp(JQuickSQLParser.DatasetOpContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link JQuickSQLParser#datasetOp}.
+	 * @param ctx the parse tree
+	 */
+	void exitDatasetOp(JQuickSQLParser.DatasetOpContext ctx);
+	/**
 	 * Enter a parse tree produced by {@link JQuickSQLParser#olapOperation}.
 	 * @param ctx the parse tree
 	 */

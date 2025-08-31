@@ -16,6 +16,8 @@ public interface JDataSetJoinerStrategy {
 
     JDataSet leftJoin(JDataSet left, JDataSet right, JoinCondition condition);
 
+    JDataSet rightJoin(JDataSet left, JDataSet right, JoinCondition condition);
+
     JDataSet fullOuterJoin(JDataSet left, JDataSet right, JoinCondition condition);
 
     JDataSet crossJoin(JDataSet left, JDataSet right);

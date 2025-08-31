@@ -46,6 +46,13 @@ public class JQuickSQLBaseVisitor<T> extends AbstractParseTreeVisitor<T> impleme
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
+	@Override public T visitDatasetOp(JQuickSQLParser.DatasetOpContext ctx) { return visitChildren(ctx); }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation returns the result of calling
+	 * {@link #visitChildren} on {@code ctx}.</p>
+	 */
 	@Override public T visitOlapOperation(JQuickSQLParser.OlapOperationContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}

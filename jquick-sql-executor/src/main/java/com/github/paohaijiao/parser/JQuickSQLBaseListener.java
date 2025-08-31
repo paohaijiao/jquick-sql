@@ -65,6 +65,18 @@ public class JQuickSQLBaseListener implements JQuickSQLListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
+	@Override public void enterDatasetOp(JQuickSQLParser.DatasetOpContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitDatasetOp(JQuickSQLParser.DatasetOpContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
 	@Override public void enterOlapOperation(JQuickSQLParser.OlapOperationContext ctx) { }
 	/**
 	 * {@inheritDoc}

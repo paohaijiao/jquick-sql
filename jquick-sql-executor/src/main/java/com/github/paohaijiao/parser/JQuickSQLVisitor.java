@@ -37,6 +37,12 @@ public interface JQuickSQLVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitSelectExpression(JQuickSQLParser.SelectExpressionContext ctx);
 	/**
+	 * Visit a parse tree produced by {@link JQuickSQLParser#datasetOp}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitDatasetOp(JQuickSQLParser.DatasetOpContext ctx);
+	/**
 	 * Visit a parse tree produced by {@link JQuickSQLParser#olapOperation}.
 	 * @param ctx the parse tree
 	 * @return the visitor result

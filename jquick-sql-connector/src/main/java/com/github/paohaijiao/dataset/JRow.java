@@ -31,7 +31,6 @@ public class JRow implements Map<String, Object> {
 
     private final Map<String, Object> data;
 
-    private String tableName;
 
     /**
      * Creates an empty JRow with no associated table name.
@@ -47,7 +46,6 @@ public class JRow implements Map<String, Object> {
      */
     public JRow(String tableName) {
         this();
-        this.tableName = tableName;
     }
 
     /**
@@ -59,34 +57,7 @@ public class JRow implements Map<String, Object> {
         this.data = new HashMap<>(data);
     }
 
-    /**
-     * Creates a JRow with table name and initial data.
-     *
-     * @param tableName the name of the table
-     * @param data the initial data for this row
-     */
-    public JRow(String tableName, Map<String, Object> data) {
-        this(data);
-        this.tableName = tableName;
-    }
 
-    /**
-     * Gets the name of the table this row belongs to.
-     *
-     * @return the table name, or null if not set
-     */
-    public String getTableName() {
-        return tableName;
-    }
-
-    /**
-     * Sets the name of the table this row belongs to.
-     *
-     * @param tableName the table name
-     */
-    public void setTableName(String tableName) {
-        this.tableName = tableName;
-    }
 
 
     @Override
@@ -210,22 +181,19 @@ public class JRow implements Map<String, Object> {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         JRow jRow = (JRow) o;
-        return data.equals(jRow.data) &&
-                (tableName == null ? jRow.tableName == null : tableName.equals(jRow.tableName));
+        return data.equals(jRow.data) ;
     }
 
     @Override
     public int hashCode() {
         int result = data.hashCode();
-        result = 31 * result + (tableName != null ? tableName.hashCode() : 0);
         return result;
     }
 
     @Override
     public String toString() {
         return "JRow{" +
-                "tableName='" + tableName + '\'' +
-                ", data=" + data +
+                " data=" + data +
                 '}';
     }
 }

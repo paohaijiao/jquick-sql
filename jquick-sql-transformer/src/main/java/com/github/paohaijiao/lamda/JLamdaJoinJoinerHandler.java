@@ -16,6 +16,8 @@
 package com.github.paohaijiao.lamda;
 
 import com.github.paohaijiao.condition.JCondition;
+import com.github.paohaijiao.console.JConsole;
+import com.github.paohaijiao.enums.JLogLevel;
 import com.github.paohaijiao.evalue.JConditionEvaluator;
 import com.github.paohaijiao.dataset.JColumnMeta;
 import com.github.paohaijiao.dataset.JDataSet;
@@ -29,6 +31,7 @@ import com.github.paohaijiao.factory.JDataSetJoinerStrategy;
 import com.github.paohaijiao.join.JoinCondition;
 import com.github.paohaijiao.function.JAggregateFunctionFactory;
 import com.github.paohaijiao.handler.JBaseHandler;
+
 
 import java.util.*;
 import java.util.function.Function;
@@ -80,10 +83,60 @@ public class JLamdaJoinJoinerHandler extends JBaseHandler implements JDataSetJoi
     }
 
     @Override
+    public JDataSet rightJoin(JDataSet left, JDataSet right, JoinCondition condition) {
+        List<JRow> resultRows = new ArrayList<>();
+        List<JColumnMeta> resultColumns = mergeColumns(left, right);
+        int matchCount = 0;
+        int totalComparisons = 0;
+        for (JRow rightRow : right.getRows()) {
+            boolean hasMatch = false;
+            for (JRow leftRow : left.getRows()) {
+                totalComparisons++;
+                if (condition.test(leftRow, rightRow)) {
+                    matchCount++;
+                    hasMatch = true;
+                    resultRows.add(mergeRows(leftRow, rightRow));
+                }
+            }
+            if (!hasMatch) {
+                resultRows.add(mergeRows(createNullRow(left), rightRow));
+            }
+        }
+        return new JDataSet(resultColumns, resultRows);
+    }
+
+
+    @Override
     public JDataSet fullOuterJoin(JDataSet left, JDataSet right, JoinCondition condition) {
-        JDataSet leftJoin = leftJoin(left, right, condition);
-        JDataSet rightJoin = leftJoin(right, left, (r, l) -> condition.test(l, r));
-        return union(leftJoin, rightJoin);
+        List<JColumnMeta> resultColumns = mergeColumns(left, right);
+        Map<JRow, Set<JRow>> matches = new HashMap<>();
+        for (JRow leftRow : left.getRows()) {
+            for (JRow rightRow : right.getRows()) {
+                if (condition.test(leftRow, rightRow)) {
+                    matches.computeIfAbsent(leftRow, k -> new HashSet<>()).add(rightRow);
+                }
+            }
+        }
+        List<JRow> resultRows = new ArrayList<>();
+        for (Map.Entry<JRow, Set<JRow>> entry : matches.entrySet()) {
+            for (JRow rightRow : entry.getValue()) {
+                resultRows.add(mergeRows(entry.getKey(), rightRow));
+            }
+        }
+        for (JRow leftRow : left.getRows()) {
+            if (!matches.containsKey(leftRow)) {
+                resultRows.add(mergeRows(leftRow, createNullRow(right)));
+            }
+        }
+        Set<JRow> allMatchedRightRows = matches.values().stream()
+                .flatMap(Set::stream)
+                .collect(Collectors.toSet());
+        for (JRow rightRow : right.getRows()) {
+            if (!allMatchedRightRows.contains(rightRow)) {
+                resultRows.add(mergeRows(createNullRow(left), rightRow));
+            }
+        }
+        return new JDataSet(resultColumns, resultRows);
     }
 
     @Override
@@ -150,7 +203,7 @@ public class JLamdaJoinJoinerHandler extends JBaseHandler implements JDataSetJoi
         List<JRow> newRows = currentRows.stream()
                 .map(row -> {
                     JRow jrow = (row instanceof JRow)
-                            ? new JRow(((JRow) row).getTableName())
+                            ? new JRow(((JRow) row))
                             : new JRow();
                     columnNames.forEach(col -> jrow.put(col, row.get(col)));
                     return jrow;

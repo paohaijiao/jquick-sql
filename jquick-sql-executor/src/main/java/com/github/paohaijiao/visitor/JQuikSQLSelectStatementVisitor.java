@@ -52,12 +52,39 @@ public class JQuikSQLSelectStatementVisitor extends JQuikSQLFilterStatementVisit
     @Override
     public JDataSet visitSelectExpression(JQuickSQLParser.SelectExpressionContext ctx) {
         String text=ctx.getText();
-        if(ctx.selectClause()!=null){
-            return visitSelectClause(ctx.selectClause());
+        if(ctx.datasetOp()!=null){
+            return visitDatasetOp(ctx.datasetOp());
         }
         JAssert.throwNewException("not support this statement");
         return null;
     }
+    @Override
+    public JDataSet visitDatasetOp(JQuickSQLParser.DatasetOpContext ctx) {
+        JAssert.notNull(ctx.selectClause(),"selectClause must not be null");
+        if(ctx.selectClause().size()==1){
+            return visitSelectClause(ctx.selectClause().get(0));
+        }
+        JAssert.isTrue(ctx.selectClause().size()==2,"selectClause must have 2 elements");
+
+        JDataSet dataSetOne=visitSelectClause(ctx.selectClause().get(0));
+        JDataSet dataSetTwo=visitSelectClause(ctx.selectClause().get(1));
+        JDataSetJoinerStrategy strategy= JDataSetJoinerFactory.createJoiner(engine);
+        if(null!=ctx.UNION()){
+            JDataSet  jDataSet=   strategy.union(dataSetOne,dataSetTwo);
+            return jDataSet;
+        }
+        if(null!=ctx.MINUS()){
+            JDataSet  jDataSet=   strategy.minus(dataSetOne,dataSetTwo);
+            return jDataSet;
+        }
+        if(null!=ctx.INTERSECT()){
+            JDataSet  jDataSet=   strategy.intersect(dataSetOne,dataSetTwo);
+            return jDataSet;
+        }
+        JAssert.throwNewException(" this statement only accepts union or intersect or minus statements");
+        return null;
+    }
+
     @Override
     public JDataSet visitSelectClause(JQuickSQLParser.SelectClauseContext ctx) {
         JDataSetJoinerStrategy strategy= JDataSetJoinerFactory.createJoiner(engine);
@@ -73,27 +100,40 @@ public class JQuikSQLSelectStatementVisitor extends JQuikSQLFilterStatementVisit
                 JoinType joinType=joinPartModel.getJoinType();
                 JAssert.notNull(joinType,"the join type require not null");
                 JDataSet rightDataSet=joinPartModel.getDataset();
-                String leftColumn = joinPartModel.getLeft().getColumnName();
-                String rightColumn =joinPartModel.getRight().getColumnName();
-                JoinCondition condition = JoinCondition.equals(leftColumn, rightColumn);
+                JoinCondition condition=null;
+                if(null!=jDataSet.getAlias()&&null!=joinPartModel.getLeft()){
+                    if(jDataSet.getAlias().equalsIgnoreCase(joinPartModel.getLeft().getTableName())
+                            ||jDataSet.getTableName().equalsIgnoreCase(joinPartModel.getLeft().getTableName())){
+                        String leftColumn = joinPartModel.getLeft().getColumnName();
+                        String rightColumn =joinPartModel.getRight().getColumnName();
+                        condition = JoinCondition.equals(leftColumn, rightColumn);
+                    }
+                }
+
+                if(null!=rightDataSet.getAlias()&&null!=joinPartModel.getLeft()){
+                    if(rightDataSet.getAlias().equalsIgnoreCase(joinPartModel.getLeft().getTableName())
+                            ||rightDataSet.getTableName().equalsIgnoreCase(joinPartModel.getLeft().getTableName())){
+                        String leftColumn = joinPartModel.getLeft().getColumnName();
+                        String rightColumn =joinPartModel.getRight().getColumnName();
+                        condition = JoinCondition.equals(rightColumn,leftColumn );
+                    }
+                }
                 if(joinType==JoinType.INNER){
                     jDataSet= strategy.innerJoin(jDataSet,rightDataSet,condition);
                 }else if(joinType==JoinType.LEFT){
                     jDataSet=  strategy.leftJoin(jDataSet,rightDataSet,condition);
                 }else if(joinType==JoinType.RIGHT){
-                    JAssert.throwNewException("the join type require not supported");
+                    jDataSet=  strategy.rightJoin(jDataSet ,rightDataSet,condition);
                 }else if(joinType==JoinType.CROSS){
+                    JAssert.isNull(joinPartModel.getRight()," cross join require on condition is empty");
+                    JAssert.isNull(joinPartModel.getLeft()," cross join require on condition is empty");
                     jDataSet=  strategy.crossJoin(jDataSet,rightDataSet);
                 }else if(joinType==JoinType.FULL){
                     jDataSet=  strategy.fullOuterJoin(jDataSet,rightDataSet,condition);
                 }else if(joinType==JoinType.NATURAL){
+                    JAssert.isNull(joinPartModel.getRight()," natural join require on condition is empty");
+                    JAssert.isNull(joinPartModel.getLeft()," natural join require on condition is empty");
                     jDataSet=  strategy.naturalJoin(jDataSet,rightDataSet);
-                }else if(joinType==JoinType.UNION){
-                    jDataSet=   strategy.union(jDataSet,rightDataSet);
-                }else if(joinType==JoinType.INTERSECT){
-                    jDataSet=  strategy.intersect(jDataSet,rightDataSet);
-                }else if(joinType==JoinType.MINUS){
-                    jDataSet=  strategy.minus(jDataSet,rightDataSet);
                 }
             }
         }
@@ -175,9 +215,10 @@ public class JQuikSQLSelectStatementVisitor extends JQuikSQLFilterStatementVisit
         JDataSet dataset = (JDataSet) visit(ctx.tableNameItem());
         joinPartModel.setDataset(dataset);
         joinPartModel.setJoinType(visitJoinType(ctx.joinType()));
-        JAssert.isTrue(ctx.fullColumnName().size() == 2, "the full column name require 2 columns");
-        joinPartModel.setLeft(visitFullColumnName(ctx.fullColumnName(0)));
-        joinPartModel.setRight(visitFullColumnName(ctx.fullColumnName(1)));
+        if(ctx.fullColumnName().size() == 2){
+           joinPartModel.setLeft(visitFullColumnName(ctx.fullColumnName(0)));
+           joinPartModel.setRight(visitFullColumnName(ctx.fullColumnName(1)));
+        }
         return joinPartModel;
     }
 
@@ -212,7 +253,10 @@ public class JQuikSQLSelectStatementVisitor extends JQuikSQLFilterStatementVisit
         JAssert.notNull(tableName, " the tableName require not null");
         JAssert.notNull(dataSet, " the table dataset require not null");
         if (ctx.uid() != null) {
-            dataSetHolder.addAlias(tableName, ctx.uid().getText());
+            String alias= ctx.uid().getText();
+            dataSetHolder.addAlias(tableName, alias);
+            dataSet.setTableName(tableName);
+            dataSet.setAlias(alias);
         }
         return dataSet;
     }
