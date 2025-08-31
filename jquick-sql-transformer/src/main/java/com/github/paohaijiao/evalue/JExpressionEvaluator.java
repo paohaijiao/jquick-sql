@@ -34,6 +34,8 @@ public class JExpressionEvaluator extends JBaseEvaluator implements JSqlEvaluato
             return evaluateLogicalExpression((JLogicalExpression) expression, row);
         } else if (expression instanceof JDataSetExpression) {
             return evaluateDataSetExpression((JDataSetExpression) expression, row);
+        }else if(null==expression){
+            return null;
         }
         throw new UnsupportedOperationException("Unsupported expression type: " + expression.getType());
     }

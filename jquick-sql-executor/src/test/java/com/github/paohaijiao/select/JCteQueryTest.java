@@ -98,7 +98,7 @@ public class JCteQueryTest {
                 ") " +
                 "SELECT e.id as id,e.name as manager_name, ds.emp_count " +
                 "FROM employees e " +
-                "JOIN department_stats ds ON e.id = ds.dept_id " +
+                "left JOIN department_stats ds ON e.id = ds.dept_id " +
                 "ORDER BY ds.emp_count DESC";
         JQuickSQLExecutor executor=new JQuickSQLExecutor();
         JDataSetHolder dataSetContainer=new JDataSetHolder();

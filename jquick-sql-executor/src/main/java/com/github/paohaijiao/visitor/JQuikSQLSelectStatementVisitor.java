@@ -20,6 +20,7 @@ import com.github.paohaijiao.dataset.JDataSet;
 import com.github.paohaijiao.dataset.JRow;
 import com.github.paohaijiao.enums.JSortDirection;
 import com.github.paohaijiao.enums.JoinType;
+import com.github.paohaijiao.evalue.JExpressionEvaluator;
 import com.github.paohaijiao.exception.JAssert;
 import com.github.paohaijiao.expression.JColumnExpression;
 import com.github.paohaijiao.expression.JExpression;
@@ -34,9 +35,11 @@ import com.github.paohaijiao.model.JSelectElementModel;
 import com.github.paohaijiao.model.JSelectElementsResultModel;
 import com.github.paohaijiao.model.JoinPartModel;
 import com.github.paohaijiao.parser.JQuickSQLParser;
-import com.github.paohaijiao.evalue.JExpressionEvaluator;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * packageName com.github.paohaijiao.visitor
@@ -98,12 +101,13 @@ public class JQuikSQLSelectStatementVisitor extends JQuikSQLFilterStatementVisit
             JCondition condition = visitWhereClause(ctx.whereClause());
             jDataSet=strategy.filter(jDataSet,condition);
         }
+        JSelectElementsResultModel   selectElementsResultModel=null;
         if(ctx.selectElements()!=null){
-            JSelectElementsResultModel   selectElementsResultModel=visitSelectElements(ctx.selectElements());
+            selectElementsResultModel=visitSelectElements(ctx.selectElements());
+        }
+        if(selectElementsResultModel!=null&&!selectElementsResultModel.hasStar()){
             JAssert.notNull(selectElementsResultModel," the select elements require not null");
-            if(selectElementsResultModel.hasStar()){
-                return jDataSet;
-            }else{
+            if (!selectElementsResultModel.hasStar()) {
                 if(ctx.groupByClause()!=null&&selectElementsResultModel.hasAggregateFunction()){
                     List<JExpression>  groupByClauses= visitGroupByClause(ctx.groupByClause());
                     JAssert.isTrue(selectElementsResultModel.hasAggregateFunction(),"groupBy clause must have aggregateFunction");
@@ -139,7 +143,15 @@ public class JQuikSQLSelectStatementVisitor extends JQuikSQLFilterStatementVisit
                         JSelectElementModel selectElementModel= selectElementsResultModel.getNonAggregateFunction().get(i);
                         JRow row=jDataSet.getRows().get(j);
                         Object value= expressionEvaluator.evaluate(selectElementModel.getExpression(),row);
-                        row.put(selectElementModel.getAlias(),value);
+                        String column=null;
+                        JExpression expression=selectElementModel.getExpression();
+                        if(expression instanceof JColumnExpression){
+                            column=((JColumnExpression)expression).getColumnName();
+                        }
+                        if(selectElementModel.getAlias()!=null){
+                            column=selectElementModel.getAlias();
+                        }
+                        row.put(column,value);
                     }
                 }
             }

@@ -47,7 +47,7 @@ public class JSelectTest {
 
         JRow row2 = new JRow("orders");
         row2.put("order_id", 1002);
-        row2.put("user_id", 2);
+        row2.put("user_id", 1);
         row2.put("amount", 149.99);
 
         builder.addRow(row1).addRow(row2);
@@ -109,7 +109,7 @@ public class JSelectTest {
     }
     @Test
     public void orderBy() {
-        String rule="select * from orders order by order_id asc";
+        String rule="select * from orders order by user_id desc,order_id asc";
         JQuickSQLExecutor executor=new JQuickSQLExecutor();
         JDataSetHolder dataSetContainer=new JDataSetHolder();
         dataSetContainer.addDataSet("orders",createOrdersDataSet());
