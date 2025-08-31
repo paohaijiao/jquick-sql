@@ -49,12 +49,6 @@ public interface JQuickSQLVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitOlapOperation(JQuickSQLParser.OlapOperationContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link JQuickSQLParser#olapClause}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitOlapClause(JQuickSQLParser.OlapClauseContext ctx);
-	/**
 	 * Visit a parse tree produced by the {@code rollupOperation}
 	 * labeled alternative in {@link JQuickSQLParser#olapClauseItem}.
 	 * @param ctx the parse tree

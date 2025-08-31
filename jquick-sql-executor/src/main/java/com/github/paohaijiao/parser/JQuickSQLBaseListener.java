@@ -89,18 +89,6 @@ public class JQuickSQLBaseListener implements JQuickSQLListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void enterOlapClause(JQuickSQLParser.OlapClauseContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void exitOlapClause(JQuickSQLParser.OlapClauseContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
 	@Override public void enterRollupOperation(JQuickSQLParser.RollupOperationContext ctx) { }
 	/**
 	 * {@inheritDoc}

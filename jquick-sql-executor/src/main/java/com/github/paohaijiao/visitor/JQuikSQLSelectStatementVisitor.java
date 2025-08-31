@@ -55,6 +55,11 @@ public class JQuikSQLSelectStatementVisitor extends JQuikSQLFilterStatementVisit
         if(ctx.datasetOp()!=null){
             return visitDatasetOp(ctx.datasetOp());
         }
+        if(ctx.olapOperation()!=null){
+            Object value= visitOlapOperation(ctx.olapOperation());
+            JAssert.isTrue(value instanceof JDataSet,"the value of olapOperation is not a JDataSet");
+            return (JDataSet)value;
+        }
         JAssert.throwNewException("not support this statement");
         return null;
     }
@@ -65,7 +70,6 @@ public class JQuikSQLSelectStatementVisitor extends JQuikSQLFilterStatementVisit
             return visitSelectClause(ctx.selectClause().get(0));
         }
         JAssert.isTrue(ctx.selectClause().size()==2,"selectClause must have 2 elements");
-
         JDataSet dataSetOne=visitSelectClause(ctx.selectClause().get(0));
         JDataSet dataSetTwo=visitSelectClause(ctx.selectClause().get(1));
         JDataSetJoinerStrategy strategy= JDataSetJoinerFactory.createJoiner(engine);

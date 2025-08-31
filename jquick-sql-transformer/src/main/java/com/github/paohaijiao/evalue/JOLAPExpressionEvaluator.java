@@ -3,6 +3,7 @@ package com.github.paohaijiao.evalue;
 import com.github.paohaijiao.dataset.JColumnMeta;
 import com.github.paohaijiao.dataset.JDataSet;
 import com.github.paohaijiao.dataset.JRow;
+import com.github.paohaijiao.expression.JColumnExpression;
 import com.github.paohaijiao.expression.JExpression;
 import com.github.paohaijiao.expression.olap.*;
 import com.github.paohaijiao.support.JOLAPOperations;
@@ -44,11 +45,11 @@ public class JOLAPExpressionEvaluator extends JBaseEvaluator implements JSqlEval
     private Boolean evaluateDiceCondition(JDiceExpression diceExpr, Map<String, Object> row) {
         Map<JExpression, JExpression> conditions = diceExpr.getConditions();
         for (Map.Entry<JExpression, JExpression> entry : conditions.entrySet()) {
-            Object columnNameObj = expressionEvaluator.evaluate(entry.getKey(), row);
-            if (!(columnNameObj instanceof String)) {
+            Object columnNameObj =  entry.getKey();
+            if (!(columnNameObj instanceof JColumnExpression)) {
                 return false;
             }
-            String columnName = (String) columnNameObj;
+            String columnName =  ((JColumnExpression) columnNameObj).getColumnName();
             Object expectedValue = expressionEvaluator.evaluate(entry.getValue(), row);
             Object actualValue = row.get(columnName);
             if (!Objects.equals(actualValue, expectedValue)) {

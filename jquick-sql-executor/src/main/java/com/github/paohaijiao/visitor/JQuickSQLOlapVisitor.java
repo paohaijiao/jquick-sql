@@ -15,6 +15,7 @@
  */
 package com.github.paohaijiao.visitor;
 
+import com.github.paohaijiao.condition.JComparisonCondition;
 import com.github.paohaijiao.dataset.JDataSet;
 import com.github.paohaijiao.evalue.JOLAPExpressionEvaluator;
 import com.github.paohaijiao.exception.JAssert;
@@ -24,6 +25,8 @@ import com.github.paohaijiao.expression.JExpression;
 import com.github.paohaijiao.expression.JFunctionCallExpression;
 import com.github.paohaijiao.expression.olap.*;
 import com.github.paohaijiao.function.JAggregateFunctionFactory;
+import com.github.paohaijiao.model.JSelectElementModel;
+import com.github.paohaijiao.model.JSelectElementsResultModel;
 import com.github.paohaijiao.parser.JQuickSQLParser;
 
 import java.util.ArrayList;
@@ -43,30 +46,92 @@ public class JQuickSQLOlapVisitor extends JQuikSQLCommonTableExpressionVisitor{
     @Override
     public JDataSet visitOlapOperation(JQuickSQLParser.OlapOperationContext ctx){
         JDataSet dataset=null;
-        if(ctx.selectClause() != null){
-            dataset=visitSelectClause(ctx.selectClause());
+        if(ctx.fromClause() != null){
+            dataset=visitFromClause(ctx.fromClause());
         }
         JAssert.notNull(dataset,"the dataset require not null");
-        if(ctx.olapClause() != null){
-            List<JExpression> expressionList=visitOlapClause(ctx.olapClause());
-            JOLAPExpressionEvaluator evaluator = new JOLAPExpressionEvaluator();
-            for(JExpression expression:expressionList){
-                evaluator.setDataset(dataset);
-                dataset= evaluator.executeOLAPOperation(expression);
+        JSelectElementsResultModel selectElementsResultModel=null;
+        if(ctx.selectElements()!=null){
+            selectElementsResultModel=visitSelectElements(ctx.selectElements());
+        }
+        JOLAPExpressionEvaluator evaluator = new JOLAPExpressionEvaluator();
+        List<JExpression> list=new ArrayList<>();
+        if(ctx.olapClauseItem() != null&&!ctx.olapClauseItem().isEmpty()){
+            for (int i = 0; i < ctx.olapClauseItem().size(); i++) {
+               Object exp= visit(ctx.olapClauseItem().get(i));
+               JAssert.isTrue(exp instanceof JExpression,"the expression should be an expression");
+               list.add((JExpression)exp);
+               evaluator.setDataset(dataset);
+                if(exp instanceof JRollUpExpression){
+                    JAssert.notNull(selectElementsResultModel.getAggregateFunction(),"the aggregateFunction function should be set");
+                    Map<String, Function<List<Object>, Object>> aggregations=new HashMap<>();
+                    for (int j = 0; j < selectElementsResultModel.getAggregateFunction().size(); j++) {
+                        JSelectElementModel selectElementModel= selectElementsResultModel.getAggregateFunction().get(j);
+                        JExpression columnExpression=selectElementModel.getExpression();
+                        String funcName= selectElementModel.getFunctionName();
+                        JAssert.isTrue(JAggregateFunctionFactory.containsFunction(funcName),"the aggregateFunction not exist ");;
+                        JAssert.isTrue(columnExpression instanceof JFunctionCallExpression,"the column expression should be a funcationcall");
+                        JFunctionCallExpression functionCallExpression=(JFunctionCallExpression)columnExpression;
+                        JAssert.isTrue(functionCallExpression.getArguments().size()==1,"the functioncall expression should be at length 1");
+                        JExpression columnExpress=functionCallExpression.getArguments().get(0);
+                        JAssert.isTrue(columnExpress instanceof JColumnExpression,"the aggregate param type should be a column");
+                        JColumnExpression col=(JColumnExpression)columnExpress;
+                        aggregations.put(col.getColumnName(), JAggregateFunctionFactory.getFunction(funcName));
+                    }
+                    JRollUpExpression rollUp=(JRollUpExpression)exp;
+                    JRollUpExpression rollUpExpression =new JRollUpExpression(rollUp.getGroupByColumns(),aggregations);
+                    dataset= evaluator.executeOLAPOperation(rollUpExpression);
+                }
+                if(exp instanceof JDrillDownExpression){
+                    JAssert.notNull(selectElementsResultModel.getAggregateFunction(),"the aggregateFunction function should be set");
+                    Map<String, Function<List<Object>, Object>> aggregations=new HashMap<>();
+                    for (int j = 0; j < selectElementsResultModel.getAggregateFunction().size(); j++) {
+                        JSelectElementModel selectElementModel= selectElementsResultModel.getAggregateFunction().get(j);
+                        JExpression columnExpression=selectElementModel.getExpression();
+                        String funcName= selectElementModel.getFunctionName();
+                        JAssert.isTrue(JAggregateFunctionFactory.containsFunction(funcName),"the aggregateFunction not exist ");;
+                        JAssert.isTrue(columnExpression instanceof JFunctionCallExpression,"the column expression should be a funcationcall");
+                        JFunctionCallExpression functionCallExpression=(JFunctionCallExpression)columnExpression;
+                        JAssert.isTrue(functionCallExpression.getArguments().size()==1,"the functioncall expression should be at length 1");
+                        JExpression columnExpress=functionCallExpression.getArguments().get(0);
+                        JAssert.isTrue(columnExpress instanceof JColumnExpression,"the aggregate param type should be a column");
+                        JColumnExpression col=(JColumnExpression)columnExpress;
+                        aggregations.put(col.getColumnName(), JAggregateFunctionFactory.getFunction(funcName));
+                    }
+                    JDrillDownExpression drillDownExpression=(JDrillDownExpression)exp;
+                    JDrillDownExpression drillDown =new JDrillDownExpression(drillDownExpression.getGroupByColumns(),aggregations);
+                    dataset= evaluator.executeOLAPOperation(drillDown);
+                }
+                if(exp instanceof JPivotExpression){
+                    JAssert.notNull(selectElementsResultModel.getAggregateFunction(),"the aggregateFunction function should be set");
+                    Map<String, Function<List<Object>, Object>> aggregations=new HashMap<>();
+                    for (int j = 0; j < selectElementsResultModel.getAggregateFunction().size(); j++) {
+                        JSelectElementModel selectElementModel= selectElementsResultModel.getAggregateFunction().get(j);
+                        JExpression columnExpression=selectElementModel.getExpression();
+                        String funcName= selectElementModel.getFunctionName();
+                        JAssert.isTrue(JAggregateFunctionFactory.containsFunction(funcName),"the aggregateFunction not exist ");;
+                        JAssert.isTrue(columnExpression instanceof JFunctionCallExpression,"the column expression should be a funcationcall");
+                        JFunctionCallExpression functionCallExpression=(JFunctionCallExpression)columnExpression;
+                        JAssert.isTrue(functionCallExpression.getArguments().size()==1,"the functioncall expression should be at length 1");
+                        JExpression columnExpress=functionCallExpression.getArguments().get(0);
+                        JAssert.isTrue(columnExpress instanceof JColumnExpression,"the aggregate param type should be a column");
+                        JColumnExpression col=(JColumnExpression)columnExpress;
+                        aggregations.put(col.getColumnName(), JAggregateFunctionFactory.getFunction(funcName));
+                    }
+                    JPivotExpression pivotExpression=(JPivotExpression)exp;
+                    dataset= evaluator.executeOLAPOperation(pivotExpression);
+                }
+                if(exp instanceof JSliceExpression){
+                    JSliceExpression expression=(JSliceExpression)exp;
+                    dataset= evaluator.executeOLAPOperation(expression);
+                }
+                if(exp instanceof JDiceExpression){
+                    JDiceExpression expression=(JDiceExpression)exp;
+                    dataset= evaluator.executeOLAPOperation(expression);
+                }
             }
         }
         return dataset;
-    }
-    @Override
-    public List<JExpression> visitOlapClause(JQuickSQLParser.OlapClauseContext ctx) {
-        List<JExpression> list=new ArrayList<JExpression>();
-        for (JQuickSQLParser.OlapClauseItemContext item:ctx.olapClauseItem()){
-            Object value= this.visit(item);
-            JAssert.notNull(value,"the value is null");
-            JExpression expression= (JExpression) value;
-            list.add(expression);
-        }
-        return list;
     }
     @Override
     public JRollUpExpression visitRollupOperation(JQuickSQLParser.RollupOperationContext ctx) {
@@ -125,11 +190,12 @@ public class JQuickSQLOlapVisitor extends JQuikSQLCommonTableExpressionVisitor{
         JQuickSQLParser.DiceConditionsContext diceCtx = ctx.diceConditions();
         for (JQuickSQLParser.DiceConditionContext conditionCtx : diceCtx.diceCondition()) {
             Object predicate = visit(conditionCtx.predicate());
-            JAssert.isTrue(predicate instanceof JBinaryExpression,"the predicate should be instanceof JBinaryExpression");
-            JBinaryExpression binaryExpression = (JBinaryExpression) predicate;
-            JAssert.isTrue("=".equals(binaryExpression.getOperator().getSymbol()),"the operator must be =");
-            JExpression leftExpression=binaryExpression.getLeft();
+            JComparisonCondition comparisonCondition = (JComparisonCondition) predicate;
+            JAssert.isTrue("=".equals(comparisonCondition.getOperator().getSymbol()),"the operator must be =");
+            JExpression leftExpression=comparisonCondition.getLeft();
+            JExpression rightExpression=comparisonCondition.getRight();
             JAssert.isTrue(leftExpression instanceof JColumnExpression,"the left expression should be JColumnExpression");
+            conditions.put(leftExpression,rightExpression);
         }
         return new JDiceExpression(conditions);
     }
@@ -137,17 +203,13 @@ public class JQuickSQLOlapVisitor extends JQuikSQLCommonTableExpressionVisitor{
     @Override
     public JPivotExpression visitPivotOperation(JQuickSQLParser.PivotOperationContext ctx) {
         JQuickSQLParser.PivotSpecContext pivotCtx = ctx.pivotSpec();
-        JAssert.isTrue(pivotCtx.uid().size()==2,"the pivot expression should have two uids");
+        JAssert.isTrue(pivotCtx.uid().size()==3,"the pivot expression should have two uids");
         String pivotColumn = pivotCtx.uid(0).getText();
         String valueColumn = pivotCtx.uid(1).getText();
-        if (pivotCtx.functionCall() != null) {
-            JQuickSQLParser.FunctionCallContext funcCtx = pivotCtx.functionCall();
-            String functionName = funcCtx.uid().getText();
-            JAssert.isTrue(JAggregateFunctionFactory.containsFunction(functionName),"the function does not exist");;
-            Function<List<Object>, Object> function=JAggregateFunctionFactory.getFunction(functionName);
-            return new JPivotExpression(pivotColumn, valueColumn, function);
-        }
-        return new JPivotExpression(pivotColumn, valueColumn, null);
+        String aggregator = pivotCtx.uid(2).getText();
+        JAssert.isTrue(JAggregateFunctionFactory.containsFunction(aggregator),"the function does not exist");;
+        Function<List<Object>, Object> function=JAggregateFunctionFactory.getFunction(aggregator);
+        return new JPivotExpression(pivotColumn, valueColumn, function);
     }
 
 

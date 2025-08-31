@@ -72,16 +72,6 @@ public interface JQuickSQLListener extends ParseTreeListener {
 	 */
 	void exitOlapOperation(JQuickSQLParser.OlapOperationContext ctx);
 	/**
-	 * Enter a parse tree produced by {@link JQuickSQLParser#olapClause}.
-	 * @param ctx the parse tree
-	 */
-	void enterOlapClause(JQuickSQLParser.OlapClauseContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link JQuickSQLParser#olapClause}.
-	 * @param ctx the parse tree
-	 */
-	void exitOlapClause(JQuickSQLParser.OlapClauseContext ctx);
-	/**
 	 * Enter a parse tree produced by the {@code rollupOperation}
 	 * labeled alternative in {@link JQuickSQLParser#olapClauseItem}.
 	 * @param ctx the parse tree
