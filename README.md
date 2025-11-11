@@ -29,7 +29,7 @@
 
 ## 概述
 
-JQuickSQL 是一个轻量级 SQL 查询引擎，支持标准 SQL 语法和 OLAP 操作，适用于内存数据集（如 `JDataSet`）的查询和分析。
+JQuickSQL 是一个轻量级 SQL 查询引擎，支持异构数据源查询，JOIN，提供标准 SQL 语法和 OLAP 操作，适用于通用数据的查询和分析。
 
 ## 基本语法结构
 
