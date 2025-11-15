@@ -16,8 +16,6 @@
 package com.github.paohaijiao.condition;
 
 import com.github.paohaijiao.enums.JConditionType;
-import com.github.paohaijiao.enums.JExpressionType;
-import com.github.paohaijiao.expression.JColumnExpression;
 import com.github.paohaijiao.expression.JExpression;
 import lombok.Getter;
 

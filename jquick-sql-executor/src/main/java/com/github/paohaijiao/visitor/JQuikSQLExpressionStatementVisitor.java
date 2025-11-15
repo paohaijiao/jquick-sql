@@ -15,11 +15,8 @@
  */
 package com.github.paohaijiao.visitor;
 
-import com.github.paohaijiao.enums.JLogicalOperator;
 import com.github.paohaijiao.exception.JAssert;
-import com.github.paohaijiao.expression.JColumnExpression;
 import com.github.paohaijiao.expression.JExpression;
-import com.github.paohaijiao.expression.JLogicalExpression;
 import com.github.paohaijiao.expression.JNotExpression;
 import com.github.paohaijiao.parser.JQuickSQLParser;
 

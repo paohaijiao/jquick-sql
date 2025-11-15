@@ -15,7 +15,10 @@
  */
 package com.github.paohaijiao.visitor;
 
-import com.github.paohaijiao.condition.*;
+import com.github.paohaijiao.condition.JAndCondition;
+import com.github.paohaijiao.condition.JCondition;
+import com.github.paohaijiao.condition.JOrCondition;
+import com.github.paohaijiao.condition.JParenthesesCondition;
 import com.github.paohaijiao.parser.JQuickSQLParser;
 
 /**

@@ -19,7 +19,6 @@ import com.github.paohaijiao.condition.JComparisonCondition;
 import com.github.paohaijiao.dataset.DataSet;
 import com.github.paohaijiao.evalue.JOLAPExpressionEvaluator;
 import com.github.paohaijiao.exception.JAssert;
-import com.github.paohaijiao.expression.JBinaryExpression;
 import com.github.paohaijiao.expression.JColumnExpression;
 import com.github.paohaijiao.expression.JExpression;
 import com.github.paohaijiao.expression.JFunctionCallExpression;

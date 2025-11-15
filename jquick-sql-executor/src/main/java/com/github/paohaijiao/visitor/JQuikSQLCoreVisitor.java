@@ -32,7 +32,6 @@ import com.github.paohaijiao.parser.JQuickSQLBaseVisitor;
 import com.github.paohaijiao.parser.JQuickSQLLexer;
 import com.github.paohaijiao.parser.JQuickSQLParser;
 import com.github.paohaijiao.support.JDataSetHolder;
-import com.github.paohaijiao.util.JStringUtils;
 import org.antlr.v4.runtime.CommonTokenStream;
 
 import java.text.NumberFormat;

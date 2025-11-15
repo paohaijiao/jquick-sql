@@ -17,7 +17,6 @@ package com.github.paohaijiao.executor;
 
 import com.github.paohaijiao.config.JQuickSQLConfig;
 import com.github.paohaijiao.dataset.DataSet;
-import com.github.paohaijiao.dataset.DataSet;
 import com.github.paohaijiao.enums.JEngineEnums;
 import com.github.paohaijiao.param.JContext;
 import com.github.paohaijiao.parser.JQuickSQLLexer;

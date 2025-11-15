@@ -14,17 +14,13 @@
  * Copyright (c) [2025-2099] Martin (goudingcheng@gmail.com)
  */
 package com.github.paohaijiao.select;
+
 import com.github.paohaijiao.dataset.DataSet;
 import com.github.paohaijiao.dataset.Row;
 import com.github.paohaijiao.enums.JEngineEnums;
 import com.github.paohaijiao.executor.JQuickSQLExecutor;
-import com.github.paohaijiao.parser.JQuickSQLParser;
 import com.github.paohaijiao.support.JDataSetHolder;
-import com.github.paohaijiao.visitor.JQuikSQLCommonTableExpressionVisitor;
-import org.junit.Before;
 import org.junit.Test;
-
-import java.util.Arrays;
 
 /**
  * packageName com.github.paohaijiao.select

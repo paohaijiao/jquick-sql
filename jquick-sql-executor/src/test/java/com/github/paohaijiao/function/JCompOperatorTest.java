@@ -15,11 +15,6 @@
  */
 package com.github.paohaijiao.function;
 
-import com.github.paohaijiao.parser.JQuickSQLLexer;
-import com.github.paohaijiao.parser.JQuickSQLParser;
-import com.github.paohaijiao.visitor.JQuikSQLCommonVisitor;
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.CommonTokenStream;
 import org.junit.Test;
 
 /**
