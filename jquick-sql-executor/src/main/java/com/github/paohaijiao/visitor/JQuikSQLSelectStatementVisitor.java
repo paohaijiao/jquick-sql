@@ -93,11 +93,11 @@ public class JQuikSQLSelectStatementVisitor extends JQuikSQLFilterStatementVisit
     public DataSet visitSelectClause(JQuickSQLParser.SelectClauseContext ctx) {
         JDataSetJoinerStrategy strategy= JDataSetJoinerFactory.createJoiner(engine);
         JAssert.notNull(ctx.fromClause()," the from dataset require not null");
-        DataSet DataSet=null;
+        DataSet dataSet=null;
         if(ctx.fromClause()!=null){
-            DataSet=visitFromClause(ctx.fromClause());
+            dataSet=visitFromClause(ctx.fromClause());
         }
-        JAssert.notNull(DataSet," the from dataset require not null");
+        JAssert.notNull(dataSet," the from dataset require not null");
         if (ctx.joinClause() != null && !ctx.joinClause().isEmpty()) {
             for (int i = 0; i < ctx.joinClause().size(); i++) {
                 JoinPartModel joinPartModel= visitJoinClause(ctx.joinClause().get(i));
@@ -105,45 +105,33 @@ public class JQuikSQLSelectStatementVisitor extends JQuikSQLFilterStatementVisit
                 JAssert.notNull(joinType,"the join type require not null");
                 DataSet rightDataSet=joinPartModel.getDataset();
                 JoinCondition condition=null;
-//                if(null!=DataSet.getAlias()&&null!=joinPartModel.getLeft()){
-//                    if(DataSet.getAlias().equalsIgnoreCase(joinPartModel.getLeft().getTableName())
-//                            ||DataSet.getTableName().equalsIgnoreCase(joinPartModel.getLeft().getTableName())){
-//                        String leftColumn = joinPartModel.getLeft().getColumnName();
-//                        String rightColumn =joinPartModel.getRight().getColumnName();
-//                        condition = JoinCondition.equals(leftColumn, rightColumn);
-//                    }
-//                }
-//
-//                if(null!=rightDataSet.getAlias()&&null!=joinPartModel.getLeft()){
-//                    if(rightDataSet.getAlias().equalsIgnoreCase(joinPartModel.getLeft().getTableName())
-//                            ||rightDataSet.getTableName().equalsIgnoreCase(joinPartModel.getLeft().getTableName())){
-//                        String leftColumn = joinPartModel.getLeft().getColumnName();
-//                        String rightColumn =joinPartModel.getRight().getColumnName();
-//                        condition = JoinCondition.equals(rightColumn,leftColumn );
-//                    }
-//                }
+                if(null!=dataSet.getRows()&&null!=joinPartModel.getLeft()){
+                        String leftColumn = joinPartModel.getLeft().getColumnName();
+                        String rightColumn =joinPartModel.getRight().getColumnName();
+                        condition = JoinCondition.equals(leftColumn, rightColumn);
+                }
                 if(joinType==JoinType.INNER){
-                    DataSet= strategy.innerJoin(DataSet,rightDataSet,condition);
+                    dataSet= strategy.innerJoin(dataSet,rightDataSet,condition);
                 }else if(joinType==JoinType.LEFT){
-                    DataSet=  strategy.leftJoin(DataSet,rightDataSet,condition);
+                    dataSet=  strategy.leftJoin(dataSet,rightDataSet,condition);
                 }else if(joinType==JoinType.RIGHT){
-                    DataSet=  strategy.rightJoin(DataSet ,rightDataSet,condition);
+                    dataSet=  strategy.rightJoin(dataSet ,rightDataSet,condition);
                 }else if(joinType==JoinType.CROSS){
                     JAssert.isNull(joinPartModel.getRight()," cross join require on condition is empty");
                     JAssert.isNull(joinPartModel.getLeft()," cross join require on condition is empty");
-                    DataSet=  strategy.crossJoin(DataSet,rightDataSet);
+                    dataSet=  strategy.crossJoin(dataSet,rightDataSet);
                 }else if(joinType==JoinType.FULL){
-                    DataSet=  strategy.fullOuterJoin(DataSet,rightDataSet,condition);
+                    dataSet=  strategy.fullOuterJoin(dataSet,rightDataSet,condition);
                 }else if(joinType==JoinType.NATURAL){
                     JAssert.isNull(joinPartModel.getRight()," natural join require on condition is empty");
                     JAssert.isNull(joinPartModel.getLeft()," natural join require on condition is empty");
-                    DataSet=  strategy.naturalJoin(DataSet,rightDataSet);
+                    dataSet=  strategy.naturalJoin(dataSet,rightDataSet);
                 }
             }
         }
         if(ctx.whereClause()!=null){
             JCondition condition = visitWhereClause(ctx.whereClause());
-            DataSet=strategy.filter(DataSet,condition);
+            dataSet=strategy.filter(dataSet,condition);
         }
         JSelectElementsResultModel   selectElementsResultModel=null;
         if(ctx.selectElements()!=null){
@@ -173,19 +161,19 @@ public class JQuikSQLSelectStatementVisitor extends JQuikSQLFilterStatementVisit
                             JAssert.throwNewException("the groupBy clause must have column expression");
                         }
                     });
-                    DataSet=strategy.aggregate(DataSet,groupByField,aggregations);
+                    dataSet=strategy.aggregate(dataSet,groupByField,aggregations);
                     if(ctx.havingClause()!=null){
                         JCondition condition = visitHavingClause(ctx.havingClause());
-                        DataSet=strategy.filter(DataSet,condition);
+                        dataSet=strategy.filter(dataSet,condition);
                     }
                 }
             }
             if(!selectElementsResultModel.getNonAggregateFunction().isEmpty()){
                 JExpressionEvaluator expressionEvaluator=new JExpressionEvaluator();
                 for (int i = 0; i < selectElementsResultModel.getNonAggregateFunction().size(); i++) {
-                    for (int j=0;j<DataSet.size();j++){
+                    for (int j=0;j<dataSet.size();j++){
                         JSelectElementModel selectElementModel= selectElementsResultModel.getNonAggregateFunction().get(i);
-                        Row row=DataSet.getRows().get(j);
+                        Row row=dataSet.getRows().get(j);
                         Object value= expressionEvaluator.evaluate(selectElementModel.getExpression(),row);
                         String column=null;
                         JExpression expression=selectElementModel.getExpression();
@@ -203,14 +191,14 @@ public class JQuikSQLSelectStatementVisitor extends JQuikSQLFilterStatementVisit
 
         if(ctx.orderByClause()!=null){
             List<JOrderByExpression>  orderByExpressions= visitOrderByClause(ctx.orderByClause());
-            DataSet=strategy.sort(DataSet,orderByExpressions);
+            dataSet=strategy.sort(dataSet,orderByExpressions);
         }
         if(ctx.limitClause()!=null){
             JLimitModel limitModel= visitLimitClause(ctx.limitClause());
-            DataSet=strategy.limit(DataSet,limitModel.getLimit(),limitModel.getOffset());
+            dataSet=strategy.limit(dataSet,limitModel.getLimit(),limitModel.getOffset());
         }
 
-        return DataSet;
+        return dataSet;
     }
 
     @Override

@@ -28,6 +28,7 @@ import java.util.List;
  * @since 2025/8/24
  */
 public class JAndCondition extends JCondition {
+
     private List<JCondition> conditions;
 
     public JAndCondition() {

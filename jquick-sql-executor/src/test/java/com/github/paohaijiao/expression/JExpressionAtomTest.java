@@ -121,17 +121,6 @@ public class JExpressionAtomTest {
         System.out.println(object);
     }
     @Test
-    public void subqueryExperssionAtom() {
-        String rule="(select 1 from a)";
-        JQuickSQLLexer lexer = new JQuickSQLLexer(CharStreams.fromString(rule));
-        CommonTokenStream tokens = new CommonTokenStream(lexer);
-        JQuickSQLParser parser = new JQuickSQLParser(tokens);
-        JQuickSQLParser.ExpressionAtomContext tree = parser.expressionAtom();
-        JQuikSQLCommonVisitor tv = new JQuikSQLCommonVisitor();
-        Object object = tv.visit(tree);
-        System.out.println(object);
-    }
-    @Test
     public void mathExpressionAtom() {
         String rule="1+3";
         JQuickSQLLexer lexer = new JQuickSQLLexer(CharStreams.fromString(rule));

@@ -211,9 +211,6 @@ public class JDataSetFactory {
         System.out.println("=== " + title + " ===");
         System.out.println("列信息: " + dataSet.getColumnNames());
         System.out.println("行数: " + dataSet.getRows().size());
-
-        // 打印前5行数据
-        System.out.println("示例数据:");
         for (int i = 0; i < Math.min(5, dataSet.getRows().size()); i++) {
             System.out.println("行 " + (i + 1) + ": " + dataSet.getRows().get(i));
         }

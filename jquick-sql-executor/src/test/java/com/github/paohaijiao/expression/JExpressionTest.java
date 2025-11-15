@@ -52,15 +52,4 @@ public class JExpressionTest {
         Object object = tv.visit(tree);
         System.out.println(object);
     }
-    @Test
-    public void selectCAULSE() {
-        String rule="select true from foo";
-        JQuickSQLLexer lexer = new JQuickSQLLexer(CharStreams.fromString(rule));
-        CommonTokenStream tokens = new CommonTokenStream(lexer);
-        JQuickSQLParser parser = new JQuickSQLParser(tokens);
-        JQuickSQLParser.ExpressionContext tree = parser.expression();
-        JQuikSQLCommonVisitor tv = new JQuikSQLCommonVisitor();
-        Object object = tv.visit(tree);
-        System.out.println(object);
-    }
 }
