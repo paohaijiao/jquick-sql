@@ -56,6 +56,7 @@ public class JLiteralExpression extends JExpression {
     public static JLiteralExpression nullValue() {
         return new JLiteralExpression(null, JDataType.NULL);
     }
+
     public static JLiteralExpression date(Date value) {
         return new JLiteralExpression(value, JDataType.DATE);
     }

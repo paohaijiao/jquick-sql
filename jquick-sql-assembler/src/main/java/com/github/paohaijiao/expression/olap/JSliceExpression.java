@@ -11,7 +11,6 @@ public class JSliceExpression extends JExpression {
 
     private JExpression expression;
 
-
     public JSliceExpression(String dimension, JExpression expression) {
         this.type = JExpressionType.OLAP;
         this.dimension = dimension;

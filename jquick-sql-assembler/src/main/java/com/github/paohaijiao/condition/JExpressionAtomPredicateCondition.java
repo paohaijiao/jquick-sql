@@ -28,7 +28,9 @@ import lombok.Getter;
  */
 @Getter
 public class JExpressionAtomPredicateCondition extends JCondition{
+
     private JExpression expression;
+
     public JExpressionAtomPredicateCondition(JExpression expression) {
         this.type = JConditionType.ATOM;
         this.expression = expression;

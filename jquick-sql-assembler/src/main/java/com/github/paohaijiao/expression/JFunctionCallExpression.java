@@ -36,7 +36,6 @@ public class JFunctionCallExpression extends JExpression {
 
     private boolean distinct;
 
-
     public JFunctionCallExpression(String functionName, List<JExpression> arguments) {
         this.type = JExpressionType.FUNCTION;
         this.functionName = functionName;

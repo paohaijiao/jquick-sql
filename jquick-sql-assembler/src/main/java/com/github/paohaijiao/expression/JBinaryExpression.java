@@ -35,7 +35,6 @@ public class JBinaryExpression extends JExpression {
 
     private JBinaryOperator operator;
 
-
     public JBinaryExpression(JExpression left, JBinaryOperator operator, JExpression right) {
         this.type = JExpressionType.BINARY;
         this.left = left;

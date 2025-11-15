@@ -14,7 +14,9 @@ public class JDiceExpression extends JExpression {
 
 
     public JDiceExpression(Map<JExpression, JExpression> conditions) {
+
         this.type = JExpressionType.OLAP;
+
         this.conditions = conditions;
     }
 }

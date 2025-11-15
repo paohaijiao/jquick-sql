@@ -17,8 +17,11 @@ public class JDrillDownExpression extends JExpression {
 
 
     public JDrillDownExpression(List<String> groupByColumns, Map<String, Function<List<Object>, Object>> aggregations) {
+
         this.type = JExpressionType.OLAP;
+
         this.groupByColumns = groupByColumns;
+
         this.aggregations = aggregations;
     }
 }

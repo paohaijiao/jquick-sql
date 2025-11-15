@@ -33,7 +33,6 @@ public class JUnaryExpression extends JExpression {
 
     private JUnaryOperator operator;
 
-
     public JUnaryExpression(JUnaryOperator operator, JExpression expression) {
         this.type = JExpressionType.UNARY;
         this.operator = operator;
