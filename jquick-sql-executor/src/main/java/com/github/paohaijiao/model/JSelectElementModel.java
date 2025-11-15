@@ -29,8 +29,11 @@ import lombok.Data;
 public class JSelectElementModel {
 
     private final JExpression expression;
+
     private final String alias;
+
     private final boolean isAggregate;
+
     private final String functionName;
 
     public JSelectElementModel(JExpression expression, String alias, boolean isAggregate, String functionName) {

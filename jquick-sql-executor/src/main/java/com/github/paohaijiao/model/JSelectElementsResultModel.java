@@ -26,7 +26,9 @@ import java.util.stream.Collectors;
  * @since 2025/8/22
  */
 public class JSelectElementsResultModel {
+
     private final boolean hasStar;
+
     private final List<JSelectElementModel> elements;
 
     public JSelectElementsResultModel(boolean hasStar, List<JSelectElementModel> elements) {

@@ -45,13 +45,11 @@ public class JConditionEvaluator extends JBaseEvaluator implements JSqlEvaluator
     public  boolean evaluateCondition( JCondition condition, Map<String, Object> row) {
         if (condition instanceof JAndCondition) {
             JAndCondition andExpr = (JAndCondition) condition;
-            return andExpr.getConditions().stream()
-                    .allMatch(cond -> evaluateCondition( cond, row));
+            return andExpr.getConditions().stream().allMatch(cond -> evaluateCondition( cond, row));
         }
         if (condition instanceof JOrCondition) {
             JOrCondition orExpr = (JOrCondition) condition;
-            return orExpr.getConditions().stream()
-                    .anyMatch(cond -> evaluateCondition( cond, row));
+            return orExpr.getConditions().stream().anyMatch(cond -> evaluateCondition( cond, row));
         }
 
         if (condition instanceof JParenthesesCondition) {
@@ -73,16 +71,14 @@ public class JConditionEvaluator extends JBaseEvaluator implements JSqlEvaluator
         if (cond.isEmpty()) {
             throw new IllegalArgumentException("AND expression must have at least one condition");
         }
-        return cond.getConditions().stream()
-                .allMatch(c -> evaluate(c, row));
+        return cond.getConditions().stream().allMatch(c -> evaluate(c, row));
     }
 
     private boolean evaluateOr(JOrCondition cond, Map<String, Object> row) {
         if (cond.isEmpty()) {
             throw new IllegalArgumentException("OR expression must have at least one condition");
         }
-        return cond.getConditions().stream()
-                .anyMatch(c -> evaluate(c, row));
+        return cond.getConditions().stream().anyMatch(c -> evaluate(c, row));
     }
     private boolean evaluateAtomPredicate(JExpressionAtomPredicateCondition cond, Map<String, Object> row) {
         Object val = evaluateExpression(cond.getExpression(), row);

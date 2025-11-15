@@ -4,13 +4,21 @@ import lombok.Getter;
 
 @Getter
 public enum JMathOperator {
+
     MULTIPLY("*", "Multiply"),
+
     DIVIDE("/", "Divide"),
+
     MODULO("%", "Modulo"),
+
     DIV("DIV", "Integer Division"),
+
     MOD("MOD", "Modulus"),
+
     ADD("+", "Add"),
+
     SUBTRACT("-", "Subtract"),
+
     DECREMENT("--", "Decrement");
 
     private final String code;
