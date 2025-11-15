@@ -15,7 +15,8 @@
  */
 package com.github.paohaijiao.visitor;
 
-import com.github.paohaijiao.dataset.JDataSet;
+import com.github.paohaijiao.dataset.DataSet;
+import com.github.paohaijiao.dataset.DataSet;
 import com.github.paohaijiao.enums.JEngineEnums;
 import com.github.paohaijiao.param.JContext;
 import com.github.paohaijiao.parser.JQuickSQLLexer;
@@ -59,11 +60,11 @@ public class JQuikSQLCommonVisitor extends JQuickSQLOlapVisitor{
         return this;
     }
     @Override
-    public JDataSet visitQuery(JQuickSQLParser.QueryContext ctx) {
-        return (JDataSet)visit(ctx.selectStatement());
+    public DataSet visitQuery(JQuickSQLParser.QueryContext ctx) {
+        return (DataSet)visit(ctx.selectStatement());
     }
     @Override
-    public JDataSet visitSingleQuery(JQuickSQLParser.SingleQueryContext ctx) {
+    public DataSet visitSingleQuery(JQuickSQLParser.SingleQueryContext ctx) {
         return visitSelectExpression(ctx.selectExpression());
     }
 

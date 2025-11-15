@@ -15,7 +15,7 @@
  */
 package com.github.paohaijiao.expression;
 
-import com.github.paohaijiao.dataset.JDataSet;
+import com.github.paohaijiao.dataset.DataSet;
 import com.github.paohaijiao.enums.JExpressionType;
 
 /**
@@ -27,9 +27,9 @@ import com.github.paohaijiao.enums.JExpressionType;
  */
 public class JDataSetExpression  extends JExpression {
 
-    private JDataSet dataSet;
+    private DataSet dataSet;
 
-    public JDataSetExpression(JDataSet dataSet) {
+    public JDataSetExpression(DataSet dataSet) {
         this.type = JExpressionType.SUBQUERY;
         this.dataSet = dataSet;
     }

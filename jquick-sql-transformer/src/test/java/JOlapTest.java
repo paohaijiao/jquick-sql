@@ -14,9 +14,9 @@
  * Copyright (c) [2025-2099] Martin (goudingcheng@gmail.com)
  */
 
-import com.github.paohaijiao.dataset.JColumnMeta;
-import com.github.paohaijiao.dataset.JDataSet;
-import com.github.paohaijiao.dataset.JRow;
+import com.github.paohaijiao.dataset.ColumnMeta;
+import com.github.paohaijiao.dataset.DataSet;
+import com.github.paohaijiao.dataset.Row;
 import com.github.paohaijiao.function.JAggregateFunctionFactory;
 import com.github.paohaijiao.support.JOLAPOperations;
 import org.junit.Test;
@@ -32,29 +32,29 @@ import java.util.function.Function;
  * @since 2025/8/17
  */
 public class JOlapTest {
-    private static JRow createRow(String region, String product, String quarter, double sales) {
-        JRow row = new JRow();
+    private static Row createRow(String region, String product, String quarter, double sales) {
+        Row row = new Row();
         row.put("region", region);
         row.put("product", product);
         row.put("quarter", quarter);
         row.put("sales", sales);
         return row;
     }
-    private static JDataSet  buildDataSet(){
-        List<JColumnMeta> columns = Arrays.asList(
-                new JColumnMeta("region", String.class, "source"),
-                new JColumnMeta("product", String.class, "source"),
-                new JColumnMeta("quarter", String.class, "source"),
-                new JColumnMeta("sales", Double.class, "source")
+    private static DataSet  buildDataSet(){
+        List<ColumnMeta> columns = Arrays.asList(
+                new ColumnMeta("region", String.class, "source"),
+                new ColumnMeta("product", String.class, "source"),
+                new ColumnMeta("quarter", String.class, "source"),
+                new ColumnMeta("sales", Double.class, "source")
         );
 
-        List<JRow> rows = new ArrayList<>();
-        rows.add(new JRow(createRow( "East", "A", "Q1",  100.0)));
-        rows.add(new JRow(createRow( "East", "A", "Q2",  150.0)));
-        rows.add(new JRow(createRow( "East",  "B", "Q1",  200.0)));
-        rows.add(new JRow(createRow( "West",  "A",  "Q1",  120.0)));
-        rows.add(new JRow(createRow( "West",  "B", "Q2",  180.0)));
-        JDataSet dataset = new JDataSet(columns, rows);
+        List<Row> rows = new ArrayList<>();
+        rows.add(new Row(createRow( "East", "A", "Q1",  100.0)));
+        rows.add(new Row(createRow( "East", "A", "Q2",  150.0)));
+        rows.add(new Row(createRow( "East",  "B", "Q1",  200.0)));
+        rows.add(new Row(createRow( "West",  "A",  "Q1",  120.0)));
+        rows.add(new Row(createRow( "West",  "B", "Q2",  180.0)));
+        DataSet dataset = new DataSet(columns, rows);
         return dataset;
     }
     @Test
@@ -62,12 +62,12 @@ public class JOlapTest {
         Map<String, Function<List<Object>, Object>> aggregations =new HashMap<>();
         aggregations.put("sales", JAggregateFunctionFactory.getFunction(JAggregateFunctionFactory.SUM));
         aggregations = Collections.unmodifiableMap(aggregations);
-        JDataSet rolledUp = JOLAPOperations.rollUp(
+        DataSet rolledUp = JOLAPOperations.rollUp(
                 buildDataSet(),
                 Arrays.asList("region", "product"),
                 aggregations
         );
-        for (JRow row:rolledUp.getRows()){
+        for (Row row:rolledUp.getRows()){
             System.out.println(row);
         }
     }
@@ -76,19 +76,19 @@ public class JOlapTest {
         Map<String, Function<List<Object>, Object>> aggregations =new HashMap<>();
         aggregations.put("sales", JAggregateFunctionFactory.getFunction(JAggregateFunctionFactory.SUM));
         aggregations = Collections.unmodifiableMap(aggregations);
-        JDataSet drilledDown = JOLAPOperations.drillDown(
+        DataSet drilledDown = JOLAPOperations.drillDown(
                 buildDataSet(),
                 Collections.singletonList("quarter"),
                 aggregations
         );
-        for (JRow row:drilledDown.getRows()){
+        for (Row row:drilledDown.getRows()){
             System.out.println(row);
         }
     }
     @Test
     public void slice() {
-        JDataSet sliced = JOLAPOperations.slice(buildDataSet(), "region", "East");
-        for (JRow row:sliced.getRows()){
+        DataSet sliced = JOLAPOperations.slice(buildDataSet(), "region", "East");
+        for (Row row:sliced.getRows()){
             System.out.println(row);
         }
     }
@@ -97,23 +97,23 @@ public class JOlapTest {
         Map<String, Object> map=new HashMap<>();
         map.put("region", "East");
         map.put("product", "A");
-        JDataSet diced = JOLAPOperations.dice(
+        DataSet diced = JOLAPOperations.dice(
                 buildDataSet(),
                 map
         );
-        for (JRow row:diced.getRows()){
+        for (Row row:diced.getRows()){
             System.out.println(row);
         }
     }
     @Test
     public void pivoted  () {
-        JDataSet pivoted = JOLAPOperations.pivot(
+        DataSet pivoted = JOLAPOperations.pivot(
                 buildDataSet(),
                 "quarter",
                 "sales",
                 JAggregateFunctionFactory.getFunction(JAggregateFunctionFactory.SUM)
         );
-        for (JRow row:pivoted.getRows()){
+        for (Row row:pivoted.getRows()){
             System.out.println(row);
         }
     }

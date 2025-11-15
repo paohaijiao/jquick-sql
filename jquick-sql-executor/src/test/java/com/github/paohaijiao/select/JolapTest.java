@@ -15,11 +15,10 @@
  */
 package com.github.paohaijiao.select;
 
-import com.github.paohaijiao.dataset.JDataSet;
-import com.github.paohaijiao.dataset.JRow;
+import com.github.paohaijiao.dataset.DataSet;
+import com.github.paohaijiao.dataset.Row;
 import com.github.paohaijiao.enums.JEngineEnums;
 import com.github.paohaijiao.executor.JQuickSQLExecutor;
-import com.github.paohaijiao.model.JDataSetFactory;
 import com.github.paohaijiao.model.JOLapDataSetFactory;
 import com.github.paohaijiao.support.JDataSetHolder;
 import org.junit.Test;
@@ -43,8 +42,8 @@ public class JolapTest {
         JDataSetHolder dataSetContainer=new JDataSetHolder();
         dataSetContainer.addDataSet("sales_data", JOLapDataSetFactory.createSalesDataSet());
         executor.dataSet(dataSetContainer);
-        JDataSet dataSet=executor.execute(rule, JEngineEnums.LAMBDA);
-        for (JRow row : dataSet.getRows()) {
+        DataSet dataSet=executor.execute(rule, JEngineEnums.LAMBDA);
+        for (Row row : dataSet.getRows()) {
             System.out.println(row);
         }
     }
@@ -59,8 +58,8 @@ public class JolapTest {
         JDataSetHolder dataSetContainer=new JDataSetHolder();
         dataSetContainer.addDataSet("sales_data", JOLapDataSetFactory.createSalesDataSet());
         executor.dataSet(dataSetContainer);
-        JDataSet dataSet=executor.execute(rule, JEngineEnums.LAMBDA);
-        for (JRow row : dataSet.getRows()) {
+        DataSet dataSet=executor.execute(rule, JEngineEnums.LAMBDA);
+        for (Row row : dataSet.getRows()) {
             System.out.println(row);
         }
     }
@@ -73,8 +72,8 @@ public class JolapTest {
         JDataSetHolder dataSetContainer=new JDataSetHolder();
         dataSetContainer.addDataSet("sales_data", JOLapDataSetFactory.createSalesDataSet());
         executor.dataSet(dataSetContainer);
-        JDataSet dataSet=executor.execute(rule, JEngineEnums.LAMBDA);
-        for (JRow row : dataSet.getRows()) {
+        DataSet dataSet=executor.execute(rule, JEngineEnums.LAMBDA);
+        for (Row row : dataSet.getRows()) {
             System.out.println(row);
         }
     }
@@ -87,8 +86,8 @@ public class JolapTest {
         JDataSetHolder dataSetContainer=new JDataSetHolder();
         dataSetContainer.addDataSet("sales_data", JOLapDataSetFactory.createSalesDataSet());
         executor.dataSet(dataSetContainer);
-        JDataSet dataSet=executor.execute(rule, JEngineEnums.LAMBDA);
-        for (JRow row : dataSet.getRows()) {
+        DataSet dataSet=executor.execute(rule, JEngineEnums.LAMBDA);
+        for (Row row : dataSet.getRows()) {
             System.out.println(row);
         }
     }
@@ -101,8 +100,8 @@ public class JolapTest {
         JDataSetHolder dataSetContainer=new JDataSetHolder();
         dataSetContainer.addDataSet("sales_data", JOLapDataSetFactory.createSalesDataSet());
         executor.dataSet(dataSetContainer);
-        JDataSet dataSet=executor.execute(rule, JEngineEnums.LAMBDA);
-        for (JRow row : dataSet.getRows()) {
+        DataSet dataSet=executor.execute(rule, JEngineEnums.LAMBDA);
+        for (Row row : dataSet.getRows()) {
             System.out.println(row);
         }
     }

@@ -6,8 +6,6 @@
     <packaging>pom</packaging>
     <name>jquick-sql</name>
     <modules>
-        <module>jquick-sql-connector</module>
-        <module>jquick-sql-metastore</module>
         <module>jquick-sql-assembler</module>
         <module>jquick-sql-transformer</module>
         <module>jquick-sql-executor</module>
@@ -31,8 +29,8 @@
         <dependencies>
             <dependency>
                 <groupId>io.github.paohaijiao</groupId>
-                <artifactId>jquick-sql-connector</artifactId>
-                <version>${jquick-sql}</version>
+                <artifactId>jquick-connector</artifactId>
+                <version>1.0.0</version>
             </dependency>
             <dependency>
                 <groupId>io.github.paohaijiao</groupId>

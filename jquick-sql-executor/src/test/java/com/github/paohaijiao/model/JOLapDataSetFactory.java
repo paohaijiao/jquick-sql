@@ -15,9 +15,9 @@
  */
 package com.github.paohaijiao.model;
 
-import com.github.paohaijiao.dataset.JColumnMeta;
-import com.github.paohaijiao.dataset.JDataSet;
-import com.github.paohaijiao.dataset.JRow;
+import com.github.paohaijiao.dataset.ColumnMeta;
+import com.github.paohaijiao.dataset.DataSet;
+import com.github.paohaijiao.dataset.Row;
 
 import java.util.Arrays;
 import java.util.List;
@@ -30,18 +30,18 @@ import java.util.List;
  * @since 2025/8/31
  */
 public class JOLapDataSetFactory {
-    public static JDataSet createSalesDataSet() {
-        List<JColumnMeta> columns = Arrays.asList(
-                new JColumnMeta("region", String.class, "sales_data"),
-                new JColumnMeta("department", String.class, "sales_data"),
-                new JColumnMeta("category", String.class, "sales_data"),
-                new JColumnMeta("product", String.class, "sales_data"),
-                new JColumnMeta("sales", Double.class, "sales_data"),
-                new JColumnMeta("quarter", String.class, "sales_data"),
-                new JColumnMeta("year", Integer.class, "sales_data")
+    public static DataSet createSalesDataSet() {
+        List<ColumnMeta> columns = Arrays.asList(
+                new ColumnMeta("region", String.class, "sales_data"),
+                new ColumnMeta("department", String.class, "sales_data"),
+                new ColumnMeta("category", String.class, "sales_data"),
+                new ColumnMeta("product", String.class, "sales_data"),
+                new ColumnMeta("sales", Double.class, "sales_data"),
+                new ColumnMeta("quarter", String.class, "sales_data"),
+                new ColumnMeta("year", Integer.class, "sales_data")
         );
 
-        List<JRow> rows = Arrays.asList(
+        List<Row> rows = Arrays.asList(
                 createSalesRow("North", "Electronics", "Computers", "Laptop", 15000.00, "Q1", 2024),
                 createSalesRow("North", "Electronics", "Computers", "Desktop", 12000.00, "Q1", 2024),
                 createSalesRow("North", "Electronics", "Phones", "Smartphone", 20000.00, "Q1", 2024),
@@ -53,12 +53,12 @@ public class JOLapDataSetFactory {
                 createSalesRow("South", "Clothing", "Women", "Dress", 15000.00, "Q1", 2024)
         );
 
-        return new JDataSet(columns, rows);
+        return new DataSet(columns, rows);
     }
 
-    private static JRow createSalesRow(String region, String department, String category,
+    private static Row createSalesRow(String region, String department, String category,
                                        String product, double sales, String quarter, int year) {
-        JRow row = new JRow();
+        Row row = new Row();
         row.put("region", region);
         row.put("department", department);
         row.put("category", category);
@@ -68,17 +68,17 @@ public class JOLapDataSetFactory {
         row.put("year", year);
         return row;
     }
-    public static JDataSet createEmployeeDataSet() {
-        List<JColumnMeta> columns = Arrays.asList(
-                new JColumnMeta("employee_id", Integer.class, "employee_data"),
-                new JColumnMeta("name", String.class, "employee_data"),
-                new JColumnMeta("department", String.class, "employee_data"),
-                new JColumnMeta("salary", Double.class, "employee_data"),
-                new JColumnMeta("hire_date", String.class, "employee_data"),
-                new JColumnMeta("region", String.class, "employee_data")
+    public static DataSet createEmployeeDataSet() {
+        List<ColumnMeta> columns = Arrays.asList(
+                new ColumnMeta("employee_id", Integer.class, "employee_data"),
+                new ColumnMeta("name", String.class, "employee_data"),
+                new ColumnMeta("department", String.class, "employee_data"),
+                new ColumnMeta("salary", Double.class, "employee_data"),
+                new ColumnMeta("hire_date", String.class, "employee_data"),
+                new ColumnMeta("region", String.class, "employee_data")
         );
 
-        List<JRow> rows = Arrays.asList(
+        List<Row> rows = Arrays.asList(
                 createEmployeeRow(1, "张三", "IT", 75000.00, "2023-03-15", "North"),
                 createEmployeeRow(2, "李四", "IT", 85000.00, "2022-06-20", "North"),
                 createEmployeeRow(3, "王五", "Sales", 60000.00, "2023-01-10", "South"),
@@ -89,12 +89,12 @@ public class JOLapDataSetFactory {
                 createEmployeeRow(8, "吴十", "Sales", 72000.00, "2022-09-18", "North")
         );
 
-        return new JDataSet(columns, rows);
+        return new DataSet(columns, rows);
     }
 
-    private static JRow createEmployeeRow(int employeeId, String name, String department,
+    private static Row createEmployeeRow(int employeeId, String name, String department,
                                           double salary, String hireDate, String region) {
-        JRow row = new JRow();
+        Row row = new Row();
         row.put("employee_id", employeeId);
         row.put("name", name);
         row.put("department", department);
@@ -103,17 +103,17 @@ public class JOLapDataSetFactory {
         row.put("region", region);
         return row;
     }
-    public static JDataSet createFinancialDataSet() {
-        List<JColumnMeta> columns = Arrays.asList(
-                new JColumnMeta("year", Integer.class, "financial_data"),
-                new JColumnMeta("quarter", String.class, "financial_data"),
-                new JColumnMeta("month", Integer.class, "financial_data"),
-                new JColumnMeta("revenue", Double.class, "financial_data"),
-                new JColumnMeta("expense", Double.class, "financial_data"),
-                new JColumnMeta("department", String.class, "financial_data")
+    public static DataSet createFinancialDataSet() {
+        List<ColumnMeta> columns = Arrays.asList(
+                new ColumnMeta("year", Integer.class, "financial_data"),
+                new ColumnMeta("quarter", String.class, "financial_data"),
+                new ColumnMeta("month", Integer.class, "financial_data"),
+                new ColumnMeta("revenue", Double.class, "financial_data"),
+                new ColumnMeta("expense", Double.class, "financial_data"),
+                new ColumnMeta("department", String.class, "financial_data")
         );
 
-        List<JRow> rows = Arrays.asList(
+        List<Row> rows = Arrays.asList(
                 createFinancialRow(2024, "Q1", 1, 500000.00, 300000.00, "Sales"),
                 createFinancialRow(2024, "Q1", 2, 550000.00, 320000.00, "Sales"),
                 createFinancialRow(2024, "Q1", 3, 600000.00, 350000.00, "Sales"),
@@ -125,12 +125,12 @@ public class JOLapDataSetFactory {
                 createFinancialRow(2023, "Q4", 12, 580000.00, 340000.00, "Sales")
         );
 
-        return new JDataSet(columns, rows);
+        return new DataSet(columns, rows);
     }
 
-    private static JRow createFinancialRow(int year, String quarter, int month,
+    private static Row createFinancialRow(int year, String quarter, int month,
                                            double revenue, double expense, String department) {
-        JRow row = new JRow();
+        Row row = new Row();
         row.put("year", year);
         row.put("quarter", quarter);
         row.put("month", month);

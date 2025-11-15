@@ -15,9 +15,9 @@
  */
 package com.github.paohaijiao.select;
 
-import com.github.paohaijiao.dataset.JColumnMeta;
-import com.github.paohaijiao.dataset.JDataSet;
-import com.github.paohaijiao.dataset.JRow;
+import com.github.paohaijiao.dataset.ColumnMeta;
+import com.github.paohaijiao.dataset.DataSet;
+import com.github.paohaijiao.dataset.Row;
 import com.github.paohaijiao.enums.JEngineEnums;
 import com.github.paohaijiao.executor.JQuickSQLExecutor;
 import com.github.paohaijiao.support.JDataSetHolder;
@@ -34,18 +34,18 @@ import java.util.List;
  * @since 2025/8/17
  */
 public class JSelectTest {
-    private static JDataSet createOrdersDataSet() {
-        JDataSet.Builder builder = JDataSet.builder();
+    private static DataSet createOrdersDataSet() {
+        DataSet.Builder builder = DataSet.builder();
         builder.addColumn("order_id", Integer.class, "orders")
                 .addColumn("user_id", Integer.class, "orders")
                 .addColumn("amount", Double.class, "orders");
 
-        JRow row1 = new JRow("orders");
+        Row row1 = new Row("orders");
         row1.put("order_id", 1001);
         row1.put("user_id", 1);
         row1.put("amount", 99.99);
 
-        JRow row2 = new JRow("orders");
+        Row row2 = new Row("orders");
         row2.put("order_id", 1002);
         row2.put("user_id", 1);
         row2.put("amount", 149.99);
@@ -53,15 +53,15 @@ public class JSelectTest {
         builder.addRow(row1).addRow(row2);
         return builder.build();
     }
-    public static JDataSet createAggregationTestData() {
-        List<JColumnMeta> columns = Arrays.asList(
-                new JColumnMeta("department", String.class, "hr"),
-                new JColumnMeta("employee_name", String.class, "hr"),
-                new JColumnMeta("salary", Double.class, "finance"),
-                new JColumnMeta("years_of_service", Integer.class, "hr"),
-                new JColumnMeta("is_manager", Boolean.class, "hr")
+    public static DataSet createAggregationTestData() {
+        List<ColumnMeta> columns = Arrays.asList(
+                new ColumnMeta("department", String.class, "hr"),
+                new ColumnMeta("employee_name", String.class, "hr"),
+                new ColumnMeta("salary", Double.class, "finance"),
+                new ColumnMeta("years_of_service", Integer.class, "hr"),
+                new ColumnMeta("is_manager", Boolean.class, "hr")
         );
-        List<JRow> rows = Arrays.asList(
+        List<Row> rows = Arrays.asList(
                 createEmployeeRow("Engineering", "Alice", 8500.0, 3, true),
                 createEmployeeRow("Engineering", "Bob", 7500.0, 2, false),
                 createEmployeeRow("Marketing", "Charlie", 9200.0, 5, true),
@@ -71,11 +71,11 @@ public class JSelectTest {
                 createEmployeeRow("Engineering", "Grace", 8800.0, 4, false)
         );
 
-        return new JDataSet(columns, rows);
+        return new DataSet(columns, rows);
     }
-    private static JRow createEmployeeRow(String department, String name,
+    private static Row createEmployeeRow(String department, String name,
                                           double salary, int years, boolean isManager) {
-        JRow row = new JRow();
+        Row row = new Row();
         row.put("department", department);
         row.put("employee_name", name);
         row.put("salary", salary);
@@ -90,8 +90,8 @@ public class JSelectTest {
         JDataSetHolder dataSetContainer=new JDataSetHolder();
         dataSetContainer.addDataSet("orders",createOrdersDataSet());
         executor.dataSet(dataSetContainer);
-        JDataSet dataSet=executor.execute(rule, JEngineEnums.LAMBDA);
-        for (JRow row : dataSet.getRows()) {
+        DataSet dataSet=executor.execute(rule, JEngineEnums.LAMBDA);
+        for (Row row : dataSet.getRows()) {
             System.out.println(row);
         }
     }
@@ -102,8 +102,8 @@ public class JSelectTest {
         JDataSetHolder dataSetContainer=new JDataSetHolder();
         dataSetContainer.addDataSet("orders",createOrdersDataSet());
         executor.dataSet(dataSetContainer);
-        JDataSet dataSet=executor.execute(rule, JEngineEnums.LAMBDA);
-        for (JRow row : dataSet.getRows()) {
+        DataSet dataSet=executor.execute(rule, JEngineEnums.LAMBDA);
+        for (Row row : dataSet.getRows()) {
             System.out.println(row);
         }
     }
@@ -114,8 +114,8 @@ public class JSelectTest {
         JDataSetHolder dataSetContainer=new JDataSetHolder();
         dataSetContainer.addDataSet("orders",createOrdersDataSet());
         executor.dataSet(dataSetContainer);
-        JDataSet dataSet=executor.execute(rule, JEngineEnums.LAMBDA);
-        for (JRow row : dataSet.getRows()) {
+        DataSet dataSet=executor.execute(rule, JEngineEnums.LAMBDA);
+        for (Row row : dataSet.getRows()) {
             System.out.println(row);
         }
     }
@@ -127,8 +127,8 @@ public class JSelectTest {
         JDataSetHolder dataSetContainer=new JDataSetHolder();
         dataSetContainer.addDataSet("orders",createAggregationTestData());
         executor.dataSet(dataSetContainer);
-        JDataSet dataSet=executor.execute(rule, JEngineEnums.LAMBDA);
-        for (JRow row : dataSet.getRows()) {
+        DataSet dataSet=executor.execute(rule, JEngineEnums.LAMBDA);
+        for (Row row : dataSet.getRows()) {
             System.out.println(row);
         }
     }
@@ -140,8 +140,8 @@ public class JSelectTest {
         JDataSetHolder dataSetContainer=new JDataSetHolder();
         dataSetContainer.addDataSet("orders",createAggregationTestData());
         executor.dataSet(dataSetContainer);
-        JDataSet dataSet=executor.execute(rule, JEngineEnums.LAMBDA);
-        for (JRow row : dataSet.getRows()) {
+        DataSet dataSet=executor.execute(rule, JEngineEnums.LAMBDA);
+        for (Row row : dataSet.getRows()) {
             System.out.println(row);
         }
     }

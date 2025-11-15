@@ -1,8 +1,8 @@
 package com.github.paohaijiao.evalue;
 
-import com.github.paohaijiao.dataset.JColumnMeta;
-import com.github.paohaijiao.dataset.JDataSet;
-import com.github.paohaijiao.dataset.JRow;
+import com.github.paohaijiao.dataset.ColumnMeta;
+import com.github.paohaijiao.dataset.DataSet;
+import com.github.paohaijiao.dataset.Row;
 import com.github.paohaijiao.expression.JColumnExpression;
 import com.github.paohaijiao.expression.JExpression;
 import com.github.paohaijiao.expression.olap.*;
@@ -14,13 +14,13 @@ public class JOLAPExpressionEvaluator extends JBaseEvaluator implements JSqlEval
 
     private final JExpressionEvaluator expressionEvaluator;
 
-    private JDataSet currentDataset;
+    private DataSet currentDataset;
 
     public JOLAPExpressionEvaluator() {
         this.expressionEvaluator = new JExpressionEvaluator();
     }
 
-    public void setDataset(JDataSet dataset) {
+    public void setDataset(DataSet dataset) {
         this.currentDataset = dataset;
     }
 
@@ -59,7 +59,7 @@ public class JOLAPExpressionEvaluator extends JBaseEvaluator implements JSqlEval
         return true;
     }
 
-    public JDataSet executeOLAPOperation(JExpression olapExpression) {
+    public DataSet executeOLAPOperation(JExpression olapExpression) {
         if (currentDataset == null) {
             throw new IllegalStateException("Dataset not set. Call setDataset() first.");
         }
@@ -70,11 +70,11 @@ public class JOLAPExpressionEvaluator extends JBaseEvaluator implements JSqlEval
             JDrillDownExpression drillDownExpr = (JDrillDownExpression) olapExpression;
             return JOLAPOperations.drillDown(currentDataset, drillDownExpr.getGroupByColumns(), drillDownExpr.getAggregations());
         } else if (olapExpression instanceof JSliceExpression) {
-            List<JRow> filteredRows = filterRowsByCondition(olapExpression);
-            return new JDataSet(currentDataset.getColumns(), filteredRows);
+            List<Row> filteredRows = filterRowsByCondition(olapExpression);
+            return new DataSet(currentDataset.getColumns(), filteredRows);
         } else if (olapExpression instanceof JDiceExpression) {
-            List<JRow> filteredRows = filterRowsByCondition(olapExpression);
-            return new JDataSet(currentDataset.getColumns(), filteredRows);
+            List<Row> filteredRows = filterRowsByCondition(olapExpression);
+            return new DataSet(currentDataset.getColumns(), filteredRows);
         } else if (olapExpression instanceof JPivotExpression) {
             JPivotExpression pivotExpr = (JPivotExpression) olapExpression;
             return JOLAPOperations.pivot(currentDataset, pivotExpr.getPivotColumn(), pivotExpr.getValueColumn(), pivotExpr.getAggregator());
@@ -83,11 +83,11 @@ public class JOLAPExpressionEvaluator extends JBaseEvaluator implements JSqlEval
         }
     }
 
-    private List<JRow> filterRowsByCondition(JExpression condition) {
-        List<JRow> filteredRows = new ArrayList<>();
-        for (JRow row : currentDataset.getRows()) {
+    private List<Row> filterRowsByCondition(JExpression condition) {
+        List<Row> filteredRows = new ArrayList<>();
+        for (Row row : currentDataset.getRows()) {
             Map<String, Object> rowData = new HashMap<>();
-            for (JColumnMeta column : currentDataset.getColumns()) {
+            for (ColumnMeta column : currentDataset.getColumns()) {
                 rowData.put(column.getName(), row.get(column.getName()));
             }
             Boolean result = evaluate(condition, rowData);
@@ -98,12 +98,12 @@ public class JOLAPExpressionEvaluator extends JBaseEvaluator implements JSqlEval
         return filteredRows;
     }
 
-    public static List<JRow> filterRows(JDataSet dataset, JExpression condition) {
+    public static List<Row> filterRows(DataSet dataset, JExpression condition) {
         JOLAPExpressionEvaluator evaluator = new JOLAPExpressionEvaluator();
         evaluator.setDataset(dataset);
         return evaluator.filterRowsByCondition(condition);
     }
-    public static JDataSet executeOLAP(JDataSet dataset, JExpression olapExpression) {
+    public static DataSet executeOLAP(DataSet dataset, JExpression olapExpression) {
         JOLAPExpressionEvaluator evaluator = new JOLAPExpressionEvaluator();
         evaluator.setDataset(dataset);
         return evaluator.executeOLAPOperation(olapExpression);

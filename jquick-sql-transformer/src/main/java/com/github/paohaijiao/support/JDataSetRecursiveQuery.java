@@ -15,8 +15,8 @@
  */
 package com.github.paohaijiao.support;
 
-import com.github.paohaijiao.dataset.JDataSet;
-import com.github.paohaijiao.dataset.JRow;
+import com.github.paohaijiao.dataset.DataSet;
+import com.github.paohaijiao.dataset.Row;
 
 import java.util.*;
 import java.util.function.Function;
@@ -38,12 +38,12 @@ public class JDataSetRecursiveQuery {
      * @param distinct
      * @return
      */
-    public static JDataSet withRecursive(JDataSet initialDataSet, Function<JDataSet, JDataSet> recursiveFunction, int maxDepth, boolean distinct) {
+    public static DataSet withRecursive(DataSet initialDataSet, Function<DataSet, DataSet> recursiveFunction, int maxDepth, boolean distinct) {
         if (maxDepth <= 0) {
             throw new IllegalArgumentException("maxDepth must be positive");
         }
-        Set<JRow> allRows = new LinkedHashSet<>();
-        JDataSet currentDataSet = initialDataSet;
+        Set<Row> allRows = new LinkedHashSet<>();
+        DataSet currentDataSet = initialDataSet;
         if (distinct) {
             allRows.addAll(new LinkedHashSet<>(currentDataSet.getRows()));
         } else {
@@ -51,18 +51,18 @@ public class JDataSetRecursiveQuery {
         }
         int depth = 1;
         while (depth < maxDepth && !currentDataSet.isEmpty()) {
-            JDataSet nextDataSet = recursiveFunction.apply(currentDataSet);
+            DataSet nextDataSet = recursiveFunction.apply(currentDataSet);
             if (nextDataSet.isEmpty()) {
                 break;
             }
             if (distinct) {
-                Set<JRow> newRows = new LinkedHashSet<>(nextDataSet.getRows());
+                Set<Row> newRows = new LinkedHashSet<>(nextDataSet.getRows());
                 newRows.removeAll(allRows);
                 if (newRows.isEmpty()) {
                     break; //stop
                 }
                 allRows.addAll(newRows);
-                currentDataSet = new JDataSet(nextDataSet.getColumns(), new ArrayList<>(newRows));
+                currentDataSet = new DataSet(nextDataSet.getColumns(), new ArrayList<>(newRows));
             } else {
                 allRows.addAll(nextDataSet.getRows());
                 currentDataSet = nextDataSet;
@@ -70,35 +70,35 @@ public class JDataSetRecursiveQuery {
             depth++;
         }
 
-        return new JDataSet(initialDataSet.getColumns(), new ArrayList<>(allRows));
+        return new DataSet(initialDataSet.getColumns(), new ArrayList<>(allRows));
     }
 
 
-    public static JDataSet withRecursive(JDataSet initialDataSet, Function<JDataSet, JDataSet> recursiveFunction, int maxDepth) {
+    public static DataSet withRecursive(DataSet initialDataSet, Function<DataSet, DataSet> recursiveFunction, int maxDepth) {
         return withRecursive(initialDataSet, recursiveFunction, maxDepth, true);
     }
 
-    public static JDataSet withRecursive(JDataSet initialDataSet, Function<JDataSet, JDataSet> recursiveFunction) {
+    public static DataSet withRecursive(DataSet initialDataSet, Function<DataSet, DataSet> recursiveFunction) {
         return withRecursive(initialDataSet, recursiveFunction, 100, true);
     }
 
-    public static Function<JDataSet, JDataSet> buildHierarchicalRecursiveFunction(JDataSet fullDataSet,  String parentKeyColumn, String childKeyColumn) {
+    public static Function<DataSet, DataSet> buildHierarchicalRecursiveFunction(DataSet fullDataSet,  String parentKeyColumn, String childKeyColumn) {
         return currentDataSet -> {
             Set<Object> childKeys = currentDataSet.getRows().stream()
                     .map(row -> row.get(childKeyColumn))
                     .filter(Objects::nonNull)
                     .collect(Collectors.toSet());
             if (childKeys.isEmpty()) {
-                return JDataSet.builder().build();
+                return DataSet.builder().build();
             }
-            List<JRow> nextLevelRows = fullDataSet.getRows().stream()
+            List<Row> nextLevelRows = fullDataSet.getRows().stream()
                     .filter(row -> {
                         Object parentKey = row.get(parentKeyColumn);
                         return parentKey != null && childKeys.contains(parentKey);
                     })
                     .collect(Collectors.toList());
 
-            return new JDataSet(fullDataSet.getColumns(), nextLevelRows);
+            return new DataSet(fullDataSet.getColumns(), nextLevelRows);
         };
     }
 }

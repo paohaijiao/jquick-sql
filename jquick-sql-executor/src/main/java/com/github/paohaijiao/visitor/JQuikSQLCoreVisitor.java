@@ -18,9 +18,9 @@ package com.github.paohaijiao.visitor;
 import com.github.paohaijiao.condition.JComparisonCondition;
 import com.github.paohaijiao.condition.JCondition;
 import com.github.paohaijiao.console.JConsole;
-import com.github.paohaijiao.dataset.JColumnMeta;
-import com.github.paohaijiao.dataset.JDataSet;
-import com.github.paohaijiao.dataset.JRow;
+import com.github.paohaijiao.dataset.ColumnMeta;
+import com.github.paohaijiao.dataset.DataSet;
+import com.github.paohaijiao.dataset.Row;
 import com.github.paohaijiao.enums.JComparisonOperator;
 import com.github.paohaijiao.enums.JEngineEnums;
 import com.github.paohaijiao.exception.JAssert;
@@ -59,7 +59,7 @@ public class JQuikSQLCoreVisitor extends JQuickSQLBaseVisitor {
 
     protected JQuickSQLParser parser;
 
-    protected final Map<String, JDataSet> tableRegistry = new HashMap<>();
+    protected final Map<String, DataSet> tableRegistry = new HashMap<>();
 
     protected JDataSetJoinerStrategy joinerStrategy;
     protected JEngineEnums engine=JEngineEnums.LAMBDA;
@@ -68,27 +68,27 @@ public class JQuikSQLCoreVisitor extends JQuickSQLBaseVisitor {
 
     protected JConsole console=new JConsole();
 
-    public void registerDataSet(String tableName, JDataSet dataSet) {
+    public void registerDataSet(String tableName, DataSet dataSet) {
         tableRegistry.put(tableName, dataSet);
     }
-    protected JDataSet aliasColumns(JDataSet dataset, String alias) {
-        List<JColumnMeta> newColumns = new ArrayList<>();
-        List<JRow> newRows = new ArrayList<>();
-        for (JColumnMeta column : dataset.getColumns()) {
-            newColumns.add(new JColumnMeta(
+    protected DataSet aliasColumns(DataSet dataset, String alias) {
+        List<ColumnMeta> newColumns = new ArrayList<>();
+        List<Row> newRows = new ArrayList<>();
+        for (ColumnMeta column : dataset.getColumns()) {
+            newColumns.add(new ColumnMeta(
                     alias + "." + column.getName(),
                     column.getType(),
                     column.getSource()
             ));
         }
-        for (JRow row : dataset.getRows()) {
-            JRow newRow = new JRow();
+        for (Row row : dataset.getRows()) {
+            Row newRow = new Row();
             for (String key : row.keySet()) {
                 newRow.put(alias + "." + key, row.get(key));
             }
             newRows.add(newRow);
         }
-        return new JDataSet(newColumns, newRows);
+        return new DataSet(newColumns, newRows);
     }
 
 

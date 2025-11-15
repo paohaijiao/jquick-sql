@@ -15,9 +15,10 @@
  */
 package com.github.paohaijiao.visitor;
 
-import com.github.paohaijiao.dataset.JDataSet;
+import com.github.paohaijiao.dataset.DataSet;
 import com.github.paohaijiao.parser.JQuickSQLParser;
 import com.github.paohaijiao.support.JDataSetRecursiveQuery;
+
 
 import java.util.*;
 import java.util.function.Function;
@@ -31,9 +32,9 @@ import java.util.function.Function;
  */
 public class JQuikSQLCommonTableExpressionVisitor extends JQuikSQLSelectStatementVisitor {
 
-    private Map<String, JDataSet> cteCache = new HashMap<>();
+    private Map<String, DataSet> cteCache = new HashMap<>();
     @Override
-    public JDataSet visitCteQuery(JQuickSQLParser.CteQueryContext ctx) {
+    public DataSet visitCteQuery(JQuickSQLParser.CteQueryContext ctx) {
         parseCteDefinitions(ctx);
         return visitSelectExpression(ctx.selectExpression());
     }
@@ -41,9 +42,9 @@ public class JQuikSQLCommonTableExpressionVisitor extends JQuikSQLSelectStatemen
     private void parseCteDefinitions(JQuickSQLParser.CteQueryContext ctx) {
         for (JQuickSQLParser.CommonTableExpressionContext cteCtx : ctx.commonTableExpression()) {
             String cteName = cteCtx.uid().getText();
-            JDataSet cteDataSet;
+            DataSet cteDataSet;
             if (cteCtx.selectStatement() != null) {
-                cteDataSet =(JDataSet) visit(cteCtx.selectStatement());
+                cteDataSet =(DataSet) visit(cteCtx.selectStatement());
             } else {
                 cteDataSet = processRecursiveCte(cteCtx, ctx.RECURSIVE() != null);
             }
@@ -52,9 +53,9 @@ public class JQuikSQLCommonTableExpressionVisitor extends JQuikSQLSelectStatemen
         }
     }
 
-    private JDataSet processRecursiveCte(JQuickSQLParser.CommonTableExpressionContext cteCtx, boolean isRecursive) {
-        JDataSet initialDataSet = (JDataSet)visit(cteCtx.initialQuery());
-        Function<JDataSet, JDataSet> recursiveFunction = buildRecursiveFunction(cteCtx.recursivePart());
+    private DataSet processRecursiveCte(JQuickSQLParser.CommonTableExpressionContext cteCtx, boolean isRecursive) {
+        DataSet initialDataSet = (DataSet)visit(cteCtx.initialQuery());
+        Function<DataSet, DataSet> recursiveFunction = buildRecursiveFunction(cteCtx.recursivePart());
         return JDataSetRecursiveQuery.withRecursive(
                 initialDataSet,
                 recursiveFunction,
@@ -63,12 +64,12 @@ public class JQuikSQLCommonTableExpressionVisitor extends JQuikSQLSelectStatemen
         );
     }
 
-    private Function<JDataSet, JDataSet> buildRecursiveFunction(JQuickSQLParser.RecursivePartContext ctx) {
+    private Function<DataSet, DataSet> buildRecursiveFunction(JQuickSQLParser.RecursivePartContext ctx) {
         return currentDataSet -> {
             String tempRecursiveTable = "__current_recursive__";
             dataSetHolder.addDataSet(tempRecursiveTable, currentDataSet);
             try {
-                return (JDataSet)visit(ctx.selectStatement());
+                return (DataSet)visit(ctx.selectStatement());
             } finally {
                 dataSetHolder.removeDataSet(tempRecursiveTable);
             }

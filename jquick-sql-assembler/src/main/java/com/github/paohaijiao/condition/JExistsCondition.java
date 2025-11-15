@@ -15,7 +15,7 @@
  */
 package com.github.paohaijiao.condition;
 
-import com.github.paohaijiao.dataset.JDataSet;
+import com.github.paohaijiao.dataset.DataSet;
 import com.github.paohaijiao.enums.JConditionType;
 import lombok.Getter;
 /**
@@ -28,9 +28,9 @@ import lombok.Getter;
 @Getter
 public class JExistsCondition extends JCondition{
 
-    private JDataSet dataSet;
+    private DataSet dataSet;
 
-    public JExistsCondition(JDataSet dataSet) {
+    public JExistsCondition(DataSet dataSet) {
         this.type = JConditionType.EXISTS;
         this.dataSet = dataSet;
     }

@@ -16,11 +16,11 @@
 //package com.github.paohaijiao.forkjoin;
 //
 //import com.github.paohaijiao.condition.JCondition;
-//import com.github.paohaijiao.dataset.JDataSet;
+//import com.github.paohaijiao.dataset.DataSet;
 //import com.github.paohaijiao.expression.JExpression;
 //import com.github.paohaijiao.expression.JFunctionCallExpression;
 //import com.github.paohaijiao.expression.JOrderByExpression;
-//import com.github.paohaijiao.factory.JDataSetJoinerStrategy;
+//import com.github.paohaijiao.factory.DataSetJoinerStrategy;
 //import com.github.paohaijiao.func.JoinCondition;
 //
 //import java.util.List;
@@ -33,79 +33,79 @@
 // * @version 1.0.0
 // * @since 2025/8/17
 // */
-//public class JForkJoinJoiner implements JDataSetJoinerStrategy {
+//public class JForkJoinJoiner implements DataSetJoinerStrategy {
 //    @Override
-//    public JDataSet innerJoin(JDataSet left, JDataSet right, JoinCondition condition) {
+//    public DataSet innerJoin(DataSet left, DataSet right, JoinCondition condition) {
 //        return null;
 //    }
 //
 //    @Override
-//    public JDataSet leftJoin(JDataSet left, JDataSet right, JoinCondition condition) {
+//    public DataSet leftJoin(DataSet left, DataSet right, JoinCondition condition) {
 //        return null;
 //    }
 //
 //    @Override
-//    public JDataSet fullOuterJoin(JDataSet left, JDataSet right, JoinCondition condition) {
+//    public DataSet fullOuterJoin(DataSet left, DataSet right, JoinCondition condition) {
 //        return null;
 //    }
 //
 //    @Override
-//    public JDataSet crossJoin(JDataSet left, JDataSet right) {
+//    public DataSet crossJoin(DataSet left, DataSet right) {
 //        return null;
 //    }
 //
 //    @Override
-//    public JDataSet naturalJoin(JDataSet left, JDataSet right) {
+//    public DataSet naturalJoin(DataSet left, DataSet right) {
 //        return null;
 //    }
 //
 //    @Override
-//    public JDataSet union(JDataSet ds1, JDataSet ds2) {
+//    public DataSet union(DataSet ds1, DataSet ds2) {
 //        return null;
 //    }
 //
 //    @Override
-//    public JDataSet intersect(JDataSet ds1, JDataSet ds2) {
+//    public DataSet intersect(DataSet ds1, DataSet ds2) {
 //        return null;
 //    }
 //
 //    @Override
-//    public JDataSet minus(JDataSet ds1, JDataSet ds2) {
+//    public DataSet minus(DataSet ds1, DataSet ds2) {
 //        return null;
 //    }
 //
 //    @Override
-//    public JDataSet selectColumns(JDataSet dataset, List<String> columnNames) {
+//    public DataSet selectColumns(DataSet dataset, List<String> columnNames) {
 //        return null;
 //    }
 //
 //    @Override
-//    public JDataSet filter(JDataSet dataset, JCondition condition) {
+//    public DataSet filter(DataSet dataset, JCondition condition) {
 //        return null;
 //    }
 //
 //    @Override
-//    public JDataSet transform(JDataSet dataset, Map<String, JFunctionCallExpression> transformations) {
+//    public DataSet transform(DataSet dataset, Map<String, JFunctionCallExpression> transformations) {
 //        return null;
 //    }
 //
 //    @Override
-//    public JDataSet sort(JDataSet dataset, List<JOrderByExpression> orderByExpressions) {
+//    public DataSet sort(DataSet dataset, List<JOrderByExpression> orderByExpressions) {
 //        return null;
 //    }
 //
 //    @Override
-//    public JDataSet aggregate(JDataSet dataset, List<String> groupBy, Map<String, JAggregateExpression> aggregations) {
+//    public DataSet aggregate(DataSet dataset, List<String> groupBy, Map<String, JAggregateExpression> aggregations) {
 //        return null;
 //    }
 //
 //    @Override
-//    public JDataSet alias(JDataSet dataset, Map<String, JExpression> aliases) {
+//    public DataSet alias(DataSet dataset, Map<String, JExpression> aliases) {
 //        return null;
 //    }
 //
 //    @Override
-//    public JDataSet limit(JDataSet dataset, Integer limit, Integer offset) {
+//    public DataSet limit(DataSet dataset, Integer limit, Integer offset) {
 //        return null;
 //    }
 //}

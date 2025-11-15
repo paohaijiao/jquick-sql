@@ -16,7 +16,7 @@
 package com.github.paohaijiao.visitor;
 
 import com.github.paohaijiao.condition.*;
-import com.github.paohaijiao.dataset.JDataSet;
+import com.github.paohaijiao.dataset.DataSet;
 import com.github.paohaijiao.enums.JComparisonOperator;
 import com.github.paohaijiao.exception.JAssert;
 import com.github.paohaijiao.expression.JColumnExpression;
@@ -126,8 +126,8 @@ public class JQuikSQLPredictStatementVisitor extends JQuikSQLFunctionStatementVi
     @Override
     public JCondition visitExisitsPredicate(JQuickSQLParser.ExisitsPredicateContext ctx) {
         Object subqueryResult = visit(ctx.expression());
-        JAssert.isTrue(subqueryResult instanceof JDataSet,"the type should be DataSet");
-        return new JExistsCondition((JDataSet)subqueryResult);
+        JAssert.isTrue(subqueryResult instanceof DataSet,"the type should be DataSet");
+        return new JExistsCondition((DataSet)subqueryResult);
     }
 
 

@@ -1,7 +1,7 @@
 package com.github.paohaijiao.factory;
 
 import com.github.paohaijiao.condition.JCondition;
-import com.github.paohaijiao.dataset.JDataSet;
+import com.github.paohaijiao.dataset.DataSet;
 import com.github.paohaijiao.expression.JExpression;
 import com.github.paohaijiao.expression.JFunctionCallExpression;
 import com.github.paohaijiao.expression.JOrderByExpression;
@@ -12,36 +12,36 @@ import java.util.Map;
 
 public interface JDataSetJoinerStrategy {
 
-    JDataSet innerJoin(JDataSet left, JDataSet right, JoinCondition condition);
+    DataSet innerJoin(DataSet left, DataSet right, JoinCondition condition);
 
-    JDataSet leftJoin(JDataSet left, JDataSet right, JoinCondition condition);
+    DataSet leftJoin(DataSet left, DataSet right, JoinCondition condition);
 
-    JDataSet rightJoin(JDataSet left, JDataSet right, JoinCondition condition);
+    DataSet rightJoin(DataSet left, DataSet right, JoinCondition condition);
 
-    JDataSet fullOuterJoin(JDataSet left, JDataSet right, JoinCondition condition);
+    DataSet fullOuterJoin(DataSet left, DataSet right, JoinCondition condition);
 
-    JDataSet crossJoin(JDataSet left, JDataSet right);
+    DataSet crossJoin(DataSet left, DataSet right);
 
-    JDataSet naturalJoin(JDataSet left, JDataSet right);
+    DataSet naturalJoin(DataSet left, DataSet right);
 
-    public  JDataSet union(JDataSet ds1, JDataSet ds2);
+    public  DataSet union(DataSet ds1, DataSet ds2);
 
-    public  JDataSet intersect(JDataSet ds1, JDataSet ds2);
+    public  DataSet intersect(DataSet ds1, DataSet ds2);
 
-    public  JDataSet minus(JDataSet ds1, JDataSet ds2);
+    public  DataSet minus(DataSet ds1, DataSet ds2);
 
-    public  JDataSet selectColumns(JDataSet dataset, List<String> columnNames);
+    public  DataSet selectColumns(DataSet dataset, List<String> columnNames);
 
-    public  JDataSet filter(JDataSet dataset, JCondition condition);
+    public  DataSet filter(DataSet dataset, JCondition condition);
 
-    public  JDataSet transform(JDataSet dataset, Map<String, JFunctionCallExpression> transformations);
+    public  DataSet transform(DataSet dataset, Map<String, JFunctionCallExpression> transformations);
 
-    public  JDataSet sort(JDataSet dataset, List<JOrderByExpression> orderByExpressions);
+    public  DataSet sort(DataSet dataset, List<JOrderByExpression> orderByExpressions);
 
-    public  JDataSet aggregate(JDataSet dataset, List<String> groupBy, Map<String, JFunctionCallExpression> aggregations);
+    public  DataSet aggregate(DataSet dataset, List<String> groupBy, Map<String, JFunctionCallExpression> aggregations);
 
-    public  JDataSet alias(JDataSet dataset, Map<String, JExpression> aliases) ;
+    public  DataSet alias(DataSet dataset, Map<String, JExpression> aliases) ;
 
-    public  JDataSet limit(JDataSet dataset,Integer limit ,Integer offset) ;
+    public  DataSet limit(DataSet dataset,Integer limit ,Integer offset) ;
 
 }

@@ -14,11 +14,10 @@
  * Copyright (c) [2025-2099] Martin (goudingcheng@gmail.com)
  */
 package com.github.paohaijiao.select;
-import com.github.paohaijiao.dataset.JDataSet;
-import com.github.paohaijiao.dataset.JRow;
+import com.github.paohaijiao.dataset.DataSet;
+import com.github.paohaijiao.dataset.Row;
 import com.github.paohaijiao.enums.JEngineEnums;
 import com.github.paohaijiao.executor.JQuickSQLExecutor;
-import com.github.paohaijiao.model.JDataSetFactory;
 import com.github.paohaijiao.parser.JQuickSQLParser;
 import com.github.paohaijiao.support.JDataSetHolder;
 import com.github.paohaijiao.visitor.JQuikSQLCommonTableExpressionVisitor;
@@ -35,15 +34,15 @@ import java.util.Arrays;
  * @since 2025/8/24
  */
 public class JCteQueryTest {
-    private JRow addRow(Integer id,String name,Integer managerId){
-        JRow row = new JRow();
+    private Row addRow(Integer id,String name,Integer managerId){
+        Row row = new Row();
         row.put("id",id);
         row.put("name",name);
         row.put("manager_id",managerId);
         return row;
     }
-    private JRow addEmRow(Integer emp_id,String emp_name,Integer manager_id,String department,Integer salary){
-        JRow row = new JRow();
+    private Row addEmRow(Integer emp_id,String emp_name,Integer manager_id,String department,Integer salary){
+        Row row = new Row();
         row.put("emp_id",emp_id);
         row.put("emp_name",emp_name);
         row.put("manager_id",manager_id);
@@ -52,8 +51,8 @@ public class JCteQueryTest {
         return row;
     }
 
-    private JDataSet setupTestData() {
-        JDataSet employees = JDataSet.builder()
+    private DataSet setupTestData() {
+        DataSet employees = DataSet.builder()
                 .addColumn("id",Integer.class,"")
                 .addColumn("name",String.class,"")
                 .addColumn("manager_id",Integer.class,"")
@@ -67,8 +66,8 @@ public class JCteQueryTest {
                 .build();
         return employees;
     }
-    private JDataSet buildEmployeeHierarchy() {
-        JDataSet employeeHierarchy = JDataSet.builder()
+    private DataSet buildEmployeeHierarchy() {
+        DataSet employeeHierarchy = DataSet.builder()
                 .addColumn("emp_id",Integer.class,"")
                 .addColumn("emp_name",String.class,"")
                 .addColumn("manager_id",Integer.class,"")
@@ -104,8 +103,8 @@ public class JCteQueryTest {
         JDataSetHolder dataSetContainer=new JDataSetHolder();
         dataSetContainer.addDataSet("employees", setupTestData());
         executor.dataSet(dataSetContainer);
-        JDataSet dataSet=executor.execute(sql, JEngineEnums.LAMBDA);
-        for (JRow row : dataSet.getRows()) {
+        DataSet dataSet=executor.execute(sql, JEngineEnums.LAMBDA);
+        for (Row row : dataSet.getRows()) {
             System.out.println(row);
         }
 //        assertNotNull(result);
@@ -135,11 +134,11 @@ public class JCteQueryTest {
         dataSetContainer.addDataSet("employees", setupTestData());
         dataSetContainer.addDataSet("employee_hierarchy", buildEmployeeHierarchy());
         executor.dataSet(dataSetContainer);
-        JDataSet dataSet=executor.execute(sql, JEngineEnums.LAMBDA);
-        for (JRow row : dataSet.getRows()) {
+        DataSet dataSet=executor.execute(sql, JEngineEnums.LAMBDA);
+        for (Row row : dataSet.getRows()) {
             System.out.println(row);
         }
-        JRow ceoRow = dataSet.getRows().stream()
+        Row ceoRow = dataSet.getRows().stream()
                 .filter(row -> "CEO".equals(row.get("name")))
                 .findFirst().orElse(null);
         System.out.println(ceoRow);
@@ -164,7 +163,7 @@ public class JCteQueryTest {
 //                "JOIN top_managers tm ON e.id = tm.manager_id " +
 //                "ORDER BY tm.report_count DESC";
 //
-//        JDataSet result = visitor.visit(parseSql(sql));
+//        DataSet result = visitor.visit(parseSql(sql));
 //        assertNotNull(result);
 //        assertEquals(2, result.rowCount());
 //    }
@@ -176,7 +175,7 @@ public class JCteQueryTest {
 //                ") " +
 //                "SELECT COUNT(*) as count FROM filtered_employees";
 //
-//        JDataSet result = visitor.visit(parseSql(sql.replace("?", "2")));
+//        DataSet result = visitor.visit(parseSql(sql.replace("?", "2")));
 //
 //        assertNotNull(result);
 //        assertEquals(1, result.rowCount());

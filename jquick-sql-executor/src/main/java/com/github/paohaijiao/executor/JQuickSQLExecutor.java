@@ -16,7 +16,8 @@
 package com.github.paohaijiao.executor;
 
 import com.github.paohaijiao.config.JQuickSQLConfig;
-import com.github.paohaijiao.dataset.JDataSet;
+import com.github.paohaijiao.dataset.DataSet;
+import com.github.paohaijiao.dataset.DataSet;
 import com.github.paohaijiao.enums.JEngineEnums;
 import com.github.paohaijiao.param.JContext;
 import com.github.paohaijiao.parser.JQuickSQLLexer;
@@ -56,7 +57,7 @@ public class JQuickSQLExecutor {
         return this;
     }
 
-    public JDataSet execute(String sql, JEngineEnums engine){
+    public DataSet execute(String sql, JEngineEnums engine){
         JQuickSQLLexer lexer = new JQuickSQLLexer(CharStreams.fromString(sql));
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         JQuickSQLParser parser = new JQuickSQLParser(tokens);
@@ -65,6 +66,6 @@ public class JQuickSQLExecutor {
         JQuikSQLCommonVisitor tv = new JQuikSQLCommonVisitor(dataSetContainer,lexer,tokens,parser);
         tv.engine(engine);
         Object object = tv.visit(tree);
-        return (JDataSet)object;
+        return (DataSet)object;
     }
 }

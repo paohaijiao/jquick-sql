@@ -15,7 +15,7 @@
  */
 package com.github.paohaijiao.visitor;
 
-import com.github.paohaijiao.dataset.JDataSet;
+import com.github.paohaijiao.dataset.DataSet;
 import com.github.paohaijiao.enums.JBinaryOperator;
 import com.github.paohaijiao.enums.JUnaryOperator;
 import com.github.paohaijiao.exception.JAssert;
@@ -72,8 +72,8 @@ public class JQuikSQLExpressionStatementAtomVisitor extends JQuikSQLValueStateme
     public JExpression visitSubqueryExperssionAtom(JQuickSQLParser.SubqueryExperssionAtomContext ctx) {
         JAssert.notNull(ctx.selectStatement(),"selectStatement must not be null");
         Object dataSet=visit(ctx.selectStatement());
-        JAssert.notNull(dataSet instanceof JDataSet,"dataSet must  be instance of dataSet");
-        return new JDataSetExpression((JDataSet)dataSet);
+        JAssert.notNull(dataSet instanceof DataSet,"dataSet must  be instance of dataSet");
+        return new JDataSetExpression((DataSet)dataSet);
     }
     @Override
     public JExpression visitMathExpressionAtom(JQuickSQLParser.MathExpressionAtomContext ctx) {

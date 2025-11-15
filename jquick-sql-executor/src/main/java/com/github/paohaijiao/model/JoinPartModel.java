@@ -15,7 +15,7 @@
  */
 package com.github.paohaijiao.model;
 
-import com.github.paohaijiao.dataset.JDataSet;
+import com.github.paohaijiao.dataset.DataSet;
 import com.github.paohaijiao.enums.JoinType;
 import lombok.Data;
 
@@ -29,7 +29,7 @@ import lombok.Data;
 @Data
 public class JoinPartModel {
 
-    private JDataSet dataset;
+    private DataSet dataset;
 
     private JoinType joinType;
 

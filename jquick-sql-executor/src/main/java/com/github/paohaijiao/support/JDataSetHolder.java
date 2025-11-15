@@ -15,7 +15,7 @@
  */
 package com.github.paohaijiao.support;
 
-import com.github.paohaijiao.dataset.JDataSet;
+import com.github.paohaijiao.dataset.DataSet;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -32,11 +32,11 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class JDataSetHolder {
 
-    private final Map<String, JDataSet> dataSetMap = new ConcurrentHashMap<>();
+    private final Map<String, DataSet> dataSetMap = new ConcurrentHashMap<>();
 
     private final Map<String, String> aliasToTableNameMap = new ConcurrentHashMap<>();
 
-    public JDataSetHolder addDataSet(String tableName, JDataSet dataSet) {
+    public JDataSetHolder addDataSet(String tableName, DataSet dataSet) {
         if (tableName == null || tableName.trim().isEmpty()) {
             throw new IllegalArgumentException("tableName required not null");
         }
@@ -60,7 +60,7 @@ public class JDataSetHolder {
         }
         return this;
     }
-    public JDataSet getDataSet(String name) {
+    public DataSet getDataSet(String name) {
         if (name == null) {
             return null;
         }
@@ -81,12 +81,12 @@ public class JDataSetHolder {
         String key = name.toLowerCase();
         return dataSetMap.containsKey(key) || aliasToTableNameMap.containsKey(key);
     }
-    public JDataSet removeDataSet(String tableName) {
+    public DataSet removeDataSet(String tableName) {
         if (tableName == null) {
             return null;
         }
         String key = tableName.toLowerCase();
-        JDataSet removed = dataSetMap.remove(key);
+        DataSet removed = dataSetMap.remove(key);
         if (removed != null) {
             aliasToTableNameMap.entrySet().removeIf(entry ->
                     entry.getValue().equals(key));
@@ -111,7 +111,7 @@ public class JDataSetHolder {
         }
         return aliasToTableNameMap.get(alias.toLowerCase());
     }
-    public Collection<JDataSet> getAllDataSets() {
+    public Collection<DataSet> getAllDataSets() {
         return Collections.unmodifiableCollection(dataSetMap.values());
     }
     public void clear() {

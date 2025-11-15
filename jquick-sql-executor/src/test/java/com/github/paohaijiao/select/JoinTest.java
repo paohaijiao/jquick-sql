@@ -15,8 +15,8 @@
  */
 package com.github.paohaijiao.select;
 
-import com.github.paohaijiao.dataset.JDataSet;
-import com.github.paohaijiao.dataset.JRow;
+import com.github.paohaijiao.dataset.DataSet;
+import com.github.paohaijiao.dataset.Row;
 import com.github.paohaijiao.enums.JEngineEnums;
 import com.github.paohaijiao.executor.JQuickSQLExecutor;
 import com.github.paohaijiao.model.JDataSetFactory;
@@ -39,8 +39,8 @@ public class JoinTest {
         dataSetContainer.addDataSet("user", JDataSetFactory.createUsersDataSet());
         dataSetContainer.addDataSet("user_order", JDataSetFactory.createOrdersDataSet());
         executor.dataSet(dataSetContainer);
-        JDataSet dataSet=executor.execute(rule, JEngineEnums.LAMBDA);
-        for (JRow row : dataSet.getRows()) {
+        DataSet dataSet=executor.execute(rule, JEngineEnums.LAMBDA);
+        for (Row row : dataSet.getRows()) {
             System.out.println(row);
         }
     }
@@ -52,8 +52,8 @@ public class JoinTest {
         dataSetContainer.addDataSet("user", JDataSetFactory.createUsersDataSet());
         dataSetContainer.addDataSet("user_order", JDataSetFactory.createOrdersDataSet());
         executor.dataSet(dataSetContainer);
-        JDataSet dataSet=executor.execute(rule, JEngineEnums.LAMBDA);
-        for (JRow row : dataSet.getRows()) {
+        DataSet dataSet=executor.execute(rule, JEngineEnums.LAMBDA);
+        for (Row row : dataSet.getRows()) {
             System.out.println(row);
         }
     }
@@ -65,8 +65,8 @@ public class JoinTest {
         dataSetContainer.addDataSet("user", JDataSetFactory.createUsersDataSet());
         dataSetContainer.addDataSet("user_order", JDataSetFactory.createOrdersDataSet());
         executor.dataSet(dataSetContainer);
-        JDataSet dataSet=executor.execute(rule, JEngineEnums.LAMBDA);
-        for (JRow row : dataSet.getRows()) {
+        DataSet dataSet=executor.execute(rule, JEngineEnums.LAMBDA);
+        for (Row row : dataSet.getRows()) {
             System.out.println(row);
         }
     }
@@ -78,8 +78,8 @@ public class JoinTest {
         dataSetContainer.addDataSet("user", JDataSetFactory.createUsersDataSet());
         dataSetContainer.addDataSet("user_order", JDataSetFactory.createOrdersDataSet());
         executor.dataSet(dataSetContainer);
-        JDataSet dataSet=executor.execute(rule, JEngineEnums.LAMBDA);
-        for (JRow row : dataSet.getRows()) {
+        DataSet dataSet=executor.execute(rule, JEngineEnums.LAMBDA);
+        for (Row row : dataSet.getRows()) {
             System.out.println(row);
         }
     }
@@ -91,8 +91,8 @@ public class JoinTest {
         dataSetContainer.addDataSet("user", JDataSetFactory.createUsersDataSet());
         dataSetContainer.addDataSet("user_order", JDataSetFactory.createOrdersDataSet());
         executor.dataSet(dataSetContainer);
-        JDataSet dataSet=executor.execute(rule, JEngineEnums.LAMBDA);
-        for (JRow row : dataSet.getRows()) {
+        DataSet dataSet=executor.execute(rule, JEngineEnums.LAMBDA);
+        for (Row row : dataSet.getRows()) {
             System.out.println(row);
         }
     }
@@ -104,8 +104,8 @@ public class JoinTest {
         dataSetContainer.addDataSet("user", JDataSetFactory.createUsersDataSet());
         dataSetContainer.addDataSet("user_order", JDataSetFactory.createOrdersDataSet());
         executor.dataSet(dataSetContainer);
-        JDataSet dataSet=executor.execute(rule, JEngineEnums.LAMBDA);
-        for (JRow row : dataSet.getRows()) {
+        DataSet dataSet=executor.execute(rule, JEngineEnums.LAMBDA);
+        for (Row row : dataSet.getRows()) {
             System.out.println(row);
         }
     }
@@ -117,8 +117,8 @@ public class JoinTest {
         dataSetContainer.addDataSet("user1", JDataSetFactory.createUsersDataSet());
         dataSetContainer.addDataSet("user2", JDataSetFactory.createOrdersDataSet());
         executor.dataSet(dataSetContainer);
-        JDataSet dataSet=executor.execute(rule, JEngineEnums.LAMBDA);
-        for (JRow row : dataSet.getRows()) {
+        DataSet dataSet=executor.execute(rule, JEngineEnums.LAMBDA);
+        for (Row row : dataSet.getRows()) {
             System.out.println(row);
         }
     }

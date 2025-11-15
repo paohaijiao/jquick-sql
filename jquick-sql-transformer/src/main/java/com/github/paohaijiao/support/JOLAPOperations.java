@@ -15,9 +15,9 @@
  */
 package com.github.paohaijiao.support;
 
-import com.github.paohaijiao.dataset.JColumnMeta;
-import com.github.paohaijiao.dataset.JDataSet;
-import com.github.paohaijiao.dataset.JRow;
+import com.github.paohaijiao.dataset.ColumnMeta;
+import com.github.paohaijiao.dataset.DataSet;
+import com.github.paohaijiao.dataset.Row;
 
 import java.util.*;
 import java.util.function.Function;
@@ -39,25 +39,25 @@ public class JOLAPOperations {
      * @param aggregations aggregations (columnname -> aggregations)
      * @return dataset
      */
-    public static JDataSet rollUp(JDataSet dataset, List<String> groupByColumns, Map<String, Function<List<Object>, Object>> aggregations) {
-        Map<List<Object>, List<JRow>> grouped = dataset.getRows().stream()
+    public static DataSet rollUp(DataSet dataset, List<String> groupByColumns, Map<String, Function<List<Object>, Object>> aggregations) {
+        Map<List<Object>, List<Row>> grouped = dataset.getRows().stream()
                 .collect(Collectors.groupingBy(
                         row -> groupByColumns.stream()
                                 .map(row::get)
                                 .collect(Collectors.toList())
                 ));
-        List<JColumnMeta> newColumns = new ArrayList<>();
-        for (JColumnMeta column : dataset.getColumns()) {
+        List<ColumnMeta> newColumns = new ArrayList<>();
+        for (ColumnMeta column : dataset.getColumns()) {
             if (groupByColumns.contains(column.getName())) {
                 newColumns.add(column);
             }
         }
         aggregations.keySet().forEach(col -> {
-            newColumns.add(new JColumnMeta(col, Object.class, "aggregated"));
+            newColumns.add(new ColumnMeta(col, Object.class, "aggregated"));
         });
-        List<JRow> aggregatedRows = new ArrayList<>();
-        for (Map.Entry<List<Object>, List<JRow>> entry : grouped.entrySet()) {
-            JRow newRow = new JRow();
+        List<Row> aggregatedRows = new ArrayList<>();
+        for (Map.Entry<List<Object>, List<Row>> entry : grouped.entrySet()) {
+            Row newRow = new Row();
             for (int i = 0; i < groupByColumns.size(); i++) {
                 newRow.put(groupByColumns.get(i), entry.getKey().get(i));
             }
@@ -70,7 +70,7 @@ public class JOLAPOperations {
             }
             aggregatedRows.add(newRow);
         }
-        return new JDataSet(newColumns, aggregatedRows);
+        return new DataSet(newColumns, aggregatedRows);
     }
 
     /**
@@ -81,7 +81,7 @@ public class JOLAPOperations {
      * @param aggregations aggregations (column -> aggregations)
      * @return dataset
      */
-    public static JDataSet drillDown(JDataSet dataset, List<String> additionalDimensions, Map<String, Function<List<Object>, Object>> aggregations) {
+    public static DataSet drillDown(DataSet dataset, List<String> additionalDimensions, Map<String, Function<List<Object>, Object>> aggregations) {
         List<String> currentGroupBy = Collections.singletonList(dataset.getColumns().get(0).getName());
         List<String> newGroupBy = new ArrayList<>(currentGroupBy);
         newGroupBy.addAll(additionalDimensions);
@@ -96,11 +96,11 @@ public class JOLAPOperations {
      * @param value value
      * @return dataset
      */
-    public static JDataSet slice(JDataSet dataset, String dimension, Object value) {
-        List<JRow> filteredRows = dataset.getRows().stream()
+    public static DataSet slice(DataSet dataset, String dimension, Object value) {
+        List<Row> filteredRows = dataset.getRows().stream()
                 .filter(row -> Objects.equals(row.get(dimension), value))
                 .collect(Collectors.toList());
-        return new JDataSet(dataset.getColumns(), filteredRows);
+        return new DataSet(dataset.getColumns(), filteredRows);
     }
 
     /**
@@ -110,12 +110,12 @@ public class JOLAPOperations {
      * @param conditions condition (column -> conditionValue)
      * @return dataset
      */
-    public static JDataSet dice(JDataSet dataset, Map<String, Object> conditions) {
-        List<JRow> filteredRows = dataset.getRows().stream()
+    public static DataSet dice(DataSet dataset, Map<String, Object> conditions) {
+        List<Row> filteredRows = dataset.getRows().stream()
                 .filter(row -> conditions.entrySet().stream()
                         .allMatch(cond -> Objects.equals(row.get(cond.getKey()), cond.getValue())))
                 .collect(Collectors.toList());
-        return new JDataSet(dataset.getColumns(), filteredRows);
+        return new DataSet(dataset.getColumns(), filteredRows);
     }
 
     /**
@@ -127,10 +127,10 @@ public class JOLAPOperations {
      * @param aggregator aggregator
      * @return dataset
      */
-    public static JDataSet pivot(JDataSet dataset, String pivotColumn, String valueColumn,
+    public static DataSet pivot(DataSet dataset, String pivotColumn, String valueColumn,
                                  Function<List<Object>, Object> aggregator) {
         Set<String> otherColumns = dataset.getColumns().stream()
-                .map(JColumnMeta::getName)
+                .map(ColumnMeta::getName)
                 .filter(name -> !name.equals(pivotColumn) && !name.equals(valueColumn))
                 .collect(Collectors.toSet());
         Map<List<Object>, Map<Object, List<Object>>> grouped = dataset.getRows().stream()
@@ -146,20 +146,20 @@ public class JOLAPOperations {
         Set<Object> pivotValues = dataset.getRows().stream()
                 .map(row -> row.get(pivotColumn))
                 .collect(Collectors.toSet());
-        List<JColumnMeta> newColumns = new ArrayList<>();
+        List<ColumnMeta> newColumns = new ArrayList<>();
         for (String col : otherColumns) {
             newColumns.add(dataset.getColumns().stream()
                     .filter(c -> c.getName().equals(col))
                     .findFirst()
-                    .orElse(new JColumnMeta(col, Object.class, "pivoted")));
+                    .orElse(new ColumnMeta(col, Object.class, "pivoted")));
         }
         for (Object pivotValue : pivotValues) {
-            newColumns.add(new JColumnMeta(pivotValue.toString(), Object.class, "pivoted"));
+            newColumns.add(new ColumnMeta(pivotValue.toString(), Object.class, "pivoted"));
         }
 
-        List<JRow> pivotedRows = new ArrayList<>();
+        List<Row> pivotedRows = new ArrayList<>();
         for (Map.Entry<List<Object>, Map<Object, List<Object>>> entry : grouped.entrySet()) {
-            JRow newRow = new JRow();
+            Row newRow = new Row();
             for (int i = 0; i < otherColumns.size(); i++) {
                 newRow.put(newColumns.get(i).getName(), entry.getKey().get(i));
             }
@@ -173,7 +173,7 @@ public class JOLAPOperations {
             pivotedRows.add(newRow);
         }
 
-        return new JDataSet(newColumns, pivotedRows);
+        return new DataSet(newColumns, pivotedRows);
     }
 
 

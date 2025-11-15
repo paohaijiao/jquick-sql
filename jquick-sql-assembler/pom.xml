@@ -16,6 +16,11 @@
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
         </dependency>
+        <dependency>
+            <groupId>io.github.paohaijiao</groupId>
+            <artifactId>jquick-connector</artifactId>
+            <version>1.0.0</version>
+        </dependency>
     </dependencies>
     <name>jquick-sql-assembler</name>
     <description>
@@ -24,7 +29,7 @@
         flexible and efficient sql parsing capabilities for java applications, particularly suitable for development scenarios such
         as data analysis, report generation, and custom query engines.
     </description>
-    <url>https://github.com/paohaijiao/jquick-pdf</url>
+    <url>https://github.com/paohaijiao/jquick-sql</url>
     <licenses>
         <license>
             <name>The Apache License, Version 2.0</name>

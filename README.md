@@ -170,11 +170,11 @@ FROM employees
 
 #### 1.注册数据集
 ```java
-public class JDataSetFactory {
+public class DataSetFactory {
     /**
      * 创建用户数据集
      */
-    public static JDataSet createUsersDataSet() {
+    public static DataSet createUsersDataSet() {
         List<JColumnMeta> columns = Arrays.asList(
                 new JColumnMeta("id", Integer.class, "users"),
                 new JColumnMeta("name", String.class, "users"),
@@ -182,13 +182,13 @@ public class JDataSetFactory {
                 new JColumnMeta("city", String.class, "users"),
                 new JColumnMeta("salary", Double.class, "users")
         );
-        List<JRow> rows = Arrays.asList(
+        List<Row> rows = Arrays.asList(
                 createUserRow(1, "张三", 25, "北京", 8000.0),
                 createUserRow(2, "李四", 30, "上海", 12000.0)
         );
-        return new JDataSet(columns, rows);
+        return new DataSet(columns, rows);
     }
-    public static JDataSet createOrdersDataSet() {
+    public static DataSet createOrdersDataSet() {
         List<JColumnMeta> columns = Arrays.asList(
                 new JColumnMeta("order_id", Integer.class, "orders"),
                 new JColumnMeta("user_id", Integer.class, "orders"),
@@ -197,13 +197,13 @@ public class JDataSetFactory {
                 new JColumnMeta("price", Double.class, "orders"),
                 new JColumnMeta("order_date", String.class, "orders")
         );
-        List<JRow> rows = Arrays.asList(
+        List<Row> rows = Arrays.asList(
                 createOrderRow(101, 1, "笔记本电脑", 1, 5999.0, "2024-01-15"),
                 createOrderRow(102, 1, "鼠标", 2, 199.0, "2024-01-16"),
                 createOrderRow(103, 2, "手机", 1, 3999.0, "2024-01-17"),
                 createOrderRow(104, 3, "耳机", 3, 299.0, "2024-01-18")
         );
-        return new JDataSet(columns, rows);
+        return new DataSet(columns, rows);
     }
 }
 ```
@@ -211,12 +211,12 @@ public class JDataSetFactory {
 ```java
         String rule="select * from user a inner join user_order b on a.id=b.user_id order by b.user_id";
         JQuickSQLExecutor executor=new JQuickSQLExecutor();
-        JDataSetHolder dataSetContainer=new JDataSetHolder();
-        dataSetContainer.addDataSet("user", JDataSetFactory.createUsersDataSet());
-        dataSetContainer.addDataSet("user_order", JDataSetFactory.createOrdersDataSet());
+        DataSetHolder dataSetContainer=new DataSetHolder();
+        dataSetContainer.addDataSet("user", DataSetFactory.createUsersDataSet());
+        dataSetContainer.addDataSet("user_order", DataSetFactory.createOrdersDataSet());
         executor.dataSet(dataSetContainer);
-        JDataSet dataSet=executor.execute(rule, JEngineEnums.LAMBDA);
-        for (JRow row : dataSet.getRows()) {
+        DataSet dataSet=executor.execute(rule, JEngineEnums.LAMBDA);
+        for (Row row : dataSet.getRows()) {
             System.out.println(row);
         }
 ```

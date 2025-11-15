@@ -15,9 +15,9 @@
  */
 package com.github.paohaijiao.handler;
 
-import com.github.paohaijiao.dataset.JColumnMeta;
-import com.github.paohaijiao.dataset.JDataSet;
-import com.github.paohaijiao.dataset.JRow;
+import com.github.paohaijiao.dataset.ColumnMeta;
+import com.github.paohaijiao.dataset.DataSet;
+import com.github.paohaijiao.dataset.Row;
 import com.github.paohaijiao.enums.JNullsOrder;
 import com.github.paohaijiao.enums.JSortDirection;
 import com.github.paohaijiao.expression.*;
@@ -34,41 +34,41 @@ import java.util.*;
  */
 public abstract class JBaseHandler implements JDataSetJoinerStrategy {
 
-    protected static JRow mergeRows(JRow left, JRow right) {
-        JRow merged = new JRow(left);
+    protected static Row mergeRows(Row left, Row right) {
+        Row merged = new Row(left);
         merged.putAll(right);
         return merged;
     }
-    protected static List<JColumnMeta> mergeColumns(JDataSet right, JDataSet left) {
-        List<JColumnMeta> result = new ArrayList<>(right.getColumns());
+    protected static List<ColumnMeta> mergeColumns(DataSet right, DataSet left) {
+        List<ColumnMeta> result = new ArrayList<>(right.getColumns());
         result.addAll(left.getColumns());
         return result;
     }
-    protected static JRow createNullRow(JDataSet ds) {
+    protected static Row createNullRow(DataSet ds) {
         System.out.println(ds);
         List<String> list=ds.getColumnNames();
-        JRow nullRow = new JRow();
+        Row nullRow = new Row();
         List<String> columns = ds.getColumnNames();
         for (int i = 0; i < columns.size(); i++) {
             nullRow.put(columns.get(i), null);
         }
         return nullRow;
     }
-    protected static boolean isMatch(JRow leftRow,
-                                   JRow rightRow,
+    protected static boolean isMatch(Row leftRow,
+                                   Row rightRow,
                                    Set<String> commonColumns) {
         return commonColumns.stream()
                 .allMatch(col -> Objects.equals(
                         leftRow.get(col),
                         rightRow.get(col)));
     }
-    protected static void validateUnionCompatible(JDataSet ds1, JDataSet ds2) {
+    protected static void validateUnionCompatible(DataSet ds1, DataSet ds2) {
         if (ds1.getColumns().size() != ds2.getColumns().size()) {
             throw new IllegalArgumentException("Datasets have different number of columns");
         }
     }
-    protected static JRow transformRow(JRow row, Map<String, JFunctionCallExpression> transformations) {
-        JRow newRow = new JRow();
+    protected static Row transformRow(Row row, Map<String, JFunctionCallExpression> transformations) {
+        Row newRow = new Row();
         for (String column : row.keySet()) {
             if (transformations.containsKey(column)) {
                 JFunctionCallExpression function=transformations.get(column);
@@ -127,8 +127,8 @@ public abstract class JBaseHandler implements JDataSetJoinerStrategy {
         }
         return Object.class;
     }
-    protected static JRow createAliasedRow(JRow originalRow, Map<String, JExpression> aliases) {
-        JRow newRow = new JRow(originalRow);
+    protected static Row createAliasedRow(Row originalRow, Map<String, JExpression> aliases) {
+        Row newRow = new Row(originalRow);
         for (Map.Entry<String, JExpression> entry : aliases.entrySet()) {
             String alias = entry.getKey();
             JExpression expr = entry.getValue();
