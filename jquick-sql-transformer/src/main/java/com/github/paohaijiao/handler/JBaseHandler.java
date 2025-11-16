@@ -39,14 +39,16 @@ public abstract class JBaseHandler implements JDataSetJoinerStrategy {
         merged.putAll(right);
         return merged;
     }
+
     protected static List<ColumnMeta> mergeColumns(DataSet right, DataSet left) {
         List<ColumnMeta> result = new ArrayList<>(right.getColumns());
         result.addAll(left.getColumns());
         return result;
     }
+
     protected static Row createNullRow(DataSet ds) {
         System.out.println(ds);
-        List<String> list=ds.getColumnNames();
+        List<String> list = ds.getColumnNames();
         Row nullRow = new Row();
         List<String> columns = ds.getColumnNames();
         for (int i = 0; i < columns.size(); i++) {
@@ -54,34 +56,38 @@ public abstract class JBaseHandler implements JDataSetJoinerStrategy {
         }
         return nullRow;
     }
+
     protected static boolean isMatch(Row leftRow,
-                                   Row rightRow,
-                                   Set<String> commonColumns) {
+                                     Row rightRow,
+                                     Set<String> commonColumns) {
         return commonColumns.stream()
                 .allMatch(col -> Objects.equals(
                         leftRow.get(col),
                         rightRow.get(col)));
     }
+
     protected static void validateUnionCompatible(DataSet ds1, DataSet ds2) {
         if (ds1.getColumns().size() != ds2.getColumns().size()) {
             throw new IllegalArgumentException("Datasets have different number of columns");
         }
     }
+
     protected static Row transformRow(Row row, Map<String, JFunctionCallExpression> transformations) {
         Row newRow = new Row();
         for (String column : row.keySet()) {
             if (transformations.containsKey(column)) {
-                JFunctionCallExpression function=transformations.get(column);
+                JFunctionCallExpression function = transformations.get(column);
                 String functionName = function.getFunctionName().toUpperCase();
                 //List<Object> args = function.getArguments();
                 //   int i= evaluateFunction(transformations.get(column), row);
-                newRow.put(column,1);
+                newRow.put(column, 1);
             } else {
                 newRow.put(column, row.get(column));
             }
         }
         return newRow;
     }
+
     protected static Comparator<Map<String, Object>> createComparatorChain(List<JOrderByExpression> orderByExpressions) {
         Comparator<Map<String, Object>> comparator = null;
         for (JOrderByExpression orderBy : orderByExpressions) {
@@ -90,6 +96,7 @@ public abstract class JBaseHandler implements JDataSetJoinerStrategy {
         }
         return comparator;
     }
+
     protected static Comparator<Map<String, Object>> createSingleComparator(JOrderByExpression orderBy) {
         // Get the column name from the expression (assuming it's a column expression)
         String columnName = getColumnNameFromExpression(orderBy.getExpression());
@@ -111,12 +118,14 @@ public abstract class JBaseHandler implements JDataSetJoinerStrategy {
 
         return comparator;
     }
+
     protected static String getColumnNameFromExpression(JExpression expression) {
         if (expression instanceof JColumnExpression) {
             return ((JColumnExpression) expression).getColumnName();
         }
         throw new UnsupportedOperationException("Only column expressions are supported for sorting");
     }
+
     protected static Class<?> determineExpressionType(JExpression expr) {
         if (expr instanceof JLiteralExpression) {
             return ((JLiteralExpression) expr).getValue().getClass();
@@ -127,6 +136,7 @@ public abstract class JBaseHandler implements JDataSetJoinerStrategy {
         }
         return Object.class;
     }
+
     protected static Row createAliasedRow(Row originalRow, Map<String, JExpression> aliases) {
         Row newRow = new Row(originalRow);
         for (Map.Entry<String, JExpression> entry : aliases.entrySet()) {

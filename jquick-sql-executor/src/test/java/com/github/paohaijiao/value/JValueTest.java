@@ -32,7 +32,7 @@ import org.junit.Test;
 public class JValueTest {
     @Test
     public void keyword() {
-        String rule="select";
+        String rule = "select";
         JQuickSQLLexer lexer = new JQuickSQLLexer(CharStreams.fromString(rule));
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         JQuickSQLParser parser = new JQuickSQLParser(tokens);
@@ -41,9 +41,10 @@ public class JValueTest {
         Object object = tv.visit(tree);
         System.out.println(object);
     }
+
     @Test
     public void simpleId() {
-        String rule="select1";
+        String rule = "select1";
         JQuickSQLLexer lexer = new JQuickSQLLexer(CharStreams.fromString(rule));
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         JQuickSQLParser parser = new JQuickSQLParser(tokens);
@@ -52,9 +53,10 @@ public class JValueTest {
         Object object = tv.visit(tree);
         System.out.println(object);
     }
+
     @Test
     public void uid() {
-        String rule="uid";
+        String rule = "uid";
         JQuickSQLLexer lexer = new JQuickSQLLexer(CharStreams.fromString(rule));
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         JQuickSQLParser parser = new JQuickSQLParser(tokens);
@@ -63,9 +65,10 @@ public class JValueTest {
         Object object = tv.visit(tree);
         System.out.println(object);
     }
+
     @Test
     public void stringLiteral() {
-        String rule="'stringLiteral'";
+        String rule = "'stringLiteral'";
         JQuickSQLLexer lexer = new JQuickSQLLexer(CharStreams.fromString(rule));
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         JQuickSQLParser parser = new JQuickSQLParser(tokens);
@@ -74,9 +77,10 @@ public class JValueTest {
         Object object = tv.visit(tree);
         System.out.println(object);
     }
+
     @Test
     public void dottedId() {
-        String rule=".dottedId";
+        String rule = ".dottedId";
         JQuickSQLLexer lexer = new JQuickSQLLexer(CharStreams.fromString(rule));
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         JQuickSQLParser parser = new JQuickSQLParser(tokens);
@@ -85,9 +89,10 @@ public class JValueTest {
         Object object = tv.visit(tree);
         System.out.println(object);
     }
+
     @Test
     public void columnName() {
-        String rule="t_event_table.id";
+        String rule = "t_event_table.id";
         JQuickSQLLexer lexer = new JQuickSQLLexer(CharStreams.fromString(rule));
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         JQuickSQLParser parser = new JQuickSQLParser(tokens);
@@ -96,9 +101,10 @@ public class JValueTest {
         Object object = tv.visit(tree);
         System.out.println(object);
     }
+
     @Test
     public void columnName1() {
-        String rule="id";
+        String rule = "id";
         JQuickSQLLexer lexer = new JQuickSQLLexer(CharStreams.fromString(rule));
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         JQuickSQLParser parser = new JQuickSQLParser(tokens);
@@ -107,9 +113,10 @@ public class JValueTest {
         Object object = tv.visit(tree);
         System.out.println(object);
     }
+
     @Test
     public void booleanLiteral() {
-        String rule="true";
+        String rule = "true";
         JQuickSQLLexer lexer = new JQuickSQLLexer(CharStreams.fromString(rule));
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         JQuickSQLParser parser = new JQuickSQLParser(tokens);
@@ -118,9 +125,10 @@ public class JValueTest {
         Object object = tv.visit(tree);
         System.out.println(object);
     }
+
     @Test
     public void format() {
-        String rule="'yyyy-MM-dd HH:mm:ss'";
+        String rule = "'yyyy-MM-dd HH:mm:ss'";
         JQuickSQLLexer lexer = new JQuickSQLLexer(CharStreams.fromString(rule));
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         JQuickSQLParser parser = new JQuickSQLParser(tokens);
@@ -129,9 +137,10 @@ public class JValueTest {
         Object object = tv.visit(tree);
         System.out.println(object);
     }
+
     @Test
     public void null1() {
-        String rule="null";
+        String rule = "null";
         JQuickSQLLexer lexer = new JQuickSQLLexer(CharStreams.fromString(rule));
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         JQuickSQLParser parser = new JQuickSQLParser(tokens);
@@ -140,9 +149,10 @@ public class JValueTest {
         Object object = tv.visit(tree);
         System.out.println(object);
     }
+
     @Test
     public void dateLiteral() {
-        String rule="'2025-01-01 00:01:02'::'yyyy-MM-dd HH:mm:ss'";
+        String rule = "'2025-01-01 00:01:02'::'yyyy-MM-dd HH:mm:ss'";
         JQuickSQLLexer lexer = new JQuickSQLLexer(CharStreams.fromString(rule));
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         JQuickSQLParser parser = new JQuickSQLParser(tokens);
@@ -151,64 +161,10 @@ public class JValueTest {
         Object object = tv.visit(tree);
         System.out.println(object);
     }
+
     @Test
     public void constantString() {
-        String rule="'2025-01-01 00:01:02'";
-        JQuickSQLLexer lexer = new JQuickSQLLexer(CharStreams.fromString(rule));
-        CommonTokenStream tokens = new CommonTokenStream(lexer);
-        JQuickSQLParser parser = new JQuickSQLParser(tokens);
-        JQuickSQLParser.ConstantContext tree = parser.constant();
-        JQuikSQLCommonVisitor tv = new JQuikSQLCommonVisitor();
-        Object object = tv.visit(tree);
-        System.out.println(object);
-    }
-    @Test
-    public void constant1() {
-        String rule="-3.56";
-        JQuickSQLLexer lexer = new JQuickSQLLexer(CharStreams.fromString(rule));
-        CommonTokenStream tokens = new CommonTokenStream(lexer);
-        JQuickSQLParser parser = new JQuickSQLParser(tokens);
-        JQuickSQLParser.ConstantContext tree = parser.constant();
-        JQuikSQLCommonVisitor tv = new JQuikSQLCommonVisitor();
-        Object object = tv.visit(tree);
-        System.out.println(object);
-    }
-    @Test
-    public void constantNumber() {
-        String rule="3.56";
-        JQuickSQLLexer lexer = new JQuickSQLLexer(CharStreams.fromString(rule));
-        CommonTokenStream tokens = new CommonTokenStream(lexer);
-        JQuickSQLParser parser = new JQuickSQLParser(tokens);
-        JQuickSQLParser.ConstantContext tree = parser.constant();
-        JQuikSQLCommonVisitor tv = new JQuikSQLCommonVisitor();
-        Object object = tv.visit(tree);
-        System.out.println(object);
-    }
-    @Test
-    public void constant2() {
-        String rule="true";
-        JQuickSQLLexer lexer = new JQuickSQLLexer(CharStreams.fromString(rule));
-        CommonTokenStream tokens = new CommonTokenStream(lexer);
-        JQuickSQLParser parser = new JQuickSQLParser(tokens);
-        JQuickSQLParser.ConstantContext tree = parser.constant();
-        JQuikSQLCommonVisitor tv = new JQuikSQLCommonVisitor();
-        Object object = tv.visit(tree);
-        System.out.println(object);
-    }
-    @Test
-    public void constant3() {
-        String rule="NULL";
-        JQuickSQLLexer lexer = new JQuickSQLLexer(CharStreams.fromString(rule));
-        CommonTokenStream tokens = new CommonTokenStream(lexer);
-        JQuickSQLParser parser = new JQuickSQLParser(tokens);
-        JQuickSQLParser.ConstantContext tree = parser.constant();
-        JQuikSQLCommonVisitor tv = new JQuikSQLCommonVisitor();
-        Object object = tv.visit(tree);
-        System.out.println(object);
-    }
-    @Test
-    public void constant4() {
-        String rule="'2025-01-01 00:01:02'::'yyyy-MM-dd HH:mm:ss'";
+        String rule = "'2025-01-01 00:01:02'";
         JQuickSQLLexer lexer = new JQuickSQLLexer(CharStreams.fromString(rule));
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         JQuickSQLParser parser = new JQuickSQLParser(tokens);
@@ -218,6 +174,65 @@ public class JValueTest {
         System.out.println(object);
     }
 
+    @Test
+    public void constant1() {
+        String rule = "-3.56";
+        JQuickSQLLexer lexer = new JQuickSQLLexer(CharStreams.fromString(rule));
+        CommonTokenStream tokens = new CommonTokenStream(lexer);
+        JQuickSQLParser parser = new JQuickSQLParser(tokens);
+        JQuickSQLParser.ConstantContext tree = parser.constant();
+        JQuikSQLCommonVisitor tv = new JQuikSQLCommonVisitor();
+        Object object = tv.visit(tree);
+        System.out.println(object);
+    }
+
+    @Test
+    public void constantNumber() {
+        String rule = "3.56";
+        JQuickSQLLexer lexer = new JQuickSQLLexer(CharStreams.fromString(rule));
+        CommonTokenStream tokens = new CommonTokenStream(lexer);
+        JQuickSQLParser parser = new JQuickSQLParser(tokens);
+        JQuickSQLParser.ConstantContext tree = parser.constant();
+        JQuikSQLCommonVisitor tv = new JQuikSQLCommonVisitor();
+        Object object = tv.visit(tree);
+        System.out.println(object);
+    }
+
+    @Test
+    public void constant2() {
+        String rule = "true";
+        JQuickSQLLexer lexer = new JQuickSQLLexer(CharStreams.fromString(rule));
+        CommonTokenStream tokens = new CommonTokenStream(lexer);
+        JQuickSQLParser parser = new JQuickSQLParser(tokens);
+        JQuickSQLParser.ConstantContext tree = parser.constant();
+        JQuikSQLCommonVisitor tv = new JQuikSQLCommonVisitor();
+        Object object = tv.visit(tree);
+        System.out.println(object);
+    }
+
+    @Test
+    public void constant3() {
+        String rule = "NULL";
+        JQuickSQLLexer lexer = new JQuickSQLLexer(CharStreams.fromString(rule));
+        CommonTokenStream tokens = new CommonTokenStream(lexer);
+        JQuickSQLParser parser = new JQuickSQLParser(tokens);
+        JQuickSQLParser.ConstantContext tree = parser.constant();
+        JQuikSQLCommonVisitor tv = new JQuikSQLCommonVisitor();
+        Object object = tv.visit(tree);
+        System.out.println(object);
+    }
+
+    @Test
+    public void constant4() {
+        String rule = "'2025-01-01 00:01:02'::'yyyy-MM-dd HH:mm:ss'";
+        JQuickSQLLexer lexer = new JQuickSQLLexer(CharStreams.fromString(rule));
+        CommonTokenStream tokens = new CommonTokenStream(lexer);
+        JQuickSQLParser parser = new JQuickSQLParser(tokens);
+        JQuickSQLParser.ConstantContext tree = parser.constant();
+        JQuikSQLCommonVisitor tv = new JQuikSQLCommonVisitor();
+        Object object = tv.visit(tree);
+        System.out.println(object);
+    }
 
 
 }

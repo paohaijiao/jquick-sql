@@ -22,6 +22,7 @@ import com.github.paohaijiao.dataset.Row;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+
 /**
  * packageName com.github.paohaijiao.support
  *
@@ -34,9 +35,9 @@ public class JOLAPOperations {
     /**
      * 上rollUp
      *
-     * @param dataset dataset
+     * @param dataset        dataset
      * @param groupByColumns groupByColumns
-     * @param aggregations aggregations (columnname -> aggregations)
+     * @param aggregations   aggregations (columnname -> aggregations)
      * @return dataset
      */
     public static DataSet rollUp(DataSet dataset, List<String> groupByColumns, Map<String, Function<List<Object>, Object>> aggregations) {
@@ -76,9 +77,9 @@ public class JOLAPOperations {
     /**
      * drillDown
      *
-     * @param dataset dataset
+     * @param dataset              dataset
      * @param additionalDimensions additionalDimensions
-     * @param aggregations aggregations (column -> aggregations)
+     * @param aggregations         aggregations (column -> aggregations)
      * @return dataset
      */
     public static DataSet drillDown(DataSet dataset, List<String> additionalDimensions, Map<String, Function<List<Object>, Object>> aggregations) {
@@ -91,9 +92,9 @@ public class JOLAPOperations {
     /**
      * slice
      *
-     * @param dataset dataset
+     * @param dataset   dataset
      * @param dimension dimension
-     * @param value value
+     * @param value     value
      * @return dataset
      */
     public static DataSet slice(DataSet dataset, String dimension, Object value) {
@@ -106,7 +107,7 @@ public class JOLAPOperations {
     /**
      * dice
      *
-     * @param dataset dataset
+     * @param dataset    dataset
      * @param conditions condition (column -> conditionValue)
      * @return dataset
      */
@@ -121,14 +122,14 @@ public class JOLAPOperations {
     /**
      * pivot
      *
-     * @param dataset dataset
+     * @param dataset     dataset
      * @param pivotColumn pivotColumn
      * @param valueColumn valueColumn
-     * @param aggregator aggregator
+     * @param aggregator  aggregator
      * @return dataset
      */
     public static DataSet pivot(DataSet dataset, String pivotColumn, String valueColumn,
-                                 Function<List<Object>, Object> aggregator) {
+                                Function<List<Object>, Object> aggregator) {
         Set<String> otherColumns = dataset.getColumns().stream()
                 .map(ColumnMeta::getName)
                 .filter(name -> !name.equals(pivotColumn) && !name.equals(valueColumn))
@@ -175,7 +176,6 @@ public class JOLAPOperations {
 
         return new DataSet(newColumns, pivotedRows);
     }
-
 
 
 }

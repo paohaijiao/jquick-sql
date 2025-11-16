@@ -32,7 +32,7 @@ import org.junit.Test;
 public class JPredicateTest {
     @Test
     public void expressionAtomPredicate() {
-        String rule="9";
+        String rule = "9";
         JQuickSQLLexer lexer = new JQuickSQLLexer(CharStreams.fromString(rule));
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         JQuickSQLParser parser = new JQuickSQLParser(tokens);
@@ -41,9 +41,10 @@ public class JPredicateTest {
         Object object = tv.visit(tree);
         System.out.println(object);
     }
+
     @Test
     public void isNullPredicate() {
-        String rule=" a is null";
+        String rule = " a is null";
         JQuickSQLLexer lexer = new JQuickSQLLexer(CharStreams.fromString(rule));
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         JQuickSQLParser parser = new JQuickSQLParser(tokens);
@@ -52,9 +53,10 @@ public class JPredicateTest {
         Object object = tv.visit(tree);
         System.out.println(object);
     }
+
     @Test
     public void binaryComparisonPredicate() {
-        String rule=" 9>8";
+        String rule = " 9>8";
         JQuickSQLLexer lexer = new JQuickSQLLexer(CharStreams.fromString(rule));
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         JQuickSQLParser parser = new JQuickSQLParser(tokens);
@@ -63,9 +65,10 @@ public class JPredicateTest {
         Object object = tv.visit(tree);
         System.out.println(object);
     }
+
     @Test
     public void betweenPredicate() {
-        String rule=" 9 between 8 and 10";
+        String rule = " 9 between 8 and 10";
         JQuickSQLLexer lexer = new JQuickSQLLexer(CharStreams.fromString(rule));
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         JQuickSQLParser parser = new JQuickSQLParser(tokens);
@@ -74,9 +77,10 @@ public class JPredicateTest {
         Object object = tv.visit(tree);
         System.out.println(object);
     }
+
     @Test
     public void inPredicate() {
-        String rule=" 9 in (8,9,10)";
+        String rule = " 9 in (8,9,10)";
         JQuickSQLLexer lexer = new JQuickSQLLexer(CharStreams.fromString(rule));
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         JQuickSQLParser parser = new JQuickSQLParser(tokens);
@@ -85,9 +89,10 @@ public class JPredicateTest {
         Object object = tv.visit(tree);
         System.out.println(object);
     }
+
     @Test
     public void likePredicate() {
-        String rule=" 'hello' like '%ello'";
+        String rule = " 'hello' like '%ello'";
         JQuickSQLLexer lexer = new JQuickSQLLexer(CharStreams.fromString(rule));
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         JQuickSQLParser parser = new JQuickSQLParser(tokens);
@@ -96,9 +101,10 @@ public class JPredicateTest {
         Object object = tv.visit(tree);
         System.out.println(object);
     }
+
     @Test
     public void regex() {
-        String rule=" 'JAn' REGEXP '^J.*n$'";
+        String rule = " 'JAn' REGEXP '^J.*n$'";
         JQuickSQLLexer lexer = new JQuickSQLLexer(CharStreams.fromString(rule));
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         JQuickSQLParser parser = new JQuickSQLParser(tokens);
@@ -107,9 +113,10 @@ public class JPredicateTest {
         Object object = tv.visit(tree);
         System.out.println(object);
     }
+
     @Test
     public void exists() {
-        String rule=" exists true";
+        String rule = " exists true";
         JQuickSQLLexer lexer = new JQuickSQLLexer(CharStreams.fromString(rule));
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         JQuickSQLParser parser = new JQuickSQLParser(tokens);

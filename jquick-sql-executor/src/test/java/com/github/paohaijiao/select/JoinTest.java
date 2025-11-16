@@ -33,96 +33,101 @@ import org.junit.Test;
 public class JoinTest {
     @Test
     public void leftjoin() {
-        String rule="select * from user a left join user_order b on b.user_id=a.id order by b.user_id";
-        JQuickSQLExecutor executor=new JQuickSQLExecutor();
-        JDataSetHolder dataSetContainer=new JDataSetHolder();
+        String rule = "select * from user a left join user_order b on b.user_id=a.id order by b.user_id";
+        JQuickSQLExecutor executor = new JQuickSQLExecutor();
+        JDataSetHolder dataSetContainer = new JDataSetHolder();
         dataSetContainer.addDataSet("user", JDataSetFactory.createUsersDataSet());
         dataSetContainer.addDataSet("user_order", JDataSetFactory.createOrdersDataSet());
         executor.dataSet(dataSetContainer);
-        DataSet dataSet=executor.execute(rule, JEngineEnums.LAMBDA);
-        for (Row row : dataSet.getRows()) {
-            System.out.println(row);
-        }
-    }
-    @Test
-    public void rightjoin() {
-        String rule="select * from user a right join user_order b on b.user_id=a.id order by b.user_id";
-        JQuickSQLExecutor executor=new JQuickSQLExecutor();
-        JDataSetHolder dataSetContainer=new JDataSetHolder();
-        dataSetContainer.addDataSet("user", JDataSetFactory.createUsersDataSet());
-        dataSetContainer.addDataSet("user_order", JDataSetFactory.createOrdersDataSet());
-        executor.dataSet(dataSetContainer);
-        DataSet dataSet=executor.execute(rule, JEngineEnums.LAMBDA);
-        for (Row row : dataSet.getRows()) {
-            System.out.println(row);
-        }
-    }
-    @Test
-    public void innerjoin() {
-        String rule="select * from user a inner join user_order b on a.id=b.user_id order by b.user_id";
-        JQuickSQLExecutor executor=new JQuickSQLExecutor();
-        JDataSetHolder dataSetContainer=new JDataSetHolder();
-        dataSetContainer.addDataSet("user", JDataSetFactory.createUsersDataSet());
-        dataSetContainer.addDataSet("user_order", JDataSetFactory.createOrdersDataSet());
-        executor.dataSet(dataSetContainer);
-        DataSet dataSet=executor.execute(rule, JEngineEnums.LAMBDA);
-        for (Row row : dataSet.getRows()) {
-            System.out.println(row);
-        }
-    }
-    @Test
-    public void crossjoin() {
-        String rule="select * from user a cross join user_order b order by b.user_id";
-        JQuickSQLExecutor executor=new JQuickSQLExecutor();
-        JDataSetHolder dataSetContainer=new JDataSetHolder();
-        dataSetContainer.addDataSet("user", JDataSetFactory.createUsersDataSet());
-        dataSetContainer.addDataSet("user_order", JDataSetFactory.createOrdersDataSet());
-        executor.dataSet(dataSetContainer);
-        DataSet dataSet=executor.execute(rule, JEngineEnums.LAMBDA);
-        for (Row row : dataSet.getRows()) {
-            System.out.println(row);
-        }
-    }
-    @Test
-    public void full() {
-        String rule="select * from user a full join user_order b on a.id=b.user_id order by b.user_id";
-        JQuickSQLExecutor executor=new JQuickSQLExecutor();
-        JDataSetHolder dataSetContainer=new JDataSetHolder();
-        dataSetContainer.addDataSet("user", JDataSetFactory.createUsersDataSet());
-        dataSetContainer.addDataSet("user_order", JDataSetFactory.createOrdersDataSet());
-        executor.dataSet(dataSetContainer);
-        DataSet dataSet=executor.execute(rule, JEngineEnums.LAMBDA);
-        for (Row row : dataSet.getRows()) {
-            System.out.println(row);
-        }
-    }
-    @Test
-    public void natural() {
-        String rule="select * from user a natural join user_order order by b.user_id";
-        JQuickSQLExecutor executor=new JQuickSQLExecutor();
-        JDataSetHolder dataSetContainer=new JDataSetHolder();
-        dataSetContainer.addDataSet("user", JDataSetFactory.createUsersDataSet());
-        dataSetContainer.addDataSet("user_order", JDataSetFactory.createOrdersDataSet());
-        executor.dataSet(dataSetContainer);
-        DataSet dataSet=executor.execute(rule, JEngineEnums.LAMBDA);
-        for (Row row : dataSet.getRows()) {
-            System.out.println(row);
-        }
-    }
-    @Test
-    public void union() {
-        String rule="select * from user a union select * from user b";
-        JQuickSQLExecutor executor=new JQuickSQLExecutor();
-        JDataSetHolder dataSetContainer=new JDataSetHolder();
-        dataSetContainer.addDataSet("user1", JDataSetFactory.createUsersDataSet());
-        dataSetContainer.addDataSet("user2", JDataSetFactory.createOrdersDataSet());
-        executor.dataSet(dataSetContainer);
-        DataSet dataSet=executor.execute(rule, JEngineEnums.LAMBDA);
+        DataSet dataSet = executor.execute(rule, JEngineEnums.LAMBDA);
         for (Row row : dataSet.getRows()) {
             System.out.println(row);
         }
     }
 
+    @Test
+    public void rightjoin() {
+        String rule = "select * from user a right join user_order b on b.user_id=a.id order by b.user_id";
+        JQuickSQLExecutor executor = new JQuickSQLExecutor();
+        JDataSetHolder dataSetContainer = new JDataSetHolder();
+        dataSetContainer.addDataSet("user", JDataSetFactory.createUsersDataSet());
+        dataSetContainer.addDataSet("user_order", JDataSetFactory.createOrdersDataSet());
+        executor.dataSet(dataSetContainer);
+        DataSet dataSet = executor.execute(rule, JEngineEnums.LAMBDA);
+        for (Row row : dataSet.getRows()) {
+            System.out.println(row);
+        }
+    }
+
+    @Test
+    public void innerjoin() {
+        String rule = "select * from user a inner join user_order b on a.id=b.user_id order by b.user_id";
+        JQuickSQLExecutor executor = new JQuickSQLExecutor();
+        JDataSetHolder dataSetContainer = new JDataSetHolder();
+        dataSetContainer.addDataSet("user", JDataSetFactory.createUsersDataSet());
+        dataSetContainer.addDataSet("user_order", JDataSetFactory.createOrdersDataSet());
+        executor.dataSet(dataSetContainer);
+        DataSet dataSet = executor.execute(rule, JEngineEnums.LAMBDA);
+        for (Row row : dataSet.getRows()) {
+            System.out.println(row);
+        }
+    }
+
+    @Test
+    public void crossjoin() {
+        String rule = "select * from user a cross join user_order b order by b.user_id";
+        JQuickSQLExecutor executor = new JQuickSQLExecutor();
+        JDataSetHolder dataSetContainer = new JDataSetHolder();
+        dataSetContainer.addDataSet("user", JDataSetFactory.createUsersDataSet());
+        dataSetContainer.addDataSet("user_order", JDataSetFactory.createOrdersDataSet());
+        executor.dataSet(dataSetContainer);
+        DataSet dataSet = executor.execute(rule, JEngineEnums.LAMBDA);
+        for (Row row : dataSet.getRows()) {
+            System.out.println(row);
+        }
+    }
+
+    @Test
+    public void full() {
+        String rule = "select * from user a full join user_order b on a.id=b.user_id order by b.user_id";
+        JQuickSQLExecutor executor = new JQuickSQLExecutor();
+        JDataSetHolder dataSetContainer = new JDataSetHolder();
+        dataSetContainer.addDataSet("user", JDataSetFactory.createUsersDataSet());
+        dataSetContainer.addDataSet("user_order", JDataSetFactory.createOrdersDataSet());
+        executor.dataSet(dataSetContainer);
+        DataSet dataSet = executor.execute(rule, JEngineEnums.LAMBDA);
+        for (Row row : dataSet.getRows()) {
+            System.out.println(row);
+        }
+    }
+
+    @Test
+    public void natural() {
+        String rule = "select * from user a natural join user_order order by b.user_id";
+        JQuickSQLExecutor executor = new JQuickSQLExecutor();
+        JDataSetHolder dataSetContainer = new JDataSetHolder();
+        dataSetContainer.addDataSet("user", JDataSetFactory.createUsersDataSet());
+        dataSetContainer.addDataSet("user_order", JDataSetFactory.createOrdersDataSet());
+        executor.dataSet(dataSetContainer);
+        DataSet dataSet = executor.execute(rule, JEngineEnums.LAMBDA);
+        for (Row row : dataSet.getRows()) {
+            System.out.println(row);
+        }
+    }
+
+    @Test
+    public void union() {
+        String rule = "select * from user a union select * from user b";
+        JQuickSQLExecutor executor = new JQuickSQLExecutor();
+        JDataSetHolder dataSetContainer = new JDataSetHolder();
+        dataSetContainer.addDataSet("user1", JDataSetFactory.createUsersDataSet());
+        dataSetContainer.addDataSet("user2", JDataSetFactory.createOrdersDataSet());
+        executor.dataSet(dataSetContainer);
+        DataSet dataSet = executor.execute(rule, JEngineEnums.LAMBDA);
+        for (Row row : dataSet.getRows()) {
+            System.out.println(row);
+        }
+    }
 
 
 }

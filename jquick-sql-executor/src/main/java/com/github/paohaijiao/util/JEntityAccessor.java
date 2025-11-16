@@ -33,7 +33,7 @@ import java.util.stream.Collectors;
  * @version 1.0.0
  * @since 2025/8/12
  */
-public class JEntityAccessor<T>{
+public class JEntityAccessor<T> {
 
     private final Class<T> entityClass;
 
@@ -47,9 +47,11 @@ public class JEntityAccessor<T>{
         this.entityClass = entityClass;
         initializeCache();
     }
+
     public List<String> getFieldNames() {
         return fieldCache.values().stream().map(field -> field.getName()).collect(Collectors.toList());
     }
+
     private void initializeCache() {
         Arrays.stream(entityClass.getDeclaredFields())
                 .forEach(field -> {

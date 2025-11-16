@@ -53,6 +53,7 @@ public class JSelectTest {
         builder.addRow(row1).addRow(row2);
         return builder.build();
     }
+
     public static DataSet createAggregationTestData() {
         List<ColumnMeta> columns = Arrays.asList(
                 new ColumnMeta("department", String.class, "hr"),
@@ -73,8 +74,9 @@ public class JSelectTest {
 
         return new DataSet(columns, rows);
     }
+
     private static Row createEmployeeRow(String department, String name,
-                                          double salary, int years, boolean isManager) {
+                                         double salary, int years, boolean isManager) {
         Row row = new Row();
         row.put("department", department);
         row.put("employee_name", name);
@@ -83,64 +85,69 @@ public class JSelectTest {
         row.put("is_manager", isManager);
         return row;
     }
+
     @Test
     public void limit() {
-        String rule="select * from orders limit 1";
-        JQuickSQLExecutor executor=new JQuickSQLExecutor();
-        JDataSetHolder dataSetContainer=new JDataSetHolder();
-        dataSetContainer.addDataSet("orders",createOrdersDataSet());
+        String rule = "select * from orders limit 1";
+        JQuickSQLExecutor executor = new JQuickSQLExecutor();
+        JDataSetHolder dataSetContainer = new JDataSetHolder();
+        dataSetContainer.addDataSet("orders", createOrdersDataSet());
         executor.dataSet(dataSetContainer);
-        DataSet dataSet=executor.execute(rule, JEngineEnums.LAMBDA);
+        DataSet dataSet = executor.execute(rule, JEngineEnums.LAMBDA);
         for (Row row : dataSet.getRows()) {
             System.out.println(row);
         }
     }
+
     @Test
     public void limitOffset() {
-        String rule="select * from orders limit  1 , 1";
-        JQuickSQLExecutor executor=new JQuickSQLExecutor();
-        JDataSetHolder dataSetContainer=new JDataSetHolder();
-        dataSetContainer.addDataSet("orders",createOrdersDataSet());
+        String rule = "select * from orders limit  1 , 1";
+        JQuickSQLExecutor executor = new JQuickSQLExecutor();
+        JDataSetHolder dataSetContainer = new JDataSetHolder();
+        dataSetContainer.addDataSet("orders", createOrdersDataSet());
         executor.dataSet(dataSetContainer);
-        DataSet dataSet=executor.execute(rule, JEngineEnums.LAMBDA);
+        DataSet dataSet = executor.execute(rule, JEngineEnums.LAMBDA);
         for (Row row : dataSet.getRows()) {
             System.out.println(row);
         }
     }
+
     @Test
     public void orderBy() {
-        String rule="select * from orders order by user_id desc,order_id asc";
-        JQuickSQLExecutor executor=new JQuickSQLExecutor();
-        JDataSetHolder dataSetContainer=new JDataSetHolder();
-        dataSetContainer.addDataSet("orders",createOrdersDataSet());
+        String rule = "select * from orders order by user_id desc,order_id asc";
+        JQuickSQLExecutor executor = new JQuickSQLExecutor();
+        JDataSetHolder dataSetContainer = new JDataSetHolder();
+        dataSetContainer.addDataSet("orders", createOrdersDataSet());
         executor.dataSet(dataSetContainer);
-        DataSet dataSet=executor.execute(rule, JEngineEnums.LAMBDA);
+        DataSet dataSet = executor.execute(rule, JEngineEnums.LAMBDA);
         for (Row row : dataSet.getRows()) {
             System.out.println(row);
         }
     }
+
     @Test
     public void groupByItem() {
-        String rule="select department, count(department) as cnt from orders group  by department ";
+        String rule = "select department, count(department) as cnt from orders group  by department ";
         System.out.println(rule);
-        JQuickSQLExecutor executor=new JQuickSQLExecutor();
-        JDataSetHolder dataSetContainer=new JDataSetHolder();
-        dataSetContainer.addDataSet("orders",createAggregationTestData());
+        JQuickSQLExecutor executor = new JQuickSQLExecutor();
+        JDataSetHolder dataSetContainer = new JDataSetHolder();
+        dataSetContainer.addDataSet("orders", createAggregationTestData());
         executor.dataSet(dataSetContainer);
-        DataSet dataSet=executor.execute(rule, JEngineEnums.LAMBDA);
+        DataSet dataSet = executor.execute(rule, JEngineEnums.LAMBDA);
         for (Row row : dataSet.getRows()) {
             System.out.println(row);
         }
     }
+
     @Test
     public void groupByHaving() {
-        String rule="select department, count(department) as cnt from orders group  by department having cnt>2 ";
+        String rule = "select department, count(department) as cnt from orders group  by department having cnt>2 ";
         System.out.println(rule);
-        JQuickSQLExecutor executor=new JQuickSQLExecutor();
-        JDataSetHolder dataSetContainer=new JDataSetHolder();
-        dataSetContainer.addDataSet("orders",createAggregationTestData());
+        JQuickSQLExecutor executor = new JQuickSQLExecutor();
+        JDataSetHolder dataSetContainer = new JDataSetHolder();
+        dataSetContainer.addDataSet("orders", createAggregationTestData());
         executor.dataSet(dataSetContainer);
-        DataSet dataSet=executor.execute(rule, JEngineEnums.LAMBDA);
+        DataSet dataSet = executor.execute(rule, JEngineEnums.LAMBDA);
         for (Row row : dataSet.getRows()) {
             System.out.println(row);
         }

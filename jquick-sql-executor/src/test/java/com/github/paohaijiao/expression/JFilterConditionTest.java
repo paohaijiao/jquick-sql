@@ -32,7 +32,7 @@ import org.junit.Test;
 public class JFilterConditionTest {
     @Test
     public void and() {
-        String rule=" a is null and b=1";
+        String rule = " a is null and b=1";
         JQuickSQLLexer lexer = new JQuickSQLLexer(CharStreams.fromString(rule));
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         JQuickSQLParser parser = new JQuickSQLParser(tokens);
@@ -41,9 +41,10 @@ public class JFilterConditionTest {
         Object object = tv.visit(tree);
         System.out.println(object);
     }
+
     @Test
     public void or() {
-        String rule=" a is null or b=1";
+        String rule = " a is null or b=1";
         JQuickSQLLexer lexer = new JQuickSQLLexer(CharStreams.fromString(rule));
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         JQuickSQLParser parser = new JQuickSQLParser(tokens);
@@ -52,9 +53,10 @@ public class JFilterConditionTest {
         Object object = tv.visit(tree);
         System.out.println(object);
     }
+
     @Test
     public void and1() {
-        String rule=" a is null or (b=1 and c=5)";
+        String rule = " a is null or (b=1 and c=5)";
         JQuickSQLLexer lexer = new JQuickSQLLexer(CharStreams.fromString(rule));
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         JQuickSQLParser parser = new JQuickSQLParser(tokens);

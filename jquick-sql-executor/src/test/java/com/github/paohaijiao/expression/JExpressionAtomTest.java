@@ -32,7 +32,7 @@ import org.junit.Test;
 public class JExpressionAtomTest {
     @Test
     public void expressionAtom() {
-        String rule="1";
+        String rule = "1";
         JQuickSQLLexer lexer = new JQuickSQLLexer(CharStreams.fromString(rule));
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         JQuickSQLParser parser = new JQuickSQLParser(tokens);
@@ -41,9 +41,10 @@ public class JExpressionAtomTest {
         Object object = tv.visit(tree);
         System.out.println(object);
     }
+
     @Test
     public void expressionAtom1() {
-        String rule="'scdxd'";
+        String rule = "'scdxd'";
         JQuickSQLLexer lexer = new JQuickSQLLexer(CharStreams.fromString(rule));
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         JQuickSQLParser parser = new JQuickSQLParser(tokens);
@@ -52,9 +53,10 @@ public class JExpressionAtomTest {
         Object object = tv.visit(tree);
         System.out.println(object);
     }
+
     @Test
     public void date() {
-        String rule="'2026-01-01'::'yyyy-MM-dd'";
+        String rule = "'2026-01-01'::'yyyy-MM-dd'";
         JQuickSQLLexer lexer = new JQuickSQLLexer(CharStreams.fromString(rule));
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         JQuickSQLParser parser = new JQuickSQLParser(tokens);
@@ -63,9 +65,10 @@ public class JExpressionAtomTest {
         Object object = tv.visit(tree);
         System.out.println(object);
     }
+
     @Test
     public void null_() {
-        String rule="null";
+        String rule = "null";
         JQuickSQLLexer lexer = new JQuickSQLLexer(CharStreams.fromString(rule));
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         JQuickSQLParser parser = new JQuickSQLParser(tokens);
@@ -74,9 +77,10 @@ public class JExpressionAtomTest {
         Object object = tv.visit(tree);
         System.out.println(object);
     }
+
     @Test
     public void bool() {
-        String rule="true";
+        String rule = "true";
         JQuickSQLLexer lexer = new JQuickSQLLexer(CharStreams.fromString(rule));
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         JQuickSQLParser parser = new JQuickSQLParser(tokens);
@@ -89,7 +93,7 @@ public class JExpressionAtomTest {
 
     @Test
     public void fullColumnName() {
-        String rule="b.c";
+        String rule = "b.c";
         JQuickSQLLexer lexer = new JQuickSQLLexer(CharStreams.fromString(rule));
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         JQuickSQLParser parser = new JQuickSQLParser(tokens);
@@ -98,9 +102,10 @@ public class JExpressionAtomTest {
         Object object = tv.visit(tree);
         System.out.println(object);
     }
+
     @Test
     public void functionCall() {
-        String rule="sum(1,2)";
+        String rule = "sum(1,2)";
         JQuickSQLLexer lexer = new JQuickSQLLexer(CharStreams.fromString(rule));
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         JQuickSQLParser parser = new JQuickSQLParser(tokens);
@@ -109,9 +114,10 @@ public class JExpressionAtomTest {
         Object object = tv.visit(tree);
         System.out.println(object);
     }
+
     @Test
     public void nestedExpressionAtom() {
-        String rule="(1,2)";
+        String rule = "(1,2)";
         JQuickSQLLexer lexer = new JQuickSQLLexer(CharStreams.fromString(rule));
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         JQuickSQLParser parser = new JQuickSQLParser(tokens);
@@ -120,9 +126,10 @@ public class JExpressionAtomTest {
         Object object = tv.visit(tree);
         System.out.println(object);
     }
+
     @Test
     public void mathExpressionAtom() {
-        String rule="1+3";
+        String rule = "1+3";
         JQuickSQLLexer lexer = new JQuickSQLLexer(CharStreams.fromString(rule));
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         JQuickSQLParser parser = new JQuickSQLParser(tokens);
@@ -131,9 +138,10 @@ public class JExpressionAtomTest {
         Object object = tv.visit(tree);
         System.out.println(object);
     }
+
     @Test
     public void unaryExpressionAtom() {
-        String rule="!true";
+        String rule = "!true";
         JQuickSQLLexer lexer = new JQuickSQLLexer(CharStreams.fromString(rule));
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         JQuickSQLParser parser = new JQuickSQLParser(tokens);

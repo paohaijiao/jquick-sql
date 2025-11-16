@@ -30,42 +30,45 @@ import java.util.List;
  * @version 1.0.0
  * @since 2025/8/11
  */
-public class JQuikSQLExpressionStatementVisitor extends JQuikSQLExpressionStatementAtomVisitor{
+public class JQuikSQLExpressionStatementVisitor extends JQuikSQLExpressionStatementAtomVisitor {
     @Override
     public List<JExpression> visitExpressions(JQuickSQLParser.ExpressionsContext ctx) {
         List<JExpression> results = new ArrayList<>();
         for (JQuickSQLParser.ExpressionContext exprCtx : ctx.expression()) {
-            results.add((JExpression)visit(exprCtx));
+            results.add((JExpression) visit(exprCtx));
         }
         return results;
     }
+
     @Override
     public JExpression visitParenExpression(JQuickSQLParser.ParenExpressionContext ctx) {
-        JAssert.notNull(ctx.expression(),"parenExpression must not be null");
-        Object value=visit(ctx.expression());
-        JAssert.isTrue( value instanceof  JExpression,"parenExpression must not be instance of JExpression");
-        return (JExpression)value;
+        JAssert.notNull(ctx.expression(), "parenExpression must not be null");
+        Object value = visit(ctx.expression());
+        JAssert.isTrue(value instanceof JExpression, "parenExpression must not be instance of JExpression");
+        return (JExpression) value;
     }
+
     @Override
-    public JExpression  visitNotExpression(JQuickSQLParser.NotExpressionContext ctx) {
+    public JExpression visitNotExpression(JQuickSQLParser.NotExpressionContext ctx) {
         Object expression = visit(ctx.expression());
-        JAssert.isTrue(expression instanceof JExpression,"the expression is not a condition");
-        return new JNotExpression((JExpression)expression);
+        JAssert.isTrue(expression instanceof JExpression, "the expression is not a condition");
+        return new JNotExpression((JExpression) expression);
     }
 
 
     @Override
     public JExpression visitPredicateExpression(JQuickSQLParser.PredicateExpressionContext ctx) {
-        JAssert.notNull(ctx.expressionAtom(),"Predicate expression must not be null");
-        Object value= visit(ctx.expressionAtom());
-        JAssert.isTrue(value instanceof JExpression,"the expression is not a condition");
-        return (JExpression)value;
+        JAssert.notNull(ctx.expressionAtom(), "Predicate expression must not be null");
+        Object value = visit(ctx.expressionAtom());
+        JAssert.isTrue(value instanceof JExpression, "the expression is not a condition");
+        return (JExpression) value;
     }
+
     @Override
     public JExpression visitSelectResult(JQuickSQLParser.SelectResultContext ctx) {
-        JAssert.notNull(ctx.selectClause(),"select clause must not be null");
-        Object  value=visitSelectClause(ctx.selectClause());
-        return (JExpression)value;
+        JAssert.notNull(ctx.selectClause(), "select clause must not be null");
+        Object value = visitSelectClause(ctx.selectClause());
+        return (JExpression) value;
     }
 
 }

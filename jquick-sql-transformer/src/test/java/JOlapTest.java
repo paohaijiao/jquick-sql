@@ -40,7 +40,8 @@ public class JOlapTest {
         row.put("sales", sales);
         return row;
     }
-    private static DataSet  buildDataSet(){
+
+    private static DataSet buildDataSet() {
         List<ColumnMeta> columns = Arrays.asList(
                 new ColumnMeta("region", String.class, "source"),
                 new ColumnMeta("product", String.class, "source"),
@@ -49,17 +50,18 @@ public class JOlapTest {
         );
 
         List<Row> rows = new ArrayList<>();
-        rows.add(new Row(createRow( "East", "A", "Q1",  100.0)));
-        rows.add(new Row(createRow( "East", "A", "Q2",  150.0)));
-        rows.add(new Row(createRow( "East",  "B", "Q1",  200.0)));
-        rows.add(new Row(createRow( "West",  "A",  "Q1",  120.0)));
-        rows.add(new Row(createRow( "West",  "B", "Q2",  180.0)));
+        rows.add(new Row(createRow("East", "A", "Q1", 100.0)));
+        rows.add(new Row(createRow("East", "A", "Q2", 150.0)));
+        rows.add(new Row(createRow("East", "B", "Q1", 200.0)));
+        rows.add(new Row(createRow("West", "A", "Q1", 120.0)));
+        rows.add(new Row(createRow("West", "B", "Q2", 180.0)));
         DataSet dataset = new DataSet(columns, rows);
         return dataset;
     }
+
     @Test
     public void rollUp() {
-        Map<String, Function<List<Object>, Object>> aggregations =new HashMap<>();
+        Map<String, Function<List<Object>, Object>> aggregations = new HashMap<>();
         aggregations.put("sales", JAggregateFunctionFactory.getFunction(JAggregateFunctionFactory.SUM));
         aggregations = Collections.unmodifiableMap(aggregations);
         DataSet rolledUp = JOLAPOperations.rollUp(
@@ -67,13 +69,14 @@ public class JOlapTest {
                 Arrays.asList("region", "product"),
                 aggregations
         );
-        for (Row row:rolledUp.getRows()){
+        for (Row row : rolledUp.getRows()) {
             System.out.println(row);
         }
     }
+
     @Test
     public void drilledDown() {
-        Map<String, Function<List<Object>, Object>> aggregations =new HashMap<>();
+        Map<String, Function<List<Object>, Object>> aggregations = new HashMap<>();
         aggregations.put("sales", JAggregateFunctionFactory.getFunction(JAggregateFunctionFactory.SUM));
         aggregations = Collections.unmodifiableMap(aggregations);
         DataSet drilledDown = JOLAPOperations.drillDown(
@@ -81,39 +84,42 @@ public class JOlapTest {
                 Collections.singletonList("quarter"),
                 aggregations
         );
-        for (Row row:drilledDown.getRows()){
+        for (Row row : drilledDown.getRows()) {
             System.out.println(row);
         }
     }
+
     @Test
     public void slice() {
         DataSet sliced = JOLAPOperations.slice(buildDataSet(), "region", "East");
-        for (Row row:sliced.getRows()){
+        for (Row row : sliced.getRows()) {
             System.out.println(row);
         }
     }
+
     @Test
-    public void diced () {
-        Map<String, Object> map=new HashMap<>();
+    public void diced() {
+        Map<String, Object> map = new HashMap<>();
         map.put("region", "East");
         map.put("product", "A");
         DataSet diced = JOLAPOperations.dice(
                 buildDataSet(),
                 map
         );
-        for (Row row:diced.getRows()){
+        for (Row row : diced.getRows()) {
             System.out.println(row);
         }
     }
+
     @Test
-    public void pivoted  () {
+    public void pivoted() {
         DataSet pivoted = JOLAPOperations.pivot(
                 buildDataSet(),
                 "quarter",
                 "sales",
                 JAggregateFunctionFactory.getFunction(JAggregateFunctionFactory.SUM)
         );
-        for (Row row:pivoted.getRows()){
+        for (Row row : pivoted.getRows()) {
             System.out.println(row);
         }
     }

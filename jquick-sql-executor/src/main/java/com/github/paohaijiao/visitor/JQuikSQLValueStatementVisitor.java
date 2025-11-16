@@ -34,74 +34,79 @@ import java.util.Date;
  * @version 1.0.0
  * @since 2025/8/11
  */
-public class JQuikSQLValueStatementVisitor extends JQuikSQLCoreVisitor{
+public class JQuikSQLValueStatementVisitor extends JQuikSQLCoreVisitor {
     @Override
     public String visitKeyword(JQuickSQLParser.KeywordContext ctx) {
-        String text=ctx.getText();
+        String text = ctx.getText();
         return text;
     }
+
     @Override
     public String visitSimpleId(JQuickSQLParser.SimpleIdContext ctx) {
-        String text=ctx.getText();
+        String text = ctx.getText();
         return text;
     }
+
     @Override
     public Object visitUid(JQuickSQLParser.UidContext ctx) {
-        JAssert.notNull(ctx.simpleId(),"not null");
+        JAssert.notNull(ctx.simpleId(), "not null");
         return visitSimpleId(ctx.simpleId());
     }
 
     @Override
     public String visitDottedId(JQuickSQLParser.DottedIdContext ctx) {
-        JAssert.notNull(ctx.uid(),"variable not null");
+        JAssert.notNull(ctx.uid(), "variable not null");
         return ctx.uid().getText();
     }
 
 
     @Override
     public Boolean visitBooleanLiteral(JQuickSQLParser.BooleanLiteralContext ctx) {
-        if(ctx.TRUE() != null){
+        if (ctx.TRUE() != null) {
             return true;
         }
-        if(ctx.FALSE() != null){
+        if (ctx.FALSE() != null) {
             return false;
         }
         JAssert.throwNewException("invalid boolean literal");
         return false;
     }
+
     @Override
     public Date visitDateLiteral(JQuickSQLParser.DateLiteralContext ctx) {
         JAssert.notNull(ctx.stringLiteral(), "date  literal expected");
         JAssert.notNull(ctx.format(), "format expected");
-        String format=visitFormat( ctx.format());
-        String dateString=visitStringLiteral( ctx.stringLiteral());
-        return JDateUtil.parse(JDateUtil.getSimpleDateFormat(format),dateString);
+        String format = visitFormat(ctx.format());
+        String dateString = visitStringLiteral(ctx.stringLiteral());
+        return JDateUtil.parse(JDateUtil.getSimpleDateFormat(format), dateString);
     }
 
     @Override
     public JLiteralExpression visitConstant(JQuickSQLParser.ConstantContext ctx) {
-        if(null!=ctx.stringLiteral()){
+        if (null != ctx.stringLiteral()) {
             return JLiteralExpression.string(visitStringLiteral(ctx.stringLiteral()));
-        } else if (ctx.decimal_literal()!=null) {
+        } else if (ctx.decimal_literal() != null) {
             return JLiteralExpression.number(getNumber(ctx.decimal_literal().getText()));
-        } else if (ctx.booleanLiteral()!=null) {
+        } else if (ctx.booleanLiteral() != null) {
             return JLiteralExpression.bool(visitBooleanLiteral(ctx.booleanLiteral()));
-        }else if(null!=ctx.null_literal()){
+        } else if (null != ctx.null_literal()) {
             return JLiteralExpression.nullValue();
-        }else if(null!=ctx.dateLiteral()){
+        } else if (null != ctx.dateLiteral()) {
             return JLiteralExpression.date(visitDateLiteral(ctx.dateLiteral()));
         }
         JAssert.throwNewException("invalid constant literal");
         return null;
     }
+
     @Override
     public String visitFormat(JQuickSQLParser.FormatContext ctx) {
-        JAssert.notNull(ctx.stringLiteral(),"string literal expected");
+        JAssert.notNull(ctx.stringLiteral(), "string literal expected");
         return trim(ctx.stringLiteral().getText());
     }
+
     @Override
     public String visitStringLiteral(JQuickSQLParser.StringLiteralContext ctx) {
-        JAssert.notNull(ctx.STRING_LITERAL(),"string literal expected");
+        JAssert.notNull(ctx.STRING_LITERAL(), "string literal expected");
         return trim(ctx.STRING_LITERAL().getText());
     }
 
@@ -109,42 +114,43 @@ public class JQuikSQLValueStatementVisitor extends JQuikSQLCoreVisitor{
     public JComparisonOperator visitComparisonOperator(JQuickSQLParser.ComparisonOperatorContext ctx) {
         return JComparisonOperator.symbolOf(ctx.getText());
     }
+
     @Override
     public JLogicalOperator visitLogicalOperator(JQuickSQLParser.LogicalOperatorContext ctx) {
-        if(ctx.AND() != null||ctx.getText().equals("&&")){
+        if (ctx.AND() != null || ctx.getText().equals("&&")) {
             return JLogicalOperator.And;
         }
-        if(ctx.OR() != null||ctx.getText().equals("||")){
+        if (ctx.OR() != null || ctx.getText().equals("||")) {
             return JLogicalOperator.Or;
         }
-        if(ctx.XOR() != null){
+        if (ctx.XOR() != null) {
             return JLogicalOperator.XOR;
         }
         JAssert.throwNewException("invalid logical operator");
         return null;
     }
+
     @Override
     public JUnaryOperator visitUnaryOperator(JQuickSQLParser.UnaryOperatorContext ctx) {
         return JUnaryOperator.symbolOf(ctx.getText());
     }
+
     @Override
     public JMathOperator visitMathOperator(JQuickSQLParser.MathOperatorContext ctx) {
         return JMathOperator.codeOf(ctx.getText());
     }
+
     @Override
     public JFullColumnModel visitFullColumnName(JQuickSQLParser.FullColumnNameContext ctx) {
         JFullColumnModel fullColumnModel = new JFullColumnModel();
-        if(ctx.dottedId()!=null){
+        if (ctx.dottedId() != null) {
             fullColumnModel.setTableName(ctx.uid().getText());
             fullColumnModel.setColumnName(visitDottedId(ctx.dottedId()));
-        }else{
+        } else {
             fullColumnModel.setColumnName(ctx.uid().getText());
         }
         return fullColumnModel;
     }
-
-
-
 
 
 }

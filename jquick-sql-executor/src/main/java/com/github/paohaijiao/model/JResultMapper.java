@@ -26,7 +26,7 @@ import java.util.Map;
  * @version 1.0.0
  * @since 2025/8/12
  */
-public class JResultMapper<T>{
+public class JResultMapper<T> {
     private final Class<T> targetClass;
     private final JEntityAccessor<T> targetAccessor;
 

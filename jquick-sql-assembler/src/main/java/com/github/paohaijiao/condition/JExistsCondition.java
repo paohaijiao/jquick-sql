@@ -18,6 +18,7 @@ package com.github.paohaijiao.condition;
 import com.github.paohaijiao.dataset.DataSet;
 import com.github.paohaijiao.enums.JConditionType;
 import lombok.Getter;
+
 /**
  * packageName com.github.paohaijiao.condition
  *
@@ -26,7 +27,7 @@ import lombok.Getter;
  * @since 2025/8/23
  */
 @Getter
-public class JExistsCondition extends JCondition{
+public class JExistsCondition extends JCondition {
 
     private DataSet dataSet;
 

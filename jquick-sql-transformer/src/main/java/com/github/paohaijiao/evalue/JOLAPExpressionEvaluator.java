@@ -10,7 +10,7 @@ import com.github.paohaijiao.support.JOLAPOperations;
 
 import java.util.*;
 
-public class JOLAPExpressionEvaluator extends JBaseEvaluator implements JSqlEvaluator<JExpression,Object> {
+public class JOLAPExpressionEvaluator extends JBaseEvaluator implements JSqlEvaluator<JExpression, Object> {
 
     private final JExpressionEvaluator expressionEvaluator;
 
@@ -18,6 +18,18 @@ public class JOLAPExpressionEvaluator extends JBaseEvaluator implements JSqlEval
 
     public JOLAPExpressionEvaluator() {
         this.expressionEvaluator = new JExpressionEvaluator();
+    }
+
+    public static List<Row> filterRows(DataSet dataset, JExpression condition) {
+        JOLAPExpressionEvaluator evaluator = new JOLAPExpressionEvaluator();
+        evaluator.setDataset(dataset);
+        return evaluator.filterRowsByCondition(condition);
+    }
+
+    public static DataSet executeOLAP(DataSet dataset, JExpression olapExpression) {
+        JOLAPExpressionEvaluator evaluator = new JOLAPExpressionEvaluator();
+        evaluator.setDataset(dataset);
+        return evaluator.executeOLAPOperation(olapExpression);
     }
 
     public void setDataset(DataSet dataset) {
@@ -35,6 +47,7 @@ public class JOLAPExpressionEvaluator extends JBaseEvaluator implements JSqlEval
             return result instanceof Boolean ? (Boolean) result : false;
         }
     }
+
     private Boolean evaluateSliceCondition(JSliceExpression sliceExpr, Map<String, Object> row) {
         String dimension = sliceExpr.getDimension();
         Object expectedValue = expressionEvaluator.evaluate(sliceExpr.getExpression(), row);
@@ -45,11 +58,11 @@ public class JOLAPExpressionEvaluator extends JBaseEvaluator implements JSqlEval
     private Boolean evaluateDiceCondition(JDiceExpression diceExpr, Map<String, Object> row) {
         Map<JExpression, JExpression> conditions = diceExpr.getConditions();
         for (Map.Entry<JExpression, JExpression> entry : conditions.entrySet()) {
-            Object columnNameObj =  entry.getKey();
+            Object columnNameObj = entry.getKey();
             if (!(columnNameObj instanceof JColumnExpression)) {
                 return false;
             }
-            String columnName =  ((JColumnExpression) columnNameObj).getColumnName();
+            String columnName = ((JColumnExpression) columnNameObj).getColumnName();
             Object expectedValue = expressionEvaluator.evaluate(entry.getValue(), row);
             Object actualValue = row.get(columnName);
             if (!Objects.equals(actualValue, expectedValue)) {
@@ -96,16 +109,5 @@ public class JOLAPExpressionEvaluator extends JBaseEvaluator implements JSqlEval
             }
         }
         return filteredRows;
-    }
-
-    public static List<Row> filterRows(DataSet dataset, JExpression condition) {
-        JOLAPExpressionEvaluator evaluator = new JOLAPExpressionEvaluator();
-        evaluator.setDataset(dataset);
-        return evaluator.filterRowsByCondition(condition);
-    }
-    public static DataSet executeOLAP(DataSet dataset, JExpression olapExpression) {
-        JOLAPExpressionEvaluator evaluator = new JOLAPExpressionEvaluator();
-        evaluator.setDataset(dataset);
-        return evaluator.executeOLAPOperation(olapExpression);
     }
 }

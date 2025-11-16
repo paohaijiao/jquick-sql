@@ -32,13 +32,12 @@ public class JQuikSQLFilterStatementVisitor extends JQuikSQLPredictStatementVisi
     @Override
     public JCondition visitFilterCondition(JQuickSQLParser.FilterConditionContext ctx) {
         if (ctx.AND() != null) {
-            JCondition left =(JCondition)visit(ctx.filterCondition(0));
-            JCondition right = (JCondition)visit(ctx.filterCondition(1));
+            JCondition left = (JCondition) visit(ctx.filterCondition(0));
+            JCondition right = (JCondition) visit(ctx.filterCondition(1));
             if (left instanceof JAndCondition) {
                 ((JAndCondition) left).addCondition(right);
                 return left;
-            }
-            else {
+            } else {
                 JAndCondition andCondition = new JAndCondition();
                 andCondition.addCondition(left);
                 andCondition.addCondition(right);
@@ -46,13 +45,12 @@ public class JQuikSQLFilterStatementVisitor extends JQuikSQLPredictStatementVisi
             }
         }
         if (ctx.OR() != null) {
-            JCondition left = (JCondition)visit(ctx.filterCondition(0));
-            JCondition right = (JCondition)visit(ctx.filterCondition(1));
+            JCondition left = (JCondition) visit(ctx.filterCondition(0));
+            JCondition right = (JCondition) visit(ctx.filterCondition(1));
             if (left instanceof JOrCondition) {
                 ((JOrCondition) left).addCondition(right);
                 return left;
-            }
-            else {
+            } else {
                 JOrCondition orCondition = new JOrCondition();
                 orCondition.addCondition(left);
                 orCondition.addCondition(right);
@@ -63,11 +61,11 @@ public class JQuikSQLFilterStatementVisitor extends JQuikSQLPredictStatementVisi
                 ctx.getChild(0).getText().equals("(") &&
                 ctx.getChild(2).getText().equals(")")) {
             JParenthesesCondition parentheses = new JParenthesesCondition();
-            parentheses.setInnerCondition((JCondition)visit(ctx.filterCondition(0)));
+            parentheses.setInnerCondition((JCondition) visit(ctx.filterCondition(0)));
             return parentheses;
         }
         if (ctx.predicate() != null) {
-            return (JCondition)visit(ctx.predicate());
+            return (JCondition) visit(ctx.predicate());
         }
         throw new IllegalArgumentException("unsupported filter condition: " + ctx.getText());
     }

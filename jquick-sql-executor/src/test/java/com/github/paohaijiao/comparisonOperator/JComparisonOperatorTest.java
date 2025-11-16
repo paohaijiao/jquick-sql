@@ -32,7 +32,7 @@ import org.junit.Test;
 public class JComparisonOperatorTest {
     @Test
     public void eq() {
-        String rule="=";
+        String rule = "=";
         JQuickSQLLexer lexer = new JQuickSQLLexer(CharStreams.fromString(rule));
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         JQuickSQLParser parser = new JQuickSQLParser(tokens);
@@ -41,9 +41,10 @@ public class JComparisonOperatorTest {
         Object object = tv.visit(tree);
         System.out.println(object);
     }
+
     @Test
     public void gt() {
-        String rule=">";
+        String rule = ">";
         JQuickSQLLexer lexer = new JQuickSQLLexer(CharStreams.fromString(rule));
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         JQuickSQLParser parser = new JQuickSQLParser(tokens);
@@ -52,9 +53,10 @@ public class JComparisonOperatorTest {
         Object object = tv.visit(tree);
         System.out.println(object);
     }
+
     @Test
     public void lt() {
-        String rule="<";
+        String rule = "<";
         JQuickSQLLexer lexer = new JQuickSQLLexer(CharStreams.fromString(rule));
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         JQuickSQLParser parser = new JQuickSQLParser(tokens);
@@ -63,9 +65,10 @@ public class JComparisonOperatorTest {
         Object object = tv.visit(tree);
         System.out.println(object);
     }
+
     @Test
     public void le() {
-        String rule="<=";
+        String rule = "<=";
         JQuickSQLLexer lexer = new JQuickSQLLexer(CharStreams.fromString(rule));
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         JQuickSQLParser parser = new JQuickSQLParser(tokens);
@@ -74,9 +77,10 @@ public class JComparisonOperatorTest {
         Object object = tv.visit(tree);
         System.out.println(object);
     }
+
     @Test
     public void ge() {
-        String rule=">=";
+        String rule = ">=";
         JQuickSQLLexer lexer = new JQuickSQLLexer(CharStreams.fromString(rule));
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         JQuickSQLParser parser = new JQuickSQLParser(tokens);
@@ -85,9 +89,10 @@ public class JComparisonOperatorTest {
         Object object = tv.visit(tree);
         System.out.println(object);
     }
+
     @Test
     public void neq() {
-        String rule="<>";
+        String rule = "<>";
         JQuickSQLLexer lexer = new JQuickSQLLexer(CharStreams.fromString(rule));
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         JQuickSQLParser parser = new JQuickSQLParser(tokens);
@@ -96,9 +101,10 @@ public class JComparisonOperatorTest {
         Object object = tv.visit(tree);
         System.out.println(object);
     }
+
     @Test
     public void neq1() {
-        String rule="!=";
+        String rule = "!=";
         JQuickSQLLexer lexer = new JQuickSQLLexer(CharStreams.fromString(rule));
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         JQuickSQLParser parser = new JQuickSQLParser(tokens);
@@ -107,9 +113,10 @@ public class JComparisonOperatorTest {
         Object object = tv.visit(tree);
         System.out.println(object);
     }
+
     @Test
     public void and() {
-        String rule="and";
+        String rule = "and";
         JQuickSQLLexer lexer = new JQuickSQLLexer(CharStreams.fromString(rule));
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         JQuickSQLParser parser = new JQuickSQLParser(tokens);
@@ -118,9 +125,10 @@ public class JComparisonOperatorTest {
         Object object = tv.visit(tree);
         System.out.println(object);
     }
+
     @Test
     public void or() {
-        String rule="or";
+        String rule = "or";
         JQuickSQLLexer lexer = new JQuickSQLLexer(CharStreams.fromString(rule));
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         JQuickSQLParser parser = new JQuickSQLParser(tokens);
@@ -129,9 +137,10 @@ public class JComparisonOperatorTest {
         Object object = tv.visit(tree);
         System.out.println(object);
     }
+
     @Test
     public void xor() {
-        String rule="xor";
+        String rule = "xor";
         JQuickSQLLexer lexer = new JQuickSQLLexer(CharStreams.fromString(rule));
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         JQuickSQLParser parser = new JQuickSQLParser(tokens);
@@ -140,9 +149,10 @@ public class JComparisonOperatorTest {
         Object object = tv.visit(tree);
         System.out.println(object);
     }
+
     @Test
     public void unaryOperator() {
-        String rule="!";
+        String rule = "!";
         JQuickSQLLexer lexer = new JQuickSQLLexer(CharStreams.fromString(rule));
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         JQuickSQLParser parser = new JQuickSQLParser(tokens);
@@ -151,9 +161,10 @@ public class JComparisonOperatorTest {
         Object object = tv.visit(tree);
         System.out.println(object);
     }
+
     @Test
     public void unaryOperator1() {
-        String rule="~";
+        String rule = "~";
         JQuickSQLLexer lexer = new JQuickSQLLexer(CharStreams.fromString(rule));
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         JQuickSQLParser parser = new JQuickSQLParser(tokens);
@@ -162,9 +173,10 @@ public class JComparisonOperatorTest {
         Object object = tv.visit(tree);
         System.out.println(object);
     }
+
     @Test
     public void unaryOperator12() {
-        String rule="+";
+        String rule = "+";
         JQuickSQLLexer lexer = new JQuickSQLLexer(CharStreams.fromString(rule));
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         JQuickSQLParser parser = new JQuickSQLParser(tokens);
@@ -173,9 +185,10 @@ public class JComparisonOperatorTest {
         Object object = tv.visit(tree);
         System.out.println(object);
     }
+
     @Test
     public void unaryOperator3() {
-        String rule="-";
+        String rule = "-";
         JQuickSQLLexer lexer = new JQuickSQLLexer(CharStreams.fromString(rule));
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         JQuickSQLParser parser = new JQuickSQLParser(tokens);
@@ -184,9 +197,10 @@ public class JComparisonOperatorTest {
         Object object = tv.visit(tree);
         System.out.println(object);
     }
+
     @Test
     public void unaryOperator4() {
-        String rule="not";
+        String rule = "not";
         JQuickSQLLexer lexer = new JQuickSQLLexer(CharStreams.fromString(rule));
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         JQuickSQLParser parser = new JQuickSQLParser(tokens);
@@ -195,9 +209,10 @@ public class JComparisonOperatorTest {
         Object object = tv.visit(tree);
         System.out.println(object);
     }
+
     @Test
     public void mathOperator() {
-        String rule="*";
+        String rule = "*";
         JQuickSQLLexer lexer = new JQuickSQLLexer(CharStreams.fromString(rule));
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         JQuickSQLParser parser = new JQuickSQLParser(tokens);
@@ -206,9 +221,10 @@ public class JComparisonOperatorTest {
         Object object = tv.visit(tree);
         System.out.println(object);
     }
+
     @Test
     public void mathOperator1() {
-        String rule="/";
+        String rule = "/";
         JQuickSQLLexer lexer = new JQuickSQLLexer(CharStreams.fromString(rule));
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         JQuickSQLParser parser = new JQuickSQLParser(tokens);
@@ -217,9 +233,10 @@ public class JComparisonOperatorTest {
         Object object = tv.visit(tree);
         System.out.println(object);
     }
+
     @Test
     public void mathOperator2() {
-        String rule="%";
+        String rule = "%";
         JQuickSQLLexer lexer = new JQuickSQLLexer(CharStreams.fromString(rule));
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         JQuickSQLParser parser = new JQuickSQLParser(tokens);
@@ -228,9 +245,10 @@ public class JComparisonOperatorTest {
         Object object = tv.visit(tree);
         System.out.println(object);
     }
+
     @Test
     public void mathOperator3() {
-        String rule="+";
+        String rule = "+";
         JQuickSQLLexer lexer = new JQuickSQLLexer(CharStreams.fromString(rule));
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         JQuickSQLParser parser = new JQuickSQLParser(tokens);
@@ -239,9 +257,10 @@ public class JComparisonOperatorTest {
         Object object = tv.visit(tree);
         System.out.println(object);
     }
+
     @Test
     public void mathOperator4() {
-        String rule="-";
+        String rule = "-";
         JQuickSQLLexer lexer = new JQuickSQLLexer(CharStreams.fromString(rule));
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         JQuickSQLParser parser = new JQuickSQLParser(tokens);
@@ -250,9 +269,10 @@ public class JComparisonOperatorTest {
         Object object = tv.visit(tree);
         System.out.println(object);
     }
+
     @Test
     public void mathOperator5() {
-        String rule="--";
+        String rule = "--";
         JQuickSQLLexer lexer = new JQuickSQLLexer(CharStreams.fromString(rule));
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         JQuickSQLParser parser = new JQuickSQLParser(tokens);

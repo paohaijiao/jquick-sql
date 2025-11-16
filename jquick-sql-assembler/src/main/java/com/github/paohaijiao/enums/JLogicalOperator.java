@@ -2,9 +2,9 @@ package com.github.paohaijiao.enums;
 
 public enum JLogicalOperator {
 
-        And,
+    And,
 
-        Or,
+    Or,
 
-        XOR
+    XOR
 }

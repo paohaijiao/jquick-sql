@@ -25,10 +25,6 @@ public enum JBinaryOperator {
         this.symbol = symbol;
     }
 
-    public String getSymbol() {
-        return symbol;
-    }
-
     public static JBinaryOperator of(String symbol) {
         for (JBinaryOperator op : values()) {
             if (op.getSymbol().equals(symbol)) {
@@ -36,5 +32,9 @@ public enum JBinaryOperator {
             }
         }
         throw new IllegalArgumentException(symbol + " is not a valid binary operator");
+    }
+
+    public String getSymbol() {
+        return symbol;
     }
 }

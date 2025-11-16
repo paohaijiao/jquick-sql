@@ -18,14 +18,16 @@ public enum JComparisonOperator {
         this.symbol = symbol;
     }
 
-    public static JComparisonOperator symbolOf(String symbol){
-        for(JComparisonOperator operator : values()){
-            if(operator.symbol.equals(symbol)){
+    public static JComparisonOperator symbolOf(String symbol) {
+        for (JComparisonOperator operator : values()) {
+            if (operator.symbol.equals(symbol)) {
                 return operator;
             }
         }
         throw new IllegalArgumentException("Unknown operator: " + symbol);
     }
 
-    public String getSymbol() { return symbol; }
+    public String getSymbol() {
+        return symbol;
+    }
 }

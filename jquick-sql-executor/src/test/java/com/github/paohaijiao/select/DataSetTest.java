@@ -34,39 +34,41 @@ public class DataSetTest {
 
     @Test
     public void union() {
-        String rule="select * from user1 a union select * from user2 b";
-        JQuickSQLExecutor executor=new JQuickSQLExecutor();
-        JDataSetHolder dataSetContainer=new JDataSetHolder();
+        String rule = "select * from user1 a union select * from user2 b";
+        JQuickSQLExecutor executor = new JQuickSQLExecutor();
+        JDataSetHolder dataSetContainer = new JDataSetHolder();
         dataSetContainer.addDataSet("user1", JDataSetFactory.createUsersDataSet());
         dataSetContainer.addDataSet("user2", JDataSetFactory.createUsersDataSet1());
         executor.dataSet(dataSetContainer);
-        DataSet dataSet=executor.execute(rule, JEngineEnums.LAMBDA);
+        DataSet dataSet = executor.execute(rule, JEngineEnums.LAMBDA);
         for (Row row : dataSet.getRows()) {
             System.out.println(row);
         }
     }
+
     @Test
     public void minus() {
-        String rule="select * from user1 a minus select * from user2 b";
-        JQuickSQLExecutor executor=new JQuickSQLExecutor();
-        JDataSetHolder dataSetContainer=new JDataSetHolder();
+        String rule = "select * from user1 a minus select * from user2 b";
+        JQuickSQLExecutor executor = new JQuickSQLExecutor();
+        JDataSetHolder dataSetContainer = new JDataSetHolder();
         dataSetContainer.addDataSet("user1", JDataSetFactory.createUsersDataSet());
         dataSetContainer.addDataSet("user2", JDataSetFactory.createUsersDataSet1());
         executor.dataSet(dataSetContainer);
-        DataSet dataSet=executor.execute(rule, JEngineEnums.LAMBDA);
+        DataSet dataSet = executor.execute(rule, JEngineEnums.LAMBDA);
         for (Row row : dataSet.getRows()) {
             System.out.println(row);
         }
     }
+
     @Test
     public void intersect() {
-        String rule="select * from user1 a intersect select * from user2 b";
-        JQuickSQLExecutor executor=new JQuickSQLExecutor();
-        JDataSetHolder dataSetContainer=new JDataSetHolder();
+        String rule = "select * from user1 a intersect select * from user2 b";
+        JQuickSQLExecutor executor = new JQuickSQLExecutor();
+        JDataSetHolder dataSetContainer = new JDataSetHolder();
         dataSetContainer.addDataSet("user1", JDataSetFactory.createUsersDataSet());
         dataSetContainer.addDataSet("user2", JDataSetFactory.createUsersDataSet1());
         executor.dataSet(dataSetContainer);
-        DataSet dataSet=executor.execute(rule, JEngineEnums.LAMBDA);
+        DataSet dataSet = executor.execute(rule, JEngineEnums.LAMBDA);
         for (Row row : dataSet.getRows()) {
             System.out.println(row);
         }

@@ -10,7 +10,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.regex.PatternSyntaxException;
 
-public class JConditionEvaluator extends JBaseEvaluator implements JSqlEvaluator<JCondition,Boolean> {
+public class JConditionEvaluator extends JBaseEvaluator implements JSqlEvaluator<JCondition, Boolean> {
 
     public Boolean evaluate(JCondition condition, Map<String, Object> row) {
         if (condition instanceof JComparisonCondition) {
@@ -23,17 +23,17 @@ public class JConditionEvaluator extends JBaseEvaluator implements JSqlEvaluator
             return evaluateIsNull((JIsNullCondition) condition, row);
         } else if (condition instanceof JInCondition) {
             return evaluateValueInList((JInCondition) condition, row);
-        }else if (condition instanceof JLikeCondition) {
+        } else if (condition instanceof JLikeCondition) {
             return evaluateLike((JLikeCondition) condition, row);
-        }else if (condition instanceof JRegexCondition) {
+        } else if (condition instanceof JRegexCondition) {
             return evaluateRegex((JRegexCondition) condition, row);
-        }else if (condition instanceof JExistsCondition) {
+        } else if (condition instanceof JExistsCondition) {
             return evaluateExists((JExistsCondition) condition, row);
-        }else if (condition instanceof JNotCondtion) {
+        } else if (condition instanceof JNotCondtion) {
             return evaluateNot((JNotCondtion) condition, row);
         } else if (condition instanceof JExpressionAtomPredicateCondition) {
             return evaluateAtomPredicate((JExpressionAtomPredicateCondition) condition, row);
-        }else if (condition instanceof JParenthesesCondition) {
+        } else if (condition instanceof JParenthesesCondition) {
             return evaluateParentheses((JParenthesesCondition) condition, row);
         } else if (condition instanceof JAndCondition) {
             return evaluateAnd((JAndCondition) condition, row);
@@ -42,14 +42,15 @@ public class JConditionEvaluator extends JBaseEvaluator implements JSqlEvaluator
         }
         throw new UnsupportedOperationException("Unsupported condition type: " + condition.getType());
     }
-    public  boolean evaluateCondition( JCondition condition, Map<String, Object> row) {
+
+    public boolean evaluateCondition(JCondition condition, Map<String, Object> row) {
         if (condition instanceof JAndCondition) {
             JAndCondition andExpr = (JAndCondition) condition;
-            return andExpr.getConditions().stream().allMatch(cond -> evaluateCondition( cond, row));
+            return andExpr.getConditions().stream().allMatch(cond -> evaluateCondition(cond, row));
         }
         if (condition instanceof JOrCondition) {
             JOrCondition orExpr = (JOrCondition) condition;
-            return orExpr.getConditions().stream().anyMatch(cond -> evaluateCondition( cond, row));
+            return orExpr.getConditions().stream().anyMatch(cond -> evaluateCondition(cond, row));
         }
 
         if (condition instanceof JParenthesesCondition) {
@@ -61,12 +62,14 @@ public class JConditionEvaluator extends JBaseEvaluator implements JSqlEvaluator
         }
         return evaluate(condition, row);
     }
+
     private boolean evaluateParentheses(JParenthesesCondition cond, Map<String, Object> row) {
         if (!cond.hasInnerCondition()) {
             throw new IllegalArgumentException("Parentheses condition must have an inner condition");
         }
         return evaluate(cond.getInnerCondition(), row);
     }
+
     private boolean evaluateAnd(JAndCondition cond, Map<String, Object> row) {
         if (cond.isEmpty()) {
             throw new IllegalArgumentException("AND expression must have at least one condition");
@@ -80,29 +83,33 @@ public class JConditionEvaluator extends JBaseEvaluator implements JSqlEvaluator
         }
         return cond.getConditions().stream().anyMatch(c -> evaluate(c, row));
     }
+
     private boolean evaluateAtomPredicate(JExpressionAtomPredicateCondition cond, Map<String, Object> row) {
         Object val = evaluateExpression(cond.getExpression(), row);
-        if(val==null){
+        if (val == null) {
             return false;
         }
-        JAssert.isTrue(val instanceof Boolean,"the expression is not a boolean type");
-        return (Boolean)val;
+        JAssert.isTrue(val instanceof Boolean, "the expression is not a boolean type");
+        return (Boolean) val;
     }
+
     private boolean evaluateExists(JExistsCondition cond, Map<String, Object> row) {
         return !cond.getDataSet().isEmpty();
     }
+
     private boolean evaluateNot(JNotCondtion cond, Map<String, Object> row) {
         Object val = evaluateExpression(cond.getExpression(), row);
-        if(val==null){
+        if (val == null) {
             return false;
         }
-        JAssert.isTrue(val instanceof Boolean,"the expression is not a boolean type");
-        return !(Boolean)val;
+        JAssert.isTrue(val instanceof Boolean, "the expression is not a boolean type");
+        return !(Boolean) val;
     }
+
     private boolean evaluateRegex(JRegexCondition cond, Map<String, Object> row) {
         Object val = evaluateExpression(cond.getExpression(), row);
-        String regex=cond.getRegex();
-        boolean isNot=cond.getNot();
+        String regex = cond.getRegex();
+        boolean isNot = cond.getNot();
         String input = val.toString();
         boolean matches;
         try {
@@ -112,10 +119,11 @@ public class JConditionEvaluator extends JBaseEvaluator implements JSqlEvaluator
         }
         return isNot != matches;
     }
+
     private boolean evaluateLike(JLikeCondition cond, Map<String, Object> row) {
         Object val = evaluateExpression(cond.getExpression(), row);
-        String pattern=cond.getPattern();
-        boolean isNot=cond.getNot();
+        String pattern = cond.getPattern();
+        boolean isNot = cond.getNot();
         String input = val.toString();
         boolean matches = likeMatch(input, pattern);
         return isNot != matches;
@@ -123,7 +131,7 @@ public class JConditionEvaluator extends JBaseEvaluator implements JSqlEvaluator
 
     private boolean evaluateValueInList(JInCondition cond, Map<String, Object> row) {
         Object val = evaluateExpression(cond.getExpression(), row);
-        List<JExpression> list=cond.getList();
+        List<JExpression> list = cond.getList();
         for (JExpression item : list) {
             Object value = evaluateExpression(item, row);
             if (value == null) {
@@ -135,29 +143,38 @@ public class JConditionEvaluator extends JBaseEvaluator implements JSqlEvaluator
         }
         return false;
     }
+
     private boolean evaluateIsNull(JIsNullCondition cond, Map<String, Object> row) {
         Object val = evaluateExpression(cond.getExpression(), row);
         boolean requireNull = cond.getNot();
-        if(requireNull){
+        if (requireNull) {
             return val != null;
-        }else{
+        } else {
             return val == null;
         }
     }
+
     private boolean evaluateComparison(JComparisonCondition cond, Map<String, Object> row) {
         Object leftVal = evaluateExpression(cond.getLeft(), row);
         Object rightVal = evaluateExpression(cond.getRight(), row);
         switch (cond.getOperator()) {
-            case EQ: return Objects.equals(leftVal, rightVal);
-            case NEQ: return !Objects.equals(leftVal, rightVal);
-            case GT: return compare((Number)leftVal, (Number)rightVal) > 0;
-            case GE: return compare((Number)leftVal,(Number) rightVal) >= 0;
-            case LT: return compare((Number)leftVal, (Number)rightVal) < 0;
-            case LE: return compare((Number)leftVal, (Number)rightVal) <= 0;
+            case EQ:
+                return Objects.equals(leftVal, rightVal);
+            case NEQ:
+                return !Objects.equals(leftVal, rightVal);
+            case GT:
+                return compare((Number) leftVal, (Number) rightVal) > 0;
+            case GE:
+                return compare((Number) leftVal, (Number) rightVal) >= 0;
+            case LT:
+                return compare((Number) leftVal, (Number) rightVal) < 0;
+            case LE:
+                return compare((Number) leftVal, (Number) rightVal) <= 0;
             default:
                 throw new UnsupportedOperationException("Unsupported operator: " + cond.getOperator());
         }
     }
+
     private boolean evaluateLogical(JLogicalCondition cond, Map<String, Object> row) {
         switch (cond.getType()) {
             case AND:
@@ -193,8 +210,6 @@ public class JConditionEvaluator extends JBaseEvaluator implements JSqlEvaluator
     }
 
 
-
-
     private int compareValues(Object a, Object b) {
         if (a instanceof Number && b instanceof Number) {
             double d1 = ((Number) a).doubleValue();
@@ -205,6 +220,7 @@ public class JConditionEvaluator extends JBaseEvaluator implements JSqlEvaluator
         }
         return a.toString().compareTo(b.toString());
     }
+
     private String removeQuotes(String str) {
         if (str == null || str.length() < 2) {
             return str;
@@ -217,6 +233,7 @@ public class JConditionEvaluator extends JBaseEvaluator implements JSqlEvaluator
         }
         return str;
     }
+
     private boolean likeMatch(String input, String pattern) {
         String cleanInput = removeQuotes(input);
         String cleanPattern = removeQuotes(pattern);

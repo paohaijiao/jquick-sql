@@ -32,7 +32,7 @@ import org.junit.Test;
 public class JExpressionTest {
     @Test
     public void expression() {
-        String rule="!true";
+        String rule = "!true";
         JQuickSQLLexer lexer = new JQuickSQLLexer(CharStreams.fromString(rule));
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         JQuickSQLParser parser = new JQuickSQLParser(tokens);
@@ -41,9 +41,10 @@ public class JExpressionTest {
         Object object = tv.visit(tree);
         System.out.println(object);
     }
+
     @Test
     public void expression3() {
-        String rule="(false)";
+        String rule = "(false)";
         JQuickSQLLexer lexer = new JQuickSQLLexer(CharStreams.fromString(rule));
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         JQuickSQLParser parser = new JQuickSQLParser(tokens);

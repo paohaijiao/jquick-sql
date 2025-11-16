@@ -25,7 +25,7 @@ import com.github.paohaijiao.enums.JExpressionType;
  * @version 1.0.0
  * @since 2025/8/24
  */
-public class JDataSetExpression  extends JExpression {
+public class JDataSetExpression extends JExpression {
 
     private DataSet dataSet;
 

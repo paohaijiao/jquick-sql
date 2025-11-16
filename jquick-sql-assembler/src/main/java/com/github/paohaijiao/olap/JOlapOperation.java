@@ -38,30 +38,35 @@ public class JOlapOperation {
 
     private List<JOlapCondition> conditions;
 
+    private JOlapOperation(JOlapType type, List<String> dimensions, List<JOlapCondition> conditions) {
+        this.type = type;
+        this.dimensions = dimensions;
+        this.conditions = conditions;
+    }
+
     public static JOlapOperation rollup(List<String> dimensions) {
         return new JOlapOperation(JOlapType.ROLLUP, dimensions, null);
     }
+
     public static JOlapOperation drillDown(List<String> baseDimensions, List<String> drillDimensions) {
         List<String> allDims = new ArrayList<>(baseDimensions);
         allDims.addAll(drillDimensions);
         return new JOlapOperation(JOlapType.DRILLDOWN, allDims, null);
     }
+
     public static JOlapOperation slice(List<JOlapCondition> conditions) {
         return new JOlapOperation(JOlapType.SLICE, null, conditions);
     }
+
     public static JOlapOperation dice(List<JOlapCondition> conditions) {
         return new JOlapOperation(JOlapType.DICE, null, conditions);
     }
+
     public static JOlapOperation pivot(String dimension, List<String> values, JAggregateFunction function) {
         List<JOlapCondition> conditions = Arrays.asList(
                 new JOlapCondition(dimension, "IN", values),
                 new JOlapCondition(function)
         );
         return new JOlapOperation(JOlapType.PIVOT, Collections.singletonList(dimension), conditions);
-    }
-    private JOlapOperation(JOlapType type, List<String> dimensions, List<JOlapCondition> conditions) {
-        this.type = type;
-        this.dimensions = dimensions;
-        this.conditions = conditions;
     }
 }

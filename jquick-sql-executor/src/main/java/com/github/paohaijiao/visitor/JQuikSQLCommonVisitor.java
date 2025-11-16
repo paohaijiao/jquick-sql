@@ -30,7 +30,7 @@ import org.antlr.v4.runtime.CommonTokenStream;
  * @version 1.0.0
  * @since 2025/8/11
  */
-public class JQuikSQLCommonVisitor extends JQuickSQLOlapVisitor{
+public class JQuikSQLCommonVisitor extends JQuickSQLOlapVisitor {
 
     public JQuikSQLCommonVisitor(JDataSetHolder dataSetHolder, JContext context, JQuickSQLLexer lexer, CommonTokenStream tokenStream, JQuickSQLParser parser) {
         this.context = context;
@@ -47,28 +47,30 @@ public class JQuikSQLCommonVisitor extends JQuickSQLOlapVisitor{
         this.tokenStream = tokenStream;
         this.parser = parser;
     }
+
     public JQuikSQLCommonVisitor() {
         this.context = new JContext();
     }
+
     public JQuikSQLCommonVisitor engine(JEngineEnums engine) {
-        this.engine=engine;
+        this.engine = engine;
         return this;
     }
+
     public JQuikSQLCommonVisitor engine(JDataSetHolder holder) {
-        this.dataSetHolder=holder;
+        this.dataSetHolder = holder;
         return this;
     }
+
     @Override
     public DataSet visitQuery(JQuickSQLParser.QueryContext ctx) {
-        return (DataSet)visit(ctx.selectStatement());
+        return (DataSet) visit(ctx.selectStatement());
     }
+
     @Override
     public DataSet visitSingleQuery(JQuickSQLParser.SingleQueryContext ctx) {
         return visitSelectExpression(ctx.selectExpression());
     }
-
-
-
 
 
 }

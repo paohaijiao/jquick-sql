@@ -11,7 +11,7 @@ import java.util.function.Function;
 @Getter
 public class JDrillDownExpression extends JExpression {
 
-    private  List<String> groupByColumns;
+    private List<String> groupByColumns;
 
     private Map<String, Function<List<Object>, Object>> aggregations;
 

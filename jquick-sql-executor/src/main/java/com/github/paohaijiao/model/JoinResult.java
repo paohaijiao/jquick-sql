@@ -28,7 +28,7 @@ import java.util.Map;
  * @since 2025/8/12
  */
 @Getter
-public class JoinResult <T>{
+public class JoinResult<T> {
 
     private final T mainRecord;
 
@@ -44,7 +44,6 @@ public class JoinResult <T>{
     public void addJoinedRecord(String tableAlias, Object record) {
         joinedRecords.put(tableAlias, record);
     }
-
 
 
     public void setExcluded(boolean excluded) {

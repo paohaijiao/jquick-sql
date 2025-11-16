@@ -29,7 +29,7 @@ import java.util.Objects;
  * @version 1.0.0
  * @since 2025/8/12
  */
-public class JEntityQueryEngine<T>  {
+public class JEntityQueryEngine<T> {
 
     private final Class<T> entityClass;
 
@@ -43,13 +43,14 @@ public class JEntityQueryEngine<T>  {
     }
 
     public List<T> executeQuery(String sql, List<T> dataset) {
-    return null;
+        return null;
     }
 
 
     public JEntityQueryEngine<T> registerJdbcTable(String tableName, DataSource dataSource) {
         return this;
     }
+
     public JEntityQueryEngine<T> registerCsvTable(String tableName, Path csvFile) {
         return this;
     }
@@ -58,6 +59,7 @@ public class JEntityQueryEngine<T>  {
         String tableName = entityClass.getSimpleName();
         return registerEntityList(tableName, entityClass, data);
     }
+
     public <E> JEntityQueryEngine<T> registerEntityList(String tableName, Class<E> entityClass, List<E> data) {
         Objects.requireNonNull(tableName, "table name cannot be null");
         Objects.requireNonNull(entityClass, "entity class cannot be null");

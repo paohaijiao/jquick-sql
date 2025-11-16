@@ -26,7 +26,7 @@ import lombok.Getter;
  * @since 2025/8/24
  */
 @Getter
-public class JNotExpression extends JExpression{
+public class JNotExpression extends JExpression {
 
     private JExpression expression;
 

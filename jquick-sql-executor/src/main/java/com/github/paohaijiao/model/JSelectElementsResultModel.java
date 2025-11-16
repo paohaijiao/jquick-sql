@@ -43,16 +43,19 @@ public class JSelectElementsResultModel {
     public List<JSelectElementModel> getElements() {
         return elements;
     }
+
     public boolean hasAggregateFunction() {
-        List<JSelectElementModel> list=elements.stream().filter(JSelectElementModel::isAggregate).collect(Collectors.toList());
+        List<JSelectElementModel> list = elements.stream().filter(JSelectElementModel::isAggregate).collect(Collectors.toList());
         return !list.isEmpty();
     }
+
     public List<JSelectElementModel> getAggregateFunction() {
-        List<JSelectElementModel> list=elements.stream().filter(JSelectElementModel::isAggregate).collect(Collectors.toList());
+        List<JSelectElementModel> list = elements.stream().filter(JSelectElementModel::isAggregate).collect(Collectors.toList());
         return list;
     }
+
     public List<JSelectElementModel> getNonAggregateFunction() {
-        List<JSelectElementModel> list=elements.stream().filter(e->!e.isAggregate()).collect(Collectors.toList());
+        List<JSelectElementModel> list = elements.stream().filter(e -> !e.isAggregate()).collect(Collectors.toList());
         return list;
     }
 }

@@ -35,36 +35,37 @@ import org.antlr.v4.runtime.CommonTokenStream;
  */
 public class JQuickSQLExecutor {
 
-    private JContext context=new JContext();
+    private JContext context = new JContext();
 
-    private JQuickSQLConfig config=new JQuickSQLConfig();
+    private JQuickSQLConfig config = new JQuickSQLConfig();
 
-    private JDataSetHolder dataSetContainer=new JDataSetHolder();
+    private JDataSetHolder dataSetContainer = new JDataSetHolder();
 
 
-    public JQuickSQLExecutor config( JQuickSQLConfig config){
+    public JQuickSQLExecutor config(JQuickSQLConfig config) {
         this.config = config;
         return this;
     }
-    public JQuickSQLExecutor context( JContext context){
+
+    public JQuickSQLExecutor context(JContext context) {
         this.context = context;
         return this;
     }
 
-    public JQuickSQLExecutor dataSet(JDataSetHolder container){
-        this.dataSetContainer=container;
+    public JQuickSQLExecutor dataSet(JDataSetHolder container) {
+        this.dataSetContainer = container;
         return this;
     }
 
-    public DataSet execute(String sql, JEngineEnums engine){
+    public DataSet execute(String sql, JEngineEnums engine) {
         JQuickSQLLexer lexer = new JQuickSQLLexer(CharStreams.fromString(sql));
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         JQuickSQLParser parser = new JQuickSQLParser(tokens);
         JQuickSQLParser.QueryContext tree = parser.query();
         JContext params = new JContext();
-        JQuikSQLCommonVisitor tv = new JQuikSQLCommonVisitor(dataSetContainer,lexer,tokens,parser);
+        JQuikSQLCommonVisitor tv = new JQuikSQLCommonVisitor(dataSetContainer, lexer, tokens, parser);
         tv.engine(engine);
         Object object = tv.visit(tree);
-        return (DataSet)object;
+        return (DataSet) object;
     }
 }

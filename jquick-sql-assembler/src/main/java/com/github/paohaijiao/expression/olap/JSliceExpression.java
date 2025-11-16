@@ -7,7 +7,7 @@ import lombok.Getter;
 @Getter
 public class JSliceExpression extends JExpression {
 
-    private  String dimension;
+    private String dimension;
 
     private JExpression expression;
 

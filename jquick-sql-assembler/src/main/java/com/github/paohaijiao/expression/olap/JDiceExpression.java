@@ -10,7 +10,7 @@ import java.util.Map;
 public class JDiceExpression extends JExpression {
 
 
-    private   Map<JExpression, JExpression> conditions;
+    private Map<JExpression, JExpression> conditions;
 
 
     public JDiceExpression(Map<JExpression, JExpression> conditions) {

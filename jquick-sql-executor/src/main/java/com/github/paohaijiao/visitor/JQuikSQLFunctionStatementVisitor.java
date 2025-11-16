@@ -35,14 +35,14 @@ public class JQuikSQLFunctionStatementVisitor extends JQuikSQLExpressionStatemen
     @Override
     public JExpression visitFunctionArg(JQuickSQLParser.FunctionArgContext ctx) {
         JAssert.notNull(ctx.expression(), "expression not  null");
-        return (JExpression)visit(ctx.expression());
+        return (JExpression) visit(ctx.expression());
     }
 
     @Override
     public List<JExpression> visitFunctionArgs(JQuickSQLParser.FunctionArgsContext ctx) {
         List<JExpression> args = new ArrayList<>();
         for (int i = 0; i < ctx.functionArg().size(); i++) {
-            JExpression obj=visitFunctionArg(ctx.functionArg(i));
+            JExpression obj = visitFunctionArg(ctx.functionArg(i));
             args.add(obj);
         }
         return args;
@@ -50,21 +50,22 @@ public class JQuikSQLFunctionStatementVisitor extends JQuikSQLExpressionStatemen
 
     @Override
     public JFunctionCallExpression visitFunctionCall(JQuickSQLParser.FunctionCallContext ctx) {
-        JAssert.notNull(ctx.uid(),"uid must not be null");
+        JAssert.notNull(ctx.uid(), "uid must not be null");
         String funcName = ctx.uid().getText();
         List<JExpression> args = new ArrayList<>();
         if (ctx.arg() != null) {
-            args=visitArg(ctx.arg());
+            args = visitArg(ctx.arg());
         }
-        JFunctionCallExpression jFunctionCallModel = new JFunctionCallExpression(funcName,args);
+        JFunctionCallExpression jFunctionCallModel = new JFunctionCallExpression(funcName, args);
         return jFunctionCallModel;
     }
+
     @Override
     public List<JExpression> visitArg(JQuickSQLParser.ArgContext ctx) {
         List<JExpression> args = new ArrayList<>();
-        if(null!= ctx.functionArgs()){
-            args= visitFunctionArgs(ctx.functionArgs());
-        }else if("*".equalsIgnoreCase( ctx.getText())){
+        if (null != ctx.functionArgs()) {
+            args = visitFunctionArgs(ctx.functionArgs());
+        } else if ("*".equalsIgnoreCase(ctx.getText())) {
             args.add(new JStarExpression());
         }
         return args;

@@ -11,13 +11,13 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
 
-public class JExpressionEvaluator extends JBaseEvaluator implements JSqlEvaluator<JExpression,Object> {
+public class JExpressionEvaluator extends JBaseEvaluator implements JSqlEvaluator<JExpression, Object> {
 
     public Object evaluate(JExpression expression, Map<String, Object> row) {
         if (expression instanceof JColumnExpression) {
-            return evaluateExpression( expression, row);
+            return evaluateExpression(expression, row);
         } else if (expression instanceof JLiteralExpression) {
-            return evaluateExpression( expression,row);
+            return evaluateExpression(expression, row);
         } else if (expression instanceof JBinaryExpression) {
             return evaluateBinaryExpression((JBinaryExpression) expression, row);
         } else if (expression instanceof JUnaryExpression) {
@@ -34,14 +34,15 @@ public class JExpressionEvaluator extends JBaseEvaluator implements JSqlEvaluato
             return evaluateLogicalExpression((JLogicalExpression) expression, row);
         } else if (expression instanceof JDataSetExpression) {
             return evaluateDataSetExpression((JDataSetExpression) expression, row);
-        }else if(null==expression){
+        } else if (null == expression) {
             return null;
         }
         throw new UnsupportedOperationException("Unsupported expression type: " + expression.getType());
     }
+
     private Object evaluateNotExpression(JNotExpression expr, Map<String, Object> row) {
         Object value = evaluateExpression(expr.getExpression(), row);
-        JAssert.isTrue(value instanceof Boolean,"the expression is not boolean");
+        JAssert.isTrue(value instanceof Boolean, "the expression is not boolean");
         return !(Boolean) value;
     }
 
@@ -49,19 +50,32 @@ public class JExpressionEvaluator extends JBaseEvaluator implements JSqlEvaluato
         Object left = evaluate(expr.getLeft(), row);
         Object right = evaluate(expr.getRight(), row);
         switch (expr.getOperator()) {
-            case EQ: return Objects.equals(left, right);
-            case NEQ: return !Objects.equals(left, right);
-            case GT: return compareNumbers(left, right) > 0;
-            case GE: return compareNumbers(left, right) >= 0;
-            case LT: return compareNumbers(left, right) < 0;
-            case LE: return compareNumbers(left, right) <= 0;
-            case ADD: return add(left, right);
-            case SUBTRACT: return subtract(left, right);
-            case MULTIPLY: return multiply(left, right);
-            case DIVIDE: return divide(left, right);
-            case MOD: return modulo(left, right);
-            case AND: return convertToBoolean(left) && convertToBoolean(right);
-            case OR: return convertToBoolean(left) || convertToBoolean(right);
+            case EQ:
+                return Objects.equals(left, right);
+            case NEQ:
+                return !Objects.equals(left, right);
+            case GT:
+                return compareNumbers(left, right) > 0;
+            case GE:
+                return compareNumbers(left, right) >= 0;
+            case LT:
+                return compareNumbers(left, right) < 0;
+            case LE:
+                return compareNumbers(left, right) <= 0;
+            case ADD:
+                return add(left, right);
+            case SUBTRACT:
+                return subtract(left, right);
+            case MULTIPLY:
+                return multiply(left, right);
+            case DIVIDE:
+                return divide(left, right);
+            case MOD:
+                return modulo(left, right);
+            case AND:
+                return convertToBoolean(left) && convertToBoolean(right);
+            case OR:
+                return convertToBoolean(left) || convertToBoolean(right);
             default:
                 throw new UnsupportedOperationException("Unsupported binary operator: " + expr.getOperator());
         }
@@ -70,10 +84,14 @@ public class JExpressionEvaluator extends JBaseEvaluator implements JSqlEvaluato
     private Object evaluateUnaryExpression(JUnaryExpression expr, Map<String, Object> row) {
         Object value = evaluate(expr.getExpression(), row);
         switch (expr.getOperator()) {
-            case PLUS: return value;
-            case MINUS: return negate(value);
-            case NOT: return !convertToBoolean(value);
-            case BIT_NOT: return bitwiseNot(value);
+            case PLUS:
+                return value;
+            case MINUS:
+                return negate(value);
+            case NOT:
+                return !convertToBoolean(value);
+            case BIT_NOT:
+                return bitwiseNot(value);
             default:
                 throw new UnsupportedOperationException("unsupported unary operator: " + expr.getOperator());
         }
@@ -86,18 +104,17 @@ public class JExpressionEvaluator extends JBaseEvaluator implements JSqlEvaluato
     private Object evaluateFunctionCallExpression(JFunctionCallExpression expr, Map<String, Object> row) {
         String functionName = expr.getFunctionName().toUpperCase();
         List<JExpression> arguments = expr.getArguments();
-        List<Object> list=new ArrayList<>();
+        List<Object> list = new ArrayList<>();
         for (JExpression argument : arguments) {
             list.add(evaluateExpression(argument, row));
         }
-        if(JAggregateFunctionFactory.containsFunction(functionName)){//AggregateFunction
-            Function<List<Object>, Object> function= JAggregateFunctionFactory.getFunction(functionName);
+        if (JAggregateFunctionFactory.containsFunction(functionName)) {//AggregateFunction
+            Function<List<Object>, Object> function = JAggregateFunctionFactory.getFunction(functionName);
             return function.apply(list);
-        }else{//normal function
-            Object object= JEvaluator.evaluateFunction(functionName, list);
+        } else {//normal function
+            Object object = JEvaluator.evaluateFunction(functionName, list);
             return object;
         }
-
 
 
     }
@@ -110,29 +127,30 @@ public class JExpressionEvaluator extends JBaseEvaluator implements JSqlEvaluato
     }
 
     private Object evaluateLogicalExpression(JLogicalExpression expr, Map<String, Object> row) {
-        JAssert.notNull(expr.getLeft(),"the left expression  require not null\"");
-        JAssert.notNull(expr.getRight(),"the right expression  require not null\"");
-        JAssert.notNull(expr.getOperator(),"the operator  require not null");
+        JAssert.notNull(expr.getLeft(), "the left expression  require not null\"");
+        JAssert.notNull(expr.getRight(), "the right expression  require not null\"");
+        JAssert.notNull(expr.getOperator(), "the operator  require not null");
         Object left = evaluate(expr.getLeft(), row);
-        Object right =evaluate(expr.getRight(), row);
-        JLogicalOperator operator= expr.getOperator();
-        JAssert.notNull(operator,"the operator  invalid");
-        if(JLogicalOperator.And.equals(operator)){
+        Object right = evaluate(expr.getRight(), row);
+        JLogicalOperator operator = expr.getOperator();
+        JAssert.notNull(operator, "the operator  invalid");
+        if (JLogicalOperator.And.equals(operator)) {
             return convertToBoolean(left) && convertToBoolean(right);
         }
-        if(JLogicalOperator.Or.equals(operator)){
+        if (JLogicalOperator.Or.equals(operator)) {
             return convertToBoolean(left) || convertToBoolean(right);
         }
         if (JLogicalOperator.XOR.equals(operator)) {
             return convertToBoolean(left) != convertToBoolean(right);
         }
         JAssert.throwNewException("unsupported logical operator: " + expr.getOperator());
-       return null;
+        return null;
     }
 
     private Object evaluateDataSetExpression(JDataSetExpression expr, Map<String, Object> row) {
         throw new UnsupportedOperationException("Subquery evaluation not implemented yet");
     }
+
     private int compareNumbers(Object left, Object right) {
         Number leftNum = convertToNumber(left);
         Number rightNum = convertToNumber(right);

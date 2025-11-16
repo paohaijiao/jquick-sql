@@ -31,7 +31,6 @@ import java.util.stream.Collectors;
  */
 public class JDataSetRecursiveQuery {
     /**
-     *
      * @param initialDataSet
      * @param recursiveFunction
      * @param maxDepth
@@ -82,7 +81,7 @@ public class JDataSetRecursiveQuery {
         return withRecursive(initialDataSet, recursiveFunction, 100, true);
     }
 
-    public static Function<DataSet, DataSet> buildHierarchicalRecursiveFunction(DataSet fullDataSet,  String parentKeyColumn, String childKeyColumn) {
+    public static Function<DataSet, DataSet> buildHierarchicalRecursiveFunction(DataSet fullDataSet, String parentKeyColumn, String childKeyColumn) {
         return currentDataSet -> {
             Set<Object> childKeys = currentDataSet.getRows().stream()
                     .map(row -> row.get(childKeyColumn))

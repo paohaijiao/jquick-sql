@@ -1,4 +1,4 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
@@ -21,9 +21,12 @@
     </dependencies>
     <name>jquick-sql-transformer</name>
     <description>
-        jquicksql is a lightweight sql parser and query engine built on antlr4, supporting standard sql syntax and various olap
-        (online analytical processing) operations such as rollup, drilldown, slice, dice, pivot, etc. this project aims to provide
-        flexible and efficient sql parsing capabilities for java applications, particularly suitable for development scenarios such
+        jquicksql is a lightweight sql parser and query engine built on antlr4, supporting standard sql syntax and
+        various olap
+        (online analytical processing) operations such as rollup, drilldown, slice, dice, pivot, etc. this project aims
+        to provide
+        flexible and efficient sql parsing capabilities for java applications, particularly suitable for development
+        scenarios such
         as data analysis, report generation, and custom query engines.
     </description>
     <url>https://github.com/paohaijiao/jquick-sql</url>

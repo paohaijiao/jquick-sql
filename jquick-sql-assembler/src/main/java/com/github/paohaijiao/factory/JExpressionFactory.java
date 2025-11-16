@@ -42,11 +42,11 @@ public class JExpressionFactory {
         if (value == null) {
             return JLiteralExpression.nullValue();
         } else if (value instanceof String) {
-            return JLiteralExpression.string((String)value);
+            return JLiteralExpression.string((String) value);
         } else if (value instanceof Number) {
-            return JLiteralExpression.number((Number)value);
+            return JLiteralExpression.number((Number) value);
         } else if (value instanceof Boolean) {
-            return JLiteralExpression.bool((Boolean)value);
+            return JLiteralExpression.bool((Boolean) value);
         }
         throw new IllegalArgumentException("Unsupported literal type");
     }

@@ -43,6 +43,7 @@ public class JDataSetHolder {
         dataSetMap.put(tableName.toLowerCase(), dataSet);
         return this;
     }
+
     public JDataSetHolder addAlias(String tableName, String alias) {
         if (tableName == null || alias == null) {
             throw new IllegalArgumentException("tableName and alias required not null");
@@ -60,6 +61,7 @@ public class JDataSetHolder {
         }
         return this;
     }
+
     public DataSet getDataSet(String name) {
         if (name == null) {
             return null;
@@ -74,6 +76,7 @@ public class JDataSetHolder {
         }
         return null;
     }
+
     public boolean containsDataSet(String name) {
         if (name == null) {
             return false;
@@ -81,6 +84,7 @@ public class JDataSetHolder {
         String key = name.toLowerCase();
         return dataSetMap.containsKey(key) || aliasToTableNameMap.containsKey(key);
     }
+
     public DataSet removeDataSet(String tableName) {
         if (tableName == null) {
             return null;
@@ -93,37 +97,46 @@ public class JDataSetHolder {
         }
         return removed;
     }
+
     public String removeAlias(String alias) {
         if (alias == null) {
             return null;
         }
         return aliasToTableNameMap.remove(alias.toLowerCase());
     }
+
     public Set<String> getTableNames() {
         return Collections.unmodifiableSet(dataSetMap.keySet());
     }
+
     public Set<String> getAliases() {
         return Collections.unmodifiableSet(aliasToTableNameMap.keySet());
     }
+
     public String getTableNameByAlias(String alias) {
         if (alias == null) {
             return null;
         }
         return aliasToTableNameMap.get(alias.toLowerCase());
     }
+
     public Collection<DataSet> getAllDataSets() {
         return Collections.unmodifiableCollection(dataSetMap.values());
     }
+
     public void clear() {
         dataSetMap.clear();
         aliasToTableNameMap.clear();
     }
+
     public int size() {
         return dataSetMap.size();
     }
+
     public boolean isEmpty() {
         return dataSetMap.isEmpty();
     }
+
     public String getStats() {
         return String.format("DataSetContainer{table num: %d, alias num: %d}",
                 dataSetMap.size(), aliasToTableNameMap.size());

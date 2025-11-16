@@ -29,8 +29,6 @@ import java.util.stream.Collectors;
  */
 public class JAggregateFunctionFactory {
 
-    private static final Map<String, Function<List<Object>, Object>> FUNCTION_REGISTRY = new ConcurrentHashMap<>();
-
     public static final String SUM = "SUM";
     public static final String AVG = "AVG";
     public static final String MAX = "MAX";
@@ -48,6 +46,7 @@ public class JAggregateFunctionFactory {
     public static final String PRODUCT = "PRODUCT";
     public static final String CONCAT = "CONCAT";
     public static final String DISTINCT_COUNT = "DISTINCT_COUNT";
+    private static final Map<String, Function<List<Object>, Object>> FUNCTION_REGISTRY = new ConcurrentHashMap<>();
 
     static {
         registerBuiltInFunctions();
@@ -156,6 +155,7 @@ public class JAggregateFunctionFactory {
         registerFunction(DISTINCT_COUNT, values ->
                 values.stream().filter(Objects::nonNull).distinct().count());
     }
+
     private static Double calculatePercentile(List<Object> values, double percentile) {
         List<Double> sorted = values.stream()
                 .filter(Objects::nonNull)
@@ -172,10 +172,11 @@ public class JAggregateFunctionFactory {
         double weight = index - lower;
         return sorted.get(lower) * (1 - weight) + sorted.get(upper) * weight;
     }
+
     /**
      * registerFunction
      *
-     * @param name name
+     * @param name     name
      * @param function function
      */
     public static void registerFunction(String name, Function<List<Object>, Object> function) {
@@ -193,8 +194,8 @@ public class JAggregateFunctionFactory {
      * @throws IllegalArgumentException Exception
      */
     public static Function<List<Object>, Object> getFunction(String name) {
-        for(String method:FUNCTION_REGISTRY.keySet()){
-            if(method.equalsIgnoreCase(name)){
+        for (String method : FUNCTION_REGISTRY.keySet()) {
+            if (method.equalsIgnoreCase(name)) {
                 return FUNCTION_REGISTRY.get(method);
             }
         }
@@ -208,8 +209,8 @@ public class JAggregateFunctionFactory {
      * @return exists or not
      */
     public static boolean containsFunction(String name) {
-        for(String method:FUNCTION_REGISTRY.keySet()){
-            if(method.equalsIgnoreCase(name)){
+        for (String method : FUNCTION_REGISTRY.keySet()) {
+            if (method.equalsIgnoreCase(name)) {
                 return true;
             }
         }

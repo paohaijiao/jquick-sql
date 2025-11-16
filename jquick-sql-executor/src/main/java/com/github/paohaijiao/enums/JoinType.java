@@ -2,7 +2,7 @@ package com.github.paohaijiao.enums;
 
 public enum JoinType {
 
-    INNER ,
+    INNER,
 
     CROSS,
 

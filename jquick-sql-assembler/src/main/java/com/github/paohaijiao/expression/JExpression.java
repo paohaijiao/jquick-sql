@@ -24,7 +24,7 @@ import com.github.paohaijiao.enums.JExpressionType;
  * @version 1.0.0
  * @since 2025/8/12
  */
-public abstract  class JExpression {
+public abstract class JExpression {
 
     protected JExpressionType type;
 

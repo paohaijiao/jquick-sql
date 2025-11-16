@@ -57,7 +57,7 @@ public class JOLapDataSetFactory {
     }
 
     private static Row createSalesRow(String region, String department, String category,
-                                       String product, double sales, String quarter, int year) {
+                                      String product, double sales, String quarter, int year) {
         Row row = new Row();
         row.put("region", region);
         row.put("department", department);
@@ -68,6 +68,7 @@ public class JOLapDataSetFactory {
         row.put("year", year);
         return row;
     }
+
     public static DataSet createEmployeeDataSet() {
         List<ColumnMeta> columns = Arrays.asList(
                 new ColumnMeta("employee_id", Integer.class, "employee_data"),
@@ -93,7 +94,7 @@ public class JOLapDataSetFactory {
     }
 
     private static Row createEmployeeRow(int employeeId, String name, String department,
-                                          double salary, String hireDate, String region) {
+                                         double salary, String hireDate, String region) {
         Row row = new Row();
         row.put("employee_id", employeeId);
         row.put("name", name);
@@ -103,6 +104,7 @@ public class JOLapDataSetFactory {
         row.put("region", region);
         return row;
     }
+
     public static DataSet createFinancialDataSet() {
         List<ColumnMeta> columns = Arrays.asList(
                 new ColumnMeta("year", Integer.class, "financial_data"),
@@ -129,7 +131,7 @@ public class JOLapDataSetFactory {
     }
 
     private static Row createFinancialRow(int year, String quarter, int month,
-                                           double revenue, double expense, String department) {
+                                          double revenue, double expense, String department) {
         Row row = new Row();
         row.put("year", year);
         row.put("quarter", quarter);

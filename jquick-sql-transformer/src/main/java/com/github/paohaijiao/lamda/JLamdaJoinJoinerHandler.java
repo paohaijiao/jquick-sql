@@ -46,9 +46,9 @@ public class JLamdaJoinJoinerHandler extends JBaseHandler implements JDataSetJoi
     public DataSet innerJoin(DataSet left, DataSet right, JoinCondition condition) {
         List<Row> resultRows = new ArrayList<>();
         List<ColumnMeta> resultColumns = mergeColumns(left, right);
-        List<Row> list=left.getRows();
+        List<Row> list = left.getRows();
         for (Row leftRow : list) {
-            List<Row> rightRows=right.getRows();
+            List<Row> rightRows = right.getRows();
             for (Row rightRow : rightRows) {
                 if (condition.test(leftRow, rightRow)) {
                     resultRows.add(mergeRows(leftRow, rightRow));
@@ -62,10 +62,10 @@ public class JLamdaJoinJoinerHandler extends JBaseHandler implements JDataSetJoi
     public DataSet leftJoin(DataSet left, DataSet right, JoinCondition condition) {
         List<Row> resultRows = new ArrayList<>();
         List<ColumnMeta> resultColumns = mergeColumns(left, right);
-        List<Row> list=left.getRows();
+        List<Row> list = left.getRows();
         for (Row leftRow : list) {
             boolean hasMatch = false;
-            List<Row> rightRows=right.getRows();
+            List<Row> rightRows = right.getRows();
             for (Row rightRow : rightRows) {
                 if (condition.test(leftRow, rightRow)) {
                     resultRows.add(mergeRows(leftRow, rightRow));
@@ -144,8 +144,9 @@ public class JLamdaJoinJoinerHandler extends JBaseHandler implements JDataSetJoi
 
     @Override
     public DataSet naturalJoin(DataSet left, DataSet right) {
-        Set<String> leftColumns = new HashSet<>(left.getColumnNames());;
-        Set<String> rightColumns =new HashSet<>(right.getColumnNames());
+        Set<String> leftColumns = new HashSet<>(left.getColumnNames());
+        ;
+        Set<String> rightColumns = new HashSet<>(right.getColumnNames());
         Set<String> commonColumns = leftColumns.stream()
                 .filter(rightColumns::contains)
                 .collect(Collectors.toSet());
@@ -213,7 +214,7 @@ public class JLamdaJoinJoinerHandler extends JBaseHandler implements JDataSetJoi
     public DataSet filter(DataSet dataset, JCondition condition) {
         JConditionEvaluator evaluator = new JConditionEvaluator();
         List<Row> filteredRows = dataset.getRows().stream()
-                .filter(row -> evaluator.evaluateCondition( condition, row))
+                .filter(row -> evaluator.evaluateCondition(condition, row))
                 .map(row -> {
                     Row Row = new Row();
                     Row.putAll(row);
@@ -283,8 +284,8 @@ public class JLamdaJoinJoinerHandler extends JBaseHandler implements JDataSetJoi
             for (Map.Entry<String, JFunctionCallExpression> aggEntry : aggregations.entrySet()) {
                 String colName = aggEntry.getKey();
                 JFunctionCallExpression function = aggEntry.getValue();
-                JAssert.isTrue(function.getArguments().size()==1,"the aggregation function must have exactly one argument");
-                JExpression jExpression=function.getArguments().get(0);
+                JAssert.isTrue(function.getArguments().size() == 1, "the aggregation function must have exactly one argument");
+                JExpression jExpression = function.getArguments().get(0);
                 List<Object> values = entry.getValue().stream()
                         .map(row -> {
                             if (jExpression instanceof JColumnExpression) {
@@ -298,9 +299,9 @@ public class JLamdaJoinJoinerHandler extends JBaseHandler implements JDataSetJoi
                 if (function.isDistinct()) {
                     values = values.stream().distinct().collect(Collectors.toList());
                 }
-                Function<List<Object>, Object>  func=JAggregateFunctionFactory.getFunction(function.getFunctionName());
+                Function<List<Object>, Object> func = JAggregateFunctionFactory.getFunction(function.getFunctionName());
                 JAssert.notNull(func, "function not supported");
-                Object aggValue=func.apply(values);
+                Object aggValue = func.apply(values);
 //                Object aggValue = applyAggregateFunction(aggExpr.getFunction(), values);
                 resultRow.put(colName, aggValue);
             }

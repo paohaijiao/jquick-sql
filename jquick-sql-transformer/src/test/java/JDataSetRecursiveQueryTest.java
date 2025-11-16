@@ -87,6 +87,7 @@ public class JDataSetRecursiveQueryTest {
 
         return builder.build();
     }
+
     @Test
     public void testEmployeeHierarchy() {
         DataSet allEmployees = createEmployeeDataSet();
@@ -119,8 +120,8 @@ public class JDataSetRecursiveQueryTest {
     public void testFullOrganizationHierarchy() {
         DataSet allEmployees = createEmployeeDataSet();
         Function<DataSet, DataSet> recursiveFunction = JDataSetRecursiveQuery.buildHierarchicalRecursiveFunction(
-                        allEmployees,
-                        "manager_id", "id");
+                allEmployees,
+                "manager_id", "id");
         DataSet ceo = allEmployees.filter(row -> row.get("manager_id") == null);
         DataSet fullHierarchy = JDataSetRecursiveQuery.withRecursive(ceo, recursiveFunction, 10);
         assertEquals(5, fullHierarchy.size());
@@ -129,7 +130,7 @@ public class JDataSetRecursiveQueryTest {
                 .sorted()
                 .collect(Collectors.toList());
 
-        assertEquals(Arrays.asList("Alice","Bob", "Charlie", "David", "Eve"), names);
+        assertEquals(Arrays.asList("Alice", "Bob", "Charlie", "David", "Eve"), names);
     }
 
     /**
@@ -163,14 +164,13 @@ public class JDataSetRecursiveQueryTest {
         DataSet data = createLinearHierarchyDataSet();
         Function<DataSet, DataSet> recursiveFunction = current -> {
             Integer currentValue = (Integer) current.getRows().get(0).get("value");
-            return data.filter(row ->null!= row.get("parent")&&((Integer) row.get("parent")).equals(currentValue));
+            return data.filter(row -> null != row.get("parent") && ((Integer) row.get("parent")).equals(currentValue));
         };
         DataSet result = JDataSetRecursiveQuery.withRecursive(
                 data.filter(row -> ((Integer) row.get("value")) == 1),
                 recursiveFunction, 5, false);
         assertTrue(result.size() > 5);
     }
-
 
 
     @Test
@@ -212,6 +212,6 @@ public class JDataSetRecursiveQueryTest {
                 .map(row -> (String) row.get("name"))
                 .sorted()
                 .collect(Collectors.toList());
-        assertEquals(Arrays.asList("Alice","Bob", "Charlie"), names);
+        assertEquals(Arrays.asList("Alice", "Bob", "Charlie"), names);
     }
 }
