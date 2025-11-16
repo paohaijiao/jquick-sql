@@ -33,74 +33,78 @@ import org.junit.Test;
 public class JolapTest {
     @Test
     public void rollup() {
-        String rule="SELECT region, department, category, SUM(sales) as total_sales\n" +
+        String rule = "SELECT region, department, category, SUM(sales) as total_sales\n" +
                 "FROM sales_data\n" +
-                "ROLLUP (region, department, category)\n" ;
-                //"ORDER BY region, department, category;";
-        System.out.println(rule);
-        JQuickSQLExecutor executor=new JQuickSQLExecutor();
-        JDataSetHolder dataSetContainer=new JDataSetHolder();
-        dataSetContainer.addDataSet("sales_data", JOLapDataSetFactory.createSalesDataSet());
-        executor.dataSet(dataSetContainer);
-        DataSet dataSet=executor.execute(rule, JEngineEnums.LAMBDA);
-        for (Row row : dataSet.getRows()) {
-            System.out.println(row);
-        }
-    }
-    @Test
-    public void drillDown() {
-        String rule="SELECT region, department, SUM(sales) as total_sales\n" +
-                "FROM sales_data\n" +
-                "DRILLDOWN (region, department)" ;
+                "ROLLUP (region, department, category)\n";
         //"ORDER BY region, department, category;";
         System.out.println(rule);
-        JQuickSQLExecutor executor=new JQuickSQLExecutor();
-        JDataSetHolder dataSetContainer=new JDataSetHolder();
+        JQuickSQLExecutor executor = new JQuickSQLExecutor();
+        JDataSetHolder dataSetContainer = new JDataSetHolder();
         dataSetContainer.addDataSet("sales_data", JOLapDataSetFactory.createSalesDataSet());
         executor.dataSet(dataSetContainer);
-        DataSet dataSet=executor.execute(rule, JEngineEnums.LAMBDA);
+        DataSet dataSet = executor.execute(rule, JEngineEnums.LAMBDA);
         for (Row row : dataSet.getRows()) {
             System.out.println(row);
         }
     }
+
+    @Test
+    public void drillDown() {
+        String rule = "SELECT region, department, SUM(sales) as total_sales\n" +
+                "FROM sales_data\n" +
+                "DRILLDOWN (region, department)";
+        //"ORDER BY region, department, category;";
+        System.out.println(rule);
+        JQuickSQLExecutor executor = new JQuickSQLExecutor();
+        JDataSetHolder dataSetContainer = new JDataSetHolder();
+        dataSetContainer.addDataSet("sales_data", JOLapDataSetFactory.createSalesDataSet());
+        executor.dataSet(dataSetContainer);
+        DataSet dataSet = executor.execute(rule, JEngineEnums.LAMBDA);
+        for (Row row : dataSet.getRows()) {
+            System.out.println(row);
+        }
+    }
+
     @Test
     public void slice() {
-        String rule="SELECT * FROM sales_data\n" +
-                "SLICE (department = 'Electronics')" ;
+        String rule = "SELECT * FROM sales_data\n" +
+                "SLICE (department = 'Electronics')";
         System.out.println(rule);
-        JQuickSQLExecutor executor=new JQuickSQLExecutor();
-        JDataSetHolder dataSetContainer=new JDataSetHolder();
+        JQuickSQLExecutor executor = new JQuickSQLExecutor();
+        JDataSetHolder dataSetContainer = new JDataSetHolder();
         dataSetContainer.addDataSet("sales_data", JOLapDataSetFactory.createSalesDataSet());
         executor.dataSet(dataSetContainer);
-        DataSet dataSet=executor.execute(rule, JEngineEnums.LAMBDA);
+        DataSet dataSet = executor.execute(rule, JEngineEnums.LAMBDA);
         for (Row row : dataSet.getRows()) {
             System.out.println(row);
         }
     }
+
     @Test
     public void dice() {
-        String rule="SELECT * FROM sales_data\n" +
-                "DICE (region = 'North', department = 'Electronics')" ;
+        String rule = "SELECT * FROM sales_data\n" +
+                "DICE (region = 'North', department = 'Electronics')";
         System.out.println(rule);
-        JQuickSQLExecutor executor=new JQuickSQLExecutor();
-        JDataSetHolder dataSetContainer=new JDataSetHolder();
+        JQuickSQLExecutor executor = new JQuickSQLExecutor();
+        JDataSetHolder dataSetContainer = new JDataSetHolder();
         dataSetContainer.addDataSet("sales_data", JOLapDataSetFactory.createSalesDataSet());
         executor.dataSet(dataSetContainer);
-        DataSet dataSet=executor.execute(rule, JEngineEnums.LAMBDA);
+        DataSet dataSet = executor.execute(rule, JEngineEnums.LAMBDA);
         for (Row row : dataSet.getRows()) {
             System.out.println(row);
         }
     }
+
     @Test
     public void pivot() {
-        String rule="SELECT * FROM sales_data\n" +
-                "PIVOT (department, sales, SUM)" ;
+        String rule = "SELECT * FROM sales_data\n" +
+                "PIVOT (department, sales, SUM)";
         System.out.println(rule);
-        JQuickSQLExecutor executor=new JQuickSQLExecutor();
-        JDataSetHolder dataSetContainer=new JDataSetHolder();
+        JQuickSQLExecutor executor = new JQuickSQLExecutor();
+        JDataSetHolder dataSetContainer = new JDataSetHolder();
         dataSetContainer.addDataSet("sales_data", JOLapDataSetFactory.createSalesDataSet());
         executor.dataSet(dataSetContainer);
-        DataSet dataSet=executor.execute(rule, JEngineEnums.LAMBDA);
+        DataSet dataSet = executor.execute(rule, JEngineEnums.LAMBDA);
         for (Row row : dataSet.getRows()) {
             System.out.println(row);
         }

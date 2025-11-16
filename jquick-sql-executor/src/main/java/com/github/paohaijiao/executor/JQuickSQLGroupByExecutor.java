@@ -32,7 +32,7 @@ import org.antlr.v4.runtime.CommonTokenStream;
  */
 public class JQuickSQLGroupByExecutor {
 
-    public DataSet execute(String sql, JEngineEnums engine){
+    public DataSet execute(String sql, JEngineEnums engine) {
         JQuickSQLLexer lexer = new JQuickSQLLexer(CharStreams.fromString(sql));
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         JQuickSQLParser parser = new JQuickSQLParser(tokens);
@@ -40,6 +40,6 @@ public class JQuickSQLGroupByExecutor {
         JQuikSQLCommonVisitor tv = new JQuikSQLCommonVisitor();
         tv.engine(engine);
         Object object = tv.visit(tree);
-        return (DataSet)object;
+        return (DataSet) object;
     }
 }

@@ -53,6 +53,7 @@ public class JDataSetFactory {
         );
         return new DataSet(columns, rows);
     }
+
     public static DataSet createUsersDataSet1() {
         List<ColumnMeta> columns = Arrays.asList(
                 new ColumnMeta("id", Integer.class, "users"),
@@ -114,6 +115,7 @@ public class JDataSetFactory {
         );
         return new DataSet(columns, rows);
     }
+
     public static DataSet createProductsDataSet() {
         List<ColumnMeta> columns = Arrays.asList(
                 new ColumnMeta("product_id", Integer.class, "products"),
@@ -127,6 +129,7 @@ public class JDataSetFactory {
         );
         return new DataSet(columns, rows);
     }
+
     public static DataSet createSmallUsersDataSet() {
         List<ColumnMeta> columns = Arrays.asList(
                 new ColumnMeta("id", Integer.class, "small_users"),
@@ -154,6 +157,7 @@ public class JDataSetFactory {
         );
         return new DataSet(columns, rows);
     }
+
     private static Row createUserRow(int id, String name, int age, String city, double salary) {
         Row row = new Row();
         row.put("id", id);

@@ -50,26 +50,31 @@ import java.util.Map;
  */
 public class JQuikSQLCoreVisitor extends JQuickSQLBaseVisitor {
 
-    protected JContext context;
-
-    protected JQuickSQLLexer lexer;
-
-    protected CommonTokenStream tokenStream;
-
-    protected JQuickSQLParser parser;
-
     protected final Map<String, DataSet> tableRegistry = new HashMap<>();
-
+    protected JContext context;
+    protected JQuickSQLLexer lexer;
+    protected CommonTokenStream tokenStream;
+    protected JQuickSQLParser parser;
     protected JDataSetJoinerStrategy joinerStrategy;
-    protected JEngineEnums engine=JEngineEnums.LAMBDA;
+    protected JEngineEnums engine = JEngineEnums.LAMBDA;
 
-    protected JDataSetHolder dataSetHolder=new JDataSetHolder();
+    protected JDataSetHolder dataSetHolder = new JDataSetHolder();
 
-    protected JConsole console=new JConsole();
+    protected JConsole console = new JConsole();
+
+    public static String trim(String str) {
+        if (null == str || "".equals(str)) {
+            return str;
+        }
+        String newStr = str.replaceAll("\"", "");
+        newStr = str.replaceAll("'", "");
+        return newStr;
+    }
 
     public void registerDataSet(String tableName, DataSet dataSet) {
         tableRegistry.put(tableName, dataSet);
     }
+
     protected DataSet aliasColumns(DataSet dataset, String alias) {
         List<ColumnMeta> newColumns = new ArrayList<>();
         List<Row> newRows = new ArrayList<>();
@@ -90,16 +95,7 @@ public class JQuikSQLCoreVisitor extends JQuickSQLBaseVisitor {
         return new DataSet(newColumns, newRows);
     }
 
-
-    public static String trim(String str) {
-        if(null==str || "".equals(str)) {
-            return str;
-        }
-        String newStr = str.replaceAll("\"", "");
-        newStr= str.replaceAll("'", "");
-        return newStr;
-    }
-    protected Number getNumber(String number){
+    protected Number getNumber(String number) {
         NumberFormat format = NumberFormat.getInstance();
         Number num = null;
         try {
@@ -109,6 +105,7 @@ public class JQuikSQLCoreVisitor extends JQuickSQLBaseVisitor {
         }
         return num;
     }
+
     protected Number convertToNumber(Object value) {
         if (value instanceof Number) {
             return (Number) value;
@@ -121,6 +118,7 @@ public class JQuikSQLCoreVisitor extends JQuickSQLBaseVisitor {
         }
         throw new RuntimeException("Unsupported numeric type: " + value.getClass());
     }
+
     protected boolean convertToBoolean(Object value) {
         if (value instanceof Boolean) {
             return (Boolean) value;
@@ -129,6 +127,7 @@ public class JQuikSQLCoreVisitor extends JQuickSQLBaseVisitor {
             return false;
         }
     }
+
     protected int compareValues(Object a, Object b) {
         if (a instanceof Number && b instanceof Number) {
             double d1 = ((Number) a).doubleValue();
@@ -139,10 +138,11 @@ public class JQuikSQLCoreVisitor extends JQuickSQLBaseVisitor {
         }
         return a.toString().compareTo(b.toString());
     }
+
     protected JCondition convertExpressionToCondition(JExpression expression) {
-      JAssert.isTrue(expression instanceof JBinaryExpression,"the expression is not a JBinaryExpression");
-      JBinaryExpression compExpr = (JBinaryExpression) expression;
-      JComparisonOperator comparisonOperator=JComparisonOperator.symbolOf(compExpr.getOperator().getSymbol());
-      return new JComparisonCondition(compExpr.getLeft(), comparisonOperator, compExpr.getRight());
+        JAssert.isTrue(expression instanceof JBinaryExpression, "the expression is not a JBinaryExpression");
+        JBinaryExpression compExpr = (JBinaryExpression) expression;
+        JComparisonOperator comparisonOperator = JComparisonOperator.symbolOf(compExpr.getOperator().getSymbol());
+        return new JComparisonCondition(compExpr.getLeft(), comparisonOperator, compExpr.getRight());
     }
 }

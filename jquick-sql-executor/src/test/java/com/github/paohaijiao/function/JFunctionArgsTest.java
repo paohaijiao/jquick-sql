@@ -32,7 +32,7 @@ import org.junit.Test;
 public class JFunctionArgsTest {
     @Test
     public void functionArg() {
-        String rule="'2025-01-01 00:01:02'::'yyyy-MM-dd HH:mm:ss'";
+        String rule = "'2025-01-01 00:01:02'::'yyyy-MM-dd HH:mm:ss'";
         JQuickSQLLexer lexer = new JQuickSQLLexer(CharStreams.fromString(rule));
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         JQuickSQLParser parser = new JQuickSQLParser(tokens);
@@ -41,9 +41,10 @@ public class JFunctionArgsTest {
         Object object = tv.visit(tree);
         System.out.println(object);
     }
+
     @Test
     public void functionArgs() {
-        String rule="'2025-01-01 00:01:02'::'yyyy-MM-dd HH:mm:ss'";
+        String rule = "'2025-01-01 00:01:02'::'yyyy-MM-dd HH:mm:ss'";
         JQuickSQLLexer lexer = new JQuickSQLLexer(CharStreams.fromString(rule));
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         JQuickSQLParser parser = new JQuickSQLParser(tokens);
@@ -52,9 +53,10 @@ public class JFunctionArgsTest {
         Object object = tv.visit(tree);
         System.out.println(object);
     }
+
     @Test
     public void arg() {
-        String rule="'2025-01-01 00:01:02'::'yyyy-MM-dd HH:mm:ss'";
+        String rule = "'2025-01-01 00:01:02'::'yyyy-MM-dd HH:mm:ss'";
         JQuickSQLLexer lexer = new JQuickSQLLexer(CharStreams.fromString(rule));
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         JQuickSQLParser parser = new JQuickSQLParser(tokens);
@@ -63,9 +65,10 @@ public class JFunctionArgsTest {
         Object object = tv.visit(tree);
         System.out.println(object);
     }
+
     @Test
     public void functionCall() {
-        String rule="sum(1,2)";
+        String rule = "sum(1,2)";
         JQuickSQLLexer lexer = new JQuickSQLLexer(CharStreams.fromString(rule));
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         JQuickSQLParser parser = new JQuickSQLParser(tokens);
