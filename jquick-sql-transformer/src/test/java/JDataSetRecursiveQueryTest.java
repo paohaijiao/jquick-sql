@@ -150,7 +150,7 @@ public class JDataSetRecursiveQueryTest {
                 .build();
         Function<DataSet, DataSet> recursiveFunction = current -> {
             Integer currentId = (Integer) current.getRows().get(0).get("id");
-            return cyclicDataSet.filter(row -> ((Integer) row.get("manager_id")).equals(currentId));
+            return cyclicDataSet.filter(row -> row.get("manager_id").equals(currentId));
         };
         DataSet result = JDataSetRecursiveQuery.withRecursive(cyclicDataSet, recursiveFunction, 3);
         assertEquals(3, result.size());
@@ -164,7 +164,7 @@ public class JDataSetRecursiveQueryTest {
         DataSet data = createLinearHierarchyDataSet();
         Function<DataSet, DataSet> recursiveFunction = current -> {
             Integer currentValue = (Integer) current.getRows().get(0).get("value");
-            return data.filter(row -> null != row.get("parent") && ((Integer) row.get("parent")).equals(currentValue));
+            return data.filter(row -> null != row.get("parent") && row.get("parent").equals(currentValue));
         };
         DataSet result = JDataSetRecursiveQuery.withRecursive(
                 data.filter(row -> ((Integer) row.get("value")) == 1),
