@@ -8,7 +8,6 @@
 [![Last Commit](https://img.shields.io/github/last-commit/paohaijiao/jquick-sql.svg)](https://github.com/paohaijiao/jquick-sql/commits/main)
 [![Language](https://img.shields.io/github/languages/top/paohaijiao/jquick-sql.svg)](https://github.com/paohaijiao/jquick-sql)
 ## 目录
-
 - [概述](#概述)
 - [基本语法结构](#基本语法结构)
     - [SELECT 语句](#select-语句)
@@ -34,7 +33,6 @@
 - [附录：语法规则摘要](#附录语法规则摘要)
 
 ## 概述
-
 JQuickSQL 是一个轻量级 SQL 查询引擎，支持异构数据库,文件,restful 请求等进行关联查询，JOIN，提供了标准 SQL 语法和 OLAP
 操作，适用于通用数据的查询和分析。
 
@@ -53,9 +51,7 @@ FROM table_name
 ```
 
 ### FROM 子句
-
 支持表名、别名和子查询：
-
 ```sql
 FROM table_name [AS alias]
 FROM (SELECT ...) AS subquery_alias
