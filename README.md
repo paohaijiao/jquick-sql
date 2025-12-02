@@ -1,7 +1,12 @@
 # JQuickSQL 引擎使用文档
 
-简体中文 | [English](./readme-en.md)
-
+简体中文 | [English](./README-EN.md)
+## 项目状态
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+[![GitHub Stars](https://img.shields.io/github/stars/paohaijiao/jquick-sql.svg?style=social&label=Stars)](https://github.com/paohaijiao/jquick-sql)
+[![GitHub Forks](https://img.shields.io/github/forks/paohaijiao/jquick-sql.svg?style=social&label=Forks)](https://github.com/paohaijiao/jquick-sql/fork)
+[![Last Commit](https://img.shields.io/github/last-commit/paohaijiao/jquick-sql.svg)](https://github.com/paohaijiao/jquick-sql/commits/main)
+[![Language](https://img.shields.io/github/languages/top/paohaijiao/jquick-sql.svg)](https://github.com/paohaijiao/jquick-sql)
 ## 目录
 
 - [概述](#概述)
