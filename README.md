@@ -39,7 +39,6 @@ JQuickSQL 是一个轻量级 SQL 查询引擎，支持异构数据库,文件,res
 ## 基本语法结构
 
 ### SELECT 语句
-
 ```sql
 SELECT [ALL | DISTINCT] column1, column2, ...
 FROM table_name
