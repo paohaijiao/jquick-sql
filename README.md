@@ -45,7 +45,6 @@ FROM table_name
 [ORDER BY column1 [ASC|DESC], ...]
 [LIMIT n [OFFSET m]];
 ```
-
 ### FROM 子句
 支持表名、别名和子查询：
 ```sql
