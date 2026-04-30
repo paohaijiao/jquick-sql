@@ -18,9 +18,9 @@ package com.github.paohaijiao.select;
 import com.github.paohaijiao.dataset.ColumnMeta;
 import com.github.paohaijiao.dataset.DataSet;
 import com.github.paohaijiao.dataset.Row;
-import com.github.paohaijiao.enums.JEngineEnums;
+import com.github.paohaijiao.enums.JQuickSqlEngineEnums;
 import com.github.paohaijiao.executor.JQuickSQLExecutor;
-import com.github.paohaijiao.support.JDataSetHolder;
+import com.github.paohaijiao.support.JQuickSqlDataSetHolder;
 import org.junit.Test;
 
 import java.util.Arrays;
@@ -90,10 +90,10 @@ public class JSelectTest {
     public void limit() {
         String rule = "select * from orders limit 1";
         JQuickSQLExecutor executor = new JQuickSQLExecutor();
-        JDataSetHolder dataSetContainer = new JDataSetHolder();
+        JQuickSqlDataSetHolder dataSetContainer = new JQuickSqlDataSetHolder();
         dataSetContainer.addDataSet("orders", createOrdersDataSet());
         executor.dataSet(dataSetContainer);
-        DataSet dataSet = executor.execute(rule, JEngineEnums.LAMBDA);
+        DataSet dataSet = executor.execute(rule, JQuickSqlEngineEnums.LAMBDA);
         for (Row row : dataSet.getRows()) {
             System.out.println(row);
         }
@@ -103,10 +103,10 @@ public class JSelectTest {
     public void limitOffset() {
         String rule = "select * from orders limit  1 , 1";
         JQuickSQLExecutor executor = new JQuickSQLExecutor();
-        JDataSetHolder dataSetContainer = new JDataSetHolder();
+        JQuickSqlDataSetHolder dataSetContainer = new JQuickSqlDataSetHolder();
         dataSetContainer.addDataSet("orders", createOrdersDataSet());
         executor.dataSet(dataSetContainer);
-        DataSet dataSet = executor.execute(rule, JEngineEnums.LAMBDA);
+        DataSet dataSet = executor.execute(rule, JQuickSqlEngineEnums.LAMBDA);
         for (Row row : dataSet.getRows()) {
             System.out.println(row);
         }
@@ -116,10 +116,10 @@ public class JSelectTest {
     public void orderBy() {
         String rule = "select * from orders order by user_id desc,order_id asc";
         JQuickSQLExecutor executor = new JQuickSQLExecutor();
-        JDataSetHolder dataSetContainer = new JDataSetHolder();
+        JQuickSqlDataSetHolder dataSetContainer = new JQuickSqlDataSetHolder();
         dataSetContainer.addDataSet("orders", createOrdersDataSet());
         executor.dataSet(dataSetContainer);
-        DataSet dataSet = executor.execute(rule, JEngineEnums.LAMBDA);
+        DataSet dataSet = executor.execute(rule, JQuickSqlEngineEnums.LAMBDA);
         for (Row row : dataSet.getRows()) {
             System.out.println(row);
         }
@@ -130,10 +130,10 @@ public class JSelectTest {
         String rule = "select department, count(department) as cnt from orders group  by department ";
         System.out.println(rule);
         JQuickSQLExecutor executor = new JQuickSQLExecutor();
-        JDataSetHolder dataSetContainer = new JDataSetHolder();
+        JQuickSqlDataSetHolder dataSetContainer = new JQuickSqlDataSetHolder();
         dataSetContainer.addDataSet("orders", createAggregationTestData());
         executor.dataSet(dataSetContainer);
-        DataSet dataSet = executor.execute(rule, JEngineEnums.LAMBDA);
+        DataSet dataSet = executor.execute(rule, JQuickSqlEngineEnums.LAMBDA);
         for (Row row : dataSet.getRows()) {
             System.out.println(row);
         }
@@ -144,10 +144,10 @@ public class JSelectTest {
         String rule = "select department, count(department) as cnt from orders group  by department having cnt>2 ";
         System.out.println(rule);
         JQuickSQLExecutor executor = new JQuickSQLExecutor();
-        JDataSetHolder dataSetContainer = new JDataSetHolder();
+        JQuickSqlDataSetHolder dataSetContainer = new JQuickSqlDataSetHolder();
         dataSetContainer.addDataSet("orders", createAggregationTestData());
         executor.dataSet(dataSetContainer);
-        DataSet dataSet = executor.execute(rule, JEngineEnums.LAMBDA);
+        DataSet dataSet = executor.execute(rule, JQuickSqlEngineEnums.LAMBDA);
         for (Row row : dataSet.getRows()) {
             System.out.println(row);
         }

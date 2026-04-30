@@ -17,10 +17,10 @@ package com.github.paohaijiao.select;
 
 import com.github.paohaijiao.dataset.DataSet;
 import com.github.paohaijiao.dataset.Row;
-import com.github.paohaijiao.enums.JEngineEnums;
+import com.github.paohaijiao.enums.JQuickSqlEngineEnums;
 import com.github.paohaijiao.executor.JQuickSQLExecutor;
 import com.github.paohaijiao.model.JDataSetFactory;
-import com.github.paohaijiao.support.JDataSetHolder;
+import com.github.paohaijiao.support.JQuickSqlDataSetHolder;
 import org.junit.Test;
 
 /**
@@ -36,11 +36,11 @@ public class DataSetTest {
     public void union() {
         String rule = "select * from user1 a union select * from user2 b";
         JQuickSQLExecutor executor = new JQuickSQLExecutor();
-        JDataSetHolder dataSetContainer = new JDataSetHolder();
+        JQuickSqlDataSetHolder dataSetContainer = new JQuickSqlDataSetHolder();
         dataSetContainer.addDataSet("user1", JDataSetFactory.createUsersDataSet());
         dataSetContainer.addDataSet("user2", JDataSetFactory.createUsersDataSet1());
         executor.dataSet(dataSetContainer);
-        DataSet dataSet = executor.execute(rule, JEngineEnums.LAMBDA);
+        DataSet dataSet = executor.execute(rule, JQuickSqlEngineEnums.LAMBDA);
         for (Row row : dataSet.getRows()) {
             System.out.println(row);
         }
@@ -50,11 +50,11 @@ public class DataSetTest {
     public void minus() {
         String rule = "select * from user1 a minus select * from user2 b";
         JQuickSQLExecutor executor = new JQuickSQLExecutor();
-        JDataSetHolder dataSetContainer = new JDataSetHolder();
+        JQuickSqlDataSetHolder dataSetContainer = new JQuickSqlDataSetHolder();
         dataSetContainer.addDataSet("user1", JDataSetFactory.createUsersDataSet());
         dataSetContainer.addDataSet("user2", JDataSetFactory.createUsersDataSet1());
         executor.dataSet(dataSetContainer);
-        DataSet dataSet = executor.execute(rule, JEngineEnums.LAMBDA);
+        DataSet dataSet = executor.execute(rule, JQuickSqlEngineEnums.LAMBDA);
         for (Row row : dataSet.getRows()) {
             System.out.println(row);
         }
@@ -64,11 +64,11 @@ public class DataSetTest {
     public void intersect() {
         String rule = "select * from user1 a intersect select * from user2 b";
         JQuickSQLExecutor executor = new JQuickSQLExecutor();
-        JDataSetHolder dataSetContainer = new JDataSetHolder();
+        JQuickSqlDataSetHolder dataSetContainer = new JQuickSqlDataSetHolder();
         dataSetContainer.addDataSet("user1", JDataSetFactory.createUsersDataSet());
         dataSetContainer.addDataSet("user2", JDataSetFactory.createUsersDataSet1());
         executor.dataSet(dataSetContainer);
-        DataSet dataSet = executor.execute(rule, JEngineEnums.LAMBDA);
+        DataSet dataSet = executor.execute(rule, JQuickSqlEngineEnums.LAMBDA);
         for (Row row : dataSet.getRows()) {
             System.out.println(row);
         }

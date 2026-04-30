@@ -17,7 +17,7 @@ package com.github.paohaijiao.visitor;
 
 import com.github.paohaijiao.dataset.DataSet;
 import com.github.paohaijiao.parser.JQuickSQLParser;
-import com.github.paohaijiao.support.JDataSetRecursiveQuery;
+import com.github.paohaijiao.support.JQuickSqlDataSetRecursiveQuery;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -57,7 +57,7 @@ public class JQuikSQLCommonTableExpressionVisitor extends JQuikSQLSelectStatemen
     private DataSet processRecursiveCte(JQuickSQLParser.CommonTableExpressionContext cteCtx, boolean isRecursive) {
         DataSet initialDataSet = (DataSet) visit(cteCtx.initialQuery());
         Function<DataSet, DataSet> recursiveFunction = buildRecursiveFunction(cteCtx.recursivePart());
-        return JDataSetRecursiveQuery.withRecursive(
+        return JQuickSqlDataSetRecursiveQuery.withRecursive(
                 initialDataSet,
                 recursiveFunction,
                 100,

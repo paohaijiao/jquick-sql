@@ -17,10 +17,10 @@ package com.github.paohaijiao.select;
 
 import com.github.paohaijiao.dataset.DataSet;
 import com.github.paohaijiao.dataset.Row;
-import com.github.paohaijiao.enums.JEngineEnums;
+import com.github.paohaijiao.enums.JQuickSqlEngineEnums;
 import com.github.paohaijiao.executor.JQuickSQLExecutor;
 import com.github.paohaijiao.model.JOLapDataSetFactory;
-import com.github.paohaijiao.support.JDataSetHolder;
+import com.github.paohaijiao.support.JQuickSqlDataSetHolder;
 import org.junit.Test;
 
 /**
@@ -39,10 +39,10 @@ public class JolapTest {
         //"ORDER BY region, department, category;";
         System.out.println(rule);
         JQuickSQLExecutor executor = new JQuickSQLExecutor();
-        JDataSetHolder dataSetContainer = new JDataSetHolder();
+        JQuickSqlDataSetHolder dataSetContainer = new JQuickSqlDataSetHolder();
         dataSetContainer.addDataSet("sales_data", JOLapDataSetFactory.createSalesDataSet());
         executor.dataSet(dataSetContainer);
-        DataSet dataSet = executor.execute(rule, JEngineEnums.LAMBDA);
+        DataSet dataSet = executor.execute(rule, JQuickSqlEngineEnums.LAMBDA);
         for (Row row : dataSet.getRows()) {
             System.out.println(row);
         }
@@ -56,10 +56,10 @@ public class JolapTest {
         //"ORDER BY region, department, category;";
         System.out.println(rule);
         JQuickSQLExecutor executor = new JQuickSQLExecutor();
-        JDataSetHolder dataSetContainer = new JDataSetHolder();
+        JQuickSqlDataSetHolder dataSetContainer = new JQuickSqlDataSetHolder();
         dataSetContainer.addDataSet("sales_data", JOLapDataSetFactory.createSalesDataSet());
         executor.dataSet(dataSetContainer);
-        DataSet dataSet = executor.execute(rule, JEngineEnums.LAMBDA);
+        DataSet dataSet = executor.execute(rule, JQuickSqlEngineEnums.LAMBDA);
         for (Row row : dataSet.getRows()) {
             System.out.println(row);
         }
@@ -71,10 +71,10 @@ public class JolapTest {
                 "SLICE (department = 'Electronics')";
         System.out.println(rule);
         JQuickSQLExecutor executor = new JQuickSQLExecutor();
-        JDataSetHolder dataSetContainer = new JDataSetHolder();
+        JQuickSqlDataSetHolder dataSetContainer = new JQuickSqlDataSetHolder();
         dataSetContainer.addDataSet("sales_data", JOLapDataSetFactory.createSalesDataSet());
         executor.dataSet(dataSetContainer);
-        DataSet dataSet = executor.execute(rule, JEngineEnums.LAMBDA);
+        DataSet dataSet = executor.execute(rule, JQuickSqlEngineEnums.LAMBDA);
         for (Row row : dataSet.getRows()) {
             System.out.println(row);
         }
@@ -86,10 +86,10 @@ public class JolapTest {
                 "DICE (region = 'North', department = 'Electronics')";
         System.out.println(rule);
         JQuickSQLExecutor executor = new JQuickSQLExecutor();
-        JDataSetHolder dataSetContainer = new JDataSetHolder();
+        JQuickSqlDataSetHolder dataSetContainer = new JQuickSqlDataSetHolder();
         dataSetContainer.addDataSet("sales_data", JOLapDataSetFactory.createSalesDataSet());
         executor.dataSet(dataSetContainer);
-        DataSet dataSet = executor.execute(rule, JEngineEnums.LAMBDA);
+        DataSet dataSet = executor.execute(rule, JQuickSqlEngineEnums.LAMBDA);
         for (Row row : dataSet.getRows()) {
             System.out.println(row);
         }
@@ -101,10 +101,10 @@ public class JolapTest {
                 "PIVOT (department, sales, SUM)";
         System.out.println(rule);
         JQuickSQLExecutor executor = new JQuickSQLExecutor();
-        JDataSetHolder dataSetContainer = new JDataSetHolder();
+        JQuickSqlDataSetHolder dataSetContainer = new JQuickSqlDataSetHolder();
         dataSetContainer.addDataSet("sales_data", JOLapDataSetFactory.createSalesDataSet());
         executor.dataSet(dataSetContainer);
-        DataSet dataSet = executor.execute(rule, JEngineEnums.LAMBDA);
+        DataSet dataSet = executor.execute(rule, JQuickSqlEngineEnums.LAMBDA);
         for (Row row : dataSet.getRows()) {
             System.out.println(row);
         }

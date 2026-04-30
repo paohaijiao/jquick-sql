@@ -16,9 +16,9 @@
 package com.github.paohaijiao.visitor;
 
 import com.github.paohaijiao.exception.JAssert;
-import com.github.paohaijiao.expression.JExpression;
-import com.github.paohaijiao.expression.JFunctionCallExpression;
-import com.github.paohaijiao.expression.JStarExpression;
+import com.github.paohaijiao.expression.JQuickSqlExpression;
+import com.github.paohaijiao.expression.JQuickSqlFunctionCallExpression;
+import com.github.paohaijiao.expression.JQuickSqlStarExpression;
 import com.github.paohaijiao.parser.JQuickSQLParser;
 
 import java.util.ArrayList;
@@ -33,40 +33,40 @@ import java.util.List;
  */
 public class JQuikSQLFunctionStatementVisitor extends JQuikSQLExpressionStatementVisitor {
     @Override
-    public JExpression visitFunctionArg(JQuickSQLParser.FunctionArgContext ctx) {
+    public JQuickSqlExpression visitFunctionArg(JQuickSQLParser.FunctionArgContext ctx) {
         JAssert.notNull(ctx.expression(), "expression not  null");
-        return (JExpression) visit(ctx.expression());
+        return (JQuickSqlExpression) visit(ctx.expression());
     }
 
     @Override
-    public List<JExpression> visitFunctionArgs(JQuickSQLParser.FunctionArgsContext ctx) {
-        List<JExpression> args = new ArrayList<>();
+    public List<JQuickSqlExpression> visitFunctionArgs(JQuickSQLParser.FunctionArgsContext ctx) {
+        List<JQuickSqlExpression> args = new ArrayList<>();
         for (int i = 0; i < ctx.functionArg().size(); i++) {
-            JExpression obj = visitFunctionArg(ctx.functionArg(i));
+            JQuickSqlExpression obj = visitFunctionArg(ctx.functionArg(i));
             args.add(obj);
         }
         return args;
     }
 
     @Override
-    public JFunctionCallExpression visitFunctionCall(JQuickSQLParser.FunctionCallContext ctx) {
+    public JQuickSqlFunctionCallExpression visitFunctionCall(JQuickSQLParser.FunctionCallContext ctx) {
         JAssert.notNull(ctx.uid(), "uid must not be null");
         String funcName = ctx.uid().getText();
-        List<JExpression> args = new ArrayList<>();
+        List<JQuickSqlExpression> args = new ArrayList<>();
         if (ctx.arg() != null) {
             args = visitArg(ctx.arg());
         }
-        JFunctionCallExpression jFunctionCallModel = new JFunctionCallExpression(funcName, args);
+        JQuickSqlFunctionCallExpression jFunctionCallModel = new JQuickSqlFunctionCallExpression(funcName, args);
         return jFunctionCallModel;
     }
 
     @Override
-    public List<JExpression> visitArg(JQuickSQLParser.ArgContext ctx) {
-        List<JExpression> args = new ArrayList<>();
+    public List<JQuickSqlExpression> visitArg(JQuickSQLParser.ArgContext ctx) {
+        List<JQuickSqlExpression> args = new ArrayList<>();
         if (null != ctx.functionArgs()) {
             args = visitFunctionArgs(ctx.functionArgs());
         } else if ("*".equalsIgnoreCase(ctx.getText())) {
-            args.add(new JStarExpression());
+            args.add(new JQuickSqlStarExpression());
         }
         return args;
     }

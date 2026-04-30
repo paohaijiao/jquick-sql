@@ -17,7 +17,7 @@
 
 import com.github.paohaijiao.dataset.DataSet;
 import com.github.paohaijiao.dataset.Row;
-import com.github.paohaijiao.support.JDataSetRecursiveQuery;
+import com.github.paohaijiao.support.JQuickSqlDataSetRecursiveQuery;
 import org.junit.Test;
 
 import java.util.Arrays;
@@ -107,7 +107,7 @@ public class JDataSetRecursiveQueryTest {
 
             return new DataSet(allEmployees.getColumns(), subordinates);
         };
-        DataSet allSubordinates = JDataSetRecursiveQuery.withRecursive(
+        DataSet allSubordinates = JQuickSqlDataSetRecursiveQuery.withRecursive(
                 ceo, findSubordinates, 10, true);
         assertEquals(5, allSubordinates.size());
         assertTrue(allSubordinates.getRows().stream()
@@ -119,11 +119,11 @@ public class JDataSetRecursiveQueryTest {
     @Test
     public void testFullOrganizationHierarchy() {
         DataSet allEmployees = createEmployeeDataSet();
-        Function<DataSet, DataSet> recursiveFunction = JDataSetRecursiveQuery.buildHierarchicalRecursiveFunction(
+        Function<DataSet, DataSet> recursiveFunction = JQuickSqlDataSetRecursiveQuery.buildHierarchicalRecursiveFunction(
                 allEmployees,
                 "manager_id", "id");
         DataSet ceo = allEmployees.filter(row -> row.get("manager_id") == null);
-        DataSet fullHierarchy = JDataSetRecursiveQuery.withRecursive(ceo, recursiveFunction, 10);
+        DataSet fullHierarchy = JQuickSqlDataSetRecursiveQuery.withRecursive(ceo, recursiveFunction, 10);
         assertEquals(5, fullHierarchy.size());
         List<String> names = fullHierarchy.getRows().stream()
                 .map(row -> (String) row.get("name"))
@@ -152,7 +152,7 @@ public class JDataSetRecursiveQueryTest {
             Integer currentId = (Integer) current.getRows().get(0).get("id");
             return cyclicDataSet.filter(row -> row.get("manager_id").equals(currentId));
         };
-        DataSet result = JDataSetRecursiveQuery.withRecursive(cyclicDataSet, recursiveFunction, 3);
+        DataSet result = JQuickSqlDataSetRecursiveQuery.withRecursive(cyclicDataSet, recursiveFunction, 3);
         assertEquals(3, result.size());
     }
 
@@ -166,7 +166,7 @@ public class JDataSetRecursiveQueryTest {
             Integer currentValue = (Integer) current.getRows().get(0).get("value");
             return data.filter(row -> null != row.get("parent") && row.get("parent").equals(currentValue));
         };
-        DataSet result = JDataSetRecursiveQuery.withRecursive(
+        DataSet result = JQuickSqlDataSetRecursiveQuery.withRecursive(
                 data.filter(row -> ((Integer) row.get("value")) == 1),
                 recursiveFunction, 5, false);
         assertTrue(result.size() > 5);
@@ -180,7 +180,7 @@ public class JDataSetRecursiveQueryTest {
                 .build();
         Function<DataSet, DataSet> recursiveFunction = data -> data;
 
-        DataSet result = JDataSetRecursiveQuery.withRecursive(
+        DataSet result = JQuickSqlDataSetRecursiveQuery.withRecursive(
                 empty, recursiveFunction, 5);
 
         assertTrue(result.isEmpty());
@@ -205,7 +205,7 @@ public class JDataSetRecursiveQueryTest {
             return new DataSet(data.getColumns(), subordinates);
         };
         DataSet ceo = data.filter(row -> row.get("manager_id") == null);
-        DataSet directSubordinates = JDataSetRecursiveQuery.withRecursive(
+        DataSet directSubordinates = JQuickSqlDataSetRecursiveQuery.withRecursive(
                 ceo, findDirectSubordinates, 2);
         assertEquals(3, directSubordinates.size());
         List<String> names = directSubordinates.getRows().stream()

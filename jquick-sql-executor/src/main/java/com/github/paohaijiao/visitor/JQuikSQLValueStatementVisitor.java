@@ -16,13 +16,13 @@
 package com.github.paohaijiao.visitor;
 
 import com.github.paohaijiao.date.JDateUtil;
-import com.github.paohaijiao.enums.JComparisonOperator;
-import com.github.paohaijiao.enums.JLogicalOperator;
-import com.github.paohaijiao.enums.JMathOperator;
-import com.github.paohaijiao.enums.JUnaryOperator;
+import com.github.paohaijiao.enums.JQuickSqlComparisonOperator;
+import com.github.paohaijiao.enums.JQuickSqlLogicalOperator;
+import com.github.paohaijiao.enums.JQuickSqlMathOperator;
+import com.github.paohaijiao.enums.JQuickSqlUnaryOperator;
 import com.github.paohaijiao.exception.JAssert;
-import com.github.paohaijiao.expression.JLiteralExpression;
-import com.github.paohaijiao.model.JFullColumnModel;
+import com.github.paohaijiao.expression.JQuickSqlLiteralExpression;
+import com.github.paohaijiao.model.JQuickSqlFullColumnModel;
 import com.github.paohaijiao.parser.JQuickSQLParser;
 
 import java.util.Date;
@@ -82,17 +82,17 @@ public class JQuikSQLValueStatementVisitor extends JQuikSQLCoreVisitor {
     }
 
     @Override
-    public JLiteralExpression visitConstant(JQuickSQLParser.ConstantContext ctx) {
+    public JQuickSqlLiteralExpression visitConstant(JQuickSQLParser.ConstantContext ctx) {
         if (null != ctx.stringLiteral()) {
-            return JLiteralExpression.string(visitStringLiteral(ctx.stringLiteral()));
+            return JQuickSqlLiteralExpression.string(visitStringLiteral(ctx.stringLiteral()));
         } else if (ctx.decimal_literal() != null) {
-            return JLiteralExpression.number(getNumber(ctx.decimal_literal().getText()));
+            return JQuickSqlLiteralExpression.number(getNumber(ctx.decimal_literal().getText()));
         } else if (ctx.booleanLiteral() != null) {
-            return JLiteralExpression.bool(visitBooleanLiteral(ctx.booleanLiteral()));
+            return JQuickSqlLiteralExpression.bool(visitBooleanLiteral(ctx.booleanLiteral()));
         } else if (null != ctx.null_literal()) {
-            return JLiteralExpression.nullValue();
+            return JQuickSqlLiteralExpression.nullValue();
         } else if (null != ctx.dateLiteral()) {
-            return JLiteralExpression.date(visitDateLiteral(ctx.dateLiteral()));
+            return JQuickSqlLiteralExpression.date(visitDateLiteral(ctx.dateLiteral()));
         }
         JAssert.throwNewException("invalid constant literal");
         return null;
@@ -111,38 +111,38 @@ public class JQuikSQLValueStatementVisitor extends JQuikSQLCoreVisitor {
     }
 
     @Override
-    public JComparisonOperator visitComparisonOperator(JQuickSQLParser.ComparisonOperatorContext ctx) {
-        return JComparisonOperator.symbolOf(ctx.getText());
+    public JQuickSqlComparisonOperator visitComparisonOperator(JQuickSQLParser.ComparisonOperatorContext ctx) {
+        return JQuickSqlComparisonOperator.symbolOf(ctx.getText());
     }
 
     @Override
-    public JLogicalOperator visitLogicalOperator(JQuickSQLParser.LogicalOperatorContext ctx) {
+    public JQuickSqlLogicalOperator visitLogicalOperator(JQuickSQLParser.LogicalOperatorContext ctx) {
         if (ctx.AND() != null || ctx.getText().equals("&&")) {
-            return JLogicalOperator.And;
+            return JQuickSqlLogicalOperator.And;
         }
         if (ctx.OR() != null || ctx.getText().equals("||")) {
-            return JLogicalOperator.Or;
+            return JQuickSqlLogicalOperator.Or;
         }
         if (ctx.XOR() != null) {
-            return JLogicalOperator.XOR;
+            return JQuickSqlLogicalOperator.XOR;
         }
         JAssert.throwNewException("invalid logical operator");
         return null;
     }
 
     @Override
-    public JUnaryOperator visitUnaryOperator(JQuickSQLParser.UnaryOperatorContext ctx) {
-        return JUnaryOperator.symbolOf(ctx.getText());
+    public JQuickSqlUnaryOperator visitUnaryOperator(JQuickSQLParser.UnaryOperatorContext ctx) {
+        return JQuickSqlUnaryOperator.symbolOf(ctx.getText());
     }
 
     @Override
-    public JMathOperator visitMathOperator(JQuickSQLParser.MathOperatorContext ctx) {
-        return JMathOperator.codeOf(ctx.getText());
+    public JQuickSqlMathOperator visitMathOperator(JQuickSQLParser.MathOperatorContext ctx) {
+        return JQuickSqlMathOperator.codeOf(ctx.getText());
     }
 
     @Override
-    public JFullColumnModel visitFullColumnName(JQuickSQLParser.FullColumnNameContext ctx) {
-        JFullColumnModel fullColumnModel = new JFullColumnModel();
+    public JQuickSqlFullColumnModel visitFullColumnName(JQuickSQLParser.FullColumnNameContext ctx) {
+        JQuickSqlFullColumnModel fullColumnModel = new JQuickSqlFullColumnModel();
         if (ctx.dottedId() != null) {
             fullColumnModel.setTableName(ctx.uid().getText());
             fullColumnModel.setColumnName(visitDottedId(ctx.dottedId()));

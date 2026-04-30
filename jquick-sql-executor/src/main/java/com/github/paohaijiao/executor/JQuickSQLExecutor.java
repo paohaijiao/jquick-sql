@@ -17,11 +17,11 @@ package com.github.paohaijiao.executor;
 
 import com.github.paohaijiao.config.JQuickSQLConfig;
 import com.github.paohaijiao.dataset.DataSet;
-import com.github.paohaijiao.enums.JEngineEnums;
+import com.github.paohaijiao.enums.JQuickSqlEngineEnums;
 import com.github.paohaijiao.param.JContext;
 import com.github.paohaijiao.parser.JQuickSQLLexer;
 import com.github.paohaijiao.parser.JQuickSQLParser;
-import com.github.paohaijiao.support.JDataSetHolder;
+import com.github.paohaijiao.support.JQuickSqlDataSetHolder;
 import com.github.paohaijiao.visitor.JQuikSQLCommonVisitor;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -39,7 +39,7 @@ public class JQuickSQLExecutor {
 
     private JQuickSQLConfig config = new JQuickSQLConfig();
 
-    private JDataSetHolder dataSetContainer = new JDataSetHolder();
+    private JQuickSqlDataSetHolder dataSetContainer = new JQuickSqlDataSetHolder();
 
 
     public JQuickSQLExecutor config(JQuickSQLConfig config) {
@@ -52,12 +52,12 @@ public class JQuickSQLExecutor {
         return this;
     }
 
-    public JQuickSQLExecutor dataSet(JDataSetHolder container) {
+    public JQuickSQLExecutor dataSet(JQuickSqlDataSetHolder container) {
         this.dataSetContainer = container;
         return this;
     }
 
-    public DataSet execute(String sql, JEngineEnums engine) {
+    public DataSet execute(String sql, JQuickSqlEngineEnums engine) {
         JQuickSQLLexer lexer = new JQuickSQLLexer(CharStreams.fromString(sql));
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         JQuickSQLParser parser = new JQuickSQLParser(tokens);

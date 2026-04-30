@@ -16,8 +16,8 @@
 package com.github.paohaijiao.visitor;
 
 import com.github.paohaijiao.dataset.DataSet;
-import com.github.paohaijiao.enums.JBinaryOperator;
-import com.github.paohaijiao.enums.JUnaryOperator;
+import com.github.paohaijiao.enums.JQuickSqlBinaryOperator;
+import com.github.paohaijiao.enums.JQuickSqlUnaryOperator;
 import com.github.paohaijiao.exception.JAssert;
 import com.github.paohaijiao.expression.*;
 import com.github.paohaijiao.parser.JQuickSQLParser;
@@ -34,72 +34,72 @@ import java.util.List;
  */
 public class JQuikSQLExpressionStatementAtomVisitor extends JQuikSQLValueStatementVisitor {
     @Override
-    public JLiteralExpression visitConstantExpressionAtom(JQuickSQLParser.ConstantExpressionAtomContext ctx) {
+    public JQuickSqlLiteralExpression visitConstantExpressionAtom(JQuickSQLParser.ConstantExpressionAtomContext ctx) {
         JAssert.notNull(ctx.constant(), "constant must not be null");
         return visitConstant(ctx.constant());
     }
 
     @Override
-    public JColumnExpression visitFullColumnNameExpressionAtom(JQuickSQLParser.FullColumnNameExpressionAtomContext ctx) {
+    public JQuickSqlColumnExpression visitFullColumnNameExpressionAtom(JQuickSQLParser.FullColumnNameExpressionAtomContext ctx) {
         JAssert.notNull(ctx.fullColumnName(), "fullColumnName must not be null");
         String column = ctx.fullColumnName().getText();
         if (column.contains(".")) {
             String[] array = column.split("\\.");
             JAssert.isTrue(array.length == 2, "the column must have table alias and column");
-            JColumnExpression columnExpression = new JColumnExpression(array[0], array[1]);
+            JQuickSqlColumnExpression columnExpression = new JQuickSqlColumnExpression(array[0], array[1]);
             return columnExpression;
         } else {
-            JColumnExpression columnExpression = new JColumnExpression(column);
+            JQuickSqlColumnExpression columnExpression = new JQuickSqlColumnExpression(column);
             return columnExpression;
         }
 
     }
 
     @Override
-    public JFunctionCallExpression visitFunctionCallExpressionAtom(JQuickSQLParser.FunctionCallExpressionAtomContext ctx) {
+    public JQuickSqlFunctionCallExpression visitFunctionCallExpressionAtom(JQuickSQLParser.FunctionCallExpressionAtomContext ctx) {
         JQuickSQLParser.FunctionCallContext funcCtx = ctx.functionCall();
-        return (JFunctionCallExpression) visit(funcCtx);
+        return (JQuickSqlFunctionCallExpression) visit(funcCtx);
     }
 
     @Override
-    public List<JExpression> visitNestedExpressionAtom(JQuickSQLParser.NestedExpressionAtomContext ctx) {
-        List<JExpression> list = new ArrayList<>();
+    public List<JQuickSqlExpression> visitNestedExpressionAtom(JQuickSQLParser.NestedExpressionAtomContext ctx) {
+        List<JQuickSqlExpression> list = new ArrayList<>();
         for (int i = 0; i < ctx.expression().size(); i++) {
             Object object = visit(ctx.expression(i));
-            JAssert.isTrue(object instanceof JExpression, "parenExpression must  be expression");
-            list.add((JExpression) object);
+            JAssert.isTrue(object instanceof JQuickSqlExpression, "parenExpression must  be expression");
+            list.add((JQuickSqlExpression) object);
         }
         return list;
     }
 
     @Override
-    public JExpression visitSubqueryExperssionAtom(JQuickSQLParser.SubqueryExperssionAtomContext ctx) {
+    public JQuickSqlExpression visitSubqueryExperssionAtom(JQuickSQLParser.SubqueryExperssionAtomContext ctx) {
         JAssert.notNull(ctx.selectStatement(), "selectStatement must not be null");
         Object dataSet = visit(ctx.selectStatement());
         JAssert.notNull(dataSet instanceof DataSet, "dataSet must  be instance of dataSet");
-        return new JDataSetExpression((DataSet) dataSet);
+        return new JQuickSqlDataSetExpression((DataSet) dataSet);
     }
 
     @Override
-    public JExpression visitMathExpressionAtom(JQuickSQLParser.MathExpressionAtomContext ctx) {
+    public JQuickSqlExpression visitMathExpressionAtom(JQuickSQLParser.MathExpressionAtomContext ctx) {
         JAssert.isTrue(ctx.expressionAtom().size() == 2, "mathExpressionAtom must have 2 expressions");
         Object valLeft = visit(ctx.expressionAtom(0));
         Object valRight = visit(ctx.expressionAtom(1));
-        JAssert.isTrue(valLeft instanceof JExpression, "expression[0] must is literal");
-        JAssert.isTrue(valRight instanceof JExpression, "expression[1] must is literal");
+        JAssert.isTrue(valLeft instanceof JQuickSqlExpression, "expression[0] must is literal");
+        JAssert.isTrue(valRight instanceof JQuickSqlExpression, "expression[1] must is literal");
         String operator = ctx.mathOperator().getText();
-        JBinaryOperator op = JBinaryOperator.of(operator);
-        JBinaryExpression binaryExpression = new JBinaryExpression((JExpression) valLeft, op, (JExpression) valRight);
+        JQuickSqlBinaryOperator op = JQuickSqlBinaryOperator.of(operator);
+        JQuickSqlBinaryExpression binaryExpression = new JQuickSqlBinaryExpression((JQuickSqlExpression) valLeft, op, (JQuickSqlExpression) valRight);
         return binaryExpression;
     }
 
     @Override
-    public JExpression visitUnaryExpressionAtom(JQuickSQLParser.UnaryExpressionAtomContext ctx) {
+    public JQuickSqlExpression visitUnaryExpressionAtom(JQuickSQLParser.UnaryExpressionAtomContext ctx) {
         Object operand = visit(ctx.expressionAtom());
-        JAssert.isTrue(operand instanceof JExpression, "expression[1] must is literal");
+        JAssert.isTrue(operand instanceof JQuickSqlExpression, "expression[1] must is literal");
         String operator = ctx.unaryOperator().getText();
-        JUnaryOperator unaryOperator = JUnaryOperator.symbolOf(operator);
-        JUnaryExpression jUnaryExpression = new JUnaryExpression(unaryOperator, (JExpression) operand);
+        JQuickSqlUnaryOperator unaryOperator = JQuickSqlUnaryOperator.symbolOf(operator);
+        JQuickSqlUnaryExpression jUnaryExpression = new JQuickSqlUnaryExpression(unaryOperator, (JQuickSqlExpression) operand);
         return jUnaryExpression;
     }
 

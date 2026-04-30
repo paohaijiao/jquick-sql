@@ -15,23 +15,23 @@
  */
 package com.github.paohaijiao.visitor;
 
-import com.github.paohaijiao.condition.JComparisonCondition;
-import com.github.paohaijiao.condition.JCondition;
+import com.github.paohaijiao.condition.JQuickSqlComparisonCondition;
+import com.github.paohaijiao.condition.JQuickSqlCondition;
 import com.github.paohaijiao.console.JConsole;
 import com.github.paohaijiao.dataset.ColumnMeta;
 import com.github.paohaijiao.dataset.DataSet;
 import com.github.paohaijiao.dataset.Row;
-import com.github.paohaijiao.enums.JComparisonOperator;
-import com.github.paohaijiao.enums.JEngineEnums;
+import com.github.paohaijiao.enums.JQuickSqlComparisonOperator;
+import com.github.paohaijiao.enums.JQuickSqlEngineEnums;
 import com.github.paohaijiao.exception.JAssert;
-import com.github.paohaijiao.expression.JBinaryExpression;
-import com.github.paohaijiao.expression.JExpression;
-import com.github.paohaijiao.factory.JDataSetJoinerStrategy;
+import com.github.paohaijiao.expression.JQuickSqlBinaryExpression;
+import com.github.paohaijiao.expression.JQuickSqlExpression;
+import com.github.paohaijiao.factory.JQuickSqlDataSetJoinerStrategy;
 import com.github.paohaijiao.param.JContext;
 import com.github.paohaijiao.parser.JQuickSQLBaseVisitor;
 import com.github.paohaijiao.parser.JQuickSQLLexer;
 import com.github.paohaijiao.parser.JQuickSQLParser;
-import com.github.paohaijiao.support.JDataSetHolder;
+import com.github.paohaijiao.support.JQuickSqlDataSetHolder;
 import org.antlr.v4.runtime.CommonTokenStream;
 
 import java.text.NumberFormat;
@@ -55,10 +55,10 @@ public class JQuikSQLCoreVisitor extends JQuickSQLBaseVisitor {
     protected JQuickSQLLexer lexer;
     protected CommonTokenStream tokenStream;
     protected JQuickSQLParser parser;
-    protected JDataSetJoinerStrategy joinerStrategy;
-    protected JEngineEnums engine = JEngineEnums.LAMBDA;
+    protected JQuickSqlDataSetJoinerStrategy joinerStrategy;
+    protected JQuickSqlEngineEnums engine = JQuickSqlEngineEnums.LAMBDA;
 
-    protected JDataSetHolder dataSetHolder = new JDataSetHolder();
+    protected JQuickSqlDataSetHolder dataSetHolder = new JQuickSqlDataSetHolder();
 
     protected JConsole console = new JConsole();
 
@@ -139,10 +139,10 @@ public class JQuikSQLCoreVisitor extends JQuickSQLBaseVisitor {
         return a.toString().compareTo(b.toString());
     }
 
-    protected JCondition convertExpressionToCondition(JExpression expression) {
-        JAssert.isTrue(expression instanceof JBinaryExpression, "the expression is not a JBinaryExpression");
-        JBinaryExpression compExpr = (JBinaryExpression) expression;
-        JComparisonOperator comparisonOperator = JComparisonOperator.symbolOf(compExpr.getOperator().getSymbol());
-        return new JComparisonCondition(compExpr.getLeft(), comparisonOperator, compExpr.getRight());
+    protected JQuickSqlCondition convertExpressionToCondition(JQuickSqlExpression expression) {
+        JAssert.isTrue(expression instanceof JQuickSqlBinaryExpression, "the expression is not a JBinaryExpression");
+        JQuickSqlBinaryExpression compExpr = (JQuickSqlBinaryExpression) expression;
+        JQuickSqlComparisonOperator comparisonOperator = JQuickSqlComparisonOperator.symbolOf(compExpr.getOperator().getSymbol());
+        return new JQuickSqlComparisonCondition(compExpr.getLeft(), comparisonOperator, compExpr.getRight());
     }
 }

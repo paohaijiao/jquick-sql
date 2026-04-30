@@ -17,8 +17,8 @@
 import com.github.paohaijiao.dataset.ColumnMeta;
 import com.github.paohaijiao.dataset.DataSet;
 import com.github.paohaijiao.dataset.Row;
-import com.github.paohaijiao.function.JAggregateFunctionFactory;
-import com.github.paohaijiao.support.JOLAPOperations;
+import com.github.paohaijiao.function.JQuickSqlAggregateFunctionFactory;
+import com.github.paohaijiao.support.JQuickSqlOLAPOperations;
 import org.junit.Test;
 
 import java.util.*;
@@ -62,9 +62,9 @@ public class JOlapTest {
     @Test
     public void rollUp() {
         Map<String, Function<List<Object>, Object>> aggregations = new HashMap<>();
-        aggregations.put("sales", JAggregateFunctionFactory.getFunction(JAggregateFunctionFactory.SUM));
+        aggregations.put("sales", JQuickSqlAggregateFunctionFactory.getFunction(JQuickSqlAggregateFunctionFactory.SUM));
         aggregations = Collections.unmodifiableMap(aggregations);
-        DataSet rolledUp = JOLAPOperations.rollUp(
+        DataSet rolledUp = JQuickSqlOLAPOperations.rollUp(
                 buildDataSet(),
                 Arrays.asList("region", "product"),
                 aggregations
@@ -77,9 +77,9 @@ public class JOlapTest {
     @Test
     public void drilledDown() {
         Map<String, Function<List<Object>, Object>> aggregations = new HashMap<>();
-        aggregations.put("sales", JAggregateFunctionFactory.getFunction(JAggregateFunctionFactory.SUM));
+        aggregations.put("sales", JQuickSqlAggregateFunctionFactory.getFunction(JQuickSqlAggregateFunctionFactory.SUM));
         aggregations = Collections.unmodifiableMap(aggregations);
-        DataSet drilledDown = JOLAPOperations.drillDown(
+        DataSet drilledDown = JQuickSqlOLAPOperations.drillDown(
                 buildDataSet(),
                 Collections.singletonList("quarter"),
                 aggregations
@@ -91,7 +91,7 @@ public class JOlapTest {
 
     @Test
     public void slice() {
-        DataSet sliced = JOLAPOperations.slice(buildDataSet(), "region", "East");
+        DataSet sliced = JQuickSqlOLAPOperations.slice(buildDataSet(), "region", "East");
         for (Row row : sliced.getRows()) {
             System.out.println(row);
         }
@@ -102,7 +102,7 @@ public class JOlapTest {
         Map<String, Object> map = new HashMap<>();
         map.put("region", "East");
         map.put("product", "A");
-        DataSet diced = JOLAPOperations.dice(
+        DataSet diced = JQuickSqlOLAPOperations.dice(
                 buildDataSet(),
                 map
         );
@@ -113,11 +113,11 @@ public class JOlapTest {
 
     @Test
     public void pivoted() {
-        DataSet pivoted = JOLAPOperations.pivot(
+        DataSet pivoted = JQuickSqlOLAPOperations.pivot(
                 buildDataSet(),
                 "quarter",
                 "sales",
-                JAggregateFunctionFactory.getFunction(JAggregateFunctionFactory.SUM)
+                JQuickSqlAggregateFunctionFactory.getFunction(JQuickSqlAggregateFunctionFactory.SUM)
         );
         for (Row row : pivoted.getRows()) {
             System.out.println(row);

@@ -15,10 +15,10 @@
  */
 package com.github.paohaijiao.visitor;
 
-import com.github.paohaijiao.condition.JAndCondition;
-import com.github.paohaijiao.condition.JCondition;
-import com.github.paohaijiao.condition.JOrCondition;
-import com.github.paohaijiao.condition.JParenthesesCondition;
+import com.github.paohaijiao.condition.JQuickSqlAndCondition;
+import com.github.paohaijiao.condition.JQuickSqlCondition;
+import com.github.paohaijiao.condition.JQuickSqlOrCondition;
+import com.github.paohaijiao.condition.JQuickSqlParenthesesCondition;
 import com.github.paohaijiao.parser.JQuickSQLParser;
 
 /**
@@ -30,28 +30,28 @@ import com.github.paohaijiao.parser.JQuickSQLParser;
  */
 public class JQuikSQLFilterStatementVisitor extends JQuikSQLPredictStatementVisitor {
     @Override
-    public JCondition visitFilterCondition(JQuickSQLParser.FilterConditionContext ctx) {
+    public JQuickSqlCondition visitFilterCondition(JQuickSQLParser.FilterConditionContext ctx) {
         if (ctx.AND() != null) {
-            JCondition left = (JCondition) visit(ctx.filterCondition(0));
-            JCondition right = (JCondition) visit(ctx.filterCondition(1));
-            if (left instanceof JAndCondition) {
-                ((JAndCondition) left).addCondition(right);
+            JQuickSqlCondition left = (JQuickSqlCondition) visit(ctx.filterCondition(0));
+            JQuickSqlCondition right = (JQuickSqlCondition) visit(ctx.filterCondition(1));
+            if (left instanceof JQuickSqlAndCondition) {
+                ((JQuickSqlAndCondition) left).addCondition(right);
                 return left;
             } else {
-                JAndCondition andCondition = new JAndCondition();
+                JQuickSqlAndCondition andCondition = new JQuickSqlAndCondition();
                 andCondition.addCondition(left);
                 andCondition.addCondition(right);
                 return andCondition;
             }
         }
         if (ctx.OR() != null) {
-            JCondition left = (JCondition) visit(ctx.filterCondition(0));
-            JCondition right = (JCondition) visit(ctx.filterCondition(1));
-            if (left instanceof JOrCondition) {
-                ((JOrCondition) left).addCondition(right);
+            JQuickSqlCondition left = (JQuickSqlCondition) visit(ctx.filterCondition(0));
+            JQuickSqlCondition right = (JQuickSqlCondition) visit(ctx.filterCondition(1));
+            if (left instanceof JQuickSqlOrCondition) {
+                ((JQuickSqlOrCondition) left).addCondition(right);
                 return left;
             } else {
-                JOrCondition orCondition = new JOrCondition();
+                JQuickSqlOrCondition orCondition = new JQuickSqlOrCondition();
                 orCondition.addCondition(left);
                 orCondition.addCondition(right);
                 return orCondition;
@@ -60,12 +60,12 @@ public class JQuikSQLFilterStatementVisitor extends JQuikSQLPredictStatementVisi
         if (ctx.getChildCount() == 3 &&
                 ctx.getChild(0).getText().equals("(") &&
                 ctx.getChild(2).getText().equals(")")) {
-            JParenthesesCondition parentheses = new JParenthesesCondition();
-            parentheses.setInnerCondition((JCondition) visit(ctx.filterCondition(0)));
+            JQuickSqlParenthesesCondition parentheses = new JQuickSqlParenthesesCondition();
+            parentheses.setInnerCondition((JQuickSqlCondition) visit(ctx.filterCondition(0)));
             return parentheses;
         }
         if (ctx.predicate() != null) {
-            return (JCondition) visit(ctx.predicate());
+            return (JQuickSqlCondition) visit(ctx.predicate());
         }
         throw new IllegalArgumentException("unsupported filter condition: " + ctx.getText());
     }
