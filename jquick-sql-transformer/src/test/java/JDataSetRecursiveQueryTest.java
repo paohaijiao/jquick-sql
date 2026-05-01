@@ -16,6 +16,7 @@
 
 
 import com.github.paohaijiao.dataset.DataSet;
+import com.github.paohaijiao.dataset.JQuickConnectorDataSet;
 import com.github.paohaijiao.dataset.Row;
 import com.github.paohaijiao.support.JQuickSqlDataSetRecursiveQuery;
 import org.junit.Test;
@@ -37,8 +38,8 @@ import static org.junit.Assert.assertTrue;
  * @since 2025/8/20
  */
 public class JDataSetRecursiveQueryTest {
-    private DataSet createEmployeeDataSet() {
-        Row ceo = new Row();
+    private JQuickConnectorDataSet createEmployeeDataSet() {
+        JQuickRow ceo = new JQuickConnectorRow();
         ceo.put("id", 1);
         ceo.put("name", "Alice");
         ceo.put("manager_id", null);

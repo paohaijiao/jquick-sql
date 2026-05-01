@@ -14,8 +14,7 @@
  * Copyright (c) [2025-2099] Martin (goudingcheng@gmail.com)
  */
 package com.github.paohaijiao.condition;
-
-import com.github.paohaijiao.dataset.DataSet;
+import com.github.paohaijiao.dataset.JQuickConnectorDataSet;
 import com.github.paohaijiao.enums.JQuickSqlConditionType;
 import lombok.Getter;
 
@@ -29,9 +28,9 @@ import lombok.Getter;
 @Getter
 public class JQuickSqlExistsCondition extends JQuickSqlCondition {
 
-    private DataSet dataSet;
+    private JQuickConnectorDataSet dataSet;
 
-    public JQuickSqlExistsCondition(DataSet dataSet) {
+    public JQuickSqlExistsCondition(JQuickConnectorDataSet dataSet) {
         this.type = JQuickSqlConditionType.EXISTS;
         this.dataSet = dataSet;
     }

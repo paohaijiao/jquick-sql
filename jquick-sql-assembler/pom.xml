@@ -4,14 +4,10 @@
     <parent>
         <groupId>io.github.paohaijiao</groupId>
         <artifactId>jquick-sql</artifactId>
-        <version>1.0.0</version>
+        <version>1.1.0</version>
     </parent>
     <artifactId>jquick-sql-assembler</artifactId>
     <dependencies>
-        <dependency>
-            <groupId>io.github.paohaijiao</groupId>
-            <artifactId>jquick-sql-metastore</artifactId>
-        </dependency>
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
@@ -19,7 +15,6 @@
         <dependency>
             <groupId>io.github.paohaijiao</groupId>
             <artifactId>jquick-connector</artifactId>
-            <version>1.0.0</version>
         </dependency>
     </dependencies>
     <name>jquick-sql-assembler</name>
