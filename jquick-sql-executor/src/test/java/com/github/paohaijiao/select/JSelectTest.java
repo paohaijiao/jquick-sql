@@ -94,9 +94,7 @@ public class JSelectTest {
         dataSetContainer.addDataSet("orders", createOrdersDataSet());
         executor.dataSet(dataSetContainer);
         JQuickDataSet dataSet = executor.execute(rule, JQuickSqlEngineEnums.LAMBDA);
-        for (JQuickRow row : dataSet.getRows()) {
-            System.out.println(row);
-        }
+        dataSet.printTable();
     }
 
     @Test

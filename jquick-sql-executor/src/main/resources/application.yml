@@ -1,0 +1,8 @@
+jconsole:
+  enabled: true
+  level: DEBUG
+  showTimestamp: true
+  timestampFormat: "yyyy-MM-dd HH:mm:ss.SSS"
+  consoleOutput: true
+  enableColor: true
+  #logFilePath: "logs/app.log"
