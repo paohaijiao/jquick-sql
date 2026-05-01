@@ -15,8 +15,8 @@
  */
 package com.github.paohaijiao.expression;
 
-import com.github.paohaijiao.dataset.DataSet;
 import com.github.paohaijiao.enums.JQuickSqlExpressionType;
+import com.github.paohaijiao.statement.JQuickDataSet;
 
 /**
  * packageName com.github.paohaijiao.expression
@@ -27,9 +27,9 @@ import com.github.paohaijiao.enums.JQuickSqlExpressionType;
  */
 public class JQuickSqlDataSetExpression extends JQuickSqlExpression {
 
-    private DataSet dataSet;
+    private JQuickDataSet dataSet;
 
-    public JQuickSqlDataSetExpression(DataSet dataSet) {
+    public JQuickSqlDataSetExpression(JQuickDataSet dataSet) {
         this.type = JQuickSqlExpressionType.SUBQUERY;
         this.dataSet = dataSet;
     }

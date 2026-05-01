@@ -16,6 +16,10 @@
             <groupId>io.github.paohaijiao</groupId>
             <artifactId>jquick-connector</artifactId>
         </dependency>
+        <dependency>
+            <groupId>io.github.paohaijiao</groupId>
+            <artifactId>javelin-core</artifactId>
+        </dependency>
     </dependencies>
     <name>jquick-sql-assembler</name>
     <description>

@@ -16,13 +16,13 @@
 package com.github.paohaijiao.visitor;
 
 import com.github.paohaijiao.condition.*;
-import com.github.paohaijiao.dataset.DataSet;
 import com.github.paohaijiao.enums.JQuickSqlComparisonOperator;
 import com.github.paohaijiao.exception.JAssert;
 import com.github.paohaijiao.expression.JQuickSqlColumnExpression;
 import com.github.paohaijiao.expression.JQuickSqlExpression;
 import com.github.paohaijiao.expression.JQuickSqlLiteralExpression;
 import com.github.paohaijiao.parser.JQuickSQLParser;
+import com.github.paohaijiao.statement.JQuickDataSet;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -125,8 +125,8 @@ public class JQuikSQLPredictStatementVisitor extends JQuikSQLFunctionStatementVi
     @Override
     public JQuickSqlCondition visitExisitsPredicate(JQuickSQLParser.ExisitsPredicateContext ctx) {
         Object subqueryResult = visit(ctx.expression());
-        JAssert.isTrue(subqueryResult instanceof DataSet, "the type should be DataSet");
-        return new JQuickSqlExistsCondition((DataSet) subqueryResult);
+        JAssert.isTrue(subqueryResult instanceof JQuickDataSet, "the type should be DataSet");
+        return new JQuickSqlExistsCondition((JQuickDataSet) subqueryResult);
     }
 
 

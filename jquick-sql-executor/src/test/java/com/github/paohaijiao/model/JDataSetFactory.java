@@ -15,9 +15,10 @@
  */
 package com.github.paohaijiao.model;
 
-import com.github.paohaijiao.dataset.ColumnMeta;
-import com.github.paohaijiao.dataset.DataSet;
-import com.github.paohaijiao.dataset.Row;
+
+import com.github.paohaijiao.statement.JQuickColumnMeta;
+import com.github.paohaijiao.statement.JQuickDataSet;
+import com.github.paohaijiao.statement.JQuickRow;
 
 import java.util.Arrays;
 import java.util.List;
@@ -33,15 +34,15 @@ public class JDataSetFactory {
     /**
      * 创建用户数据集
      */
-    public static DataSet createUsersDataSet() {
-        List<ColumnMeta> columns = Arrays.asList(
-                new ColumnMeta("id", Integer.class, "users"),
-                new ColumnMeta("name", String.class, "users"),
-                new ColumnMeta("age", Integer.class, "users"),
-                new ColumnMeta("city", String.class, "users"),
-                new ColumnMeta("salary", Double.class, "users")
+    public static JQuickDataSet createUsersDataSet() {
+        List<JQuickColumnMeta> columns = Arrays.asList(
+                new JQuickColumnMeta("id", Integer.class, "users"),
+                new JQuickColumnMeta("name", String.class, "users"),
+                new JQuickColumnMeta("age", Integer.class, "users"),
+                new JQuickColumnMeta("city", String.class, "users"),
+                new JQuickColumnMeta("salary", Double.class, "users")
         );
-        List<Row> rows = Arrays.asList(
+        List<JQuickRow> rows = Arrays.asList(
                 createUserRow(1, "张三", 25, "北京", 8000.0),
                 createUserRow(2, "李四", 30, "上海", 12000.0)
 //                createUserRow(3, "王五", 28, "广州", 9500.0),
@@ -51,18 +52,18 @@ public class JDataSetFactory {
 //                createUserRow(7, "周九", 26, "上海", 8500.0),
 //                createUserRow(8, "吴十", 33, "成都", 11000.0)
         );
-        return new DataSet(columns, rows);
+        return new JQuickDataSet(columns, rows);
     }
 
-    public static DataSet createUsersDataSet1() {
-        List<ColumnMeta> columns = Arrays.asList(
-                new ColumnMeta("id", Integer.class, "users"),
-                new ColumnMeta("name", String.class, "users"),
-                new ColumnMeta("age", Integer.class, "users"),
-                new ColumnMeta("city", String.class, "users"),
-                new ColumnMeta("salary", Double.class, "users")
+    public static JQuickDataSet createUsersDataSet1() {
+        List<JQuickColumnMeta> columns = Arrays.asList(
+                new JQuickColumnMeta("id", Integer.class, "users"),
+                new JQuickColumnMeta("name", String.class, "users"),
+                new JQuickColumnMeta("age", Integer.class, "users"),
+                new JQuickColumnMeta("city", String.class, "users"),
+                new JQuickColumnMeta("salary", Double.class, "users")
         );
-        List<Row> rows = Arrays.asList(
+        List<JQuickRow> rows = Arrays.asList(
                 createUserRow(2, "李四", 30, "上海", 12000.0),
                 createUserRow(3, "王五", 28, "广州", 9500.0),
                 createUserRow(4, "赵六", 35, "深圳", 15000.0),
@@ -71,19 +72,19 @@ public class JDataSetFactory {
                 createUserRow(7, "周九", 26, "上海", 8500.0),
                 createUserRow(8, "吴十", 33, "成都", 11000.0)
         );
-        return new DataSet(columns, rows);
+        return new JQuickDataSet(columns, rows);
     }
 
-    public static DataSet createOrdersDataSet() {
-        List<ColumnMeta> columns = Arrays.asList(
-                new ColumnMeta("order_id", Integer.class, "orders"),
-                new ColumnMeta("user_id", Integer.class, "orders"),
-                new ColumnMeta("product", String.class, "orders"),
-                new ColumnMeta("quantity", Integer.class, "orders"),
-                new ColumnMeta("price", Double.class, "orders"),
-                new ColumnMeta("order_date", String.class, "orders")
+    public static JQuickDataSet createOrdersDataSet() {
+        List<JQuickColumnMeta> columns = Arrays.asList(
+                new JQuickColumnMeta("order_id", Integer.class, "orders"),
+                new JQuickColumnMeta("user_id", Integer.class, "orders"),
+                new JQuickColumnMeta("product", String.class, "orders"),
+                new JQuickColumnMeta("quantity", Integer.class, "orders"),
+                new JQuickColumnMeta("price", Double.class, "orders"),
+                new JQuickColumnMeta("order_date", String.class, "orders")
         );
-        List<Row> rows = Arrays.asList(
+        List<JQuickRow> rows = Arrays.asList(
                 createOrderRow(101, 1, "笔记本电脑", 1, 5999.0, "2024-01-15"),
                 createOrderRow(102, 1, "鼠标", 2, 199.0, "2024-01-16"),
                 createOrderRow(103, 2, "手机", 1, 3999.0, "2024-01-17"),
@@ -96,70 +97,70 @@ public class JDataSetFactory {
 //                createOrderRow(110, 2, "充电宝", 2, 199.0, "2024-01-24"),
 //                createOrderRow(111, 9, "智能手表", 1, 1299.0, "2024-01-25") // 用户9不存在，用于测试LEFT JOIN
         );
-        return new DataSet(columns, rows);
+        return new JQuickDataSet(columns, rows);
     }
 
-    public static DataSet createDepartmentsDataSet() {
-        List<ColumnMeta> columns = Arrays.asList(
-                new ColumnMeta("dept_id", Integer.class, "departments"),
-                new ColumnMeta("dept_name", String.class, "departments"),
-                new ColumnMeta("manager_id", Integer.class, "departments"),
-                new ColumnMeta("budget", Double.class, "departments")
+    public static JQuickDataSet createDepartmentsDataSet() {
+        List<JQuickColumnMeta> columns = Arrays.asList(
+                new JQuickColumnMeta("dept_id", Integer.class, "departments"),
+                new JQuickColumnMeta("dept_name", String.class, "departments"),
+                new JQuickColumnMeta("manager_id", Integer.class, "departments"),
+                new JQuickColumnMeta("budget", Double.class, "departments")
         );
-        List<Row> rows = Arrays.asList(
+        List<JQuickRow> rows = Arrays.asList(
                 createDepartmentRow(1, "技术部", 2, 500000.0),
                 createDepartmentRow(2, "销售部", 4, 300000.0),
                 createDepartmentRow(3, "市场部", 6, 200000.0),
                 createDepartmentRow(4, "财务部", 8, 400000.0),
                 createDepartmentRow(5, "人事部", 10, 150000.0) // 经理10不存在，用于测试
         );
-        return new DataSet(columns, rows);
+        return new JQuickDataSet(columns, rows);
     }
 
-    public static DataSet createProductsDataSet() {
-        List<ColumnMeta> columns = Arrays.asList(
-                new ColumnMeta("product_id", Integer.class, "products"),
-                new ColumnMeta("product_name", String.class, "products"),
-                new ColumnMeta("category", String.class, "products")
+    public static JQuickDataSet createProductsDataSet() {
+        List<JQuickColumnMeta> columns = Arrays.asList(
+                new JQuickColumnMeta("product_id", Integer.class, "products"),
+                new JQuickColumnMeta("product_name", String.class, "products"),
+                new JQuickColumnMeta("category", String.class, "products")
         );
-        List<Row> rows = Arrays.asList(
+        List<JQuickRow> rows = Arrays.asList(
                 createProductRow(1, "iPhone", "手机"),
                 createProductRow(2, "MacBook", "电脑"),
                 createProductRow(3, "iPad", "平板")
         );
-        return new DataSet(columns, rows);
+        return new JQuickDataSet(columns, rows);
     }
 
-    public static DataSet createSmallUsersDataSet() {
-        List<ColumnMeta> columns = Arrays.asList(
-                new ColumnMeta("id", Integer.class, "small_users"),
-                new ColumnMeta("name", String.class, "small_users")
+    public static JQuickDataSet createSmallUsersDataSet() {
+        List<JQuickColumnMeta> columns = Arrays.asList(
+                new JQuickColumnMeta("id", Integer.class, "small_users"),
+                new JQuickColumnMeta("name", String.class, "small_users")
         );
-        List<Row> rows = Arrays.asList(
+        List<JQuickRow> rows = Arrays.asList(
                 createSimpleUserRow(1, "测试用户1"),
                 createSimpleUserRow(2, "测试用户2"),
                 createSimpleUserRow(3, "测试用户3")
         );
-        return new DataSet(columns, rows);
+        return new JQuickDataSet(columns, rows);
     }
 
-    public static DataSet createSmallOrdersDataSet() {
-        List<ColumnMeta> columns = Arrays.asList(
-                new ColumnMeta("order_id", Integer.class, "small_orders"),
-                new ColumnMeta("user_id", Integer.class, "small_orders"),
-                new ColumnMeta("product", String.class, "small_orders")
+    public static JQuickDataSet createSmallOrdersDataSet() {
+        List<JQuickColumnMeta> columns = Arrays.asList(
+                new JQuickColumnMeta("order_id", Integer.class, "small_orders"),
+                new JQuickColumnMeta("user_id", Integer.class, "small_orders"),
+                new JQuickColumnMeta("product", String.class, "small_orders")
         );
-        List<Row> rows = Arrays.asList(
+        List<JQuickRow> rows = Arrays.asList(
                 createSimpleOrderRow(101, 1, "产品A"),
                 createSimpleOrderRow(102, 1, "产品B"),
                 createSimpleOrderRow(103, 2, "产品C"),
                 createSimpleOrderRow(104, 4, "产品D") // 用户4不存在
         );
-        return new DataSet(columns, rows);
+        return new JQuickDataSet(columns, rows);
     }
 
-    private static Row createUserRow(int id, String name, int age, String city, double salary) {
-        Row row = new Row();
+    private static JQuickRow createUserRow(int id, String name, int age, String city, double salary) {
+        JQuickRow row = new JQuickRow();
         row.put("id", id);
         row.put("name", name);
         row.put("age", age);
@@ -168,8 +169,8 @@ public class JDataSetFactory {
         return row;
     }
 
-    private static Row createOrderRow(int orderId, int userId, String product, int quantity, double price, String date) {
-        Row row = new Row();
+    private static JQuickRow createOrderRow(int orderId, int userId, String product, int quantity, double price, String date) {
+        JQuickRow row = new JQuickRow();
         row.put("order_id", orderId);
         row.put("user_id", userId);
         row.put("product", product);
@@ -179,8 +180,8 @@ public class JDataSetFactory {
         return row;
     }
 
-    private static Row createDepartmentRow(int deptId, String deptName, int managerId, double budget) {
-        Row row = new Row();
+    private static JQuickRow createDepartmentRow(int deptId, String deptName, int managerId, double budget) {
+        JQuickRow row = new JQuickRow();
         row.put("dept_id", deptId);
         row.put("dept_name", deptName);
         row.put("manager_id", managerId);
@@ -188,30 +189,30 @@ public class JDataSetFactory {
         return row;
     }
 
-    private static Row createProductRow(int productId, String productName, String category) {
-        Row row = new Row();
+    private static JQuickRow createProductRow(int productId, String productName, String category) {
+        JQuickRow row = new JQuickRow();
         row.put("product_id", productId);
         row.put("product_name", productName);
         row.put("category", category);
         return row;
     }
 
-    private static Row createSimpleUserRow(int id, String name) {
-        Row row = new Row();
+    private static JQuickRow createSimpleUserRow(int id, String name) {
+        JQuickRow row = new JQuickRow();
         row.put("id", id);
         row.put("name", name);
         return row;
     }
 
-    private static Row createSimpleOrderRow(int orderId, int userId, String product) {
-        Row row = new Row();
+    private static JQuickRow createSimpleOrderRow(int orderId, int userId, String product) {
+        JQuickRow row = new JQuickRow();
         row.put("order_id", orderId);
         row.put("user_id", userId);
         row.put("product", product);
         return row;
     }
 
-    public static void printDataSet(DataSet dataSet, String title) {
+    public static void printDataSet(JQuickDataSet dataSet, String title) {
         System.out.println("=== " + title + " ===");
         System.out.println("列信息: " + dataSet.getColumnNames());
         System.out.println("行数: " + dataSet.getRows().size());

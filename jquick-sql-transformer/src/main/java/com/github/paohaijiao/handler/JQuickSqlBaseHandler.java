@@ -14,14 +14,13 @@
  * Copyright (c) [2025-2099] Martin (goudingcheng@gmail.com)
  */
 package com.github.paohaijiao.handler;
-
-import com.github.paohaijiao.dataset.ColumnMeta;
-import com.github.paohaijiao.dataset.DataSet;
-import com.github.paohaijiao.dataset.Row;
 import com.github.paohaijiao.enums.JQuickSqlNullsOrder;
 import com.github.paohaijiao.enums.JQuickSqlSortDirection;
 import com.github.paohaijiao.expression.*;
 import com.github.paohaijiao.factory.JQuickSqlDataSetJoinerStrategy;
+import com.github.paohaijiao.statement.JQuickColumnMeta;
+import com.github.paohaijiao.statement.JQuickDataSet;
+import com.github.paohaijiao.statement.JQuickRow;
 
 import java.util.*;
 
@@ -34,22 +33,22 @@ import java.util.*;
  */
 public abstract class JQuickSqlBaseHandler implements JQuickSqlDataSetJoinerStrategy {
 
-    protected static Row mergeRows(Row left, Row right) {
-        Row merged = new Row(left);
+    protected static JQuickRow mergeRows(JQuickRow left, JQuickRow right) {
+        JQuickRow merged = new JQuickRow(left);
         merged.putAll(right);
         return merged;
     }
 
-    protected static List<ColumnMeta> mergeColumns(DataSet right, DataSet left) {
-        List<ColumnMeta> result = new ArrayList<>(right.getColumns());
+    protected static List<JQuickColumnMeta> mergeColumns(JQuickDataSet right, JQuickDataSet left) {
+        List<JQuickColumnMeta> result = new ArrayList<>(right.getColumns());
         result.addAll(left.getColumns());
         return result;
     }
 
-    protected static Row createNullRow(DataSet ds) {
+    protected static JQuickRow createNullRow(JQuickDataSet ds) {
         System.out.println(ds);
         List<String> list = ds.getColumnNames();
-        Row nullRow = new Row();
+        JQuickRow nullRow = new JQuickRow();
         List<String> columns = ds.getColumnNames();
         for (int i = 0; i < columns.size(); i++) {
             nullRow.put(columns.get(i), null);
@@ -57,23 +56,21 @@ public abstract class JQuickSqlBaseHandler implements JQuickSqlDataSetJoinerStra
         return nullRow;
     }
 
-    protected static boolean isMatch(Row leftRow,
-                                     Row rightRow,
-                                     Set<String> commonColumns) {
+    protected static boolean isMatch(JQuickRow leftRow, JQuickRow rightRow, Set<String> commonColumns) {
         return commonColumns.stream()
                 .allMatch(col -> Objects.equals(
                         leftRow.get(col),
                         rightRow.get(col)));
     }
 
-    protected static void validateUnionCompatible(DataSet ds1, DataSet ds2) {
+    protected static void validateUnionCompatible(JQuickDataSet ds1, JQuickDataSet ds2) {
         if (ds1.getColumns().size() != ds2.getColumns().size()) {
             throw new IllegalArgumentException("Datasets have different number of columns");
         }
     }
 
-    protected static Row transformRow(Row row, Map<String, JQuickSqlFunctionCallExpression> transformations) {
-        Row newRow = new Row();
+    protected static JQuickRow transformRow(JQuickRow row, Map<String, JQuickSqlFunctionCallExpression> transformations) {
+        JQuickRow newRow = new JQuickRow();
         for (String column : row.keySet()) {
             if (transformations.containsKey(column)) {
                 JQuickSqlFunctionCallExpression function = transformations.get(column);
@@ -137,8 +134,8 @@ public abstract class JQuickSqlBaseHandler implements JQuickSqlDataSetJoinerStra
         return Object.class;
     }
 
-    protected static Row createAliasedRow(Row originalRow, Map<String, JQuickSqlExpression> aliases) {
-        Row newRow = new Row(originalRow);
+    protected static JQuickRow createAliasedRow(JQuickRow originalRow, Map<String, JQuickSqlExpression> aliases) {
+        JQuickRow newRow = new JQuickRow(originalRow);
         for (Map.Entry<String, JQuickSqlExpression> entry : aliases.entrySet()) {
             String alias = entry.getKey();
             JQuickSqlExpression expr = entry.getValue();

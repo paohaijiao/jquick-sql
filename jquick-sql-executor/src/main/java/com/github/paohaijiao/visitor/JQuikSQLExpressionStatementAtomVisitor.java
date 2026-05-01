@@ -15,12 +15,12 @@
  */
 package com.github.paohaijiao.visitor;
 
-import com.github.paohaijiao.dataset.DataSet;
 import com.github.paohaijiao.enums.JQuickSqlBinaryOperator;
 import com.github.paohaijiao.enums.JQuickSqlUnaryOperator;
 import com.github.paohaijiao.exception.JAssert;
 import com.github.paohaijiao.expression.*;
 import com.github.paohaijiao.parser.JQuickSQLParser;
+import com.github.paohaijiao.statement.JQuickDataSet;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -76,8 +76,8 @@ public class JQuikSQLExpressionStatementAtomVisitor extends JQuikSQLValueStateme
     public JQuickSqlExpression visitSubqueryExperssionAtom(JQuickSQLParser.SubqueryExperssionAtomContext ctx) {
         JAssert.notNull(ctx.selectStatement(), "selectStatement must not be null");
         Object dataSet = visit(ctx.selectStatement());
-        JAssert.notNull(dataSet instanceof DataSet, "dataSet must  be instance of dataSet");
-        return new JQuickSqlDataSetExpression((DataSet) dataSet);
+        JAssert.notNull(dataSet instanceof JQuickDataSet, "dataSet must  be instance of dataSet");
+        return new JQuickSqlDataSetExpression((JQuickDataSet) dataSet);
     }
 
     @Override

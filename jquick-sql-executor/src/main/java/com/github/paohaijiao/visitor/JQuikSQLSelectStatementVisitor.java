@@ -16,8 +16,6 @@
 package com.github.paohaijiao.visitor;
 
 import com.github.paohaijiao.condition.JQuickSqlCondition;
-import com.github.paohaijiao.dataset.DataSet;
-import com.github.paohaijiao.dataset.Row;
 import com.github.paohaijiao.enums.JQuickSqlSortDirection;
 import com.github.paohaijiao.enums.JQuickSqlJoinType;
 import com.github.paohaijiao.evalue.JQuickSqlExpressionEvaluator;
@@ -35,6 +33,8 @@ import com.github.paohaijiao.model.JQuickSqlSelectElementModel;
 import com.github.paohaijiao.model.JQuickSqlSelectElementsResultModel;
 import com.github.paohaijiao.model.JQuickSqlJoinPartModel;
 import com.github.paohaijiao.parser.JQuickSQLParser;
+import com.github.paohaijiao.statement.JQuickDataSet;
+import com.github.paohaijiao.statement.JQuickRow;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -50,40 +50,40 @@ import java.util.Map;
  */
 public class JQuikSQLSelectStatementVisitor extends JQuikSQLFilterStatementVisitor {
     @Override
-    public DataSet visitSelectExpression(JQuickSQLParser.SelectExpressionContext ctx) {
+    public JQuickDataSet visitSelectExpression(JQuickSQLParser.SelectExpressionContext ctx) {
         String text = ctx.getText();
         if (ctx.datasetOp() != null) {
             return visitDatasetOp(ctx.datasetOp());
         }
         if (ctx.olapOperation() != null) {
             Object value = visitOlapOperation(ctx.olapOperation());
-            JAssert.isTrue(value instanceof DataSet, "the value of olapOperation is not a DataSet");
-            return (DataSet) value;
+            JAssert.isTrue(value instanceof JQuickDataSet, "the value of olapOperation is not a DataSet");
+            return (JQuickDataSet) value;
         }
         JAssert.throwNewException("not support this statement");
         return null;
     }
 
     @Override
-    public DataSet visitDatasetOp(JQuickSQLParser.DatasetOpContext ctx) {
+    public JQuickDataSet visitDatasetOp(JQuickSQLParser.DatasetOpContext ctx) {
         JAssert.notNull(ctx.selectClause(), "selectClause must not be null");
         if (ctx.selectClause().size() == 1) {
             return visitSelectClause(ctx.selectClause().get(0));
         }
         JAssert.isTrue(ctx.selectClause().size() == 2, "selectClause must have 2 elements");
-        DataSet dataSetOne = visitSelectClause(ctx.selectClause().get(0));
-        DataSet dataSetTwo = visitSelectClause(ctx.selectClause().get(1));
+        JQuickDataSet dataSetOne = visitSelectClause(ctx.selectClause().get(0));
+        JQuickDataSet dataSetTwo = visitSelectClause(ctx.selectClause().get(1));
         JQuickSqlDataSetJoinerStrategy strategy = JQuickSqlDataSetJoinerFactory.createJoiner(engine);
         if (null != ctx.UNION()) {
-            DataSet DataSet = strategy.union(dataSetOne, dataSetTwo);
+            JQuickDataSet DataSet = strategy.union(dataSetOne, dataSetTwo);
             return DataSet;
         }
         if (null != ctx.MINUS()) {
-            DataSet DataSet = strategy.minus(dataSetOne, dataSetTwo);
+            JQuickDataSet DataSet = strategy.minus(dataSetOne, dataSetTwo);
             return DataSet;
         }
         if (null != ctx.INTERSECT()) {
-            DataSet DataSet = strategy.intersect(dataSetOne, dataSetTwo);
+            JQuickDataSet DataSet = strategy.intersect(dataSetOne, dataSetTwo);
             return DataSet;
         }
         JAssert.throwNewException(" this statement only accepts union or intersect or minus statements");
@@ -91,10 +91,10 @@ public class JQuikSQLSelectStatementVisitor extends JQuikSQLFilterStatementVisit
     }
 
     @Override
-    public DataSet visitSelectClause(JQuickSQLParser.SelectClauseContext ctx) {
+    public JQuickDataSet visitSelectClause(JQuickSQLParser.SelectClauseContext ctx) {
         JQuickSqlDataSetJoinerStrategy strategy = JQuickSqlDataSetJoinerFactory.createJoiner(engine);
         JAssert.notNull(ctx.fromClause(), " the from dataset require not null");
-        DataSet dataSet = null;
+        JQuickDataSet dataSet = null;
         if (ctx.fromClause() != null) {
             dataSet = visitFromClause(ctx.fromClause());
         }
@@ -104,7 +104,7 @@ public class JQuikSQLSelectStatementVisitor extends JQuikSQLFilterStatementVisit
                 JQuickSqlJoinPartModel joinPartModel = visitJoinClause(ctx.joinClause().get(i));
                 JQuickSqlJoinType joinType = joinPartModel.getJoinType();
                 JAssert.notNull(joinType, "the join type require not null");
-                DataSet rightDataSet = joinPartModel.getDataset();
+                JQuickDataSet rightDataSet = joinPartModel.getDataset();
                 JQuickSqlJoinCondition condition = null;
                 if (null != dataSet.getRows() && null != joinPartModel.getLeft()) {
                     String leftColumn = joinPartModel.getLeft().getColumnName();
@@ -174,7 +174,7 @@ public class JQuikSQLSelectStatementVisitor extends JQuikSQLFilterStatementVisit
                 for (int i = 0; i < selectElementsResultModel.getNonAggregateFunction().size(); i++) {
                     for (int j = 0; j < dataSet.size(); j++) {
                         JQuickSqlSelectElementModel selectElementModel = selectElementsResultModel.getNonAggregateFunction().get(i);
-                        Row row = dataSet.getRows().get(j);
+                        JQuickRow row = dataSet.getRows().get(j);
                         Object value = expressionEvaluator.evaluate(selectElementModel.getExpression(), row);
                         String column = null;
                         JQuickSqlExpression expression = selectElementModel.getExpression();
@@ -205,7 +205,7 @@ public class JQuikSQLSelectStatementVisitor extends JQuikSQLFilterStatementVisit
     @Override
     public JQuickSqlJoinPartModel visitJoinClause(JQuickSQLParser.JoinClauseContext ctx) {
         JQuickSqlJoinPartModel joinPartModel = new JQuickSqlJoinPartModel();
-        DataSet dataset = (DataSet) visit(ctx.tableNameItem());
+        JQuickDataSet dataset = (JQuickDataSet) visit(ctx.tableNameItem());
         joinPartModel.setDataset(dataset);
         joinPartModel.setJoinType(visitJoinType(ctx.joinType()));
         if (ctx.fullColumnName().size() == 2) {
@@ -229,7 +229,7 @@ public class JQuikSQLSelectStatementVisitor extends JQuikSQLFilterStatementVisit
 
 
     @Override
-    public DataSet visitFromClause(JQuickSQLParser.FromClauseContext ctx) {
+    public JQuickDataSet visitFromClause(JQuickSQLParser.FromClauseContext ctx) {
         if (ctx.tableNameItem() != null) {
             return visitTableNameItem(ctx.tableNameItem());
         }
@@ -238,8 +238,8 @@ public class JQuikSQLSelectStatementVisitor extends JQuikSQLFilterStatementVisit
     }
 
     @Override
-    public DataSet visitTableNameItem(JQuickSQLParser.TableNameItemContext ctx) {
-        DataSet dataSet = null;
+    public JQuickDataSet visitTableNameItem(JQuickSQLParser.TableNameItemContext ctx) {
+        JQuickDataSet dataSet = null;
         String tableName = null;
         if (ctx.tableNameSpec() != null) {
             tableName = ctx.tableNameSpec().getText();

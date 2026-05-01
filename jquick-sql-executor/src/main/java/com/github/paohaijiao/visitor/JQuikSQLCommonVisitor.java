@@ -15,11 +15,11 @@
  */
 package com.github.paohaijiao.visitor;
 
-import com.github.paohaijiao.dataset.DataSet;
 import com.github.paohaijiao.enums.JQuickSqlEngineEnums;
 import com.github.paohaijiao.param.JContext;
 import com.github.paohaijiao.parser.JQuickSQLLexer;
 import com.github.paohaijiao.parser.JQuickSQLParser;
+import com.github.paohaijiao.statement.JQuickDataSet;
 import com.github.paohaijiao.support.JQuickSqlDataSetHolder;
 import org.antlr.v4.runtime.CommonTokenStream;
 
@@ -63,12 +63,12 @@ public class JQuikSQLCommonVisitor extends JQuickSQLOlapVisitor {
     }
 
     @Override
-    public DataSet visitQuery(JQuickSQLParser.QueryContext ctx) {
-        return (DataSet) visit(ctx.selectStatement());
+    public JQuickDataSet visitQuery(JQuickSQLParser.QueryContext ctx) {
+        return (JQuickDataSet) visit(ctx.selectStatement());
     }
 
     @Override
-    public DataSet visitSingleQuery(JQuickSQLParser.SingleQueryContext ctx) {
+    public JQuickDataSet visitSingleQuery(JQuickSQLParser.SingleQueryContext ctx) {
         return visitSelectExpression(ctx.selectExpression());
     }
 

@@ -15,11 +15,11 @@
  */
 package com.github.paohaijiao.select;
 
-import com.github.paohaijiao.dataset.ColumnMeta;
-import com.github.paohaijiao.dataset.DataSet;
-import com.github.paohaijiao.dataset.Row;
 import com.github.paohaijiao.enums.JQuickSqlEngineEnums;
 import com.github.paohaijiao.executor.JQuickSQLExecutor;
+import com.github.paohaijiao.statement.JQuickColumnMeta;
+import com.github.paohaijiao.statement.JQuickDataSet;
+import com.github.paohaijiao.statement.JQuickRow;
 import com.github.paohaijiao.support.JQuickSqlDataSetHolder;
 import org.junit.Test;
 
@@ -34,18 +34,18 @@ import java.util.List;
  * @since 2025/8/17
  */
 public class JSelectTest {
-    private static DataSet createOrdersDataSet() {
-        DataSet.Builder builder = DataSet.builder();
+    private static JQuickDataSet createOrdersDataSet() {
+        JQuickDataSet.Builder builder = JQuickDataSet.builder();
         builder.addColumn("order_id", Integer.class, "orders")
                 .addColumn("user_id", Integer.class, "orders")
                 .addColumn("amount", Double.class, "orders");
 
-        Row row1 = new Row("orders");
+        JQuickRow row1 = new JQuickRow();
         row1.put("order_id", 1001);
         row1.put("user_id", 1);
         row1.put("amount", 99.99);
 
-        Row row2 = new Row("orders");
+        JQuickRow row2 = new JQuickRow();
         row2.put("order_id", 1002);
         row2.put("user_id", 1);
         row2.put("amount", 149.99);
@@ -54,15 +54,15 @@ public class JSelectTest {
         return builder.build();
     }
 
-    public static DataSet createAggregationTestData() {
-        List<ColumnMeta> columns = Arrays.asList(
-                new ColumnMeta("department", String.class, "hr"),
-                new ColumnMeta("employee_name", String.class, "hr"),
-                new ColumnMeta("salary", Double.class, "finance"),
-                new ColumnMeta("years_of_service", Integer.class, "hr"),
-                new ColumnMeta("is_manager", Boolean.class, "hr")
+    public static JQuickDataSet createAggregationTestData() {
+        List<JQuickColumnMeta> columns = Arrays.asList(
+                new JQuickColumnMeta("department", String.class, "hr"),
+                new JQuickColumnMeta("employee_name", String.class, "hr"),
+                new JQuickColumnMeta("salary", Double.class, "finance"),
+                new JQuickColumnMeta("years_of_service", Integer.class, "hr"),
+                new JQuickColumnMeta("is_manager", Boolean.class, "hr")
         );
-        List<Row> rows = Arrays.asList(
+        List< JQuickRow> rows = Arrays.asList(
                 createEmployeeRow("Engineering", "Alice", 8500.0, 3, true),
                 createEmployeeRow("Engineering", "Bob", 7500.0, 2, false),
                 createEmployeeRow("Marketing", "Charlie", 9200.0, 5, true),
@@ -72,12 +72,12 @@ public class JSelectTest {
                 createEmployeeRow("Engineering", "Grace", 8800.0, 4, false)
         );
 
-        return new DataSet(columns, rows);
+        return new  JQuickDataSet(columns, rows);
     }
 
-    private static Row createEmployeeRow(String department, String name,
+    private static  JQuickRow createEmployeeRow(String department, String name,
                                          double salary, int years, boolean isManager) {
-        Row row = new Row();
+        JQuickRow row = new JQuickRow();
         row.put("department", department);
         row.put("employee_name", name);
         row.put("salary", salary);
@@ -93,8 +93,8 @@ public class JSelectTest {
         JQuickSqlDataSetHolder dataSetContainer = new JQuickSqlDataSetHolder();
         dataSetContainer.addDataSet("orders", createOrdersDataSet());
         executor.dataSet(dataSetContainer);
-        DataSet dataSet = executor.execute(rule, JQuickSqlEngineEnums.LAMBDA);
-        for (Row row : dataSet.getRows()) {
+        JQuickDataSet dataSet = executor.execute(rule, JQuickSqlEngineEnums.LAMBDA);
+        for (JQuickRow row : dataSet.getRows()) {
             System.out.println(row);
         }
     }
@@ -106,8 +106,8 @@ public class JSelectTest {
         JQuickSqlDataSetHolder dataSetContainer = new JQuickSqlDataSetHolder();
         dataSetContainer.addDataSet("orders", createOrdersDataSet());
         executor.dataSet(dataSetContainer);
-        DataSet dataSet = executor.execute(rule, JQuickSqlEngineEnums.LAMBDA);
-        for (Row row : dataSet.getRows()) {
+        JQuickDataSet dataSet = executor.execute(rule, JQuickSqlEngineEnums.LAMBDA);
+        for (JQuickRow row : dataSet.getRows()) {
             System.out.println(row);
         }
     }
@@ -119,8 +119,8 @@ public class JSelectTest {
         JQuickSqlDataSetHolder dataSetContainer = new JQuickSqlDataSetHolder();
         dataSetContainer.addDataSet("orders", createOrdersDataSet());
         executor.dataSet(dataSetContainer);
-        DataSet dataSet = executor.execute(rule, JQuickSqlEngineEnums.LAMBDA);
-        for (Row row : dataSet.getRows()) {
+        JQuickDataSet dataSet = executor.execute(rule, JQuickSqlEngineEnums.LAMBDA);
+        for (JQuickRow row : dataSet.getRows()) {
             System.out.println(row);
         }
     }
@@ -133,8 +133,8 @@ public class JSelectTest {
         JQuickSqlDataSetHolder dataSetContainer = new JQuickSqlDataSetHolder();
         dataSetContainer.addDataSet("orders", createAggregationTestData());
         executor.dataSet(dataSetContainer);
-        DataSet dataSet = executor.execute(rule, JQuickSqlEngineEnums.LAMBDA);
-        for (Row row : dataSet.getRows()) {
+        JQuickDataSet dataSet = executor.execute(rule, JQuickSqlEngineEnums.LAMBDA);
+        for (JQuickRow row : dataSet.getRows()) {
             System.out.println(row);
         }
     }
@@ -147,8 +147,8 @@ public class JSelectTest {
         JQuickSqlDataSetHolder dataSetContainer = new JQuickSqlDataSetHolder();
         dataSetContainer.addDataSet("orders", createAggregationTestData());
         executor.dataSet(dataSetContainer);
-        DataSet dataSet = executor.execute(rule, JQuickSqlEngineEnums.LAMBDA);
-        for (Row row : dataSet.getRows()) {
+        JQuickDataSet dataSet = executor.execute(rule, JQuickSqlEngineEnums.LAMBDA);
+        for (JQuickRow row : dataSet.getRows()) {
             System.out.println(row);
         }
     }

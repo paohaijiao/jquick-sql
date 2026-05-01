@@ -16,7 +16,6 @@
 package com.github.paohaijiao.visitor;
 
 import com.github.paohaijiao.condition.JQuickSqlComparisonCondition;
-import com.github.paohaijiao.dataset.DataSet;
 import com.github.paohaijiao.evalue.JQuickSqlOLAPExpressionEvaluator;
 import com.github.paohaijiao.exception.JAssert;
 import com.github.paohaijiao.expression.JQuickSqlColumnExpression;
@@ -27,6 +26,7 @@ import com.github.paohaijiao.function.JQuickSqlAggregateFunctionFactory;
 import com.github.paohaijiao.model.JQuickSqlSelectElementModel;
 import com.github.paohaijiao.model.JQuickSqlSelectElementsResultModel;
 import com.github.paohaijiao.parser.JQuickSQLParser;
+import com.github.paohaijiao.statement.JQuickDataSet;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -43,8 +43,8 @@ import java.util.function.Function;
  */
 public class JQuickSQLOlapVisitor extends JQuikSQLCommonTableExpressionVisitor {
     @Override
-    public DataSet visitOlapOperation(JQuickSQLParser.OlapOperationContext ctx) {
-        DataSet dataset = null;
+    public JQuickDataSet visitOlapOperation(JQuickSQLParser.OlapOperationContext ctx) {
+        JQuickDataSet dataset = null;
         if (ctx.fromClause() != null) {
             dataset = visitFromClause(ctx.fromClause());
         }

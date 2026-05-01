@@ -15,9 +15,10 @@
  */
 package com.github.paohaijiao.support;
 
-import com.github.paohaijiao.dataset.ColumnMeta;
-import com.github.paohaijiao.dataset.DataSet;
-import com.github.paohaijiao.dataset.Row;
+
+import com.github.paohaijiao.statement.JQuickColumnMeta;
+import com.github.paohaijiao.statement.JQuickDataSet;
+import com.github.paohaijiao.statement.JQuickRow;
 
 import java.util.*;
 import java.util.function.Function;
@@ -40,25 +41,25 @@ public class JQuickSqlOLAPOperations {
      * @param aggregations   aggregations (columnname -> aggregations)
      * @return dataset
      */
-    public static DataSet rollUp(DataSet dataset, List<String> groupByColumns, Map<String, Function<List<Object>, Object>> aggregations) {
-        Map<List<Object>, List<Row>> grouped = dataset.getRows().stream()
+    public static JQuickDataSet rollUp(JQuickDataSet dataset, List<String> groupByColumns, Map<String, Function<List<Object>, Object>> aggregations) {
+        Map<List<Object>, List<JQuickRow>> grouped = dataset.getRows().stream()
                 .collect(Collectors.groupingBy(
                         row -> groupByColumns.stream()
                                 .map(row::get)
                                 .collect(Collectors.toList())
                 ));
-        List<ColumnMeta> newColumns = new ArrayList<>();
-        for (ColumnMeta column : dataset.getColumns()) {
+        List<JQuickColumnMeta> newColumns = new ArrayList<>();
+        for (JQuickColumnMeta column : dataset.getColumns()) {
             if (groupByColumns.contains(column.getName())) {
                 newColumns.add(column);
             }
         }
         aggregations.keySet().forEach(col -> {
-            newColumns.add(new ColumnMeta(col, Object.class, "aggregated"));
+            newColumns.add(new JQuickColumnMeta(col, Object.class, "aggregated"));
         });
-        List<Row> aggregatedRows = new ArrayList<>();
-        for (Map.Entry<List<Object>, List<Row>> entry : grouped.entrySet()) {
-            Row newRow = new Row();
+        List<JQuickRow> aggregatedRows = new ArrayList<>();
+        for (Map.Entry<List<Object>, List<JQuickRow>> entry : grouped.entrySet()) {
+            JQuickRow newRow = new JQuickRow();
             for (int i = 0; i < groupByColumns.size(); i++) {
                 newRow.put(groupByColumns.get(i), entry.getKey().get(i));
             }
@@ -71,7 +72,7 @@ public class JQuickSqlOLAPOperations {
             }
             aggregatedRows.add(newRow);
         }
-        return new DataSet(newColumns, aggregatedRows);
+        return new JQuickDataSet(newColumns, aggregatedRows);
     }
 
     /**
@@ -82,7 +83,7 @@ public class JQuickSqlOLAPOperations {
      * @param aggregations         aggregations (column -> aggregations)
      * @return dataset
      */
-    public static DataSet drillDown(DataSet dataset, List<String> additionalDimensions, Map<String, Function<List<Object>, Object>> aggregations) {
+    public static JQuickDataSet drillDown(JQuickDataSet dataset, List<String> additionalDimensions, Map<String, Function<List<Object>, Object>> aggregations) {
         List<String> currentGroupBy = Collections.singletonList(dataset.getColumns().get(0).getName());
         List<String> newGroupBy = new ArrayList<>(currentGroupBy);
         newGroupBy.addAll(additionalDimensions);
@@ -97,11 +98,11 @@ public class JQuickSqlOLAPOperations {
      * @param value     value
      * @return dataset
      */
-    public static DataSet slice(DataSet dataset, String dimension, Object value) {
-        List<Row> filteredRows = dataset.getRows().stream()
+    public static JQuickDataSet slice(JQuickDataSet dataset, String dimension, Object value) {
+        List<JQuickRow> filteredRows = dataset.getRows().stream()
                 .filter(row -> Objects.equals(row.get(dimension), value))
                 .collect(Collectors.toList());
-        return new DataSet(dataset.getColumns(), filteredRows);
+        return new JQuickDataSet(dataset.getColumns(), filteredRows);
     }
 
     /**
@@ -111,12 +112,12 @@ public class JQuickSqlOLAPOperations {
      * @param conditions condition (column -> conditionValue)
      * @return dataset
      */
-    public static DataSet dice(DataSet dataset, Map<String, Object> conditions) {
-        List<Row> filteredRows = dataset.getRows().stream()
+    public static JQuickDataSet dice(JQuickDataSet dataset, Map<String, Object> conditions) {
+        List<JQuickRow> filteredRows = dataset.getRows().stream()
                 .filter(row -> conditions.entrySet().stream()
                         .allMatch(cond -> Objects.equals(row.get(cond.getKey()), cond.getValue())))
                 .collect(Collectors.toList());
-        return new DataSet(dataset.getColumns(), filteredRows);
+        return new JQuickDataSet(dataset.getColumns(), filteredRows);
     }
 
     /**
@@ -128,10 +129,10 @@ public class JQuickSqlOLAPOperations {
      * @param aggregator  aggregator
      * @return dataset
      */
-    public static DataSet pivot(DataSet dataset, String pivotColumn, String valueColumn,
+    public static JQuickDataSet pivot(JQuickDataSet dataset, String pivotColumn, String valueColumn,
                                 Function<List<Object>, Object> aggregator) {
         Set<String> otherColumns = dataset.getColumns().stream()
-                .map(ColumnMeta::getName)
+                .map(JQuickColumnMeta::getName)
                 .filter(name -> !name.equals(pivotColumn) && !name.equals(valueColumn))
                 .collect(Collectors.toSet());
         Map<List<Object>, Map<Object, List<Object>>> grouped = dataset.getRows().stream()
@@ -147,20 +148,20 @@ public class JQuickSqlOLAPOperations {
         Set<Object> pivotValues = dataset.getRows().stream()
                 .map(row -> row.get(pivotColumn))
                 .collect(Collectors.toSet());
-        List<ColumnMeta> newColumns = new ArrayList<>();
+        List<JQuickColumnMeta> newColumns = new ArrayList<>();
         for (String col : otherColumns) {
             newColumns.add(dataset.getColumns().stream()
                     .filter(c -> c.getName().equals(col))
                     .findFirst()
-                    .orElse(new ColumnMeta(col, Object.class, "pivoted")));
+                    .orElse(new JQuickColumnMeta(col, Object.class, "pivoted")));
         }
         for (Object pivotValue : pivotValues) {
-            newColumns.add(new ColumnMeta(pivotValue.toString(), Object.class, "pivoted"));
+            newColumns.add(new JQuickColumnMeta(pivotValue.toString(), Object.class, "pivoted"));
         }
 
-        List<Row> pivotedRows = new ArrayList<>();
+        List<JQuickRow> pivotedRows = new ArrayList<>();
         for (Map.Entry<List<Object>, Map<Object, List<Object>>> entry : grouped.entrySet()) {
-            Row newRow = new Row();
+            JQuickRow newRow = new JQuickRow();
             for (int i = 0; i < otherColumns.size(); i++) {
                 newRow.put(newColumns.get(i).getName(), entry.getKey().get(i));
             }
@@ -174,7 +175,7 @@ public class JQuickSqlOLAPOperations {
             pivotedRows.add(newRow);
         }
 
-        return new DataSet(newColumns, pivotedRows);
+        return new JQuickDataSet(newColumns, pivotedRows);
     }
 
 

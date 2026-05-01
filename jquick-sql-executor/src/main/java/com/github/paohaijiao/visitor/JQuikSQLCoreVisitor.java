@@ -18,9 +18,6 @@ package com.github.paohaijiao.visitor;
 import com.github.paohaijiao.condition.JQuickSqlComparisonCondition;
 import com.github.paohaijiao.condition.JQuickSqlCondition;
 import com.github.paohaijiao.console.JConsole;
-import com.github.paohaijiao.dataset.ColumnMeta;
-import com.github.paohaijiao.dataset.DataSet;
-import com.github.paohaijiao.dataset.Row;
 import com.github.paohaijiao.enums.JQuickSqlComparisonOperator;
 import com.github.paohaijiao.enums.JQuickSqlEngineEnums;
 import com.github.paohaijiao.exception.JAssert;
@@ -31,6 +28,9 @@ import com.github.paohaijiao.param.JContext;
 import com.github.paohaijiao.parser.JQuickSQLBaseVisitor;
 import com.github.paohaijiao.parser.JQuickSQLLexer;
 import com.github.paohaijiao.parser.JQuickSQLParser;
+import com.github.paohaijiao.statement.JQuickColumnMeta;
+import com.github.paohaijiao.statement.JQuickDataSet;
+import com.github.paohaijiao.statement.JQuickRow;
 import com.github.paohaijiao.support.JQuickSqlDataSetHolder;
 import org.antlr.v4.runtime.CommonTokenStream;
 
@@ -50,7 +50,7 @@ import java.util.Map;
  */
 public class JQuikSQLCoreVisitor extends JQuickSQLBaseVisitor {
 
-    protected final Map<String, DataSet> tableRegistry = new HashMap<>();
+    protected final Map<String, JQuickDataSet> tableRegistry = new HashMap<>();
     protected JContext context;
     protected JQuickSQLLexer lexer;
     protected CommonTokenStream tokenStream;
@@ -71,28 +71,28 @@ public class JQuikSQLCoreVisitor extends JQuickSQLBaseVisitor {
         return newStr;
     }
 
-    public void registerDataSet(String tableName, DataSet dataSet) {
+    public void registerDataSet(String tableName, JQuickDataSet dataSet) {
         tableRegistry.put(tableName, dataSet);
     }
 
-    protected DataSet aliasColumns(DataSet dataset, String alias) {
-        List<ColumnMeta> newColumns = new ArrayList<>();
-        List<Row> newRows = new ArrayList<>();
-        for (ColumnMeta column : dataset.getColumns()) {
-            newColumns.add(new ColumnMeta(
+    protected JQuickDataSet aliasColumns(JQuickDataSet dataset, String alias) {
+        List<JQuickColumnMeta> newColumns = new ArrayList<>();
+        List<JQuickRow> newRows = new ArrayList<>();
+        for (JQuickColumnMeta column : dataset.getColumns()) {
+            newColumns.add(new JQuickColumnMeta(
                     alias + "." + column.getName(),
                     column.getType(),
                     column.getSource()
             ));
         }
-        for (Row row : dataset.getRows()) {
-            Row newRow = new Row();
+        for (JQuickRow row : dataset.getRows()) {
+            JQuickRow newRow = new JQuickRow();
             for (String key : row.keySet()) {
                 newRow.put(alias + "." + key, row.get(key));
             }
             newRows.add(newRow);
         }
-        return new DataSet(newColumns, newRows);
+        return new JQuickDataSet(newColumns, newRows);
     }
 
     protected Number getNumber(String number) {

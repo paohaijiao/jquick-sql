@@ -1,11 +1,11 @@
 package com.github.paohaijiao.evalue;
 
-import com.github.paohaijiao.dataset.ColumnMeta;
-import com.github.paohaijiao.dataset.DataSet;
-import com.github.paohaijiao.dataset.Row;
 import com.github.paohaijiao.expression.JQuickSqlColumnExpression;
 import com.github.paohaijiao.expression.JQuickSqlExpression;
 import com.github.paohaijiao.expression.olap.*;
+import com.github.paohaijiao.statement.JQuickColumnMeta;
+import com.github.paohaijiao.statement.JQuickDataSet;
+import com.github.paohaijiao.statement.JQuickRow;
 import com.github.paohaijiao.support.JQuickSqlOLAPOperations;
 
 import java.util.*;
@@ -14,25 +14,25 @@ public class JQuickSqlOLAPExpressionEvaluator extends JQuickSqlBaseEvaluator imp
 
     private final JQuickSqlExpressionEvaluator expressionEvaluator;
 
-    private DataSet currentDataset;
+    private JQuickDataSet currentDataset;
 
     public JQuickSqlOLAPExpressionEvaluator() {
         this.expressionEvaluator = new JQuickSqlExpressionEvaluator();
     }
 
-    public static List<Row> filterRows(DataSet dataset, JQuickSqlExpression condition) {
+    public static List<JQuickRow> filterRows(JQuickDataSet dataset, JQuickSqlExpression condition) {
         JQuickSqlOLAPExpressionEvaluator evaluator = new JQuickSqlOLAPExpressionEvaluator();
         evaluator.setDataset(dataset);
         return evaluator.filterRowsByCondition(condition);
     }
 
-    public static DataSet executeOLAP(DataSet dataset, JQuickSqlExpression olapExpression) {
+    public static JQuickDataSet executeOLAP(JQuickDataSet dataset, JQuickSqlExpression olapExpression) {
         JQuickSqlOLAPExpressionEvaluator evaluator = new JQuickSqlOLAPExpressionEvaluator();
         evaluator.setDataset(dataset);
         return evaluator.executeOLAPOperation(olapExpression);
     }
 
-    public void setDataset(DataSet dataset) {
+    public void setDataset(JQuickDataSet dataset) {
         this.currentDataset = dataset;
     }
 
@@ -72,7 +72,7 @@ public class JQuickSqlOLAPExpressionEvaluator extends JQuickSqlBaseEvaluator imp
         return true;
     }
 
-    public DataSet executeOLAPOperation(JQuickSqlExpression olapExpression) {
+    public JQuickDataSet executeOLAPOperation(JQuickSqlExpression olapExpression) {
         if (currentDataset == null) {
             throw new IllegalStateException("Dataset not set. Call setDataset() first.");
         }
@@ -83,11 +83,11 @@ public class JQuickSqlOLAPExpressionEvaluator extends JQuickSqlBaseEvaluator imp
             JQuickSqlDrillDownExpression drillDownExpr = (JQuickSqlDrillDownExpression) olapExpression;
             return JQuickSqlOLAPOperations.drillDown(currentDataset, drillDownExpr.getGroupByColumns(), drillDownExpr.getAggregations());
         } else if (olapExpression instanceof JQuickSqlSliceExpression) {
-            List<Row> filteredRows = filterRowsByCondition(olapExpression);
-            return new DataSet(currentDataset.getColumns(), filteredRows);
+            List<JQuickRow> filteredRows = filterRowsByCondition(olapExpression);
+            return new JQuickDataSet(currentDataset.getColumns(), filteredRows);
         } else if (olapExpression instanceof JQuickSqlDiceExpression) {
-            List<Row> filteredRows = filterRowsByCondition(olapExpression);
-            return new DataSet(currentDataset.getColumns(), filteredRows);
+            List<JQuickRow> filteredRows = filterRowsByCondition(olapExpression);
+            return new JQuickDataSet(currentDataset.getColumns(), filteredRows);
         } else if (olapExpression instanceof JQuickSqlPivotExpression) {
             JQuickSqlPivotExpression pivotExpr = (JQuickSqlPivotExpression) olapExpression;
             return JQuickSqlOLAPOperations.pivot(currentDataset, pivotExpr.getPivotColumn(), pivotExpr.getValueColumn(), pivotExpr.getAggregator());
@@ -96,11 +96,11 @@ public class JQuickSqlOLAPExpressionEvaluator extends JQuickSqlBaseEvaluator imp
         }
     }
 
-    private List<Row> filterRowsByCondition(JQuickSqlExpression condition) {
-        List<Row> filteredRows = new ArrayList<>();
-        for (Row row : currentDataset.getRows()) {
+    private List<JQuickRow> filterRowsByCondition(JQuickSqlExpression condition) {
+        List<JQuickRow> filteredRows = new ArrayList<>();
+        for (JQuickRow row : currentDataset.getRows()) {
             Map<String, Object> rowData = new HashMap<>();
-            for (ColumnMeta column : currentDataset.getColumns()) {
+            for (JQuickColumnMeta column : currentDataset.getColumns()) {
                 rowData.put(column.getName(), row.get(column.getName()));
             }
             Boolean result = evaluate(condition, rowData);

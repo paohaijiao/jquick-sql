@@ -15,7 +15,8 @@
  */
 package com.github.paohaijiao.support;
 
-import com.github.paohaijiao.dataset.DataSet;
+
+import com.github.paohaijiao.statement.JQuickDataSet;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -32,11 +33,11 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class JQuickSqlDataSetHolder {
 
-    private final Map<String, DataSet> dataSetMap = new ConcurrentHashMap<>();
+    private final Map<String, JQuickDataSet> dataSetMap = new ConcurrentHashMap<>();
 
     private final Map<String, String> aliasToTableNameMap = new ConcurrentHashMap<>();
 
-    public JQuickSqlDataSetHolder addDataSet(String tableName, DataSet dataSet) {
+    public JQuickSqlDataSetHolder addDataSet(String tableName, JQuickDataSet dataSet) {
         if (tableName == null || tableName.trim().isEmpty()) {
             throw new IllegalArgumentException("tableName required not null");
         }
@@ -62,7 +63,7 @@ public class JQuickSqlDataSetHolder {
         return this;
     }
 
-    public DataSet getDataSet(String name) {
+    public JQuickDataSet getDataSet(String name) {
         if (name == null) {
             return null;
         }
@@ -85,12 +86,12 @@ public class JQuickSqlDataSetHolder {
         return dataSetMap.containsKey(key) || aliasToTableNameMap.containsKey(key);
     }
 
-    public DataSet removeDataSet(String tableName) {
+    public JQuickDataSet removeDataSet(String tableName) {
         if (tableName == null) {
             return null;
         }
         String key = tableName.toLowerCase();
-        DataSet removed = dataSetMap.remove(key);
+        JQuickDataSet removed = dataSetMap.remove(key);
         if (removed != null) {
             aliasToTableNameMap.entrySet().removeIf(entry ->
                     entry.getValue().equals(key));
@@ -120,7 +121,7 @@ public class JQuickSqlDataSetHolder {
         return aliasToTableNameMap.get(alias.toLowerCase());
     }
 
-    public Collection<DataSet> getAllDataSets() {
+    public Collection<JQuickDataSet> getAllDataSets() {
         return Collections.unmodifiableCollection(dataSetMap.values());
     }
 

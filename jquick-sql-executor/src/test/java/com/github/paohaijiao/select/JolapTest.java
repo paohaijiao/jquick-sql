@@ -15,11 +15,11 @@
  */
 package com.github.paohaijiao.select;
 
-import com.github.paohaijiao.dataset.DataSet;
-import com.github.paohaijiao.dataset.Row;
 import com.github.paohaijiao.enums.JQuickSqlEngineEnums;
 import com.github.paohaijiao.executor.JQuickSQLExecutor;
 import com.github.paohaijiao.model.JOLapDataSetFactory;
+import com.github.paohaijiao.statement.JQuickDataSet;
+import com.github.paohaijiao.statement.JQuickRow;
 import com.github.paohaijiao.support.JQuickSqlDataSetHolder;
 import org.junit.Test;
 
@@ -42,8 +42,8 @@ public class JolapTest {
         JQuickSqlDataSetHolder dataSetContainer = new JQuickSqlDataSetHolder();
         dataSetContainer.addDataSet("sales_data", JOLapDataSetFactory.createSalesDataSet());
         executor.dataSet(dataSetContainer);
-        DataSet dataSet = executor.execute(rule, JQuickSqlEngineEnums.LAMBDA);
-        for (Row row : dataSet.getRows()) {
+        JQuickDataSet dataSet = executor.execute(rule, JQuickSqlEngineEnums.LAMBDA);
+        for (JQuickRow row : dataSet.getRows()) {
             System.out.println(row);
         }
     }
@@ -59,8 +59,8 @@ public class JolapTest {
         JQuickSqlDataSetHolder dataSetContainer = new JQuickSqlDataSetHolder();
         dataSetContainer.addDataSet("sales_data", JOLapDataSetFactory.createSalesDataSet());
         executor.dataSet(dataSetContainer);
-        DataSet dataSet = executor.execute(rule, JQuickSqlEngineEnums.LAMBDA);
-        for (Row row : dataSet.getRows()) {
+        JQuickDataSet dataSet = executor.execute(rule, JQuickSqlEngineEnums.LAMBDA);
+        for (JQuickRow row : dataSet.getRows()) {
             System.out.println(row);
         }
     }
@@ -74,8 +74,8 @@ public class JolapTest {
         JQuickSqlDataSetHolder dataSetContainer = new JQuickSqlDataSetHolder();
         dataSetContainer.addDataSet("sales_data", JOLapDataSetFactory.createSalesDataSet());
         executor.dataSet(dataSetContainer);
-        DataSet dataSet = executor.execute(rule, JQuickSqlEngineEnums.LAMBDA);
-        for (Row row : dataSet.getRows()) {
+        JQuickDataSet dataSet = executor.execute(rule, JQuickSqlEngineEnums.LAMBDA);
+        for (JQuickRow row : dataSet.getRows()) {
             System.out.println(row);
         }
     }
@@ -89,8 +89,8 @@ public class JolapTest {
         JQuickSqlDataSetHolder dataSetContainer = new JQuickSqlDataSetHolder();
         dataSetContainer.addDataSet("sales_data", JOLapDataSetFactory.createSalesDataSet());
         executor.dataSet(dataSetContainer);
-        DataSet dataSet = executor.execute(rule, JQuickSqlEngineEnums.LAMBDA);
-        for (Row row : dataSet.getRows()) {
+        JQuickDataSet dataSet = executor.execute(rule, JQuickSqlEngineEnums.LAMBDA);
+        for (JQuickRow row : dataSet.getRows()) {
             System.out.println(row);
         }
     }
@@ -104,8 +104,8 @@ public class JolapTest {
         JQuickSqlDataSetHolder dataSetContainer = new JQuickSqlDataSetHolder();
         dataSetContainer.addDataSet("sales_data", JOLapDataSetFactory.createSalesDataSet());
         executor.dataSet(dataSetContainer);
-        DataSet dataSet = executor.execute(rule, JQuickSqlEngineEnums.LAMBDA);
-        for (Row row : dataSet.getRows()) {
+        JQuickDataSet dataSet = executor.execute(rule, JQuickSqlEngineEnums.LAMBDA);
+        for (JQuickRow row : dataSet.getRows()) {
             System.out.println(row);
         }
     }

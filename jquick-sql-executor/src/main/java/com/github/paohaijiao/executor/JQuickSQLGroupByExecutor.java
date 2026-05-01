@@ -15,10 +15,10 @@
  */
 package com.github.paohaijiao.executor;
 
-import com.github.paohaijiao.dataset.DataSet;
 import com.github.paohaijiao.enums.JQuickSqlEngineEnums;
 import com.github.paohaijiao.parser.JQuickSQLLexer;
 import com.github.paohaijiao.parser.JQuickSQLParser;
+import com.github.paohaijiao.statement.JQuickDataSet;
 import com.github.paohaijiao.visitor.JQuikSQLCommonVisitor;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -32,7 +32,7 @@ import org.antlr.v4.runtime.CommonTokenStream;
  */
 public class JQuickSQLGroupByExecutor {
 
-    public DataSet execute(String sql, JQuickSqlEngineEnums engine) {
+    public JQuickDataSet execute(String sql, JQuickSqlEngineEnums engine) {
         JQuickSQLLexer lexer = new JQuickSQLLexer(CharStreams.fromString(sql));
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         JQuickSQLParser parser = new JQuickSQLParser(tokens);
@@ -40,6 +40,6 @@ public class JQuickSQLGroupByExecutor {
         JQuikSQLCommonVisitor tv = new JQuikSQLCommonVisitor();
         tv.engine(engine);
         Object object = tv.visit(tree);
-        return (DataSet) object;
+        return (JQuickDataSet) object;
     }
 }

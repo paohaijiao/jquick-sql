@@ -14,10 +14,10 @@
  * Copyright (c) [2025-2099] Martin (goudingcheng@gmail.com)
  */
 
-import com.github.paohaijiao.dataset.ColumnMeta;
-import com.github.paohaijiao.dataset.DataSet;
-import com.github.paohaijiao.dataset.Row;
 import com.github.paohaijiao.function.JQuickSqlAggregateFunctionFactory;
+import com.github.paohaijiao.statement.JQuickColumnMeta;
+import com.github.paohaijiao.statement.JQuickDataSet;
+import com.github.paohaijiao.statement.JQuickRow;
 import com.github.paohaijiao.support.JQuickSqlOLAPOperations;
 import org.junit.Test;
 
@@ -32,8 +32,8 @@ import java.util.function.Function;
  * @since 2025/8/17
  */
 public class JOlapTest {
-    private static Row createRow(String region, String product, String quarter, double sales) {
-        Row row = new Row();
+    private static JQuickRow createRow(String region, String product, String quarter, double sales) {
+        JQuickRow row = new JQuickRow();
         row.put("region", region);
         row.put("product", product);
         row.put("quarter", quarter);
@@ -41,21 +41,21 @@ public class JOlapTest {
         return row;
     }
 
-    private static DataSet buildDataSet() {
-        List<ColumnMeta> columns = Arrays.asList(
-                new ColumnMeta("region", String.class, "source"),
-                new ColumnMeta("product", String.class, "source"),
-                new ColumnMeta("quarter", String.class, "source"),
-                new ColumnMeta("sales", Double.class, "source")
+    private static JQuickDataSet buildDataSet() {
+        List<JQuickColumnMeta> columns = Arrays.asList(
+                new JQuickColumnMeta("region", String.class, "source"),
+                new JQuickColumnMeta("product", String.class, "source"),
+                new JQuickColumnMeta("quarter", String.class, "source"),
+                new JQuickColumnMeta("sales", Double.class, "source")
         );
 
-        List<Row> rows = new ArrayList<>();
-        rows.add(new Row(createRow("East", "A", "Q1", 100.0)));
-        rows.add(new Row(createRow("East", "A", "Q2", 150.0)));
-        rows.add(new Row(createRow("East", "B", "Q1", 200.0)));
-        rows.add(new Row(createRow("West", "A", "Q1", 120.0)));
-        rows.add(new Row(createRow("West", "B", "Q2", 180.0)));
-        DataSet dataset = new DataSet(columns, rows);
+        List<JQuickRow> rows = new ArrayList<>();
+        rows.add(new JQuickRow(createRow("East", "A", "Q1", 100.0)));
+        rows.add(new JQuickRow(createRow("East", "A", "Q2", 150.0)));
+        rows.add(new JQuickRow(createRow("East", "B", "Q1", 200.0)));
+        rows.add(new JQuickRow(createRow("West", "A", "Q1", 120.0)));
+        rows.add(new JQuickRow(createRow("West", "B", "Q2", 180.0)));
+        JQuickDataSet dataset = new JQuickDataSet(columns, rows);
         return dataset;
     }
 
@@ -64,12 +64,12 @@ public class JOlapTest {
         Map<String, Function<List<Object>, Object>> aggregations = new HashMap<>();
         aggregations.put("sales", JQuickSqlAggregateFunctionFactory.getFunction(JQuickSqlAggregateFunctionFactory.SUM));
         aggregations = Collections.unmodifiableMap(aggregations);
-        DataSet rolledUp = JQuickSqlOLAPOperations.rollUp(
+        JQuickDataSet rolledUp = JQuickSqlOLAPOperations.rollUp(
                 buildDataSet(),
                 Arrays.asList("region", "product"),
                 aggregations
         );
-        for (Row row : rolledUp.getRows()) {
+        for (JQuickRow row : rolledUp.getRows()) {
             System.out.println(row);
         }
     }
@@ -79,20 +79,20 @@ public class JOlapTest {
         Map<String, Function<List<Object>, Object>> aggregations = new HashMap<>();
         aggregations.put("sales", JQuickSqlAggregateFunctionFactory.getFunction(JQuickSqlAggregateFunctionFactory.SUM));
         aggregations = Collections.unmodifiableMap(aggregations);
-        DataSet drilledDown = JQuickSqlOLAPOperations.drillDown(
+        JQuickDataSet drilledDown = JQuickSqlOLAPOperations.drillDown(
                 buildDataSet(),
                 Collections.singletonList("quarter"),
                 aggregations
         );
-        for (Row row : drilledDown.getRows()) {
+        for (JQuickRow row : drilledDown.getRows()) {
             System.out.println(row);
         }
     }
 
     @Test
     public void slice() {
-        DataSet sliced = JQuickSqlOLAPOperations.slice(buildDataSet(), "region", "East");
-        for (Row row : sliced.getRows()) {
+        JQuickDataSet sliced = JQuickSqlOLAPOperations.slice(buildDataSet(), "region", "East");
+        for (JQuickRow row : sliced.getRows()) {
             System.out.println(row);
         }
     }
@@ -102,24 +102,24 @@ public class JOlapTest {
         Map<String, Object> map = new HashMap<>();
         map.put("region", "East");
         map.put("product", "A");
-        DataSet diced = JQuickSqlOLAPOperations.dice(
+        JQuickDataSet diced = JQuickSqlOLAPOperations.dice(
                 buildDataSet(),
                 map
         );
-        for (Row row : diced.getRows()) {
+        for (JQuickRow row : diced.getRows()) {
             System.out.println(row);
         }
     }
 
     @Test
     public void pivoted() {
-        DataSet pivoted = JQuickSqlOLAPOperations.pivot(
+        JQuickDataSet pivoted = JQuickSqlOLAPOperations.pivot(
                 buildDataSet(),
                 "quarter",
                 "sales",
                 JQuickSqlAggregateFunctionFactory.getFunction(JQuickSqlAggregateFunctionFactory.SUM)
         );
-        for (Row row : pivoted.getRows()) {
+        for (JQuickRow row : pivoted.getRows()) {
             System.out.println(row);
         }
     }

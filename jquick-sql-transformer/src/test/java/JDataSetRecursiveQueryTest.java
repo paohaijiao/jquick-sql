@@ -14,10 +14,8 @@
  * Copyright (c) [2025-2099] Martin (goudingcheng@gmail.com)
  */
 
-
-import com.github.paohaijiao.dataset.DataSet;
-import com.github.paohaijiao.dataset.JQuickConnectorDataSet;
-import com.github.paohaijiao.dataset.Row;
+import com.github.paohaijiao.statement.JQuickDataSet;
+import com.github.paohaijiao.statement.JQuickRow;
 import com.github.paohaijiao.support.JQuickSqlDataSetRecursiveQuery;
 import org.junit.Test;
 
@@ -38,32 +36,32 @@ import static org.junit.Assert.assertTrue;
  * @since 2025/8/20
  */
 public class JDataSetRecursiveQueryTest {
-    private JQuickConnectorDataSet createEmployeeDataSet() {
-        JQuickRow ceo = new JQuickConnectorRow();
+    private JQuickDataSet createEmployeeDataSet() {
+        JQuickRow ceo = new JQuickRow();
         ceo.put("id", 1);
         ceo.put("name", "Alice");
         ceo.put("manager_id", null);
-        Row manager1 = new Row();
+        JQuickRow manager1 = new JQuickRow();
         manager1.put("id", 2);
         manager1.put("name", "Bob");
         manager1.put("manager_id", 1);
 
-        Row manager2 = new Row();
+        JQuickRow manager2 = new JQuickRow();
         manager2.put("id", 3);
         manager2.put("name", "Charlie");
         manager2.put("manager_id", 1);
 
-        Row employee1 = new Row();
+        JQuickRow employee1 = new JQuickRow();
         employee1.put("id", 4);
         employee1.put("name", "David");
         employee1.put("manager_id", 2);
 
-        Row employee2 = new Row();
+        JQuickRow employee2 = new JQuickRow();
         employee2.put("id", 5);
         employee2.put("name", "Eve");
         employee2.put("manager_id", 3);
 
-        return DataSet.builder()
+        return JQuickDataSet.builder()
                 .addColumn("id", Integer.class, "employees")
                 .addColumn("name", String.class, "employees")
                 .addColumn("manager_id", Integer.class, "employees")
@@ -75,12 +73,12 @@ public class JDataSetRecursiveQueryTest {
                 .build();
     }
 
-    private DataSet createLinearHierarchyDataSet() {
-        DataSet.Builder builder = DataSet.builder()
+    private JQuickDataSet createLinearHierarchyDataSet() {
+        JQuickDataSet.Builder builder = JQuickDataSet.builder()
                 .addColumn("value", Integer.class, "hierarchy")
                 .addColumn("parent", Integer.class, "hierarchy");
         for (int i = 1; i <= 5; i++) {
-            Row row = new Row();
+            JQuickRow row = new JQuickRow();
             row.put("value", i);
             row.put("parent", i == 1 ? null : i - 1);
             builder.addRow(row);
@@ -91,24 +89,24 @@ public class JDataSetRecursiveQueryTest {
 
     @Test
     public void testEmployeeHierarchy() {
-        DataSet allEmployees = createEmployeeDataSet();
-        DataSet ceo = allEmployees.filter(row -> row.get("manager_id") == null);
+        JQuickDataSet allEmployees = createEmployeeDataSet();
+        JQuickDataSet ceo = allEmployees.filter(row -> row.get("manager_id") == null);
         assertEquals(1, ceo.size());
         assertEquals("Alice", ceo.getRows().get(0).get("name"));
-        Function<DataSet, DataSet> findSubordinates = currentEmployees -> {
+        Function<JQuickDataSet, JQuickDataSet> findSubordinates = currentEmployees -> {
             Set<Integer> managerIds = currentEmployees.getRows().stream()
                     .map(row -> (Integer) row.get("id"))
                     .collect(Collectors.toSet());
-            List<Row> subordinates = allEmployees.getRows().stream()
+            List<JQuickRow> subordinates = allEmployees.getRows().stream()
                     .filter(row -> {
                         Integer managerId = (Integer) row.get("manager_id");
                         return managerId != null && managerIds.contains(managerId);
                     })
                     .collect(Collectors.toList());
 
-            return new DataSet(allEmployees.getColumns(), subordinates);
+            return new JQuickDataSet(allEmployees.getColumns(), subordinates);
         };
-        DataSet allSubordinates = JQuickSqlDataSetRecursiveQuery.withRecursive(
+        JQuickDataSet allSubordinates = JQuickSqlDataSetRecursiveQuery.withRecursive(
                 ceo, findSubordinates, 10, true);
         assertEquals(5, allSubordinates.size());
         assertTrue(allSubordinates.getRows().stream()
@@ -119,12 +117,12 @@ public class JDataSetRecursiveQueryTest {
 
     @Test
     public void testFullOrganizationHierarchy() {
-        DataSet allEmployees = createEmployeeDataSet();
-        Function<DataSet, DataSet> recursiveFunction = JQuickSqlDataSetRecursiveQuery.buildHierarchicalRecursiveFunction(
+        JQuickDataSet allEmployees = createEmployeeDataSet();
+        Function<JQuickDataSet, JQuickDataSet> recursiveFunction = JQuickSqlDataSetRecursiveQuery.buildHierarchicalRecursiveFunction(
                 allEmployees,
                 "manager_id", "id");
-        DataSet ceo = allEmployees.filter(row -> row.get("manager_id") == null);
-        DataSet fullHierarchy = JQuickSqlDataSetRecursiveQuery.withRecursive(ceo, recursiveFunction, 10);
+        JQuickDataSet ceo = allEmployees.filter(row -> row.get("manager_id") == null);
+        JQuickDataSet fullHierarchy = JQuickSqlDataSetRecursiveQuery.withRecursive(ceo, recursiveFunction, 10);
         assertEquals(5, fullHierarchy.size());
         List<String> names = fullHierarchy.getRows().stream()
                 .map(row -> (String) row.get("name"))
@@ -139,21 +137,21 @@ public class JDataSetRecursiveQueryTest {
      */
     @Test
     public void testMaxDepthProtection() {
-        Row cyclicEmployee = new Row();
+        JQuickRow cyclicEmployee = new JQuickRow();
         cyclicEmployee.put("id", 99);
         cyclicEmployee.put("name", "Cyclic");
         cyclicEmployee.put("manager_id", 99); // 自己管理自己
-        DataSet cyclicDataSet = DataSet.builder()
+        JQuickDataSet cyclicDataSet = JQuickDataSet.builder()
                 .addColumn("id", Integer.class, "test")
                 .addColumn("name", String.class, "test")
                 .addColumn("manager_id", Integer.class, "test")
                 .addRow(cyclicEmployee)
                 .build();
-        Function<DataSet, DataSet> recursiveFunction = current -> {
+        Function<JQuickDataSet, JQuickDataSet> recursiveFunction = current -> {
             Integer currentId = (Integer) current.getRows().get(0).get("id");
             return cyclicDataSet.filter(row -> row.get("manager_id").equals(currentId));
         };
-        DataSet result = JQuickSqlDataSetRecursiveQuery.withRecursive(cyclicDataSet, recursiveFunction, 3);
+        JQuickDataSet result = JQuickSqlDataSetRecursiveQuery.withRecursive(cyclicDataSet, recursiveFunction, 3);
         assertEquals(3, result.size());
     }
 
@@ -162,12 +160,12 @@ public class JDataSetRecursiveQueryTest {
      */
     @Test
     public void testWithoutDistinct() {
-        DataSet data = createLinearHierarchyDataSet();
-        Function<DataSet, DataSet> recursiveFunction = current -> {
+        JQuickDataSet data = createLinearHierarchyDataSet();
+        Function<JQuickDataSet, JQuickDataSet> recursiveFunction = current -> {
             Integer currentValue = (Integer) current.getRows().get(0).get("value");
             return data.filter(row -> null != row.get("parent") && row.get("parent").equals(currentValue));
         };
-        DataSet result = JQuickSqlDataSetRecursiveQuery.withRecursive(
+        JQuickDataSet result = JQuickSqlDataSetRecursiveQuery.withRecursive(
                 data.filter(row -> ((Integer) row.get("value")) == 1),
                 recursiveFunction, 5, false);
         assertTrue(result.size() > 5);
@@ -176,14 +174,12 @@ public class JDataSetRecursiveQueryTest {
 
     @Test
     public void testEmptyDataSet() {
-        DataSet empty = DataSet.builder()
+        JQuickDataSet empty = JQuickDataSet.builder()
                 .addColumn("id", Integer.class, "test")
                 .build();
-        Function<DataSet, DataSet> recursiveFunction = data -> data;
-
-        DataSet result = JQuickSqlDataSetRecursiveQuery.withRecursive(
+        Function<JQuickDataSet, JQuickDataSet> recursiveFunction = data -> data;
+        JQuickDataSet result = JQuickSqlDataSetRecursiveQuery.withRecursive(
                 empty, recursiveFunction, 5);
-
         assertTrue(result.isEmpty());
     }
 
@@ -192,21 +188,21 @@ public class JDataSetRecursiveQueryTest {
      */
     @Test
     public void testSingleLevelRecursion() {
-        DataSet data = createEmployeeDataSet();
-        Function<DataSet, DataSet> findDirectSubordinates = current -> {
+        JQuickDataSet data = createEmployeeDataSet();
+        Function<JQuickDataSet, JQuickDataSet> findDirectSubordinates = current -> {
             Set<Integer> managerIds = current.getRows().stream()
                     .map(row -> (Integer) row.get("id"))
                     .collect(Collectors.toSet());
-            List<Row> subordinates = data.getRows().stream()
+            List<JQuickRow> subordinates = data.getRows().stream()
                     .filter(row -> {
                         Integer managerId = (Integer) row.get("manager_id");
                         return managerId != null && managerIds.contains(managerId);
                     })
                     .collect(Collectors.toList());
-            return new DataSet(data.getColumns(), subordinates);
+            return new JQuickDataSet(data.getColumns(), subordinates);
         };
-        DataSet ceo = data.filter(row -> row.get("manager_id") == null);
-        DataSet directSubordinates = JQuickSqlDataSetRecursiveQuery.withRecursive(
+        JQuickDataSet ceo = data.filter(row -> row.get("manager_id") == null);
+        JQuickDataSet directSubordinates = JQuickSqlDataSetRecursiveQuery.withRecursive(
                 ceo, findDirectSubordinates, 2);
         assertEquals(3, directSubordinates.size());
         List<String> names = directSubordinates.getRows().stream()

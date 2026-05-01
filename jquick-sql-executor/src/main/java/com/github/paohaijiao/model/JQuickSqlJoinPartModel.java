@@ -15,8 +15,8 @@
  */
 package com.github.paohaijiao.model;
 
-import com.github.paohaijiao.dataset.DataSet;
 import com.github.paohaijiao.enums.JQuickSqlJoinType;
+import com.github.paohaijiao.statement.JQuickDataSet;
 import lombok.Data;
 
 /**
@@ -29,7 +29,7 @@ import lombok.Data;
 @Data
 public class JQuickSqlJoinPartModel {
 
-    private DataSet dataset;
+    private JQuickDataSet dataset;
 
     private JQuickSqlJoinType joinType;
 

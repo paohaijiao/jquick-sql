@@ -15,8 +15,9 @@
  */
 package com.github.paohaijiao.support;
 
-import com.github.paohaijiao.dataset.DataSet;
-import com.github.paohaijiao.dataset.Row;
+
+import com.github.paohaijiao.statement.JQuickDataSet;
+import com.github.paohaijiao.statement.JQuickRow;
 
 import java.util.*;
 import java.util.function.Function;
@@ -37,12 +38,12 @@ public class JQuickSqlDataSetRecursiveQuery {
      * @param distinct
      * @return
      */
-    public static DataSet withRecursive(DataSet initialDataSet, Function<DataSet, DataSet> recursiveFunction, int maxDepth, boolean distinct) {
+    public static JQuickDataSet withRecursive(JQuickDataSet initialDataSet, Function<JQuickDataSet, JQuickDataSet> recursiveFunction, int maxDepth, boolean distinct) {
         if (maxDepth <= 0) {
             throw new IllegalArgumentException("maxDepth must be positive");
         }
-        Set<Row> allRows = new LinkedHashSet<>();
-        DataSet currentDataSet = initialDataSet;
+        Set<JQuickRow> allRows = new LinkedHashSet<>();
+        JQuickDataSet currentDataSet = initialDataSet;
         if (distinct) {
             allRows.addAll(new LinkedHashSet<>(currentDataSet.getRows()));
         } else {
@@ -50,18 +51,18 @@ public class JQuickSqlDataSetRecursiveQuery {
         }
         int depth = 1;
         while (depth < maxDepth && !currentDataSet.isEmpty()) {
-            DataSet nextDataSet = recursiveFunction.apply(currentDataSet);
+            JQuickDataSet nextDataSet = recursiveFunction.apply(currentDataSet);
             if (nextDataSet.isEmpty()) {
                 break;
             }
             if (distinct) {
-                Set<Row> newRows = new LinkedHashSet<>(nextDataSet.getRows());
+                Set<JQuickRow> newRows = new LinkedHashSet<>(nextDataSet.getRows());
                 newRows.removeAll(allRows);
                 if (newRows.isEmpty()) {
                     break; //stop
                 }
                 allRows.addAll(newRows);
-                currentDataSet = new DataSet(nextDataSet.getColumns(), new ArrayList<>(newRows));
+                currentDataSet = new JQuickDataSet(nextDataSet.getColumns(), new ArrayList<>(newRows));
             } else {
                 allRows.addAll(nextDataSet.getRows());
                 currentDataSet = nextDataSet;
@@ -69,35 +70,35 @@ public class JQuickSqlDataSetRecursiveQuery {
             depth++;
         }
 
-        return new DataSet(initialDataSet.getColumns(), new ArrayList<>(allRows));
+        return new JQuickDataSet(initialDataSet.getColumns(), new ArrayList<>(allRows));
     }
 
 
-    public static DataSet withRecursive(DataSet initialDataSet, Function<DataSet, DataSet> recursiveFunction, int maxDepth) {
+    public static JQuickDataSet withRecursive(JQuickDataSet initialDataSet, Function<JQuickDataSet, JQuickDataSet> recursiveFunction, int maxDepth) {
         return withRecursive(initialDataSet, recursiveFunction, maxDepth, true);
     }
 
-    public static DataSet withRecursive(DataSet initialDataSet, Function<DataSet, DataSet> recursiveFunction) {
+    public static JQuickDataSet withRecursive(JQuickDataSet initialDataSet, Function<JQuickDataSet, JQuickDataSet> recursiveFunction) {
         return withRecursive(initialDataSet, recursiveFunction, 100, true);
     }
 
-    public static Function<DataSet, DataSet> buildHierarchicalRecursiveFunction(DataSet fullDataSet, String parentKeyColumn, String childKeyColumn) {
+    public static Function<JQuickDataSet, JQuickDataSet> buildHierarchicalRecursiveFunction(JQuickDataSet fullDataSet, String parentKeyColumn, String childKeyColumn) {
         return currentDataSet -> {
             Set<Object> childKeys = currentDataSet.getRows().stream()
                     .map(row -> row.get(childKeyColumn))
                     .filter(Objects::nonNull)
                     .collect(Collectors.toSet());
             if (childKeys.isEmpty()) {
-                return DataSet.builder().build();
+                return JQuickDataSet.builder().build();
             }
-            List<Row> nextLevelRows = fullDataSet.getRows().stream()
+            List<JQuickRow> nextLevelRows = fullDataSet.getRows().stream()
                     .filter(row -> {
                         Object parentKey = row.get(parentKeyColumn);
                         return parentKey != null && childKeys.contains(parentKey);
                     })
                     .collect(Collectors.toList());
 
-            return new DataSet(fullDataSet.getColumns(), nextLevelRows);
+            return new JQuickDataSet(fullDataSet.getColumns(), nextLevelRows);
         };
     }
 }

@@ -16,9 +16,6 @@
 package com.github.paohaijiao.lamda;
 
 import com.github.paohaijiao.condition.JQuickSqlCondition;
-import com.github.paohaijiao.dataset.ColumnMeta;
-import com.github.paohaijiao.dataset.DataSet;
-import com.github.paohaijiao.dataset.Row;
 import com.github.paohaijiao.evalue.JQuickSqlConditionEvaluator;
 import com.github.paohaijiao.exception.JAssert;
 import com.github.paohaijiao.expression.JQuickSqlColumnExpression;
@@ -29,6 +26,9 @@ import com.github.paohaijiao.factory.JQuickSqlDataSetJoinerStrategy;
 import com.github.paohaijiao.function.JQuickSqlAggregateFunctionFactory;
 import com.github.paohaijiao.handler.JQuickSqlBaseHandler;
 import com.github.paohaijiao.join.JQuickSqlJoinCondition;
+import com.github.paohaijiao.statement.JQuickColumnMeta;
+import com.github.paohaijiao.statement.JQuickDataSet;
+import com.github.paohaijiao.statement.JQuickRow;
 
 import java.util.*;
 import java.util.function.Function;
@@ -43,30 +43,30 @@ import java.util.stream.Collectors;
  */
 public class JQuickSqlLamdaJoinJoinerHandler extends JQuickSqlBaseHandler implements JQuickSqlDataSetJoinerStrategy {
     @Override
-    public DataSet innerJoin(DataSet left, DataSet right, JQuickSqlJoinCondition condition) {
-        List<Row> resultRows = new ArrayList<>();
-        List<ColumnMeta> resultColumns = mergeColumns(left, right);
-        List<Row> list = left.getRows();
-        for (Row leftRow : list) {
-            List<Row> rightRows = right.getRows();
-            for (Row rightRow : rightRows) {
+    public JQuickDataSet innerJoin(JQuickDataSet left, JQuickDataSet right, JQuickSqlJoinCondition condition) {
+        List<JQuickRow> resultRows = new ArrayList<>();
+        List<JQuickColumnMeta> resultColumns = mergeColumns(left, right);
+        List<JQuickRow> list = left.getRows();
+        for (JQuickRow leftRow : list) {
+            List<JQuickRow> rightRows = right.getRows();
+            for (JQuickRow rightRow : rightRows) {
                 if (condition.test(leftRow, rightRow)) {
                     resultRows.add(mergeRows(leftRow, rightRow));
                 }
             }
         }
-        return new DataSet(resultColumns, resultRows);
+        return new JQuickDataSet(resultColumns, resultRows);
     }
 
     @Override
-    public DataSet leftJoin(DataSet left, DataSet right, JQuickSqlJoinCondition condition) {
-        List<Row> resultRows = new ArrayList<>();
-        List<ColumnMeta> resultColumns = mergeColumns(left, right);
-        List<Row> list = left.getRows();
-        for (Row leftRow : list) {
+    public JQuickDataSet leftJoin(JQuickDataSet left, JQuickDataSet right, JQuickSqlJoinCondition condition) {
+        List<JQuickRow> resultRows = new ArrayList<>();
+        List<JQuickColumnMeta> resultColumns = mergeColumns(left, right);
+        List<JQuickRow> list = left.getRows();
+        for (JQuickRow leftRow : list) {
             boolean hasMatch = false;
-            List<Row> rightRows = right.getRows();
-            for (Row rightRow : rightRows) {
+            List<JQuickRow> rightRows = right.getRows();
+            for (JQuickRow rightRow : rightRows) {
                 if (condition.test(leftRow, rightRow)) {
                     resultRows.add(mergeRows(leftRow, rightRow));
                     hasMatch = true;
@@ -76,18 +76,18 @@ public class JQuickSqlLamdaJoinJoinerHandler extends JQuickSqlBaseHandler implem
                 resultRows.add(mergeRows(leftRow, createNullRow(right)));
             }
         }
-        return new DataSet(resultColumns, resultRows);
+        return new JQuickDataSet(resultColumns, resultRows);
     }
 
     @Override
-    public DataSet rightJoin(DataSet left, DataSet right, JQuickSqlJoinCondition condition) {
-        List<Row> resultRows = new ArrayList<>();
-        List<ColumnMeta> resultColumns = mergeColumns(left, right);
+    public JQuickDataSet rightJoin(JQuickDataSet left, JQuickDataSet right, JQuickSqlJoinCondition condition) {
+        List<JQuickRow> resultRows = new ArrayList<>();
+        List<JQuickColumnMeta> resultColumns = mergeColumns(left, right);
         int matchCount = 0;
         int totalComparisons = 0;
-        for (Row rightRow : right.getRows()) {
+        for (JQuickRow rightRow : right.getRows()) {
             boolean hasMatch = false;
-            for (Row leftRow : left.getRows()) {
+            for (JQuickRow leftRow : left.getRows()) {
                 totalComparisons++;
                 if (condition.test(leftRow, rightRow)) {
                     matchCount++;
@@ -99,51 +99,51 @@ public class JQuickSqlLamdaJoinJoinerHandler extends JQuickSqlBaseHandler implem
                 resultRows.add(mergeRows(createNullRow(left), rightRow));
             }
         }
-        return new DataSet(resultColumns, resultRows);
+        return new JQuickDataSet(resultColumns, resultRows);
     }
 
 
     @Override
-    public DataSet fullOuterJoin(DataSet left, DataSet right, JQuickSqlJoinCondition condition) {
-        List<ColumnMeta> resultColumns = mergeColumns(left, right);
-        Map<Row, Set<Row>> matches = new HashMap<>();
-        for (Row leftRow : left.getRows()) {
-            for (Row rightRow : right.getRows()) {
+    public JQuickDataSet fullOuterJoin(JQuickDataSet left, JQuickDataSet right, JQuickSqlJoinCondition condition) {
+        List<JQuickColumnMeta> resultColumns = mergeColumns(left, right);
+        Map<JQuickRow, Set<JQuickRow>> matches = new HashMap<>();
+        for (JQuickRow leftRow : left.getRows()) {
+            for (JQuickRow rightRow : right.getRows()) {
                 if (condition.test(leftRow, rightRow)) {
                     matches.computeIfAbsent(leftRow, k -> new HashSet<>()).add(rightRow);
                 }
             }
         }
-        List<Row> resultRows = new ArrayList<>();
-        for (Map.Entry<Row, Set<Row>> entry : matches.entrySet()) {
-            for (Row rightRow : entry.getValue()) {
+        List<JQuickRow> resultRows = new ArrayList<>();
+        for (Map.Entry<JQuickRow, Set<JQuickRow>> entry : matches.entrySet()) {
+            for (JQuickRow rightRow : entry.getValue()) {
                 resultRows.add(mergeRows(entry.getKey(), rightRow));
             }
         }
-        for (Row leftRow : left.getRows()) {
+        for (JQuickRow leftRow : left.getRows()) {
             if (!matches.containsKey(leftRow)) {
                 resultRows.add(mergeRows(leftRow, createNullRow(right)));
             }
         }
-        Set<Row> allMatchedRightRows = matches.values().stream()
+        Set<JQuickRow> allMatchedRightRows = matches.values().stream()
                 .flatMap(Set::stream)
                 .collect(Collectors.toSet());
-        for (Row rightRow : right.getRows()) {
+        for (JQuickRow rightRow : right.getRows()) {
             if (!allMatchedRightRows.contains(rightRow)) {
                 resultRows.add(mergeRows(createNullRow(left), rightRow));
             }
         }
-        return new DataSet(resultColumns, resultRows);
+        return new JQuickDataSet(resultColumns, resultRows);
     }
 
     @Override
-    public DataSet crossJoin(DataSet left, DataSet right) {
+    public JQuickDataSet crossJoin(JQuickDataSet left, JQuickDataSet right) {
         return innerJoin(left, right, (l, r) -> true);
 
     }
 
     @Override
-    public DataSet naturalJoin(DataSet left, DataSet right) {
+    public JQuickDataSet naturalJoin(JQuickDataSet left, JQuickDataSet right) {
         Set<String> leftColumns = new HashSet<>(left.getColumnNames());
         ;
         Set<String> rightColumns = new HashSet<>(right.getColumnNames());
@@ -153,83 +153,83 @@ public class JQuickSqlLamdaJoinJoinerHandler extends JQuickSqlBaseHandler implem
         if (commonColumns.isEmpty()) {
             return crossJoin(left, right);
         }
-        List<ColumnMeta> resultColumns = new ArrayList<>();
+        List<JQuickColumnMeta> resultColumns = new ArrayList<>();
         resultColumns.addAll(left.getColumns());
         resultColumns.addAll(right.getColumns());
-        List<Row> resultRows = left.getRows().stream()
+        List<JQuickRow> resultRows = left.getRows().stream()
                 .flatMap(leftRow -> right.getRows().stream()
                         .filter(rightRow -> isMatch(leftRow, rightRow, commonColumns))
                         .map(rightRow -> mergeRows(leftRow, rightRow)))
                 .collect(Collectors.toList());
-        return new DataSet(resultColumns, resultRows);
+        return new JQuickDataSet(resultColumns, resultRows);
     }
 
     @Override
-    public DataSet union(DataSet ds1, DataSet ds2) {
+    public JQuickDataSet union(JQuickDataSet ds1, JQuickDataSet ds2) {
         validateUnionCompatible(ds1, ds2);
-        List<Row> combinedRows = new ArrayList<>();
+        List<JQuickRow> combinedRows = new ArrayList<>();
         combinedRows.addAll(ds1.getRows());
         combinedRows.addAll(ds2.getRows());
-        return new DataSet(ds1.getColumns(), combinedRows);
+        return new JQuickDataSet(ds1.getColumns(), combinedRows);
     }
 
     @Override
-    public DataSet intersect(DataSet ds1, DataSet ds2) {
+    public JQuickDataSet intersect(JQuickDataSet ds1, JQuickDataSet ds2) {
         validateUnionCompatible(ds1, ds2);
-        Set<Row> set1 = new HashSet<>(ds1.getRows());
-        Set<Row> set2 = new HashSet<>(ds2.getRows());
+        Set<JQuickRow> set1 = new HashSet<>(ds1.getRows());
+        Set<JQuickRow> set2 = new HashSet<>(ds2.getRows());
         set1.retainAll(set2);
-        return new DataSet(ds1.getColumns(), new ArrayList<>(set1));
+        return new JQuickDataSet(ds1.getColumns(), new ArrayList<>(set1));
     }
 
     @Override
-    public DataSet minus(DataSet ds1, DataSet ds2) {
+    public JQuickDataSet minus(JQuickDataSet ds1, JQuickDataSet ds2) {
         validateUnionCompatible(ds1, ds2);
-        Set<Row> set1 = new HashSet<>(ds1.getRows());
-        Set<Row> set2 = new HashSet<>(ds2.getRows());
+        Set<JQuickRow> set1 = new HashSet<>(ds1.getRows());
+        Set<JQuickRow> set2 = new HashSet<>(ds2.getRows());
         set1.removeAll(set2);
-        return new DataSet(ds1.getColumns(), new ArrayList<>(set1));
+        return new JQuickDataSet(ds1.getColumns(), new ArrayList<>(set1));
     }
 
     @Override
-    public DataSet selectColumns(DataSet dataset, List<String> columnNames) {
-        List<ColumnMeta> currentColumns = dataset.getColumns();
-        List<Row> currentRows = dataset.getRows();
-        List<ColumnMeta> newColumns = currentColumns.stream()
+    public JQuickDataSet selectColumns(JQuickDataSet dataset, List<String> columnNames) {
+        List<JQuickColumnMeta> currentColumns = dataset.getColumns();
+        List<JQuickRow> currentRows = dataset.getRows();
+        List<JQuickColumnMeta> newColumns = currentColumns.stream()
                 .filter(col -> columnNames.contains(col.getName()))
                 .collect(Collectors.toList());
-        List<Row> newRows = currentRows.stream()
+        List<JQuickRow> newRows = currentRows.stream()
                 .map(row -> {
-                    Row Row = (row instanceof Row)
-                            ? new Row(((Row) row))
-                            : new Row();
+                    JQuickRow Row = (row instanceof JQuickRow)
+                            ? new JQuickRow(((JQuickRow) row))
+                            : new JQuickRow();
                     columnNames.forEach(col -> Row.put(col, row.get(col)));
                     return Row;
                 })
                 .collect(Collectors.toList());
-        return new DataSet(newColumns, newRows);
+        return new JQuickDataSet(newColumns, newRows);
     }
 
     @Override
-    public DataSet filter(DataSet dataset, JQuickSqlCondition condition) {
+    public JQuickDataSet filter(JQuickDataSet dataset, JQuickSqlCondition condition) {
         JQuickSqlConditionEvaluator evaluator = new JQuickSqlConditionEvaluator();
-        List<Row> filteredRows = dataset.getRows().stream()
+        List<JQuickRow> filteredRows = dataset.getRows().stream()
                 .filter(row -> evaluator.evaluateCondition(condition, row))
                 .map(row -> {
-                    Row Row = new Row();
+                    JQuickRow Row = new JQuickRow();
                     Row.putAll(row);
                     return Row;
                 })
                 .collect(Collectors.toList());
-        return new DataSet(dataset.getColumns(), filteredRows);
+        return new JQuickDataSet(dataset.getColumns(), filteredRows);
     }
 
     @Override
-    public DataSet transform(DataSet dataset, Map<String, JQuickSqlFunctionCallExpression> transformations) {
-        List<ColumnMeta> newColumns = new ArrayList<>();
-        for (ColumnMeta column : dataset.getColumns()) {
+    public JQuickDataSet transform(JQuickDataSet dataset, Map<String, JQuickSqlFunctionCallExpression> transformations) {
+        List<JQuickColumnMeta> newColumns = new ArrayList<>();
+        for (JQuickColumnMeta column : dataset.getColumns()) {
             if (transformations.containsKey(column.getName())) {
-                newColumns.add(new ColumnMeta(
+                newColumns.add(new JQuickColumnMeta(
                         column.getName(),
                         Object.class,
                         column.getSource() + "_transformed"
@@ -238,46 +238,46 @@ public class JQuickSqlLamdaJoinJoinerHandler extends JQuickSqlBaseHandler implem
                 newColumns.add(column);
             }
         }
-        List<Row> newRows = dataset.getRows().stream()
+        List<JQuickRow> newRows = dataset.getRows().stream()
                 .map(row -> transformRow(row, transformations))
                 .collect(Collectors.toList());
-        return new DataSet(newColumns, newRows);
+        return new JQuickDataSet(newColumns, newRows);
     }
 
     @Override
-    public DataSet sort(DataSet dataset, List<JQuickSqlOrderByExpression> orderByExpressions) {
+    public JQuickDataSet sort(JQuickDataSet dataset, List<JQuickSqlOrderByExpression> orderByExpressions) {
         if (orderByExpressions == null || orderByExpressions.isEmpty()) {
             return dataset;
         }
-        List<Row> sortedRows = new ArrayList<>(dataset.getRows());
+        List<JQuickRow> sortedRows = new ArrayList<>(dataset.getRows());
         Comparator<Map<String, Object>> comparator = createComparatorChain(orderByExpressions);
         sortedRows.sort(comparator);
-        return new DataSet(dataset.getColumns(), sortedRows);
+        return new JQuickDataSet(dataset.getColumns(), sortedRows);
     }
 
     @Override
-    public DataSet aggregate(DataSet dataset, List<String> groupBy, Map<String, JQuickSqlFunctionCallExpression> aggregations) {
+    public JQuickDataSet aggregate(JQuickDataSet dataset, List<String> groupBy, Map<String, JQuickSqlFunctionCallExpression> aggregations) {
         Map<List<Object>, List<Map<String, Object>>> groups = dataset.getRows().stream()
                 .collect(Collectors.groupingBy(
                         row -> groupBy.stream()
                                 .map(row::get)
                                 .collect(Collectors.toList())
                 ));
-        List<ColumnMeta> newColumns = new ArrayList<>();
+        List<JQuickColumnMeta> newColumns = new ArrayList<>();
         for (String col : groupBy) {
             Class<?> type = dataset.getColumns().stream()
                     .filter(c -> c.getName().equals(col))
                     .findFirst()
-                    .<Class<?>>map(ColumnMeta::getType)
+                    .<Class<?>>map(JQuickColumnMeta::getType)
                     .orElse(Object.class);
-            newColumns.add(new ColumnMeta(col, type, "group_by"));
+            newColumns.add(new JQuickColumnMeta(col, type, "group_by"));
         }
         for (String aggCol : aggregations.keySet()) {
-            newColumns.add(new ColumnMeta(aggCol, Object.class, "aggregate"));
+            newColumns.add(new JQuickColumnMeta(aggCol, Object.class, "aggregate"));
         }
-        List<Row> resultRows = new ArrayList<>();
+        List<JQuickRow> resultRows = new ArrayList<>();
         for (Map.Entry<List<Object>, List<Map<String, Object>>> entry : groups.entrySet()) {
-            Row resultRow = new Row();
+            JQuickRow resultRow = new JQuickRow();
             for (int i = 0; i < groupBy.size(); i++) {
                 resultRow.put(groupBy.get(i), entry.getKey().get(i));
             }
@@ -307,13 +307,13 @@ public class JQuickSqlLamdaJoinJoinerHandler extends JQuickSqlBaseHandler implem
             }
             resultRows.add(resultRow);
         }
-        return new DataSet(newColumns, resultRows);
+        return new JQuickDataSet(newColumns, resultRows);
     }
 
     @Override
-    public DataSet alias(DataSet dataset, Map<String, JQuickSqlExpression> aliases) {
-        List<ColumnMeta> newColumns = new ArrayList<>();
-        for (ColumnMeta column : dataset.getColumns()) {
+    public JQuickDataSet alias(JQuickDataSet dataset, Map<String, JQuickSqlExpression> aliases) {
+        List<JQuickColumnMeta> newColumns = new ArrayList<>();
+        for (JQuickColumnMeta column : dataset.getColumns()) {
             if (!aliases.containsValue(new JQuickSqlColumnExpression(column.getName()))) {
                 newColumns.add(column);
             }
@@ -322,27 +322,27 @@ public class JQuickSqlLamdaJoinJoinerHandler extends JQuickSqlBaseHandler implem
             String alias = entry.getKey();
             JQuickSqlExpression expr = entry.getValue();
             Class<?> type = determineExpressionType(expr);
-            newColumns.add(new ColumnMeta(alias, type, "alias"));
+            newColumns.add(new JQuickColumnMeta(alias, type, "alias"));
         }
-        List<Row> newRows = dataset.getRows().stream()
+        List<JQuickRow> newRows = dataset.getRows().stream()
                 .map(row -> createAliasedRow(row, aliases))
                 .collect(Collectors.toList());
 
-        return new DataSet(newColumns, newRows);
+        return new JQuickDataSet(newColumns, newRows);
     }
 
     @Override
-    public DataSet limit(DataSet dataset, Integer limit, Integer offset) {
+    public JQuickDataSet limit(JQuickDataSet dataset, Integer limit, Integer offset) {
         int finalLimit = limit != null ? limit : Integer.MAX_VALUE;
         int finalOffset = offset != null ? offset : 0;
         if (finalLimit <= 0 || finalOffset < 0) {
-            return new DataSet(dataset.getColumns(), Collections.emptyList());
+            return new JQuickDataSet(dataset.getColumns(), Collections.emptyList());
         }
-        List<Row> processedRows = dataset.getRows().stream()
+        List<JQuickRow> processedRows = dataset.getRows().stream()
                 .skip(finalOffset)
                 .limit(finalLimit)
                 .collect(Collectors.toList());
-        return new DataSet(dataset.getColumns(), processedRows);
+        return new JQuickDataSet(dataset.getColumns(), processedRows);
     }
 
 }

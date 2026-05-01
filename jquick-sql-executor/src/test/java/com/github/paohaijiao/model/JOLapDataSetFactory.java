@@ -15,9 +15,10 @@
  */
 package com.github.paohaijiao.model;
 
-import com.github.paohaijiao.dataset.ColumnMeta;
-import com.github.paohaijiao.dataset.DataSet;
-import com.github.paohaijiao.dataset.Row;
+
+import com.github.paohaijiao.statement.JQuickColumnMeta;
+import com.github.paohaijiao.statement.JQuickDataSet;
+import com.github.paohaijiao.statement.JQuickRow;
 
 import java.util.Arrays;
 import java.util.List;
@@ -30,18 +31,18 @@ import java.util.List;
  * @since 2025/8/31
  */
 public class JOLapDataSetFactory {
-    public static DataSet createSalesDataSet() {
-        List<ColumnMeta> columns = Arrays.asList(
-                new ColumnMeta("region", String.class, "sales_data"),
-                new ColumnMeta("department", String.class, "sales_data"),
-                new ColumnMeta("category", String.class, "sales_data"),
-                new ColumnMeta("product", String.class, "sales_data"),
-                new ColumnMeta("sales", Double.class, "sales_data"),
-                new ColumnMeta("quarter", String.class, "sales_data"),
-                new ColumnMeta("year", Integer.class, "sales_data")
+    public static JQuickDataSet createSalesDataSet() {
+        List<JQuickColumnMeta> columns = Arrays.asList(
+                new JQuickColumnMeta("region", String.class, "sales_data"),
+                new JQuickColumnMeta("department", String.class, "sales_data"),
+                new JQuickColumnMeta("category", String.class, "sales_data"),
+                new JQuickColumnMeta("product", String.class, "sales_data"),
+                new JQuickColumnMeta("sales", Double.class, "sales_data"),
+                new JQuickColumnMeta("quarter", String.class, "sales_data"),
+                new JQuickColumnMeta("year", Integer.class, "sales_data")
         );
 
-        List<Row> rows = Arrays.asList(
+        List<JQuickRow> rows = Arrays.asList(
                 createSalesRow("North", "Electronics", "Computers", "Laptop", 15000.00, "Q1", 2024),
                 createSalesRow("North", "Electronics", "Computers", "Desktop", 12000.00, "Q1", 2024),
                 createSalesRow("North", "Electronics", "Phones", "Smartphone", 20000.00, "Q1", 2024),
@@ -53,12 +54,12 @@ public class JOLapDataSetFactory {
                 createSalesRow("South", "Clothing", "Women", "Dress", 15000.00, "Q1", 2024)
         );
 
-        return new DataSet(columns, rows);
+        return new JQuickDataSet(columns, rows);
     }
 
-    private static Row createSalesRow(String region, String department, String category,
+    private static JQuickRow createSalesRow(String region, String department, String category,
                                       String product, double sales, String quarter, int year) {
-        Row row = new Row();
+        JQuickRow row = new JQuickRow();
         row.put("region", region);
         row.put("department", department);
         row.put("category", category);
@@ -69,17 +70,17 @@ public class JOLapDataSetFactory {
         return row;
     }
 
-    public static DataSet createEmployeeDataSet() {
-        List<ColumnMeta> columns = Arrays.asList(
-                new ColumnMeta("employee_id", Integer.class, "employee_data"),
-                new ColumnMeta("name", String.class, "employee_data"),
-                new ColumnMeta("department", String.class, "employee_data"),
-                new ColumnMeta("salary", Double.class, "employee_data"),
-                new ColumnMeta("hire_date", String.class, "employee_data"),
-                new ColumnMeta("region", String.class, "employee_data")
+    public static JQuickDataSet createEmployeeDataSet() {
+        List<JQuickColumnMeta> columns = Arrays.asList(
+                new JQuickColumnMeta("employee_id", Integer.class, "employee_data"),
+                new JQuickColumnMeta("name", String.class, "employee_data"),
+                new JQuickColumnMeta("department", String.class, "employee_data"),
+                new JQuickColumnMeta("salary", Double.class, "employee_data"),
+                new JQuickColumnMeta("hire_date", String.class, "employee_data"),
+                new JQuickColumnMeta("region", String.class, "employee_data")
         );
 
-        List<Row> rows = Arrays.asList(
+        List<JQuickRow> rows = Arrays.asList(
                 createEmployeeRow(1, "张三", "IT", 75000.00, "2023-03-15", "North"),
                 createEmployeeRow(2, "李四", "IT", 85000.00, "2022-06-20", "North"),
                 createEmployeeRow(3, "王五", "Sales", 60000.00, "2023-01-10", "South"),
@@ -90,12 +91,12 @@ public class JOLapDataSetFactory {
                 createEmployeeRow(8, "吴十", "Sales", 72000.00, "2022-09-18", "North")
         );
 
-        return new DataSet(columns, rows);
+        return new JQuickDataSet(columns, rows);
     }
 
-    private static Row createEmployeeRow(int employeeId, String name, String department,
+    private static JQuickRow createEmployeeRow(int employeeId, String name, String department,
                                          double salary, String hireDate, String region) {
-        Row row = new Row();
+        JQuickRow row = new JQuickRow();
         row.put("employee_id", employeeId);
         row.put("name", name);
         row.put("department", department);
@@ -105,17 +106,17 @@ public class JOLapDataSetFactory {
         return row;
     }
 
-    public static DataSet createFinancialDataSet() {
-        List<ColumnMeta> columns = Arrays.asList(
-                new ColumnMeta("year", Integer.class, "financial_data"),
-                new ColumnMeta("quarter", String.class, "financial_data"),
-                new ColumnMeta("month", Integer.class, "financial_data"),
-                new ColumnMeta("revenue", Double.class, "financial_data"),
-                new ColumnMeta("expense", Double.class, "financial_data"),
-                new ColumnMeta("department", String.class, "financial_data")
+    public static JQuickDataSet createFinancialDataSet() {
+        List<JQuickColumnMeta> columns = Arrays.asList(
+                new JQuickColumnMeta("year", Integer.class, "financial_data"),
+                new JQuickColumnMeta("quarter", String.class, "financial_data"),
+                new JQuickColumnMeta("month", Integer.class, "financial_data"),
+                new JQuickColumnMeta("revenue", Double.class, "financial_data"),
+                new JQuickColumnMeta("expense", Double.class, "financial_data"),
+                new JQuickColumnMeta("department", String.class, "financial_data")
         );
 
-        List<Row> rows = Arrays.asList(
+        List<JQuickRow> rows = Arrays.asList(
                 createFinancialRow(2024, "Q1", 1, 500000.00, 300000.00, "Sales"),
                 createFinancialRow(2024, "Q1", 2, 550000.00, 320000.00, "Sales"),
                 createFinancialRow(2024, "Q1", 3, 600000.00, 350000.00, "Sales"),
@@ -127,12 +128,12 @@ public class JOLapDataSetFactory {
                 createFinancialRow(2023, "Q4", 12, 580000.00, 340000.00, "Sales")
         );
 
-        return new DataSet(columns, rows);
+        return new JQuickDataSet(columns, rows);
     }
 
-    private static Row createFinancialRow(int year, String quarter, int month,
+    private static JQuickRow createFinancialRow(int year, String quarter, int month,
                                           double revenue, double expense, String department) {
-        Row row = new Row();
+        JQuickRow row = new JQuickRow();
         row.put("year", year);
         row.put("quarter", quarter);
         row.put("month", month);
