@@ -145,11 +145,8 @@ public class JQuickSqlLamdaJoinJoinerHandler extends JQuickSqlBaseHandler implem
     @Override
     public JQuickDataSet naturalJoin(JQuickDataSet left, JQuickDataSet right) {
         Set<String> leftColumns = new HashSet<>(left.getColumnNames());
-        ;
         Set<String> rightColumns = new HashSet<>(right.getColumnNames());
-        Set<String> commonColumns = leftColumns.stream()
-                .filter(rightColumns::contains)
-                .collect(Collectors.toSet());
+        Set<String> commonColumns = leftColumns.stream().filter(rightColumns::contains).collect(Collectors.toSet());
         if (commonColumns.isEmpty()) {
             return crossJoin(left, right);
         }
@@ -195,9 +192,7 @@ public class JQuickSqlLamdaJoinJoinerHandler extends JQuickSqlBaseHandler implem
     public JQuickDataSet selectColumns(JQuickDataSet dataset, List<String> columnNames) {
         List<JQuickColumnMeta> currentColumns = dataset.getColumns();
         List<JQuickRow> currentRows = dataset.getRows();
-        List<JQuickColumnMeta> newColumns = currentColumns.stream()
-                .filter(col -> columnNames.contains(col.getName()))
-                .collect(Collectors.toList());
+        List<JQuickColumnMeta> newColumns = currentColumns.stream().filter(col -> columnNames.contains(col.getName())).collect(Collectors.toList());
         List<JQuickRow> newRows = currentRows.stream()
                 .map(row -> {
                     JQuickRow Row = (row instanceof JQuickRow)

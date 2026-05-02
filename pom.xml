@@ -22,9 +22,12 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <java.version>1.8</java.version>
         <javelin.version>1.7.8</javelin.version>
-        <lombok.version>1.14.8</lombok.version>
+        <lombok.version>1.18.30</lombok.version>
         <log4jdbc.log4j2.version>1.16</log4jdbc.log4j2.version>
         <rest.assured.version>2.3.3</rest.assured.version>
+        <spark.version>3.4.1</spark.version>
+        <scala.binary.version>2.12.17</scala.binary.version>
+        <hadoop.version>3.3.4</hadoop.version>
     </properties>
     <dependencyManagement>
         <dependencies>
@@ -52,6 +55,42 @@
                 <groupId>io.github.paohaijiao</groupId>
                 <artifactId>javelin-core</artifactId>
                 <version>${javelin.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.projectlombok</groupId>
+                <artifactId>lombok</artifactId>
+                <version>${lombok.version}</version>
+            </dependency>
+            <!-- Spark SQL 核心依赖 -->
+            <dependency>
+                <groupId>org.apache.spark</groupId>
+                <artifactId>spark-sql_2.12</artifactId>
+                <version>3.4.1</version>
+
+            </dependency>
+            <dependency>
+                <groupId>org.scala-lang</groupId>
+                <artifactId>scala-library</artifactId>
+                <version>${scala.binary.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.hadoop</groupId>
+                <artifactId>hadoop-mapreduce-client-core</artifactId>
+                <version>${hadoop.version}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.hadoop</groupId>
+                <artifactId>hadoop-common</artifactId>
+                <version>${hadoop.version}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.hadoop</groupId>
+                <artifactId>hadoop-hdfs-client</artifactId>
+                <version>${hadoop.version}</version>
+                <scope>provided</scope>
             </dependency>
         </dependencies>
 

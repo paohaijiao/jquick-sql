@@ -47,7 +47,6 @@ public abstract class JQuickSqlBaseHandler implements JQuickSqlDataSetJoinerStra
 
     protected static JQuickRow createNullRow(JQuickDataSet ds) {
         System.out.println(ds);
-        List<String> list = ds.getColumnNames();
         JQuickRow nullRow = new JQuickRow();
         List<String> columns = ds.getColumnNames();
         for (int i = 0; i < columns.size(); i++) {

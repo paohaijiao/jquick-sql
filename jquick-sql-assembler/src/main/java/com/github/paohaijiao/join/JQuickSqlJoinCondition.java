@@ -29,4 +29,37 @@ public interface JQuickSqlJoinCondition {
     default JQuickSqlJoinCondition or(JQuickSqlJoinCondition other) {
         return (l, r) -> this.test(l, r) || other.test(l, r);
     }
+    default String getLeftColumn() {
+        return null;
+    }
+    default String getRightColumn() {
+        return null;
+    }
+    class EqualsJoinCondition implements JQuickSqlJoinCondition {
+        private final String leftColumn;
+
+        private final String rightColumn;
+
+        public EqualsJoinCondition(String leftColumn, String rightColumn) {
+            this.leftColumn = leftColumn;
+            this.rightColumn = rightColumn;
+        }
+
+        @Override
+        public boolean test(Map<String, Object> leftRow, Map<String, Object> rightRow) {
+            Object leftVal = leftRow.get(leftColumn);
+            Object rightVal = rightRow.get(rightColumn);
+            return Objects.equals(leftVal, rightVal);
+        }
+
+        @Override
+        public String getLeftColumn() {
+            return leftColumn;
+        }
+
+        @Override
+        public String getRightColumn() {
+            return rightColumn;
+        }
+    }
 }
