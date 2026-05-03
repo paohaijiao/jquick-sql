@@ -28,6 +28,7 @@
         <spark.version>3.4.1</spark.version>
         <scala.binary.version>2.12.17</scala.binary.version>
         <hadoop.version>3.3.4</hadoop.version>
+        <flink.version>1.14.0</flink.version>
     </properties>
     <dependencyManagement>
         <dependencies>
@@ -91,6 +92,16 @@
                 <artifactId>hadoop-hdfs-client</artifactId>
                 <version>${hadoop.version}</version>
                 <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.flink</groupId>
+                <artifactId>flink-streaming-java_2.12</artifactId>
+                <version>${flink.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.flink</groupId>
+                <artifactId>flink-streaming-java_2.12</artifactId>
+                <version>${flink.version}</version>
             </dependency>
         </dependencies>
 
