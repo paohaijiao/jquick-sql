@@ -44,14 +44,14 @@ public class JQuickSQLXmlInvocationHandler extends JQuickXmlInvocationHandler {
         JAssert.notNull(environment,"environment require not be null");
         JAssert.notNull(environment.getAbilityProvider(),"provider require not be null");
         JAssert.notNull(environment.getClientConfig(),"client require not be null");
-        JAssert.isTrue(environment.getDataSet().isEmpty(),"datasets require not be null");
+        JAssert.isFalse(environment.getDataSet().isEmpty(),"datasets require not be null");
         this.runtimeEnvironment=environment;
     }
 
     @Override
-    protected Object loadResult(String lexerStr, JContext context, Method method, Object[] args) {
-        if(!context.isEmpty()){
-            context.putAll(context);
+    protected Object loadResult(String lexerStr, JContext jcontext, Method method, Object[] args) {
+        if(null!=jcontext&&!jcontext.isEmpty()){
+            context.putAll(jcontext);
         }
         ParamUtil paramUtil=new ParamUtil();
         Map<String,Object> map=paramUtil.bindParams(method, args);

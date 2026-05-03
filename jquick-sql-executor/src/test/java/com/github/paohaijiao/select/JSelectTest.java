@@ -36,7 +36,7 @@ import java.util.List;
  * @since 2025/8/17
  */
 public class JSelectTest {
-    private static JQuickDataSet createOrdersDataSet() {
+    public static JQuickDataSet createOrdersDataSet() {
         JQuickDataSet.Builder builder = JQuickDataSet.builder();
         builder.addColumn("order_id", Integer.class, "orders")
                 .addColumn("user_id", Integer.class, "orders")
@@ -77,7 +77,7 @@ public class JSelectTest {
         return new  JQuickDataSet(columns, rows);
     }
 
-    private static  JQuickRow createEmployeeRow(String department, String name,
+    public static  JQuickRow createEmployeeRow(String department, String name,
                                          double salary, int years, boolean isManager) {
         JQuickRow row = new JQuickRow();
         row.put("department", department);

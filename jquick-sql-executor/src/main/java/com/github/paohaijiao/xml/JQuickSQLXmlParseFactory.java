@@ -21,14 +21,14 @@ import com.github.paohaijiao.xml.handler.JQuickParseHandler;
 import com.github.paohaijiao.xml.invocation.JQuickXmlInvocationHandler;
 
 
-public class JQuickJavaXmlParseFactory implements JQuickParseHandler {
+public class JQuickSQLXmlParseFactory implements JQuickParseHandler {
 
     private JQuickSQLRuntimeEnvironment runtimeEnvironment;
 
-    public JQuickJavaXmlParseFactory(){
+    public JQuickSQLXmlParseFactory(){
 
     }
-    public JQuickJavaXmlParseFactory(JQuickSQLRuntimeEnvironment environment){
+    public JQuickSQLXmlParseFactory(JQuickSQLRuntimeEnvironment environment){
         JAssert.notNull(environment,"environment require not be null");
         JAssert.notNull(environment.getAbilityProvider(),"provider require not be null");
         JAssert.notNull(environment.getDataSet(),"dataset require not be null");
