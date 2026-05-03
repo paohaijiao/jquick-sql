@@ -16,11 +16,13 @@
 package com.github.paohaijiao.executor;
 
 import com.github.paohaijiao.config.JQuickSQLConfig;
-
-import com.github.paohaijiao.enums.JQuickSqlEngineEnums;
+import com.github.paohaijiao.environment.JQuickSQLRuntimeEnvironment;
+import com.github.paohaijiao.exception.JAssert;
+import com.github.paohaijiao.factory.JQuickSqlAbilityProviderFactory;
 import com.github.paohaijiao.param.JContext;
 import com.github.paohaijiao.parser.JQuickSQLLexer;
 import com.github.paohaijiao.parser.JQuickSQLParser;
+import com.github.paohaijiao.provider.JQuickSqlAbilityProvider;
 import com.github.paohaijiao.statement.JQuickDataSet;
 import com.github.paohaijiao.support.JQuickSqlDataSetHolder;
 import com.github.paohaijiao.visitor.JQuikSQLCommonVisitor;
@@ -36,36 +38,28 @@ import org.antlr.v4.runtime.CommonTokenStream;
  */
 public class JQuickSQLExecutor {
 
-    private JContext context = new JContext();
+    private JQuickSQLRuntimeEnvironment environment;
 
-    private JQuickSQLConfig config = new JQuickSQLConfig();
-
-    private JQuickSqlDataSetHolder dataSetContainer = new JQuickSqlDataSetHolder();
-
-
-    public JQuickSQLExecutor config(JQuickSQLConfig config) {
-        this.config = config;
-        return this;
+    public JQuickSQLExecutor(JQuickSQLRuntimeEnvironment env){
+        JAssert.notNull(env,"JQuickSQLRuntimeEnvironment required not null");
+        JAssert.notNull(env.getAbilityProvider(),"provider required not null");
+        JAssert.notNull(env.getClientConfig(),"client required not null");
+        JAssert.notNull(env.getDataSet(),"dataset required not empty");
+        this.environment = env;
     }
 
-    public JQuickSQLExecutor context(JContext context) {
-        this.context = context;
-        return this;
-    }
-
-    public JQuickSQLExecutor dataSet(JQuickSqlDataSetHolder container) {
-        this.dataSetContainer = container;
-        return this;
-    }
-
-    public JQuickDataSet execute(String sql, JQuickSqlEngineEnums engine) {
+    public JQuickDataSet execute(String sql) {
         JQuickSQLLexer lexer = new JQuickSQLLexer(CharStreams.fromString(sql));
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         JQuickSQLParser parser = new JQuickSQLParser(tokens);
         JQuickSQLParser.QueryContext tree = parser.query();
-        JContext params = new JContext();
-        JQuikSQLCommonVisitor tv = new JQuikSQLCommonVisitor(dataSetContainer, lexer, tokens, parser);
-        tv.engine(engine);
+        JQuickSqlAbilityProviderFactory factory = new JQuickSqlAbilityProviderFactory(environment.getClientConfig());
+        JQuickSqlAbilityProvider provider=factory.create(environment.getAbilityProvider());
+        JQuickSqlDataSetHolder holder=new JQuickSqlDataSetHolder();
+        for (String table:environment.getDataSet().keySet()){
+            holder.addDataSet(table,environment.getDataSet().get(table));
+        }
+        JQuikSQLCommonVisitor tv = new JQuikSQLCommonVisitor(provider,holder, lexer, tokens, parser);
         Object object = tv.visit(tree);
         return (JQuickDataSet) object;
     }

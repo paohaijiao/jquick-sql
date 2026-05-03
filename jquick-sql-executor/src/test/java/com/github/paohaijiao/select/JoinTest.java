@@ -15,13 +15,16 @@
  */
 package com.github.paohaijiao.select;
 
-import com.github.paohaijiao.enums.JQuickSqlEngineEnums;
+import com.github.paohaijiao.config.JQuickClientConfig;
+import com.github.paohaijiao.environment.JQuickSQLRuntimeEnvironment;
 import com.github.paohaijiao.executor.JQuickSQLExecutor;
 import com.github.paohaijiao.model.JDataSetFactory;
 import com.github.paohaijiao.statement.JQuickDataSet;
 import com.github.paohaijiao.statement.JQuickRow;
 import com.github.paohaijiao.support.JQuickSqlDataSetHolder;
 import org.junit.Test;
+
+import java.util.HashMap;
 
 /**
  * packageName com.github.paohaijiao.value
@@ -34,12 +37,16 @@ public class JoinTest {
     @Test
     public void leftjoin() {
         String rule = "select * from user a left join user_order b on b.user_id=a.id order by b.user_id";
-        JQuickSQLExecutor executor = new JQuickSQLExecutor();
         JQuickSqlDataSetHolder dataSetContainer = new JQuickSqlDataSetHolder();
         dataSetContainer.addDataSet("user", JDataSetFactory.createUsersDataSet());
         dataSetContainer.addDataSet("user_order", JDataSetFactory.createOrdersDataSet());
-        executor.dataSet(dataSetContainer);
-        JQuickDataSet dataSet = executor.execute(rule, JQuickSqlEngineEnums.LAMBDA);
+        JQuickClientConfig client=new JQuickClientConfig();
+        HashMap<String, JQuickDataSet> datasetMap=new HashMap<>();
+        datasetMap.put("user",JDataSetFactory.createUsersDataSet());
+        datasetMap.put("user_order", JDataSetFactory.createOrdersDataSet());
+        JQuickSQLRuntimeEnvironment environment=new JQuickSQLRuntimeEnvironment("local",client,datasetMap);
+        JQuickSQLExecutor executor = new JQuickSQLExecutor(environment);
+        JQuickDataSet dataSet = executor.execute(rule);
         for (JQuickRow row : dataSet.getRows()) {
             System.out.println(row);
         }
@@ -48,12 +55,16 @@ public class JoinTest {
     @Test
     public void rightjoin() {
         String rule = "select * from user a right join user_order b on b.user_id=a.id order by b.user_id";
-        JQuickSQLExecutor executor = new JQuickSQLExecutor();
         JQuickSqlDataSetHolder dataSetContainer = new JQuickSqlDataSetHolder();
         dataSetContainer.addDataSet("user", JDataSetFactory.createUsersDataSet());
         dataSetContainer.addDataSet("user_order", JDataSetFactory.createOrdersDataSet());
-        executor.dataSet(dataSetContainer);
-        JQuickDataSet dataSet = executor.execute(rule, JQuickSqlEngineEnums.LAMBDA);
+        JQuickClientConfig client=new JQuickClientConfig();
+        HashMap<String, JQuickDataSet> datasetMap=new HashMap<>();
+        datasetMap.put("user",JDataSetFactory.createUsersDataSet());
+        datasetMap.put("user_order", JDataSetFactory.createOrdersDataSet());
+        JQuickSQLRuntimeEnvironment environment=new JQuickSQLRuntimeEnvironment("local",client,datasetMap);
+        JQuickSQLExecutor executor = new JQuickSQLExecutor(environment);
+        JQuickDataSet dataSet = executor.execute(rule);
         for (JQuickRow row : dataSet.getRows()) {
             System.out.println(row);
         }
@@ -62,12 +73,16 @@ public class JoinTest {
     @Test
     public void innerjoin() {
         String rule = "select * from user a inner join user_order b on a.id=b.user_id order by b.user_id";
-        JQuickSQLExecutor executor = new JQuickSQLExecutor();
         JQuickSqlDataSetHolder dataSetContainer = new JQuickSqlDataSetHolder();
         dataSetContainer.addDataSet("user", JDataSetFactory.createUsersDataSet());
         dataSetContainer.addDataSet("user_order", JDataSetFactory.createOrdersDataSet());
-        executor.dataSet(dataSetContainer);
-        JQuickDataSet dataSet = executor.execute(rule, JQuickSqlEngineEnums.LAMBDA);
+        JQuickClientConfig client=new JQuickClientConfig();
+        HashMap<String, JQuickDataSet> datasetMap=new HashMap<>();
+        datasetMap.put("user",JDataSetFactory.createUsersDataSet());
+        datasetMap.put("user_order", JDataSetFactory.createOrdersDataSet());
+        JQuickSQLRuntimeEnvironment environment=new JQuickSQLRuntimeEnvironment("local",client,datasetMap);
+        JQuickSQLExecutor executor = new JQuickSQLExecutor(environment);
+        JQuickDataSet dataSet = executor.execute(rule);
         for (JQuickRow row : dataSet.getRows()) {
             System.out.println(row);
         }
@@ -76,12 +91,16 @@ public class JoinTest {
     @Test
     public void crossjoin() {
         String rule = "select * from user a cross join user_order b order by b.user_id";
-        JQuickSQLExecutor executor = new JQuickSQLExecutor();
         JQuickSqlDataSetHolder dataSetContainer = new JQuickSqlDataSetHolder();
         dataSetContainer.addDataSet("user", JDataSetFactory.createUsersDataSet());
         dataSetContainer.addDataSet("user_order", JDataSetFactory.createOrdersDataSet());
-        executor.dataSet(dataSetContainer);
-        JQuickDataSet dataSet = executor.execute(rule, JQuickSqlEngineEnums.LAMBDA);
+        JQuickClientConfig client=new JQuickClientConfig();
+        HashMap<String, JQuickDataSet> datasetMap=new HashMap<>();
+        datasetMap.put("user",JDataSetFactory.createUsersDataSet());
+        datasetMap.put("user_order", JDataSetFactory.createOrdersDataSet());
+        JQuickSQLRuntimeEnvironment environment=new JQuickSQLRuntimeEnvironment("local",client,datasetMap);
+        JQuickSQLExecutor executor = new JQuickSQLExecutor(environment);
+        JQuickDataSet dataSet = executor.execute(rule);
         for (JQuickRow row : dataSet.getRows()) {
             System.out.println(row);
         }
@@ -90,12 +109,16 @@ public class JoinTest {
     @Test
     public void full() {
         String rule = "select * from user a full join user_order b on a.id=b.user_id order by b.user_id";
-        JQuickSQLExecutor executor = new JQuickSQLExecutor();
         JQuickSqlDataSetHolder dataSetContainer = new JQuickSqlDataSetHolder();
         dataSetContainer.addDataSet("user", JDataSetFactory.createUsersDataSet());
         dataSetContainer.addDataSet("user_order", JDataSetFactory.createOrdersDataSet());
-        executor.dataSet(dataSetContainer);
-        JQuickDataSet dataSet = executor.execute(rule, JQuickSqlEngineEnums.LAMBDA);
+        JQuickClientConfig client=new JQuickClientConfig();
+        HashMap<String, JQuickDataSet> datasetMap=new HashMap<>();
+        datasetMap.put("user",JDataSetFactory.createUsersDataSet());
+        datasetMap.put("user_order", JDataSetFactory.createOrdersDataSet());
+        JQuickSQLRuntimeEnvironment environment=new JQuickSQLRuntimeEnvironment("local",client,datasetMap);
+        JQuickSQLExecutor executor = new JQuickSQLExecutor(environment);
+        JQuickDataSet dataSet = executor.execute(rule);
         for (JQuickRow row : dataSet.getRows()) {
             System.out.println(row);
         }
@@ -104,12 +127,16 @@ public class JoinTest {
     @Test
     public void natural() {
         String rule = "select * from user a natural join user_order order by b.user_id";
-        JQuickSQLExecutor executor = new JQuickSQLExecutor();
         JQuickSqlDataSetHolder dataSetContainer = new JQuickSqlDataSetHolder();
         dataSetContainer.addDataSet("user", JDataSetFactory.createUsersDataSet());
         dataSetContainer.addDataSet("user_order", JDataSetFactory.createOrdersDataSet());
-        executor.dataSet(dataSetContainer);
-        JQuickDataSet dataSet = executor.execute(rule, JQuickSqlEngineEnums.LAMBDA);
+        JQuickClientConfig client=new JQuickClientConfig();
+        HashMap<String, JQuickDataSet> datasetMap=new HashMap<>();
+        datasetMap.put("user",JDataSetFactory.createUsersDataSet());
+        datasetMap.put("user_order", JDataSetFactory.createOrdersDataSet());
+        JQuickSQLRuntimeEnvironment environment=new JQuickSQLRuntimeEnvironment("local",client,datasetMap);
+        JQuickSQLExecutor executor = new JQuickSQLExecutor(environment);
+        JQuickDataSet dataSet = executor.execute(rule);
         for (JQuickRow row : dataSet.getRows()) {
             System.out.println(row);
         }
@@ -118,12 +145,16 @@ public class JoinTest {
     @Test
     public void union() {
         String rule = "select * from user a union select * from user b";
-        JQuickSQLExecutor executor = new JQuickSQLExecutor();
         JQuickSqlDataSetHolder dataSetContainer = new JQuickSqlDataSetHolder();
-        dataSetContainer.addDataSet("user1", JDataSetFactory.createUsersDataSet());
-        dataSetContainer.addDataSet("user2", JDataSetFactory.createOrdersDataSet());
-        executor.dataSet(dataSetContainer);
-        JQuickDataSet dataSet = executor.execute(rule, JQuickSqlEngineEnums.LAMBDA);
+        dataSetContainer.addDataSet("user", JDataSetFactory.createUsersDataSet());
+        dataSetContainer.addDataSet("user_order", JDataSetFactory.createOrdersDataSet());
+        JQuickClientConfig client=new JQuickClientConfig();
+        HashMap<String, JQuickDataSet> datasetMap=new HashMap<>();
+        datasetMap.put("user",JDataSetFactory.createUsersDataSet());
+        datasetMap.put("user_order", JDataSetFactory.createOrdersDataSet());
+        JQuickSQLRuntimeEnvironment environment=new JQuickSQLRuntimeEnvironment("local",client,datasetMap);
+        JQuickSQLExecutor executor = new JQuickSQLExecutor(environment);
+        JQuickDataSet dataSet = executor.execute(rule);
         for (JQuickRow row : dataSet.getRows()) {
             System.out.println(row);
         }

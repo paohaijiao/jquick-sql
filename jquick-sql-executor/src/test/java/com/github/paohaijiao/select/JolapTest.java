@@ -15,13 +15,17 @@
  */
 package com.github.paohaijiao.select;
 
-import com.github.paohaijiao.enums.JQuickSqlEngineEnums;
+import com.github.paohaijiao.config.JQuickClientConfig;
+import com.github.paohaijiao.environment.JQuickSQLRuntimeEnvironment;
 import com.github.paohaijiao.executor.JQuickSQLExecutor;
+import com.github.paohaijiao.model.JDataSetFactory;
 import com.github.paohaijiao.model.JOLapDataSetFactory;
 import com.github.paohaijiao.statement.JQuickDataSet;
 import com.github.paohaijiao.statement.JQuickRow;
 import com.github.paohaijiao.support.JQuickSqlDataSetHolder;
 import org.junit.Test;
+
+import java.util.HashMap;
 
 /**
  * packageName com.github.paohaijiao.select
@@ -37,12 +41,13 @@ public class JolapTest {
                 "FROM sales_data\n" +
                 "ROLLUP (region, department, category)\n";
         //"ORDER BY region, department, category;";
-        System.out.println(rule);
-        JQuickSQLExecutor executor = new JQuickSQLExecutor();
-        JQuickSqlDataSetHolder dataSetContainer = new JQuickSqlDataSetHolder();
-        dataSetContainer.addDataSet("sales_data", JOLapDataSetFactory.createSalesDataSet());
-        executor.dataSet(dataSetContainer);
-        JQuickDataSet dataSet = executor.execute(rule, JQuickSqlEngineEnums.LAMBDA);
+
+        JQuickClientConfig client=new JQuickClientConfig();
+        HashMap<String, JQuickDataSet> datasetMap=new HashMap<>();
+        datasetMap.put("sales_data",JOLapDataSetFactory.createSalesDataSet());
+        JQuickSQLRuntimeEnvironment environment=new JQuickSQLRuntimeEnvironment("local",client,datasetMap);
+        JQuickSQLExecutor executor = new JQuickSQLExecutor(environment);
+        JQuickDataSet dataSet = executor.execute(rule);
         for (JQuickRow row : dataSet.getRows()) {
             System.out.println(row);
         }
@@ -55,11 +60,12 @@ public class JolapTest {
                 "DRILLDOWN (region, department)";
         //"ORDER BY region, department, category;";
         System.out.println(rule);
-        JQuickSQLExecutor executor = new JQuickSQLExecutor();
-        JQuickSqlDataSetHolder dataSetContainer = new JQuickSqlDataSetHolder();
-        dataSetContainer.addDataSet("sales_data", JOLapDataSetFactory.createSalesDataSet());
-        executor.dataSet(dataSetContainer);
-        JQuickDataSet dataSet = executor.execute(rule, JQuickSqlEngineEnums.LAMBDA);
+        JQuickClientConfig client=new JQuickClientConfig();
+        HashMap<String, JQuickDataSet> datasetMap=new HashMap<>();
+        datasetMap.put("sales_data",JOLapDataSetFactory.createSalesDataSet());
+        JQuickSQLRuntimeEnvironment environment=new JQuickSQLRuntimeEnvironment("local",client,datasetMap);
+        JQuickSQLExecutor executor = new JQuickSQLExecutor(environment);
+        JQuickDataSet dataSet = executor.execute(rule);
         for (JQuickRow row : dataSet.getRows()) {
             System.out.println(row);
         }
@@ -70,11 +76,12 @@ public class JolapTest {
         String rule = "SELECT * FROM sales_data\n" +
                 "SLICE (department = 'Electronics')";
         System.out.println(rule);
-        JQuickSQLExecutor executor = new JQuickSQLExecutor();
-        JQuickSqlDataSetHolder dataSetContainer = new JQuickSqlDataSetHolder();
-        dataSetContainer.addDataSet("sales_data", JOLapDataSetFactory.createSalesDataSet());
-        executor.dataSet(dataSetContainer);
-        JQuickDataSet dataSet = executor.execute(rule, JQuickSqlEngineEnums.LAMBDA);
+        JQuickClientConfig client=new JQuickClientConfig();
+        HashMap<String, JQuickDataSet> datasetMap=new HashMap<>();
+        datasetMap.put("sales_data",JOLapDataSetFactory.createSalesDataSet());
+        JQuickSQLRuntimeEnvironment environment=new JQuickSQLRuntimeEnvironment("local",client,datasetMap);
+        JQuickSQLExecutor executor = new JQuickSQLExecutor(environment);
+        JQuickDataSet dataSet = executor.execute(rule);
         for (JQuickRow row : dataSet.getRows()) {
             System.out.println(row);
         }
@@ -84,12 +91,12 @@ public class JolapTest {
     public void dice() {
         String rule = "SELECT * FROM sales_data\n" +
                 "DICE (region = 'North', department = 'Electronics')";
-        System.out.println(rule);
-        JQuickSQLExecutor executor = new JQuickSQLExecutor();
-        JQuickSqlDataSetHolder dataSetContainer = new JQuickSqlDataSetHolder();
-        dataSetContainer.addDataSet("sales_data", JOLapDataSetFactory.createSalesDataSet());
-        executor.dataSet(dataSetContainer);
-        JQuickDataSet dataSet = executor.execute(rule, JQuickSqlEngineEnums.LAMBDA);
+        JQuickClientConfig client=new JQuickClientConfig();
+        HashMap<String, JQuickDataSet> datasetMap=new HashMap<>();
+        datasetMap.put("sales_data",JOLapDataSetFactory.createSalesDataSet());
+        JQuickSQLRuntimeEnvironment environment=new JQuickSQLRuntimeEnvironment("local",client,datasetMap);
+        JQuickSQLExecutor executor = new JQuickSQLExecutor(environment);
+        JQuickDataSet dataSet = executor.execute(rule);
         for (JQuickRow row : dataSet.getRows()) {
             System.out.println(row);
         }
@@ -99,12 +106,12 @@ public class JolapTest {
     public void pivot() {
         String rule = "SELECT * FROM sales_data\n" +
                 "PIVOT (department, sales, SUM)";
-        System.out.println(rule);
-        JQuickSQLExecutor executor = new JQuickSQLExecutor();
-        JQuickSqlDataSetHolder dataSetContainer = new JQuickSqlDataSetHolder();
-        dataSetContainer.addDataSet("sales_data", JOLapDataSetFactory.createSalesDataSet());
-        executor.dataSet(dataSetContainer);
-        JQuickDataSet dataSet = executor.execute(rule, JQuickSqlEngineEnums.LAMBDA);
+        JQuickClientConfig client=new JQuickClientConfig();
+        HashMap<String, JQuickDataSet> datasetMap=new HashMap<>();
+        datasetMap.put("sales_data",JOLapDataSetFactory.createSalesDataSet());
+        JQuickSQLRuntimeEnvironment environment=new JQuickSQLRuntimeEnvironment("local",client,datasetMap);
+        JQuickSQLExecutor executor = new JQuickSQLExecutor(environment);
+        JQuickDataSet dataSet = executor.execute(rule);
         for (JQuickRow row : dataSet.getRows()) {
             System.out.println(row);
         }

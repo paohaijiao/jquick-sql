@@ -15,10 +15,10 @@
  */
 package com.github.paohaijiao.visitor;
 
-import com.github.paohaijiao.enums.JQuickSqlEngineEnums;
 import com.github.paohaijiao.param.JContext;
 import com.github.paohaijiao.parser.JQuickSQLLexer;
 import com.github.paohaijiao.parser.JQuickSQLParser;
+import com.github.paohaijiao.provider.JQuickSqlAbilityProvider;
 import com.github.paohaijiao.statement.JQuickDataSet;
 import com.github.paohaijiao.support.JQuickSqlDataSetHolder;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -32,7 +32,7 @@ import org.antlr.v4.runtime.CommonTokenStream;
  */
 public class JQuikSQLCommonVisitor extends JQuickSQLOlapVisitor {
 
-    public JQuikSQLCommonVisitor(JQuickSqlDataSetHolder dataSetHolder, JContext context, JQuickSQLLexer lexer, CommonTokenStream tokenStream, JQuickSQLParser parser) {
+    public JQuikSQLCommonVisitor(JQuickSqlAbilityProvider provider, JQuickSqlDataSetHolder dataSetHolder, JContext context, JQuickSQLLexer lexer, CommonTokenStream tokenStream, JQuickSQLParser parser) {
         this.context = context;
         this.lexer = lexer;
         this.tokenStream = tokenStream;
@@ -40,7 +40,8 @@ public class JQuikSQLCommonVisitor extends JQuickSQLOlapVisitor {
         this.dataSetHolder = dataSetHolder;
     }
 
-    public JQuikSQLCommonVisitor(JQuickSqlDataSetHolder dataSetHolder, JQuickSQLLexer lexer, CommonTokenStream tokenStream, JQuickSQLParser parser) {
+    public JQuikSQLCommonVisitor(JQuickSqlAbilityProvider provider,JQuickSqlDataSetHolder dataSetHolder, JQuickSQLLexer lexer, CommonTokenStream tokenStream, JQuickSQLParser parser) {
+        this.provider = provider;
         this.context = new JContext();
         this.dataSetHolder = dataSetHolder;
         this.lexer = lexer;
@@ -52,10 +53,7 @@ public class JQuikSQLCommonVisitor extends JQuickSQLOlapVisitor {
         this.context = new JContext();
     }
 
-    public JQuikSQLCommonVisitor engine(JQuickSqlEngineEnums engine) {
-        this.engine = engine;
-        return this;
-    }
+
 
     public JQuikSQLCommonVisitor engine(JQuickSqlDataSetHolder holder) {
         this.dataSetHolder = holder;

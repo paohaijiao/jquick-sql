@@ -17,7 +17,6 @@ package com.github.paohaijiao.handler;
 import com.github.paohaijiao.enums.JQuickSqlNullsOrder;
 import com.github.paohaijiao.enums.JQuickSqlSortDirection;
 import com.github.paohaijiao.expression.*;
-import com.github.paohaijiao.factory.JQuickSqlDataSetJoinerStrategy;
 import com.github.paohaijiao.statement.JQuickColumnMeta;
 import com.github.paohaijiao.statement.JQuickDataSet;
 import com.github.paohaijiao.statement.JQuickRow;
@@ -31,7 +30,7 @@ import java.util.*;
  * @version 1.0.0
  * @since 2025/8/17
  */
-public abstract class JQuickSqlBaseHandler implements JQuickSqlDataSetJoinerStrategy {
+public abstract class JQuickSqlBaseHandler  {
 
     protected static JQuickRow mergeRows(JQuickRow left, JQuickRow right) {
         JQuickRow merged = new JQuickRow(left);

@@ -16,23 +16,24 @@
 package com.github.paohaijiao.visitor;
 
 import com.github.paohaijiao.condition.JQuickSqlCondition;
-import com.github.paohaijiao.enums.JQuickSqlSortDirection;
 import com.github.paohaijiao.enums.JQuickSqlJoinType;
+import com.github.paohaijiao.enums.JQuickSqlSortDirection;
 import com.github.paohaijiao.evalue.JQuickSqlExpressionEvaluator;
 import com.github.paohaijiao.exception.JAssert;
 import com.github.paohaijiao.expression.JQuickSqlColumnExpression;
 import com.github.paohaijiao.expression.JQuickSqlExpression;
 import com.github.paohaijiao.expression.JQuickSqlFunctionCallExpression;
 import com.github.paohaijiao.expression.JQuickSqlOrderByExpression;
-import com.github.paohaijiao.factory.JQuickSqlDataSetJoinerFactory;
-import com.github.paohaijiao.factory.JQuickSqlDataSetJoinerStrategy;
+import com.github.paohaijiao.factory.JQuickSqlAbilityProviderFactory;
 import com.github.paohaijiao.function.JQuickSqlAggregateFunctionFactory;
 import com.github.paohaijiao.join.JQuickSqlJoinCondition;
+import com.github.paohaijiao.manage.JQuickSqlAbilityProviderManager;
+import com.github.paohaijiao.model.JQuickSqlJoinPartModel;
 import com.github.paohaijiao.model.JQuickSqlLimitModel;
 import com.github.paohaijiao.model.JQuickSqlSelectElementModel;
 import com.github.paohaijiao.model.JQuickSqlSelectElementsResultModel;
-import com.github.paohaijiao.model.JQuickSqlJoinPartModel;
 import com.github.paohaijiao.parser.JQuickSQLParser;
+import com.github.paohaijiao.provider.JQuickSqlAbilityProvider;
 import com.github.paohaijiao.statement.JQuickDataSet;
 import com.github.paohaijiao.statement.JQuickRow;
 
@@ -73,17 +74,17 @@ public class JQuikSQLSelectStatementVisitor extends JQuikSQLFilterStatementVisit
         JAssert.isTrue(ctx.selectClause().size() == 2, "selectClause must have 2 elements");
         JQuickDataSet dataSetOne = visitSelectClause(ctx.selectClause().get(0));
         JQuickDataSet dataSetTwo = visitSelectClause(ctx.selectClause().get(1));
-        JQuickSqlDataSetJoinerStrategy strategy = JQuickSqlDataSetJoinerFactory.createJoiner(engine);
+        JQuickSqlAbilityProvider provider = JQuickSqlAbilityProviderFactory.create();
         if (null != ctx.UNION()) {
-            JQuickDataSet DataSet = strategy.union(dataSetOne, dataSetTwo);
+            JQuickDataSet DataSet = provider.union(dataSetOne, dataSetTwo);
             return DataSet;
         }
         if (null != ctx.MINUS()) {
-            JQuickDataSet DataSet = strategy.minus(dataSetOne, dataSetTwo);
+            JQuickDataSet DataSet = provider.minus(dataSetOne, dataSetTwo);
             return DataSet;
         }
         if (null != ctx.INTERSECT()) {
-            JQuickDataSet DataSet = strategy.intersect(dataSetOne, dataSetTwo);
+            JQuickDataSet DataSet = provider.intersect(dataSetOne, dataSetTwo);
             return DataSet;
         }
         JAssert.throwNewException(" this statement only accepts union or intersect or minus statements");
@@ -92,7 +93,6 @@ public class JQuikSQLSelectStatementVisitor extends JQuikSQLFilterStatementVisit
 
     @Override
     public JQuickDataSet visitSelectClause(JQuickSQLParser.SelectClauseContext ctx) {
-        JQuickSqlDataSetJoinerStrategy strategy = JQuickSqlDataSetJoinerFactory.createJoiner(engine);
         JAssert.notNull(ctx.fromClause(), " the from dataset require not null");
         JQuickDataSet dataSet = null;
         if (ctx.fromClause() != null) {
@@ -112,27 +112,27 @@ public class JQuikSQLSelectStatementVisitor extends JQuikSQLFilterStatementVisit
                     condition = JQuickSqlJoinCondition.equals(leftColumn, rightColumn);
                 }
                 if (joinType == JQuickSqlJoinType.INNER) {
-                    dataSet = strategy.innerJoin(dataSet, rightDataSet, condition);
+                    dataSet = provider.innerJoin(dataSet, rightDataSet, condition);
                 } else if (joinType == JQuickSqlJoinType.LEFT) {
-                    dataSet = strategy.leftJoin(dataSet, rightDataSet, condition);
+                    dataSet = provider.leftJoin(dataSet, rightDataSet, condition);
                 } else if (joinType == JQuickSqlJoinType.RIGHT) {
-                    dataSet = strategy.rightJoin(dataSet, rightDataSet, condition);
+                    dataSet = provider.rightJoin(dataSet, rightDataSet, condition);
                 } else if (joinType == JQuickSqlJoinType.CROSS) {
                     JAssert.isNull(joinPartModel.getRight(), " cross join require on condition is empty");
                     JAssert.isNull(joinPartModel.getLeft(), " cross join require on condition is empty");
-                    dataSet = strategy.crossJoin(dataSet, rightDataSet);
+                    dataSet = provider.crossJoin(dataSet, rightDataSet);
                 } else if (joinType == JQuickSqlJoinType.FULL) {
-                    dataSet = strategy.fullOuterJoin(dataSet, rightDataSet, condition);
+                    dataSet = provider.fullOuterJoin(dataSet, rightDataSet, condition);
                 } else if (joinType == JQuickSqlJoinType.NATURAL) {
                     JAssert.isNull(joinPartModel.getRight(), " natural join require on condition is empty");
                     JAssert.isNull(joinPartModel.getLeft(), " natural join require on condition is empty");
-                    dataSet = strategy.naturalJoin(dataSet, rightDataSet);
+                    dataSet = provider.naturalJoin(dataSet, rightDataSet);
                 }
             }
         }
         if (ctx.whereClause() != null) {
             JQuickSqlCondition condition = visitWhereClause(ctx.whereClause());
-            dataSet = strategy.filter(dataSet, condition);
+            dataSet = provider.filter(dataSet, condition);
         }
         JQuickSqlSelectElementsResultModel selectElementsResultModel = null;
         if (ctx.selectElements() != null) {
@@ -162,10 +162,10 @@ public class JQuikSQLSelectStatementVisitor extends JQuikSQLFilterStatementVisit
                             JAssert.throwNewException("the groupBy clause must have column expression");
                         }
                     });
-                    dataSet = strategy.aggregate(dataSet, groupByField, aggregations);
+                    dataSet = provider.aggregate(dataSet, groupByField, aggregations);
                     if (ctx.havingClause() != null) {
                         JQuickSqlCondition condition = visitHavingClause(ctx.havingClause());
-                        dataSet = strategy.filter(dataSet, condition);
+                        dataSet = provider.filter(dataSet, condition);
                     }
                 }
             }
@@ -192,11 +192,11 @@ public class JQuikSQLSelectStatementVisitor extends JQuikSQLFilterStatementVisit
 
         if (ctx.orderByClause() != null) {
             List<JQuickSqlOrderByExpression> orderByExpressions = visitOrderByClause(ctx.orderByClause());
-            dataSet = strategy.sort(dataSet, orderByExpressions);
+            dataSet = provider.sort(dataSet, orderByExpressions);
         }
         if (ctx.limitClause() != null) {
             JQuickSqlLimitModel limitModel = visitLimitClause(ctx.limitClause());
-            dataSet = strategy.limit(dataSet, limitModel.getLimit(), limitModel.getOffset());
+            dataSet = provider.limit(dataSet, limitModel.getLimit(), limitModel.getOffset());
         }
 
         return dataSet;

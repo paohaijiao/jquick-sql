@@ -1,16 +1,21 @@
-package com.github.paohaijiao.thread;
+package com.github.paohaijiao.forkjoin;
 
+import com.github.paohaijiao.client.JQuickJQuickClient;
+import com.github.paohaijiao.client.impl.JQuickForkJoinClient;
 import com.github.paohaijiao.condition.JQuickSqlCondition;
+import com.github.paohaijiao.console.JConsole;
 import com.github.paohaijiao.evalue.JQuickSqlConditionEvaluator;
 import com.github.paohaijiao.exception.JAssert;
 import com.github.paohaijiao.expression.JQuickSqlColumnExpression;
 import com.github.paohaijiao.expression.JQuickSqlExpression;
 import com.github.paohaijiao.expression.JQuickSqlFunctionCallExpression;
 import com.github.paohaijiao.expression.JQuickSqlOrderByExpression;
-import com.github.paohaijiao.factory.JQuickSqlDataSetJoinerStrategy;
 import com.github.paohaijiao.function.JQuickSqlAggregateFunctionFactory;
 import com.github.paohaijiao.handler.JQuickSqlBaseHandler;
 import com.github.paohaijiao.join.JQuickSqlJoinCondition;
+import com.github.paohaijiao.provider.JQuickSqlAbilityProvider;
+import com.github.paohaijiao.spi.anno.Priority;
+import com.github.paohaijiao.spi.constants.PriorityConstants;
 import com.github.paohaijiao.statement.JQuickColumnMeta;
 import com.github.paohaijiao.statement.JQuickDataSet;
 import com.github.paohaijiao.statement.JQuickRow;
@@ -29,7 +34,8 @@ import java.util.stream.Collectors;
  * @version 1.0.0
  * @since 2025/8/17
  */
-public class JQuickSqlMultiThreadedJoiner extends JQuickSqlBaseHandler implements JQuickSqlDataSetJoinerStrategy {
+@Priority(PriorityConstants.APPLICATION_HIGH)
+public class JQuickSqlForkJoinAbilityProvider extends JQuickSqlBaseHandler implements JQuickSqlAbilityProvider {
 
     // 并行处理阈值，小于此值使用单线程
     private static final int PARALLEL_THRESHOLD = 500;
@@ -40,17 +46,27 @@ public class JQuickSqlMultiThreadedJoiner extends JQuickSqlBaseHandler implement
     // 是否启用并行处理
     private final boolean enableParallel;
 
-    public JQuickSqlMultiThreadedJoiner() {
+
+    public JQuickSqlForkJoinAbilityProvider(JQuickJQuickClient client) {
+        JQuickForkJoinClient jQuickForkJoinClient=(JQuickForkJoinClient)client;
+        this.parallelPool = jQuickForkJoinClient.getForkJoinPool();
+        this.enableParallel = true;
+        JConsole console = JConsole.initConsoleEnvironment();
+        console.info("JQuickSqlLocalNAbilityProvider initialized with parallel processing enabled");
+    }
+    public JQuickSqlForkJoinAbilityProvider() {
         this.parallelPool = new ForkJoinPool(Math.max(4, Runtime.getRuntime().availableProcessors()));
         this.enableParallel = true;
+        JConsole console = JConsole.initConsoleEnvironment();
+        console.info("JQuickSqlLocalNAbilityProvider initialized with parallel processing enabled");
     }
 
-    public JQuickSqlMultiThreadedJoiner(ForkJoinPool pool) {
+    public JQuickSqlForkJoinAbilityProvider(ForkJoinPool pool) {
         this.parallelPool = pool;
         this.enableParallel = true;
     }
 
-    public JQuickSqlMultiThreadedJoiner(boolean enableParallel) {
+    public JQuickSqlForkJoinAbilityProvider(boolean enableParallel) {
         this.parallelPool = new ForkJoinPool(Math.max(4, Runtime.getRuntime().availableProcessors()));
         this.enableParallel = enableParallel;
     }

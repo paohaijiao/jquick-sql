@@ -13,19 +13,22 @@
  *
  * Copyright (c) [2025-2099] Martin (goudingcheng@gmail.com)
  */
-package com.github.paohaijiao.lamda;
+package com.github.paohaijiao.local;
 
 import com.github.paohaijiao.condition.JQuickSqlCondition;
+import com.github.paohaijiao.console.JConsole;
 import com.github.paohaijiao.evalue.JQuickSqlConditionEvaluator;
 import com.github.paohaijiao.exception.JAssert;
 import com.github.paohaijiao.expression.JQuickSqlColumnExpression;
 import com.github.paohaijiao.expression.JQuickSqlExpression;
 import com.github.paohaijiao.expression.JQuickSqlFunctionCallExpression;
 import com.github.paohaijiao.expression.JQuickSqlOrderByExpression;
-import com.github.paohaijiao.factory.JQuickSqlDataSetJoinerStrategy;
 import com.github.paohaijiao.function.JQuickSqlAggregateFunctionFactory;
 import com.github.paohaijiao.handler.JQuickSqlBaseHandler;
 import com.github.paohaijiao.join.JQuickSqlJoinCondition;
+import com.github.paohaijiao.provider.JQuickSqlAbilityProvider;
+import com.github.paohaijiao.spi.anno.Priority;
+import com.github.paohaijiao.spi.constants.PriorityConstants;
 import com.github.paohaijiao.statement.JQuickColumnMeta;
 import com.github.paohaijiao.statement.JQuickDataSet;
 import com.github.paohaijiao.statement.JQuickRow;
@@ -41,7 +44,12 @@ import java.util.stream.Collectors;
  * @version 1.0.0
  * @since 2025/8/17
  */
-public class JQuickSqlLamdaJoinJoinerHandler extends JQuickSqlBaseHandler implements JQuickSqlDataSetJoinerStrategy {
+@Priority(PriorityConstants.BUSINESS_HIGH)
+public class JQuickSqlLocalAbilityProvider extends JQuickSqlBaseHandler implements JQuickSqlAbilityProvider {
+    public JQuickSqlLocalAbilityProvider() {
+        JConsole console = JConsole.initConsoleEnvironment();
+        console.info("JQuickSqlLocalAbilityProvider initialized");
+    }
     @Override
     public JQuickDataSet innerJoin(JQuickDataSet left, JQuickDataSet right, JQuickSqlJoinCondition condition) {
         List<JQuickRow> resultRows = new ArrayList<>();

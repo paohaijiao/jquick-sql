@@ -1,4 +1,4 @@
-package com.github.paohaijiao.factory;
+package com.github.paohaijiao.provider;
 
 import com.github.paohaijiao.condition.JQuickSqlCondition;
 import com.github.paohaijiao.expression.JQuickSqlExpression;
@@ -10,7 +10,7 @@ import com.github.paohaijiao.statement.JQuickDataSet;
 import java.util.List;
 import java.util.Map;
 
-public interface JQuickSqlDataSetJoinerStrategy {
+public interface JQuickSqlAbilityProvider {
 
     JQuickDataSet innerJoin(JQuickDataSet left, JQuickDataSet right, JQuickSqlJoinCondition condition);
 

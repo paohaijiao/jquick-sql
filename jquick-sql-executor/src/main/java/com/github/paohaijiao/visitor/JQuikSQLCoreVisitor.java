@@ -19,15 +19,14 @@ import com.github.paohaijiao.condition.JQuickSqlComparisonCondition;
 import com.github.paohaijiao.condition.JQuickSqlCondition;
 import com.github.paohaijiao.console.JConsole;
 import com.github.paohaijiao.enums.JQuickSqlComparisonOperator;
-import com.github.paohaijiao.enums.JQuickSqlEngineEnums;
 import com.github.paohaijiao.exception.JAssert;
 import com.github.paohaijiao.expression.JQuickSqlBinaryExpression;
 import com.github.paohaijiao.expression.JQuickSqlExpression;
-import com.github.paohaijiao.factory.JQuickSqlDataSetJoinerStrategy;
 import com.github.paohaijiao.param.JContext;
 import com.github.paohaijiao.parser.JQuickSQLBaseVisitor;
 import com.github.paohaijiao.parser.JQuickSQLLexer;
 import com.github.paohaijiao.parser.JQuickSQLParser;
+import com.github.paohaijiao.provider.JQuickSqlAbilityProvider;
 import com.github.paohaijiao.statement.JQuickColumnMeta;
 import com.github.paohaijiao.statement.JQuickDataSet;
 import com.github.paohaijiao.statement.JQuickRow;
@@ -51,16 +50,18 @@ import java.util.Map;
 public class JQuikSQLCoreVisitor extends JQuickSQLBaseVisitor {
 
     protected final Map<String, JQuickDataSet> tableRegistry = new HashMap<>();
+
     protected JContext context;
+
     protected JQuickSQLLexer lexer;
+
     protected CommonTokenStream tokenStream;
+
     protected JQuickSQLParser parser;
-    protected JQuickSqlDataSetJoinerStrategy joinerStrategy;
-    protected JQuickSqlEngineEnums engine = JQuickSqlEngineEnums.LAMBDA;
+
+    protected JQuickSqlAbilityProvider provider;
 
     protected JQuickSqlDataSetHolder dataSetHolder = new JQuickSqlDataSetHolder();
-
-    protected JConsole console = new JConsole();
 
     public static String trim(String str) {
         if (null == str || "".equals(str)) {

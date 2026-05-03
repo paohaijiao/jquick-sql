@@ -15,13 +15,17 @@
  */
 package com.github.paohaijiao.select;
 
-import com.github.paohaijiao.enums.JQuickSqlEngineEnums;
+import com.github.paohaijiao.config.JQuickClientConfig;
+import com.github.paohaijiao.environment.JQuickSQLRuntimeEnvironment;
 import com.github.paohaijiao.executor.JQuickSQLExecutor;
 import com.github.paohaijiao.model.JDataSetFactory;
 import com.github.paohaijiao.statement.JQuickDataSet;
 import com.github.paohaijiao.statement.JQuickRow;
 import com.github.paohaijiao.support.JQuickSqlDataSetHolder;
 import org.junit.Test;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * packageName com.github.paohaijiao.value
@@ -35,12 +39,13 @@ public class DataSetTest {
     @Test
     public void union() {
         String rule = "select * from user1 a union select * from user2 b";
-        JQuickSQLExecutor executor = new JQuickSQLExecutor();
-        JQuickSqlDataSetHolder dataSetContainer = new JQuickSqlDataSetHolder();
-        dataSetContainer.addDataSet("user1", JDataSetFactory.createUsersDataSet());
-        dataSetContainer.addDataSet("user2", JDataSetFactory.createUsersDataSet1());
-        executor.dataSet(dataSetContainer);
-        JQuickDataSet dataSet = executor.execute(rule, JQuickSqlEngineEnums.LAMBDA);
+        JQuickClientConfig client=new JQuickClientConfig();
+        HashMap<String, JQuickDataSet> datasetMap=new HashMap<>();
+        datasetMap.put("user1", JDataSetFactory.createUsersDataSet());
+        datasetMap.put("user2", JDataSetFactory.createUsersDataSet1());
+        JQuickSQLRuntimeEnvironment environment=new JQuickSQLRuntimeEnvironment("local",client,datasetMap);
+        JQuickSQLExecutor executor = new JQuickSQLExecutor(environment);
+        JQuickDataSet dataSet = executor.execute(rule);
         for (JQuickRow row : dataSet.getRows()) {
             System.out.println(row);
         }
@@ -49,12 +54,13 @@ public class DataSetTest {
     @Test
     public void minus() {
         String rule = "select * from user1 a minus select * from user2 b";
-        JQuickSQLExecutor executor = new JQuickSQLExecutor();
-        JQuickSqlDataSetHolder dataSetContainer = new JQuickSqlDataSetHolder();
-        dataSetContainer.addDataSet("user1", JDataSetFactory.createUsersDataSet());
-        dataSetContainer.addDataSet("user2", JDataSetFactory.createUsersDataSet1());
-        executor.dataSet(dataSetContainer);
-        JQuickDataSet dataSet = executor.execute(rule, JQuickSqlEngineEnums.LAMBDA);
+        JQuickClientConfig client=new JQuickClientConfig();
+        HashMap<String, JQuickDataSet> datasetMap=new HashMap<>();
+        datasetMap.put("user1", JDataSetFactory.createUsersDataSet());
+        datasetMap.put("user2", JDataSetFactory.createUsersDataSet1());
+        JQuickSQLRuntimeEnvironment environment=new JQuickSQLRuntimeEnvironment("local",client,datasetMap);
+        JQuickSQLExecutor executor = new JQuickSQLExecutor(environment);
+        JQuickDataSet dataSet = executor.execute(rule);
         for (JQuickRow row : dataSet.getRows()) {
             System.out.println(row);
         }
@@ -63,12 +69,13 @@ public class DataSetTest {
     @Test
     public void intersect() {
         String rule = "select * from user1 a intersect select * from user2 b";
-        JQuickSQLExecutor executor = new JQuickSQLExecutor();
-        JQuickSqlDataSetHolder dataSetContainer = new JQuickSqlDataSetHolder();
-        dataSetContainer.addDataSet("user1", JDataSetFactory.createUsersDataSet());
-        dataSetContainer.addDataSet("user2", JDataSetFactory.createUsersDataSet1());
-        executor.dataSet(dataSetContainer);
-        JQuickDataSet dataSet = executor.execute(rule, JQuickSqlEngineEnums.LAMBDA);
+        JQuickClientConfig client=new JQuickClientConfig();
+        HashMap<String, JQuickDataSet> datasetMap=new HashMap<>();
+        datasetMap.put("user1", JDataSetFactory.createUsersDataSet());
+        datasetMap.put("user2", JDataSetFactory.createUsersDataSet1());
+        JQuickSQLRuntimeEnvironment environment=new JQuickSQLRuntimeEnvironment("local",client,datasetMap);
+        JQuickSQLExecutor executor = new JQuickSQLExecutor(environment);
+        JQuickDataSet dataSet = executor.execute(rule);
         for (JQuickRow row : dataSet.getRows()) {
             System.out.println(row);
         }

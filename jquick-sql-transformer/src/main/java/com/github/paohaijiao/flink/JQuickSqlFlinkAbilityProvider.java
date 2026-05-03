@@ -16,12 +16,15 @@
 package com.github.paohaijiao.flink;
 
 import com.github.paohaijiao.condition.JQuickSqlCondition;
+import com.github.paohaijiao.console.JConsole;
 import com.github.paohaijiao.expression.JQuickSqlExpression;
 import com.github.paohaijiao.expression.JQuickSqlFunctionCallExpression;
 import com.github.paohaijiao.expression.JQuickSqlOrderByExpression;
 import com.github.paohaijiao.extra.JQuickFlinkRender;
-import com.github.paohaijiao.factory.JQuickSqlDataSetJoinerStrategy;
 import com.github.paohaijiao.join.JQuickSqlJoinCondition;
+import com.github.paohaijiao.provider.JQuickSqlAbilityProvider;
+import com.github.paohaijiao.spi.anno.Priority;
+import com.github.paohaijiao.spi.constants.PriorityConstants;
 import com.github.paohaijiao.statement.JQuickColumnMeta;
 import com.github.paohaijiao.statement.JQuickDataSet;
 import com.github.paohaijiao.statement.JQuickRow;
@@ -49,12 +52,15 @@ import java.util.stream.Collectors;
  * @version 1.0.0
  * @since 2025/8/17
  */
-public class JQuickSqlFlinkJoiner extends JQuickFlinkRender implements JQuickSqlDataSetJoinerStrategy {
+@Priority(PriorityConstants.SYSTEM_MEDIUM)
+public class JQuickSqlFlinkAbilityProvider extends JQuickFlinkRender implements JQuickSqlAbilityProvider {
 
     private final StreamExecutionEnvironment env;
 
-    public JQuickSqlFlinkJoiner(StreamExecutionEnvironment env) {
+    public JQuickSqlFlinkAbilityProvider(StreamExecutionEnvironment env) {
         this.env = env;
+        JConsole console = JConsole.initConsoleEnvironment();
+        console.info("JQuickSqlFlinkAbilityProvider initialized with StreamExecutionEnvironment");
     }
 
     @Override

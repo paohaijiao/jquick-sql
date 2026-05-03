@@ -13,7 +13,7 @@
  *
  * Copyright (c) [2025-2099] Martin (goudingcheng@gmail.com)
  */
-package com.github.paohaijiao.factory;
+package com.github.paohaijiao.manage;
 
 import com.github.paohaijiao.enums.JQuickSqlBinaryOperator;
 import com.github.paohaijiao.expression.JQuickSqlBinaryExpression;

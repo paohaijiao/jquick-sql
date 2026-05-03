@@ -1,15 +1,23 @@
 package com.github.paohaijiao.spark;
 
 import com.github.paohaijiao.condition.JQuickSqlCondition;
-import com.github.paohaijiao.expression.*;
+import com.github.paohaijiao.console.JConsole;
+import com.github.paohaijiao.expression.JQuickSqlExpression;
+import com.github.paohaijiao.expression.JQuickSqlFunctionCallExpression;
+import com.github.paohaijiao.expression.JQuickSqlOrderByExpression;
 import com.github.paohaijiao.extra.JQuickSqlSparkRender;
-import com.github.paohaijiao.factory.JQuickSqlDataSetJoinerStrategy;
 import com.github.paohaijiao.join.JQuickSqlJoinCondition;
+import com.github.paohaijiao.provider.JQuickSqlAbilityProvider;
+import com.github.paohaijiao.spi.anno.Priority;
+import com.github.paohaijiao.spi.constants.PriorityConstants;
 import com.github.paohaijiao.statement.JQuickDataSet;
 import org.apache.spark.sql.*;
 import org.apache.spark.sql.expressions.Window;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import static org.apache.spark.sql.functions.col;
@@ -17,12 +25,16 @@ import static org.apache.spark.sql.functions.col;
 /**
  * 基于 Apache Spark 的实现类
  * 利用 Spark SQL 的分布式计算能力处理数据集操作
+ * 优先级：系统级别 - 高优先级（适用于大数据分布式场景）
  */
-public class JQuickSqlSparkJoiner extends JQuickSqlSparkRender implements JQuickSqlDataSetJoinerStrategy {
+@Priority(PriorityConstants.SYSTEM_HIGH)
+public class JQuickSqlSparkAbilityProvider extends JQuickSqlSparkRender implements JQuickSqlAbilityProvider {
 
 
-    public JQuickSqlSparkJoiner(SparkSession spark) {
+    public JQuickSqlSparkAbilityProvider(SparkSession spark) {
         this.spark = spark;
+        JConsole console = JConsole.initConsoleEnvironment();
+        console.info("JQuickSqlSparkAbilityProvider initialized with SparkSession");
     }
 
     @Override

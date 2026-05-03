@@ -15,7 +15,8 @@
  */
 package com.github.paohaijiao.select;
 
-import com.github.paohaijiao.enums.JQuickSqlEngineEnums;
+import com.github.paohaijiao.config.JQuickClientConfig;
+import com.github.paohaijiao.environment.JQuickSQLRuntimeEnvironment;
 import com.github.paohaijiao.executor.JQuickSQLExecutor;
 import com.github.paohaijiao.statement.JQuickColumnMeta;
 import com.github.paohaijiao.statement.JQuickDataSet;
@@ -24,6 +25,7 @@ import com.github.paohaijiao.support.JQuickSqlDataSetHolder;
 import org.junit.Test;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -89,22 +91,24 @@ public class JSelectTest {
     @Test
     public void limit() {
         String rule = "select * from orders limit 1";
-        JQuickSQLExecutor executor = new JQuickSQLExecutor();
-        JQuickSqlDataSetHolder dataSetContainer = new JQuickSqlDataSetHolder();
-        dataSetContainer.addDataSet("orders", createOrdersDataSet());
-        executor.dataSet(dataSetContainer);
-        JQuickDataSet dataSet = executor.execute(rule, JQuickSqlEngineEnums.LAMBDA);
+        JQuickClientConfig client=new JQuickClientConfig();
+        HashMap<String, JQuickDataSet> datasetMap=new HashMap<>();
+        datasetMap.put("orders",createOrdersDataSet());
+        JQuickSQLRuntimeEnvironment environment=new JQuickSQLRuntimeEnvironment("local",client,datasetMap);
+        JQuickSQLExecutor executor = new JQuickSQLExecutor(environment);
+        JQuickDataSet dataSet = executor.execute(rule);
         dataSet.printTable();
     }
 
     @Test
     public void limitOffset() {
         String rule = "select * from orders limit  1 , 1";
-        JQuickSQLExecutor executor = new JQuickSQLExecutor();
-        JQuickSqlDataSetHolder dataSetContainer = new JQuickSqlDataSetHolder();
-        dataSetContainer.addDataSet("orders", createOrdersDataSet());
-        executor.dataSet(dataSetContainer);
-        JQuickDataSet dataSet = executor.execute(rule, JQuickSqlEngineEnums.LAMBDA);
+        JQuickClientConfig client=new JQuickClientConfig();
+        HashMap<String, JQuickDataSet> datasetMap=new HashMap<>();
+        datasetMap.put("orders",createOrdersDataSet());
+        JQuickSQLRuntimeEnvironment environment=new JQuickSQLRuntimeEnvironment("local",client,datasetMap);
+        JQuickSQLExecutor executor = new JQuickSQLExecutor(environment);
+        JQuickDataSet dataSet = executor.execute(rule);
         for (JQuickRow row : dataSet.getRows()) {
             System.out.println(row);
         }
@@ -113,11 +117,12 @@ public class JSelectTest {
     @Test
     public void orderBy() {
         String rule = "select * from orders order by user_id desc,order_id asc";
-        JQuickSQLExecutor executor = new JQuickSQLExecutor();
-        JQuickSqlDataSetHolder dataSetContainer = new JQuickSqlDataSetHolder();
-        dataSetContainer.addDataSet("orders", createOrdersDataSet());
-        executor.dataSet(dataSetContainer);
-        JQuickDataSet dataSet = executor.execute(rule, JQuickSqlEngineEnums.LAMBDA);
+        JQuickClientConfig client=new JQuickClientConfig();
+        HashMap<String, JQuickDataSet> datasetMap=new HashMap<>();
+        datasetMap.put("orders",createOrdersDataSet());
+        JQuickSQLRuntimeEnvironment environment=new JQuickSQLRuntimeEnvironment("local",client,datasetMap);
+        JQuickSQLExecutor executor = new JQuickSQLExecutor(environment);
+        JQuickDataSet dataSet = executor.execute(rule);
         for (JQuickRow row : dataSet.getRows()) {
             System.out.println(row);
         }
@@ -127,11 +132,12 @@ public class JSelectTest {
     public void groupByItem() {
         String rule = "select department, count(department) as cnt from orders group  by department ";
         System.out.println(rule);
-        JQuickSQLExecutor executor = new JQuickSQLExecutor();
-        JQuickSqlDataSetHolder dataSetContainer = new JQuickSqlDataSetHolder();
-        dataSetContainer.addDataSet("orders", createAggregationTestData());
-        executor.dataSet(dataSetContainer);
-        JQuickDataSet dataSet = executor.execute(rule, JQuickSqlEngineEnums.LAMBDA);
+        JQuickClientConfig client=new JQuickClientConfig();
+        HashMap<String, JQuickDataSet> datasetMap=new HashMap<>();
+        datasetMap.put("orders",createOrdersDataSet());
+        JQuickSQLRuntimeEnvironment environment=new JQuickSQLRuntimeEnvironment("local",client,datasetMap);
+        JQuickSQLExecutor executor = new JQuickSQLExecutor(environment);
+        JQuickDataSet dataSet = executor.execute(rule);
         for (JQuickRow row : dataSet.getRows()) {
             System.out.println(row);
         }
@@ -141,11 +147,12 @@ public class JSelectTest {
     public void groupByHaving() {
         String rule = "select department, count(department) as cnt from orders group  by department having cnt>2 ";
         System.out.println(rule);
-        JQuickSQLExecutor executor = new JQuickSQLExecutor();
-        JQuickSqlDataSetHolder dataSetContainer = new JQuickSqlDataSetHolder();
-        dataSetContainer.addDataSet("orders", createAggregationTestData());
-        executor.dataSet(dataSetContainer);
-        JQuickDataSet dataSet = executor.execute(rule, JQuickSqlEngineEnums.LAMBDA);
+        JQuickClientConfig client=new JQuickClientConfig();
+        HashMap<String, JQuickDataSet> datasetMap=new HashMap<>();
+        datasetMap.put("orders",createOrdersDataSet());
+        JQuickSQLRuntimeEnvironment environment=new JQuickSQLRuntimeEnvironment("local",client,datasetMap);
+        JQuickSQLExecutor executor = new JQuickSQLExecutor(environment);
+        JQuickDataSet dataSet = executor.execute(rule);
         for (JQuickRow row : dataSet.getRows()) {
             System.out.println(row);
         }
