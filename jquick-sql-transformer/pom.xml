@@ -10,6 +10,18 @@
     <dependencies>
         <dependency>
             <groupId>io.github.paohaijiao</groupId>
+            <artifactId>jquick-function-java-plugin</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.github.paohaijiao</groupId>
+            <artifactId>jquick-function-spark-plugin</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.github.paohaijiao</groupId>
+            <artifactId>jquick-function-flink-plugin</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.github.paohaijiao</groupId>
             <artifactId>jquick-sql-assembler</artifactId>
         </dependency>
         <dependency>

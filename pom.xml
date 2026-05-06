@@ -29,9 +29,25 @@
         <scala.binary.version>2.12.17</scala.binary.version>
         <hadoop.version>3.3.4</hadoop.version>
         <flink.version>1.14.0</flink.version>
+        <jquick-function.version>1.0.0</jquick-function.version>
     </properties>
     <dependencyManagement>
         <dependencies>
+            <dependency>
+                <groupId>io.github.paohaijiao</groupId>
+                <artifactId>jquick-function-java-plugin</artifactId>
+                <version>${jquick-function.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.paohaijiao</groupId>
+                <artifactId>jquick-function-spark-plugin</artifactId>
+                <version>${jquick-function.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.paohaijiao</groupId>
+                <artifactId>jquick-function-flink-plugin</artifactId>
+                <version>${jquick-function.version}</version>
+            </dependency>
             <dependency>
                 <groupId>io.github.paohaijiao</groupId>
                 <artifactId>jquick-connector</artifactId>
@@ -103,6 +119,7 @@
                 <artifactId>flink-streaming-java_2.12</artifactId>
                 <version>${flink.version}</version>
             </dependency>
+
         </dependencies>
 
 
