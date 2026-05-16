@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE sqls PUBLIC "-//PAOHAIJIAO//DTD API JAVA 1.0//EN"
-        "D:\idea\jquick-sql\jquick-sql-executor\src\main\resources\paohaijiao\dtd\Jquick-sql.dtd">
-<sqls namespace="com.github.paohaijiao.xml.service.JQuickOrderService">
-    <sql name="getOrders" returnClass="java.util.List">
-        select * from orders limit #{limit}
-    </sql>
-</sqls>

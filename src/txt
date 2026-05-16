@@ -1,0 +1,18 @@
+PhysicalPlanGenerator 逻辑计划 → 物理计划转换器
+代码: dataset.filter(...).select(...).orderBy(...)
+    ↓
+逻辑计划构建器 (捕获操作)
+    ↓
+逻辑计划树 (LogicalPlan)
+    ↓
+优化器 (谓词下推、投影下推)
+    ↓
+物理计划生成器 (选择执行策略)
+    ↓
+执行并返回 JQuickDataSet
+
+
+
+物理计划 → 分布式执行器 → 任务拆分 → gRPC 分发 → 结果聚合
+                              ↓
+                    各 Worker 节点执行子计划

@@ -1,8 +1,0 @@
-# 线程池引擎
-com.github.paohaijiao.provider.impl.LocalThreadPoolEngine
-# MapReduce 引擎
-com.github.paohaijiao.provider.impl.MapReduceEngineAdapter
-# Spark 引擎
-com.github.paohaijiao.provider.impl.SparkEngineAdapter
-# Flink 引擎
-com.github.paohaijiao.provider.impl.FlinkEngineAdapter
