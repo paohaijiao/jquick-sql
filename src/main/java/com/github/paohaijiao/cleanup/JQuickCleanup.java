@@ -131,11 +131,11 @@ public class JQuickCleanup {
             return true;
         }
         try {
-            if (schedulePlan.getStatus() == JQuickSchedulePlan.PlanStatus.RUNNING ||
-                    schedulePlan.getStatus() == JQuickSchedulePlan.PlanStatus.PENDING) {
-                schedulePlan.cancel();
-                System.out.println("Cancelled schedule plan: " + schedulePlan.getPlanId());
-            }
+//            if (schedulePlan.getStatus() == JQuickSchedulePlan.PlanStatus.RUNNING ||
+//                    schedulePlan.getStatus() == JQuickSchedulePlan.PlanStatus.PENDING) {
+//                schedulePlan.cancel();
+//                System.out.println("Cancelled schedule plan: " + schedulePlan.getPlanId());
+//            }
             return true;
         } catch (Exception e) {
             System.err.println("Failed to cancel schedule plan: " + e.getMessage());
