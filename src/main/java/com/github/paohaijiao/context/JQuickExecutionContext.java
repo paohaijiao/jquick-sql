@@ -14,12 +14,14 @@
  * Copyright (c) [2025-2099] Martin (goudingcheng@gmail.com)
  */
 package com.github.paohaijiao.context;
+import com.github.paohaijiao.config.JQuickConfiguration;
 import com.github.paohaijiao.logic.JQuickLogicalPlanNode;
 import com.github.paohaijiao.logic.domain.JQuickLimitNode;
 import com.github.paohaijiao.logic.domain.JQuickProjectNode;
 import com.github.paohaijiao.logic.domain.JQuickSortNode;
 import com.github.paohaijiao.statement.JQuickDataSet;
 import com.github.paohaijiao.stats.JQuickExecutionStats;
+import com.github.paohaijiao.toplogy.JQuickClusterTopology;
 import lombok.Data;
 
 import java.util.*;
@@ -42,6 +44,10 @@ public class JQuickExecutionContext {
     private final String executionId;
 
     private JQuickExecutionContext parent;
+
+    private JQuickConfiguration configuration;
+
+    private JQuickClusterTopology clusterTopology;
 
     private long queryTimeout = 30000;
 

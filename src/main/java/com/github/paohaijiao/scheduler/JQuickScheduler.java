@@ -32,9 +32,13 @@ import java.util.concurrent.atomic.AtomicLong;
 public class JQuickScheduler {
 
     private final JQuickDistributedPlan plan;
+
     private final JQuickWorkerManager workerManager;
+
     private final ExecutorService schedulerExecutor;
+
     private final Map<Long, JQuickTaskExecution> runningTasks;
+
     private final AtomicLong taskIdGenerator;
 
     public JQuickScheduler(JQuickDistributedPlan plan, JQuickWorkerManager workerManager) {
@@ -50,7 +54,6 @@ public class JQuickScheduler {
      */
     public JQuickJobExecution submit() {
         JQuickJobExecution job = new JQuickJobExecution(plan);
-
         // 拓扑排序，确定执行顺序
         List<JQuickFragment> executionOrder = topologicalSort();
 
