@@ -19,7 +19,6 @@ import com.github.paohaijiao.context.JQuickExecutionContext;
 import com.github.paohaijiao.enums.JQuickSubqueryType;
 import com.github.paohaijiao.expression.JQuickExpression;
 import com.github.paohaijiao.logic.JQuickLogicalPlanNode;
-import com.github.paohaijiao.logic.domain.JQuickSubqueryNode;
 import com.github.paohaijiao.statement.JQuickDataSet;
 import com.github.paohaijiao.statement.JQuickRow;
 
@@ -70,8 +69,7 @@ public class JQuickSubqueryExpression implements JQuickExpression {
         JQuickExecutionContext childContext = createChildContext(row);
         try {
             // 执行子查询
-            JQuickDataSet result = subquery.execute(childContext);
-
+            JQuickDataSet result = null;//subquery.execute(childContext);
             switch (type) {
                 case SCALAR:
                     return evaluateScalar(result);
@@ -93,6 +91,11 @@ public class JQuickSubqueryExpression implements JQuickExpression {
         } catch (Exception e) {
             throw new RuntimeException("Subquery execution failed", e);
         }
+    }
+
+    @Override
+    public Class<?> getType() {
+        return null;
     }
 
     /**
@@ -227,18 +230,8 @@ public class JQuickSubqueryExpression implements JQuickExpression {
     /**
      * 缓存子查询结果（用于优化）
      */
-    private final java.util.Map<String, JQuickDataSet> resultCache = new java.util.HashMap<>();
 
-    public JQuickDataSet getCachedResult(JQuickExecutionContext context) {
-        String cacheKey = subquery.toString();
-        if (resultCache.containsKey(cacheKey)) {
-            return resultCache.get(cacheKey);
-        }
 
-        JQuickDataSet result = subquery.execute(context);
-        resultCache.put(cacheKey, result);
-        return result;
-    }
 
 //    @Override
 //    public Class<?> getType() {
@@ -311,7 +304,7 @@ public class JQuickSubqueryExpression implements JQuickExpression {
 
 
     public JQuickLogicalPlanNode getSubquery() { return subquery; }
-    public JQuickSubqueryNode getType() { return type; }
+    //public JQuickSubqueryType getType() { return type; }
     public JQuickExpression getLeftExpression() { return leftExpression; }
     public JQuickExpression getRightExpression() { return rightExpression; }
 }

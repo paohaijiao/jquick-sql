@@ -16,7 +16,6 @@
 package com.github.paohaijiao.config;
 
 
-import com.github.paohaijiao.worker.JQuickWorkerNode;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -46,7 +45,6 @@ public class JQuickConfiguration {
 
     private String clusterName;
 
-    private List<JQuickWorkerNode> workerNodes;
 
     private String serviceDiscoveryUrl;
 
@@ -131,7 +129,6 @@ public class JQuickConfiguration {
         this.enableVectorizedExecution = true;
         this.batchSize = 1000;
         this.clusterName = "jquick-cluster";
-        this.workerNodes = new ArrayList<>();
         this.serviceDiscoveryUrl = null;
         this.serviceDiscoveryType = "none";
         this.serviceDiscoveryTimeoutMs = 30000;
@@ -328,24 +325,9 @@ public class JQuickConfiguration {
     private interface PropertySetter {
         void set(String value);
     }
-    /**
-     * 添加Worker节点
-     */
-    public void addWorkerNode(JQuickWorkerNode worker) {
-        this.workerNodes.add(worker);
-    }
 
-    /**
-     * 添加Worker节点（通过地址）
-     */
-    public void addWorkerNode(String host, int port) {
-        String workerId = "worker-" + workerNodes.size();
-        JQuickWorkerNode worker = new JQuickWorkerNode(workerId, host, port,
-                defaultWorkerRack, defaultWorkerLocation + "-" + workerNodes.size(),
-                defaultWorkerCpuCores, defaultWorkerMemoryMb * 1024 * 1024,
-                new HashMap<>());
-        this.workerNodes.add(worker);
-    }
+
+
 
     /**
      * 批量添加Worker节点
@@ -356,17 +338,10 @@ public class JQuickConfiguration {
             if (parts.length >= 2) {
                 String host = parts[0];
                 int port = Integer.parseInt(parts[1]);
-                addWorkerNode(host, port);
             }
         }
     }
 
-    /**
-     * 移除Worker节点
-     */
-    public void removeWorkerNode(String workerId) {
-        workerNodes.removeIf(w -> w.getWorkerId().equals(workerId));
-    }
 
     /**
      * 设置自定义属性
@@ -452,7 +427,6 @@ public class JQuickConfiguration {
     // 集群配置
     public String getClusterName() { return clusterName; }
 
-    public List<JQuickWorkerNode> getWorkerNodes() { return Collections.unmodifiableList(workerNodes); }
 
     public String getServiceDiscoveryUrl() { return serviceDiscoveryUrl; }
 
@@ -568,10 +542,7 @@ public class JQuickConfiguration {
         return this;
     }
 
-    public JQuickConfiguration setWorkerNodes(List<JQuickWorkerNode> workerNodes) {
-        this.workerNodes = new ArrayList<>(workerNodes);
-        return this;
-    }
+
 
     public JQuickConfiguration setServiceDiscoveryUrl(String url) {
         this.serviceDiscoveryUrl = url;
@@ -642,7 +613,6 @@ public class JQuickConfiguration {
         copy.enableVectorizedExecution = this.enableVectorizedExecution;
         copy.batchSize = this.batchSize;
         copy.clusterName = this.clusterName;
-        copy.workerNodes = new ArrayList<>(this.workerNodes);
         copy.serviceDiscoveryUrl = this.serviceDiscoveryUrl;
         copy.serviceDiscoveryType = this.serviceDiscoveryType;
         copy.heartbeatIntervalMs = this.heartbeatIntervalMs;
@@ -661,6 +631,6 @@ public class JQuickConfiguration {
 
     @Override
     public String toString() {
-        return String.format("JQuickConfiguration{cluster='%s', parallelism=%d, workers=%d, mode='%s'}", clusterName, defaultParallelism, workerNodes.size(), executionMode);
+        return String.format("JQuickConfiguration{cluster='%s', parallelism=%d,  mode='%s'}", clusterName, defaultParallelism, executionMode);
     }
 }

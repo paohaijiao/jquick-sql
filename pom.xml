@@ -18,8 +18,14 @@
         <lombok.version>1.18.30</lombok.version>
         <rest.assured.version>2.3.3</rest.assured.version>
         <grpc.version>1.4.0</grpc.version>
+        <function.version>1.1.0</function.version>
     </properties>
         <dependencies>
+            <dependency>
+                <groupId>io.github.paohaijiao</groupId>
+                <artifactId>jquick-transform-function</artifactId>
+                <version>${function.version}</version>
+            </dependency>
             <dependency>
                 <groupId>org.antlr</groupId>
                 <artifactId>antlr4-runtime</artifactId>

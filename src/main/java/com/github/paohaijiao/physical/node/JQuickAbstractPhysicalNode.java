@@ -70,4 +70,13 @@ public abstract class JQuickAbstractPhysicalNode implements JQuickPhysicalPlanNo
     public JQuickPhysicalPlanNode getRight() {
         return children.size() > 1 ? children.get(1) : null;
     }
+    @Override
+    public JQuickPhysicalPlanNode clone() {
+        try {
+            JQuickAbstractPhysicalNode cloned = (JQuickAbstractPhysicalNode) super.clone();
+            return cloned;
+        } catch (CloneNotSupportedException e) {
+            throw new AssertionError("Clone not supported", e);
+        }
+    }
 }

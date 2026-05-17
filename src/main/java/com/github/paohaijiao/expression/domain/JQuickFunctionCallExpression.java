@@ -16,14 +16,11 @@
 package com.github.paohaijiao.expression.domain;
 
 import com.github.paohaijiao.expression.JQuickExpression;
-import com.github.paohaijiao.spi.JQuickFunctionProvider;
-import com.github.paohaijiao.spi.SpiLoader;
+import com.github.paohaijiao.function.core.JQuickMethodFunctionProvider;
+import com.github.paohaijiao.function.manager.JQuickMethodInvocationManager;
 import com.github.paohaijiao.statement.JQuickRow;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -34,9 +31,9 @@ public class JQuickFunctionCallExpression implements JQuickExpression {
     private final String functionName;
     private final List<JQuickExpression> arguments;
     private final boolean isStarArg;
-    private JQuickFunctionProvider functionProvider;
+    private JQuickMethodFunctionProvider functionProvider;
 
-    private static final Map<String, JQuickFunctionProvider> FUNCTION_CACHE = new ConcurrentHashMap<>();
+    private static final Map<String, JQuickMethodFunctionProvider> FUNCTION_CACHE = new ConcurrentHashMap<>();
 
     public JQuickFunctionCallExpression(String functionName, List<JQuickExpression> arguments) {
         this(functionName, arguments, false);
@@ -49,15 +46,15 @@ public class JQuickFunctionCallExpression implements JQuickExpression {
         this.functionProvider = loadFunctionProvider(this.functionName);
     }
 
-    private JQuickFunctionProvider loadFunctionProvider(String name) {
+    private JQuickMethodFunctionProvider loadFunctionProvider(String name) {
         if (FUNCTION_CACHE.containsKey(name)) {
             return FUNCTION_CACHE.get(name);
         }
-
+        JQuickMethodInvocationManager instance=JQuickMethodInvocationManager.getInstance();
         try {
-            List<JQuickFunctionProvider> providers = SpiLoader.loadAll(JQuickFunctionProvider.class);
-            for (JQuickFunctionProvider provider : providers) {
-                if (provider.getFunctionName().equalsIgnoreCase(name)) {
+            Collection<JQuickMethodFunctionProvider> providers =instance.getAllInvokers();
+            for (JQuickMethodFunctionProvider provider : providers) {
+                if (provider.getMethodName().equalsIgnoreCase(name)) {
                     FUNCTION_CACHE.put(name, provider);
                     return provider;
                 }

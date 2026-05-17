@@ -82,22 +82,22 @@ public class JQuickSQLCommonVisistor extends JQuickSQLCoreVisistor {
     }
     @Override
     public JQuickDataSetOpNode visitDatasetOp(JQuickSQLParser.DatasetOpContext ctx) {
-        List<JQuickSelectClauseNode> selectClauses = new ArrayList<>();
-        List<JQuickDataSetOpNode.SetOperator> operators = new ArrayList<>();
-        selectClauses.add((JQuickSelectClauseNode) visit(ctx.selectClause(0)));
-        for (int i = 1; i < ctx.selectClause().size(); i++) {
-            int operatorIndex = i * 2 - 1;
-            TerminalNode operatorNode = (TerminalNode) ctx.getChild(operatorIndex);
-            if (operatorNode.getSymbol().getType() == JQuickSQLParser.UNION) {
-                operators.add(JQuickDataSetOpNode.SetOperator.UNION);
-            } else if (operatorNode.getSymbol().getType() == JQuickSQLParser.MINUS) {
-                operators.add(JQuickDataSetOpNode.SetOperator.MINUS);
-            } else if (operatorNode.getSymbol().getType() == JQuickSQLParser.INTERSECT) {
-                operators.add(JQuickDataSetOpNode.SetOperator.INTERSECT);
-            }
-            selectClauses.add((JQuickSelectClauseNode) visit(ctx.selectClause(i)));
-        }
-        return new JQuickDataSetOpNode(selectClauses, operators);
+//        List<JQuickSelectClauseNode> selectClauses = new ArrayList<>();
+//        List<JQuickDataSetOpNode.SetOperator> operators = new ArrayList<>();
+//        selectClauses.add((JQuickSelectClauseNode) visit(ctx.selectClause(0)));
+//        for (int i = 1; i < ctx.selectClause().size(); i++) {
+//            int operatorIndex = i * 2 - 1;
+//            TerminalNode operatorNode = (TerminalNode) ctx.getChild(operatorIndex);
+//            if (operatorNode.getSymbol().getType() == JQuickSQLParser.UNION) {
+//                operators.add(JQuickDataSetOpNode.SetOperator.UNION);
+//            } else if (operatorNode.getSymbol().getType() == JQuickSQLParser.MINUS) {
+//                operators.add(JQuickDataSetOpNode.SetOperator.MINUS);
+//            } else if (operatorNode.getSymbol().getType() == JQuickSQLParser.INTERSECT) {
+//                operators.add(JQuickDataSetOpNode.SetOperator.INTERSECT);
+//            }
+//            selectClauses.add((JQuickSelectClauseNode) visit(ctx.selectClause(i)));
+//        }
+        return new JQuickDataSetOpNode(null, null);
     }
     @Override
     public JQuickSelectClauseNode visitSelectClause(JQuickSQLParser.SelectClauseContext ctx) {

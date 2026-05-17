@@ -16,7 +16,7 @@ public interface JQuickPhysicalPlanNode {
 
     JQuickPhysicalStats getStats();
 
-    JQuickPhysicalPlanNode clone();
+    public JQuickPhysicalPlanNode clone();
 
     void accept(JQuickPhysicalPlanVisitor visitor);
 }

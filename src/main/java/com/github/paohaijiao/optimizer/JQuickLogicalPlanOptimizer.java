@@ -17,6 +17,7 @@ package com.github.paohaijiao.optimizer;
 
 import com.github.paohaijiao.enums.JQuickBinaryOperator;
 import com.github.paohaijiao.context.JQuickExecutionContext;
+import com.github.paohaijiao.enums.JQuickJoinType;
 import com.github.paohaijiao.expression.JQuickExpression;
 import com.github.paohaijiao.expression.domain.JQuickBinaryExpression;
 import com.github.paohaijiao.expression.domain.JQuickColumnRefExpression;
@@ -552,7 +553,7 @@ public class JQuickLogicalPlanOptimizer {
 
             JQuickLogicalPlanNode result = tables.get(0);
             for (int i = 1; i < tables.size(); i++) {
-                result = new JQuickJoinNode(JQuickJoinNode.JoinType.INNER, result, tables.get(i), null);
+                result = new JQuickJoinNode(JQuickJoinType.INNER, result, tables.get(i), null);
             }
 
             return result;
@@ -701,10 +702,6 @@ public class JQuickLogicalPlanOptimizer {
      * 空节点 - 表示空数据集
      */
     private static class EmptyNode implements JQuickLogicalPlanNode {
-        @Override
-        public JQuickDataSet execute(JQuickExecutionContext context) {
-            return new JQuickDataSet(new ArrayList<>(), new ArrayList<>());
-        }
 
         @Override
         public String getNodeType() {

@@ -21,7 +21,6 @@ import com.github.paohaijiao.logic.domain.JQuickProjectNode;
 import com.github.paohaijiao.logic.domain.JQuickSortNode;
 import com.github.paohaijiao.statement.JQuickDataSet;
 import com.github.paohaijiao.stats.JQuickExecutionStats;
-import com.github.paohaijiao.toplogy.JQuickClusterTopology;
 import lombok.Data;
 
 import java.util.*;
@@ -47,7 +46,6 @@ public class JQuickExecutionContext {
 
     private JQuickConfiguration configuration;
 
-    private JQuickClusterTopology clusterTopology;
 
     private long queryTimeout = 30000;
 
