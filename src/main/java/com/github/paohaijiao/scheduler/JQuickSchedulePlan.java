@@ -24,16 +24,18 @@ import java.util.Map;
  * 调度计划 - 包含所有 Task 和依赖关系
  */
 public class JQuickSchedulePlan {
+
     private final Collection<JQuickTask> allTasks;
+
     private final List<JQuickTask> rootTasks;
+
     private final Map<Integer, List<Integer>> stageDependencies;
+
     private final List<WorkerInfo> workers;
+
     private final long planId;
 
-    public JQuickSchedulePlan(Collection<JQuickTask> allTasks,
-                              List<JQuickTask> rootTasks,
-                              Map<Integer, List<Integer>> stageDependencies,
-                              List<WorkerInfo> workers) {
+    public JQuickSchedulePlan(Collection<JQuickTask> allTasks, List<JQuickTask> rootTasks, Map<Integer, List<Integer>> stageDependencies, List<WorkerInfo> workers) {
         this.planId = System.currentTimeMillis();
         this.allTasks = allTasks;
         this.rootTasks = rootTasks;
@@ -42,7 +44,9 @@ public class JQuickSchedulePlan {
     }
 
     public Collection<JQuickTask> getAllTasks() { return allTasks; }
+
     public List<JQuickTask> getRootTasks() { return rootTasks; }
+
     public List<JQuickTask> getTasksByWorker(String workerId) {
         List<JQuickTask> result = new ArrayList<>();
         for (JQuickTask task : allTasks) {
@@ -54,7 +58,9 @@ public class JQuickSchedulePlan {
     }
 
     public Map<Integer, List<Integer>> getStageDependencies() { return stageDependencies; }
+
     public List<WorkerInfo> getWorkers() { return workers; }
+
     public long getPlanId() { return planId; }
 
     @Override
