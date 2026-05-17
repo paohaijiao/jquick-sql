@@ -20,8 +20,6 @@ import com.github.paohaijiao.expression.JQuickExpression;
 import com.github.paohaijiao.expression.domain.JQuickBinaryExpression;
 import com.github.paohaijiao.expression.domain.JQuickColumnRefExpression;
 import com.github.paohaijiao.logic.JQuickLogicalPlanNode;
-import com.github.paohaijiao.logic.domain.*;
-import com.github.paohaijiao.plan.logical.*;
 import com.github.paohaijiao.physical.node.*;
 
 import java.util.LinkedHashMap;
@@ -46,27 +44,23 @@ public class JQuickPhysicalPlanGenerator {
         return convert(logicalPlan, new JQuickConversionContext());
     }
 
-    private JQuickPhysicalPlanNode convert(JQuickLogicalPlanNode node, JQuickConversionContext ctx) {
-        if (node instanceof JQuickTableScanNode) {
-            return convertTableScan((JQuickTableScanNode) node);
-        } else if (node instanceof JQuickProjectNode) {
-            return convertProject((JQuickProjectNode) node, ctx);
-        } else if (node instanceof JQuickFilterNode) {
-            return convertFilter((JQuickFilterNode) node, ctx);
-        } else if (node instanceof JQuickJoinNode) {
-            return convertJoin((JQuickJoinNode) node, ctx);
-        } else if (node instanceof JQuickGroupByNode) {
-            return convertGroupBy((JQuickGroupByNode) node, ctx);
-        } else if (node instanceof JQuickSortNode) {
-            return convertSort((JQuickSortNode) node, ctx);
-        } else if (node instanceof JQuickLimitNode) {
-            return convertLimit((JQuickLimitNode) node, ctx);
-        } else if (node instanceof JQuickWithNode) {
-            return convertWith((JQuickWithNode) node, ctx);
-        } else if (node instanceof JQuickSetOperationNode) {
-            return convertSetOperation((JQuickSetOperationNode) node, ctx);
+    public JQuickPhysicalPlanNode convert(JQuickLogicalPlanNode logicalPlan) {
+        if (logicalPlan instanceof JQuickTableScanNode) {
+            return convertTableScan((JQuickTableScanNode) logicalPlan);
+        } else if (logicalPlan instanceof JQuickProjectNode) {
+            return convertProject((JQuickProjectNode) logicalPlan);
+        } else if (logicalPlan instanceof JQuickFilterNode) {
+            return convertFilter((JQuickFilterNode) logicalPlan);
+        } else if (logicalPlan instanceof JQuickJoinNode) {
+            return convertJoin((JQuickJoinNode) logicalPlan);
+        } else if (logicalPlan instanceof JQuickGroupByNode) {
+            return convertGroupBy((JQuickGroupByNode) logicalPlan);
+        } else if (logicalPlan instanceof JQuickSortNode) {
+            return convertSort((JQuickSortNode) logicalPlan);
+        } else if (logicalPlan instanceof JQuickLimitNode) {
+            return convertLimit((JQuickLimitNode) logicalPlan);
         }
-        throw new RuntimeException("Unknown logical plan node: " + node.getClass());
+        throw new RuntimeException("Unknown logical plan node: " + logicalPlan.getClass());
     }
 
     /**

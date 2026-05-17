@@ -16,17 +16,17 @@
 package com.github.paohaijiao.engine;
 
 import com.github.paohaijiao.ast.JQuickQueryNode;
+import com.github.paohaijiao.ast2logic.JQuickASTToLogicalPlanVisitor;
 import com.github.paohaijiao.context.JQuickExecutionContext;
 import com.github.paohaijiao.executor.JQuickSQLExecutor;
 import com.github.paohaijiao.fragment.JQuickFragmenter;
 import com.github.paohaijiao.logic.JQuickLogicalPlanNode;
 import com.github.paohaijiao.logic.domain.JQuickSortNode;
-import com.github.paohaijiao.logic.service.JQuickASTToLogicalPlanVisitor;
 import com.github.paohaijiao.optimizer.JQuickLogicalPlanOptimizer;
 import com.github.paohaijiao.parser.JQuickSQLLexer;
 import com.github.paohaijiao.parser.JQuickSQLParser;
 import com.github.paohaijiao.physical.JQuickPhysicalPlanGenerator;
-import com.github.paohaijiao.physical.node.JQuickPhysicalPlanNode;
+import com.github.paohaijiao.physical.JQuickPhysicalPlanNode;
 import com.github.paohaijiao.scheduler.JQuickScheduler;
 import com.github.paohaijiao.statement.JQuickDataSet;
 import com.github.paohaijiao.worker.JQuickJobExecution;

@@ -15,40 +15,24 @@
  */
 package com.github.paohaijiao.logic.domain;
 
-import com.github.paohaijiao.context.JQuickExecutionContext;
+
 import com.github.paohaijiao.logic.JQuickLogicalPlanNode;
 import com.github.paohaijiao.logic.JQuickLogicalPlanVisitor;
-import com.github.paohaijiao.statement.JQuickDataSet;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
- * 排序节点 - ORDER BY 子句
+ * 排序节点 - 描述 ORDER BY 子句
  */
 public class JQuickSortNode implements JQuickLogicalPlanNode {
 
     private final List<OrderByItem> orderByItems;
+
     private final JQuickLogicalPlanNode child;
 
     public JQuickSortNode(List<OrderByItem> orderByItems, JQuickLogicalPlanNode child) {
         this.orderByItems = Collections.unmodifiableList(new ArrayList<>(orderByItems));
         this.child = child;
-    }
-
-    @Override
-    public JQuickDataSet execute(JQuickExecutionContext context) {
-        JQuickDataSet data = child.execute(context);
-        JQuickDataSet result = data;
-
-        // 从后往前排序，保持多列排序的正确顺序
-        for (int i = orderByItems.size() - 1; i >= 0; i--) {
-            OrderByItem item = orderByItems.get(i);
-            result = result.orderBy(item.getColumnName(), item.isAscending());
-        }
-
-        return result;
     }
 
     @Override
@@ -73,40 +57,46 @@ public class JQuickSortNode implements JQuickLogicalPlanNode {
 
     @Override
     public JQuickLogicalPlanNode clone() {
-        return new JQuickSortNode(orderByItems, child.clone());
+        List<OrderByItem> clonedItems = new ArrayList<>();
+        for (OrderByItem item : orderByItems) {
+            clonedItems.add(item.clone());
+        }
+        return new JQuickSortNode(clonedItems, child.clone());
     }
 
-    public List<OrderByItem> getOrderByItems() {
-        return orderByItems;
-    }
+    public List<OrderByItem> getOrderByItems() { return orderByItems; }
 
-    public JQuickLogicalPlanNode getChild() {
-        return child;
-    }
+    public JQuickLogicalPlanNode getChild() { return child; }
 
     /**
      * 排序项
      */
     public static class OrderByItem {
+
         private final String columnName;
+
         private final boolean ascending;
 
+        private final boolean nullsFirst;
+
         public OrderByItem(String columnName, boolean ascending) {
+            this(columnName, ascending, false);
+        }
+
+        public OrderByItem(String columnName, boolean ascending, boolean nullsFirst) {
             this.columnName = columnName;
             this.ascending = ascending;
+            this.nullsFirst = nullsFirst;
         }
 
-        public String getColumnName() {
-            return columnName;
-        }
+        public String getColumnName() { return columnName; }
 
-        public boolean isAscending() {
-            return ascending;
-        }
+        public boolean isAscending() { return ascending; }
 
-        @Override
-        public String toString() {
-            return columnName + (ascending ? " ASC" : " DESC");
+        public boolean isNullsFirst() { return nullsFirst; }
+
+        public OrderByItem clone() {
+            return new OrderByItem(columnName, ascending, nullsFirst);
         }
     }
 }

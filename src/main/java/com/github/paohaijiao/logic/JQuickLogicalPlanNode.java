@@ -1,20 +1,12 @@
 package com.github.paohaijiao.logic;
-
-import com.github.paohaijiao.context.JQuickExecutionContext;
-import com.github.paohaijiao.statement.JQuickDataSet;
-
 import java.util.List;
-
+/**
+ * 逻辑计划节点接口 - 纯描述性，不包含执行逻辑
+ */
 public interface JQuickLogicalPlanNode {
-    /**
-     * 执行逻辑计划节点
-     * @param context 执行上下文
-     * @return 执行结果数据集
-     */
-    JQuickDataSet execute(JQuickExecutionContext context);
 
     /**
-     * 获取节点类型名称
+     * 获取节点类型
      */
     String getNodeType();
 
@@ -25,17 +17,16 @@ public interface JQuickLogicalPlanNode {
 
     /**
      * 接受访问者
-     * @param visitor 访问者
      */
     void accept(JQuickLogicalPlanVisitor visitor);
 
     /**
-     * 获取节点的输出列名
+     * 获取输出列名
      */
     List<String> getOutputColumns();
 
     /**
-     * 克隆节点（用于优化器）
+     * 克隆节点
      */
     JQuickLogicalPlanNode clone();
 }

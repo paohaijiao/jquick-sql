@@ -17,7 +17,7 @@ package com.github.paohaijiao.fragment;
 
 
 import com.github.paohaijiao.exchange.ExchangeNode;
-import com.github.paohaijiao.physical.node.JQuickPhysicalPlanNode;
+import com.github.paohaijiao.physical.JQuickPhysicalPlanNode;
 
 import java.util.ArrayList;
 import java.util.List;

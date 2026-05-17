@@ -15,17 +15,14 @@
  */
 package com.github.paohaijiao.logic.domain;
 
-
-import com.github.paohaijiao.context.JQuickExecutionContext;
 import com.github.paohaijiao.logic.JQuickLogicalPlanNode;
 import com.github.paohaijiao.logic.JQuickLogicalPlanVisitor;
-import com.github.paohaijiao.statement.JQuickDataSet;
 
 import java.util.Collections;
 import java.util.List;
 
 /**
- * 限制节点 - LIMIT 子句
+ * 限制节点 - 描述 LIMIT 子句
  */
 public class JQuickLimitNode implements JQuickLogicalPlanNode {
 
@@ -43,16 +40,6 @@ public class JQuickLimitNode implements JQuickLogicalPlanNode {
         this.limit = limit;
         this.offset = offset;
         this.child = child;
-    }
-
-    @Override
-    public JQuickDataSet execute(JQuickExecutionContext context) {
-        JQuickDataSet data = child.execute(context);
-
-        if (offset > 0) {
-            data = data.skip(offset);
-        }
-        return data.limit(limit);
     }
 
     @Override
@@ -80,15 +67,9 @@ public class JQuickLimitNode implements JQuickLogicalPlanNode {
         return new JQuickLimitNode(limit, offset, child.clone());
     }
 
-    public int getLimit() {
-        return limit;
-    }
+    public int getLimit() { return limit; }
 
-    public int getOffset() {
-        return offset;
-    }
+    public int getOffset() { return offset; }
 
-    public JQuickLogicalPlanNode getChild() {
-        return child;
-    }
+    public JQuickLogicalPlanNode getChild() { return child; }
 }

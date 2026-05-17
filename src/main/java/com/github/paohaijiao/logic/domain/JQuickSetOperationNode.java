@@ -15,142 +15,30 @@
  */
 package com.github.paohaijiao.logic.domain;
 
-import com.github.paohaijiao.context.JQuickExecutionContext;
+
 import com.github.paohaijiao.enums.JQuickSQLOperationType;
 import com.github.paohaijiao.logic.JQuickLogicalPlanNode;
 import com.github.paohaijiao.logic.JQuickLogicalPlanVisitor;
-import com.github.paohaijiao.statement.JQuickDataSet;
-import com.github.paohaijiao.statement.JQuickRow;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
 
 /**
- * 集合操作节点 - UNION, INTERSECT, EXCEPT
+ * 集合操作节点 - 描述 UNION, INTERSECT, EXCEPT
  */
 public class JQuickSetOperationNode implements JQuickLogicalPlanNode {
 
-    private final JQuickLogicalPlanNode left;
-    private final JQuickLogicalPlanNode right;
+
     private final JQuickSQLOperationType operationType;
-    public JQuickSetOperationNode(JQuickLogicalPlanNode left, JQuickLogicalPlanNode right, JQuickSQLOperationType operationType) {
+
+    private final JQuickLogicalPlanNode left;
+
+    private final JQuickLogicalPlanNode right;
+
+    public JQuickSetOperationNode(JQuickSQLOperationType operationType, JQuickLogicalPlanNode left, JQuickLogicalPlanNode right) {
+        this.operationType = operationType;
         this.left = left;
         this.right = right;
-        this.operationType = operationType;
-    }
-
-    @Override
-    public JQuickDataSet execute(JQuickExecutionContext context) {
-        JQuickDataSet leftData = left.execute(context);
-        JQuickDataSet rightData = right.execute(context);
-        List<JQuickRow> resultRows;
-        switch (operationType) {
-            case UNION:
-                resultRows = executeUnion(leftData, rightData, true);
-                break;
-            case UNION_ALL:
-                resultRows = executeUnion(leftData, rightData, false);
-                break;
-            case INTERSECT:
-                resultRows = executeIntersect(leftData, rightData, true);
-                break;
-            case INTERSECT_ALL:
-                resultRows = executeIntersect(leftData, rightData, false);
-                break;
-            case EXCEPT:
-                resultRows = executeExcept(leftData, rightData, true);
-                break;
-            case EXCEPT_ALL:
-                resultRows = executeExcept(leftData, rightData, false);
-                break;
-            default:
-                throw new RuntimeException("Unsupported operation: " + operationType);
-        }
-
-        // 使用左表的列元数据（假设两表结构相同）
-        return new JQuickDataSet(leftData.getColumns(), resultRows);
-    }
-
-    private List<JQuickRow> executeUnion(JQuickDataSet left, JQuickDataSet right, boolean distinct) {
-        List<JQuickRow> result = new ArrayList<>();
-        result.addAll(left.getRows());
-        result.addAll(right.getRows());
-
-        if (distinct) {
-            Set<JQuickRow> set = new LinkedHashSet<>(result);
-            return new ArrayList<>(set);
-        }
-
-        return result;
-    }
-
-    private List<JQuickRow> executeIntersect(JQuickDataSet left, JQuickDataSet right, boolean distinct) {
-        if (distinct) {
-            Set<JQuickRow> rightSet = new HashSet<>(right.getRows());
-            List<JQuickRow> result = new ArrayList<>();
-            for (JQuickRow row : left.getRows()) {
-                if (rightSet.contains(row)) {
-                    result.add(row);
-                }
-            }
-            return result;
-        } else {
-            // INTERSECT ALL - 保留重复次数
-            Map<JQuickRow, Integer> rightCounts = new HashMap<>();
-            for (JQuickRow row : right.getRows()) {
-                rightCounts.merge(row, 1, Integer::sum);
-            }
-
-            List<JQuickRow> result = new ArrayList<>();
-            Map<JQuickRow, Integer> leftCounts = new HashMap<>();
-            for (JQuickRow row : left.getRows()) {
-                leftCounts.merge(row, 1, Integer::sum);
-            }
-
-            for (Map.Entry<JQuickRow, Integer> entry : leftCounts.entrySet()) {
-                Integer rightCount = rightCounts.get(entry.getKey());
-                if (rightCount != null) {
-                    int minCount = Math.min(entry.getValue(), rightCount);
-                    for (int i = 0; i < minCount; i++) {
-                        result.add(entry.getKey());
-                    }
-                }
-            }
-            return result;
-        }
-    }
-
-    private List<JQuickRow> executeExcept(JQuickDataSet left, JQuickDataSet right, boolean distinct) {
-        if (distinct) {
-            Set<JQuickRow> rightSet = new HashSet<>(right.getRows());
-            List<JQuickRow> result = new ArrayList<>();
-            for (JQuickRow row : left.getRows()) {
-                if (!rightSet.contains(row)) {
-                    result.add(row);
-                }
-            }
-            return result;
-        } else {
-            // EXCEPT ALL - 减去出现的次数
-            Map<JQuickRow, Integer> rightCounts = new HashMap<>();
-            for (JQuickRow row : right.getRows()) {
-                rightCounts.merge(row, 1, Integer::sum);
-            }
-
-            List<JQuickRow> result = new ArrayList<>();
-            Map<JQuickRow, Integer> leftCounts = new HashMap<>();
-            for (JQuickRow row : left.getRows()) {
-                leftCounts.merge(row, 1, Integer::sum);
-            }
-
-            for (Map.Entry<JQuickRow, Integer> entry : leftCounts.entrySet()) {
-                Integer rightCount = rightCounts.getOrDefault(entry.getKey(), 0);
-                int remaining = entry.getValue() - rightCount;
-                for (int i = 0; i < remaining; i++) {
-                    result.add(entry.getKey());
-                }
-            }
-            return result;
-        }
     }
 
     @Override
@@ -175,20 +63,12 @@ public class JQuickSetOperationNode implements JQuickLogicalPlanNode {
 
     @Override
     public JQuickLogicalPlanNode clone() {
-        return new JQuickSetOperationNode(left.clone(), right.clone(), operationType);
+        return new JQuickSetOperationNode(operationType, left.clone(), right.clone());
     }
 
-    public JQuickLogicalPlanNode getLeft() {
-        return left;
-    }
+    public JQuickSQLOperationType getOperationType() { return operationType; }
 
-    public JQuickLogicalPlanNode getRight() {
-        return right;
-    }
+    public JQuickLogicalPlanNode getLeft() { return left; }
 
-    public JQuickSQLOperationType getOperationType() {
-        return operationType;
-    }
-
-
+    public JQuickLogicalPlanNode getRight() { return right; }
 }

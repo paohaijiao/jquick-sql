@@ -15,26 +15,31 @@
  */
 package com.github.paohaijiao.logic.domain;
 
-import com.github.paohaijiao.datasource.JQuickDataSourceManager;
-import com.github.paohaijiao.context.JQuickExecutionContext;
+/**
+ * packageName com.github.paohaijiao.logic.domain
+ *
+ * @author Martin
+ * @version 1.0.0
+ * @since 2026/5/17
+ */
 import com.github.paohaijiao.expression.JQuickExpression;
 import com.github.paohaijiao.logic.JQuickLogicalPlanNode;
 import com.github.paohaijiao.logic.JQuickLogicalPlanVisitor;
-import com.github.paohaijiao.statement.JQuickColumnMeta;
-import com.github.paohaijiao.statement.JQuickDataSet;
-import com.github.paohaijiao.statement.JQuickRow;
 
 import java.util.*;
 
 /**
- * 表扫描节点 - 从数据源读取表数据
+ * 表扫描节点 - 描述从数据源读取表数据
  */
 public class JQuickTableScanNode implements JQuickLogicalPlanNode {
 
     private final String tableName;
+
     private final String alias;
+
     private final Set<String> requiredColumns;
-    private final JQuickExpression filterPredicate;  // 下推的过滤条件
+
+    private final JQuickExpression filterPredicate;
 
     public JQuickTableScanNode(String tableName) {
         this(tableName, null, null, null);
@@ -53,68 +58,6 @@ public class JQuickTableScanNode implements JQuickLogicalPlanNode {
         this.alias = alias;
         this.requiredColumns = requiredColumns != null ? new HashSet<>(requiredColumns) : null;
         this.filterPredicate = filterPredicate;
-    }
-
-    @Override
-    public JQuickDataSet execute(JQuickExecutionContext context) {
-        // 检查是否是CTE引用
-        if (context.hasCTE(tableName)) {
-            JQuickDataSet cteData = context.getCTE(tableName);
-            if (alias != null && !alias.equals(tableName)) {
-                cteData = renameColumns(cteData, alias);
-            }
-            return applyFilterAndProjection(cteData);
-        }
-
-        // 从数据源获取表数据
-        JQuickDataSet data = JQuickDataSourceManager.getTable(tableName);
-
-        // 应用下推的过滤条件
-        data = applyFilterAndProjection(data);
-
-        // 如果有别名，重命名列
-        if (alias != null && !alias.equals(tableName)) {
-            data = renameColumns(data, alias);
-        }
-
-        return data;
-    }
-
-    private JQuickDataSet applyFilterAndProjection(JQuickDataSet data) {
-        // 应用下推的过滤条件
-        if (filterPredicate != null) {
-            data = data.filter(row -> {
-                Object result = filterPredicate.evaluate(row);
-                return result instanceof Boolean && (Boolean) result;
-            });
-        }
-
-        // 应用列裁剪
-        if (requiredColumns != null && !requiredColumns.isEmpty()) {
-            data = data.select(requiredColumns.toArray(new String[0]));
-        }
-
-        return data;
-    }
-
-    private JQuickDataSet renameColumns(JQuickDataSet data, String prefix) {
-        JQuickDataSet.Builder builder = JQuickDataSet.builder();
-
-        for (JQuickColumnMeta col : data.getColumns()) {
-            String newName = prefix + "." + col.getName();
-            builder.addColumn(newName, col.getType(), col.getSource());
-        }
-
-        for (JQuickRow row : data.getRows()) {
-            JQuickRow newRow = new JQuickRow();
-            for (JQuickColumnMeta col : data.getColumns()) {
-                String newName = prefix + "." + col.getName();
-                newRow.put(newName, row.get(col.getName()));
-            }
-            builder.addRow(newRow);
-        }
-
-        return builder.build();
     }
 
     @Override
@@ -152,21 +95,13 @@ public class JQuickTableScanNode implements JQuickLogicalPlanNode {
         return new JQuickTableScanNode(tableName, alias, requiredColumns, filterPredicate);
     }
 
-    public String getTableName() {
-        return tableName;
-    }
+    public String getTableName() { return tableName; }
 
-    public String getAlias() {
-        return alias;
-    }
+    public String getAlias() { return alias; }
 
-    public Set<String> getRequiredColumns() {
-        return requiredColumns;
-    }
+    public Set<String> getRequiredColumns() { return requiredColumns; }
 
-    public JQuickExpression getFilterPredicate() {
-        return filterPredicate;
-    }
+    public JQuickExpression getFilterPredicate() { return filterPredicate; }
 
     public JQuickTableScanNode withFilterPredicate(JQuickExpression predicate) {
         return new JQuickTableScanNode(tableName, alias, requiredColumns, predicate);

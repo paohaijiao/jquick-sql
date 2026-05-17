@@ -16,6 +16,7 @@
 package com.github.paohaijiao.physical.node;
 
 import com.github.paohaijiao.logic.domain.JQuickSortNode;
+import com.github.paohaijiao.physical.JQuickPhysicalPlanNode;
 import com.github.paohaijiao.statement.JQuickDataSet;
 import com.github.paohaijiao.statement.JQuickRow;
 

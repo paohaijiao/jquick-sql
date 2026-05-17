@@ -14,13 +14,15 @@
  * Copyright (c) [2025-2099] Martin (goudingcheng@gmail.com)
  */
 package com.github.paohaijiao.logic.domain;
-
-import com.github.paohaijiao.context.JQuickExecutionContext;
+/**
+ * packageName com.github.paohaijiao.logic.domain
+ * @author Martin
+ * @version 1.0.0
+ * @since 2026/5/17
+ */
 import com.github.paohaijiao.logic.JQuickLogicalPlanNode;
 import com.github.paohaijiao.logic.JQuickLogicalPlanVisitor;
-import com.github.paohaijiao.statement.JQuickDataSet;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -29,10 +31,9 @@ import java.util.List;
  */
 public class JQuickEmptyNode implements JQuickLogicalPlanNode {
 
-    @Override
-    public JQuickDataSet execute(JQuickExecutionContext context) {
-        return new JQuickDataSet(new ArrayList<>(), new ArrayList<>());
-    }
+    public static final JQuickEmptyNode INSTANCE = new JQuickEmptyNode();
+
+    private JQuickEmptyNode() {}
 
     @Override
     public String getNodeType() {
@@ -56,6 +57,6 @@ public class JQuickEmptyNode implements JQuickLogicalPlanNode {
 
     @Override
     public JQuickLogicalPlanNode clone() {
-        return new JQuickEmptyNode();
+        return INSTANCE;
     }
 }

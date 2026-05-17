@@ -15,6 +15,7 @@
  */
 package com.github.paohaijiao.expression.domain;
 
+import com.github.paohaijiao.ast.JQuickConstantNode;
 import com.github.paohaijiao.expression.JQuickExpression;
 import com.github.paohaijiao.statement.JQuickRow;
 
@@ -37,6 +38,30 @@ public class JQuickLiteralExpression implements JQuickExpression {
     public JQuickLiteralExpression(Object value, Class<?> type) {
         this.value = value;
         this.type = type;
+    }
+    public static JQuickLiteralExpression fromConstant(JQuickConstantNode node) {
+        Object value = node.getValue();
+        Class<?> type = convertConstantType(node.getType());
+        return new JQuickLiteralExpression(value, type);
+    }
+    /**
+     * 转换常量类型为 Java Class
+     */
+    private static Class<?> convertConstantType(JQuickConstantNode.ConstantType constantType) {
+        switch (constantType) {
+            case STRING:
+                return String.class;
+            case DECIMAL:
+                return Double.class;
+            case BOOLEAN:
+                return Boolean.class;
+            case DATE:
+                return java.util.Date.class;
+            case NULL:
+                return Object.class;
+            default:
+                return Object.class;
+        }
     }
 
     @Override

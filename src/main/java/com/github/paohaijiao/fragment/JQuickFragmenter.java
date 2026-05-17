@@ -18,6 +18,7 @@ package com.github.paohaijiao.fragment;
 import com.github.paohaijiao.distributed.JQuickDistributedPlan;
 import com.github.paohaijiao.exchange.ExchangeNode;
 import com.github.paohaijiao.expression.JQuickExpression;
+import com.github.paohaijiao.physical.JQuickPhysicalPlanNode;
 import com.github.paohaijiao.physical.node.*;
 
 import java.util.ArrayList;

@@ -14,25 +14,20 @@
  * Copyright (c) [2025-2099] Martin (goudingcheng@gmail.com)
  */
 package com.github.paohaijiao.logic.domain;
-
-import com.github.paohaijiao.context.JQuickExecutionContext;
 import com.github.paohaijiao.expression.JQuickExpression;
 import com.github.paohaijiao.logic.JQuickLogicalPlanNode;
 import com.github.paohaijiao.logic.JQuickLogicalPlanVisitor;
-import com.github.paohaijiao.statement.JQuickDataSet;
-import com.github.paohaijiao.statement.JQuickRow;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * 投影节点 - SELECT 子句
+ * 投影节点 - 描述 SELECT 子句
  */
 public class JQuickProjectNode implements JQuickLogicalPlanNode {
 
     private final List<SelectItem> selectItems;
+
     private final JQuickLogicalPlanNode child;
     private final boolean distinct;
 
@@ -44,51 +39,6 @@ public class JQuickProjectNode implements JQuickLogicalPlanNode {
         this.selectItems = Collections.unmodifiableList(new ArrayList<>(selectItems));
         this.child = child;
         this.distinct = distinct;
-    }
-
-    @Override
-    public JQuickDataSet execute(JQuickExecutionContext context) {
-        JQuickDataSet data = child.execute(context);
-
-        JQuickDataSet.Builder builder = JQuickDataSet.builder();
-
-        // 添加列元数据
-        for (SelectItem item : selectItems) {
-            if (!item.isStar()) {
-                builder.addColumn(item.getAlias(), item.getExpression().getType(), "projection");
-            }
-        }
-
-        // 如果是 SELECT *，直接返回子节点数据
-        if (isSelectStar()) {
-            JQuickDataSet result = data;
-            if (distinct) {
-                result = result.distinct();
-            }
-            return result;
-        }
-
-        // 执行投影
-        for (JQuickRow row : data.getRows()) {
-            JQuickRow newRow = new JQuickRow();
-            for (SelectItem item : selectItems) {
-                Object value = item.getExpression().evaluate(row);
-                newRow.put(item.getAlias(), value);
-            }
-            builder.addRow(newRow);
-        }
-
-        JQuickDataSet result = builder.build();
-
-        if (distinct) {
-            result = result.distinct();
-        }
-
-        return result;
-    }
-
-    private boolean isSelectStar() {
-        return selectItems.size() == 1 && selectItems.get(0).isStar();
     }
 
     @Override
@@ -116,27 +66,27 @@ public class JQuickProjectNode implements JQuickLogicalPlanNode {
 
     @Override
     public JQuickLogicalPlanNode clone() {
-        return new JQuickProjectNode(selectItems, child.clone(), distinct);
+        List<SelectItem> clonedItems = new ArrayList<>();
+        for (SelectItem item : selectItems) {
+            clonedItems.add(item.clone());
+        }
+        return new JQuickProjectNode(clonedItems, child.clone(), distinct);
     }
+    public List<SelectItem> getSelectItems() { return selectItems; }
 
-    public List<SelectItem> getSelectItems() {
-        return selectItems;
-    }
+    public JQuickLogicalPlanNode getChild() { return child; }
 
-    public JQuickLogicalPlanNode getChild() {
-        return child;
-    }
-
-    public boolean isDistinct() {
-        return distinct;
-    }
+    public boolean isDistinct() { return distinct; }
 
     /**
      * 选择项
      */
     public static class SelectItem {
+
         private final JQuickExpression expression;
+
         private final String alias;
+
         private final boolean isStar;
 
         public SelectItem(JQuickExpression expression, String alias) {
@@ -163,22 +113,17 @@ public class JQuickProjectNode implements JQuickLogicalPlanNode {
             return "col_" + Math.abs(sql.hashCode());
         }
 
-        public JQuickExpression getExpression() {
-            return expression;
-        }
+        public JQuickExpression getExpression() { return expression; }
 
-        public String getAlias() {
-            return alias;
-        }
+        public String getAlias() { return alias; }
 
-        public boolean isStar() {
-            return isStar;
-        }
+        public boolean isStar() { return isStar; }
 
-        @Override
-        public String toString() {
-            if (isStar) return "*";
-            return alias != null ? expression.toSql() + " AS " + alias : expression.toSql();
+        public SelectItem clone() {
+            if (isStar) {
+                return star();
+            }
+            return new SelectItem(expression.clone(), alias);
         }
     }
 }

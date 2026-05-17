@@ -15,36 +15,23 @@
  */
 package com.github.paohaijiao.logic.domain;
 
-import com.github.paohaijiao.context.JQuickExecutionContext;
 import com.github.paohaijiao.logic.JQuickLogicalPlanNode;
 import com.github.paohaijiao.logic.JQuickLogicalPlanVisitor;
-import com.github.paohaijiao.statement.JQuickDataSet;
 
 import java.util.*;
 
 /**
- * CTE节点 - WITH 子句
+ * CTE节点 - 描述 WITH 子句
  */
 public class JQuickWithNode implements JQuickLogicalPlanNode {
 
     private final JQuickLogicalPlanNode child;
+
     private final Map<String, JQuickLogicalPlanNode> ctes;
 
     public JQuickWithNode(JQuickLogicalPlanNode child, Map<String, JQuickLogicalPlanNode> ctes) {
         this.child = child;
         this.ctes = Collections.unmodifiableMap(new LinkedHashMap<>(ctes));
-    }
-
-    @Override
-    public JQuickDataSet execute(JQuickExecutionContext context) {
-        // 先执行所有CTE并缓存
-        for (Map.Entry<String, JQuickLogicalPlanNode> entry : ctes.entrySet()) {
-            JQuickDataSet cteData = entry.getValue().execute(context);
-            context.cacheCTE(entry.getKey(), cteData);
-        }
-
-        // 执行主查询
-        return child.execute(context);
     }
 
     @Override
@@ -79,9 +66,7 @@ public class JQuickWithNode implements JQuickLogicalPlanNode {
         return new JQuickWithNode(child.clone(), clonedCtes);
     }
 
-    public JQuickLogicalPlanNode getChild() {
-        return child;
-    }
+    public JQuickLogicalPlanNode getChild() { return child; }
 
     public Map<String, JQuickLogicalPlanNode> getCtes() {
         return ctes;

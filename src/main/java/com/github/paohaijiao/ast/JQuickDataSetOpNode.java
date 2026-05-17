@@ -15,6 +15,8 @@
  */
 package com.github.paohaijiao.ast;
 
+import com.github.paohaijiao.enums.JQuickSQLOperationType;
+
 import java.util.List;
 
 /**
@@ -25,10 +27,12 @@ import java.util.List;
  * | selectClause INTERSECT selectClause
  */
 public class JQuickDataSetOpNode implements JQuickASTNode {
-    private final List<JQuickSelectClauseNode> selectClauses;
-    private final List<SetOperator> operators;
 
-    public JQuickDataSetOpNode(List<JQuickSelectClauseNode> selectClauses, List<SetOperator> operators) {
+    private final List<JQuickSelectClauseNode> selectClauses;
+
+    private final List<JQuickSQLOperationType> operators;
+
+    public JQuickDataSetOpNode(List<JQuickSelectClauseNode> selectClauses, List<JQuickSQLOperationType> operators) {
         this.selectClauses = selectClauses;
         this.operators = operators;
     }
@@ -42,7 +46,7 @@ public class JQuickDataSetOpNode implements JQuickASTNode {
         return selectClauses;
     }
 
-    public List<SetOperator> getOperators() {
+    public List<JQuickSQLOperationType> getOperators() {
         return operators;
     }
 
@@ -50,7 +54,4 @@ public class JQuickDataSetOpNode implements JQuickASTNode {
         return selectClauses.size() == 1;
     }
 
-    public enum SetOperator {
-        UNION, MINUS, INTERSECT
-    }
 }

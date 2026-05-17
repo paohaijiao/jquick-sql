@@ -15,50 +15,26 @@
  */
 package com.github.paohaijiao.logic.domain;
 
-import com.github.paohaijiao.context.JQuickExecutionContext;
 import com.github.paohaijiao.logic.JQuickLogicalPlanNode;
 import com.github.paohaijiao.logic.JQuickLogicalPlanVisitor;
-import com.github.paohaijiao.statement.JQuickDataSet;
-import com.github.paohaijiao.statement.JQuickRow;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
- * 常量值节点 - 用于 VALUES 子句或内联数据
+ * 常量值节点 - 用于 VALUES 子句
  */
 public class JQuickValuesNode implements JQuickLogicalPlanNode {
 
     private final List<List<Object>> rows;
+
     private final List<String> columnNames;
+
     private final List<Class<?>> columnTypes;
 
     public JQuickValuesNode(List<List<Object>> rows, List<String> columnNames, List<Class<?>> columnTypes) {
         this.rows = rows;
         this.columnNames = columnNames;
         this.columnTypes = columnTypes;
-    }
-
-    @Override
-    public JQuickDataSet execute(JQuickExecutionContext context) {
-        JQuickDataSet.Builder builder = JQuickDataSet.builder();
-
-        // 添加列元数据
-        for (int i = 0; i < columnNames.size(); i++) {
-            builder.addColumn(columnNames.get(i), columnTypes.get(i), "values");
-        }
-
-        // 添加行数据
-        for (List<Object> rowValues : rows) {
-            JQuickRow row = new JQuickRow();
-            for (int i = 0; i < columnNames.size() && i < rowValues.size(); i++) {
-                row.put(columnNames.get(i), rowValues.get(i));
-            }
-            builder.addRow(row);
-        }
-
-        return builder.build();
     }
 
     @Override
@@ -85,4 +61,10 @@ public class JQuickValuesNode implements JQuickLogicalPlanNode {
     public JQuickLogicalPlanNode clone() {
         return new JQuickValuesNode(rows, columnNames, columnTypes);
     }
+
+    public List<List<Object>> getRows() { return rows; }
+
+    public List<String> getColumnNames() { return columnNames; }
+
+    public List<Class<?>> getColumnTypes() { return columnTypes; }
 }

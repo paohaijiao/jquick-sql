@@ -15,6 +15,7 @@
  */
 package com.github.paohaijiao.expression.domain;
 
+import com.github.paohaijiao.enums.JQuickUnaryOperator;
 import com.github.paohaijiao.expression.JQuickExpression;
 import com.github.paohaijiao.statement.JQuickRow;
 
@@ -25,29 +26,11 @@ import java.util.List;
  */
 public class JQuickUnaryExpression implements JQuickExpression {
 
-    public enum UnaryOperator {
-        NOT("NOT", false),
-        PLUS("+", false),
-        MINUS("-", false),
-        IS_NULL("IS NULL", false),
-        IS_NOT_NULL("IS NOT NULL", false);
+    private final JQuickUnaryOperator operator;
 
-        private final String symbol;
-        private final boolean isPostfix;
-
-        UnaryOperator(String symbol, boolean isPostfix) {
-            this.symbol = symbol;
-            this.isPostfix = isPostfix;
-        }
-
-        public String getSymbol() { return symbol; }
-        public boolean isPostfix() { return isPostfix; }
-    }
-
-    private final UnaryOperator operator;
     private final JQuickExpression expression;
 
-    public JQuickUnaryExpression(UnaryOperator operator, JQuickExpression expression) {
+    public JQuickUnaryExpression(JQuickUnaryOperator operator, JQuickExpression expression) {
         this.operator = operator;
         this.expression = expression;
     }
@@ -116,6 +99,6 @@ public class JQuickUnaryExpression implements JQuickExpression {
         return new JQuickUnaryExpression(operator, expression.clone());
     }
 
-    public UnaryOperator getOperator() { return operator; }
+    public JQuickUnaryOperator getOperator() { return operator; }
     public JQuickExpression getExpression() { return expression; }
 }

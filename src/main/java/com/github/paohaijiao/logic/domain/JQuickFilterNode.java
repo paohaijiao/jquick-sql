@@ -14,36 +14,32 @@
  * Copyright (c) [2025-2099] Martin (goudingcheng@gmail.com)
  */
 package com.github.paohaijiao.logic.domain;
+/**
+ * packageName com.github.paohaijiao.logic.domain
+ * @author Martin
+ * @version 1.0.0
+ * @since 2026/5/17
+ */
 
-import com.github.paohaijiao.context.JQuickExecutionContext;
 import com.github.paohaijiao.expression.JQuickExpression;
 import com.github.paohaijiao.logic.JQuickLogicalPlanNode;
 import com.github.paohaijiao.logic.JQuickLogicalPlanVisitor;
-import com.github.paohaijiao.statement.JQuickDataSet;
 
 import java.util.Collections;
 import java.util.List;
 
 /**
- * 过滤节点 - WHERE 子句
+ * 过滤节点 - 描述 WHERE 子句
  */
 public class JQuickFilterNode implements JQuickLogicalPlanNode {
 
     private final JQuickExpression predicate;
+
     private final JQuickLogicalPlanNode child;
 
     public JQuickFilterNode(JQuickExpression predicate, JQuickLogicalPlanNode child) {
         this.predicate = predicate;
         this.child = child;
-    }
-
-    @Override
-    public JQuickDataSet execute(JQuickExecutionContext context) {
-        JQuickDataSet data = child.execute(context);
-        return data.filter(row -> {
-            Object result = predicate.evaluate(row);
-            return result instanceof Boolean && (Boolean) result;
-        });
     }
 
     @Override
@@ -68,14 +64,10 @@ public class JQuickFilterNode implements JQuickLogicalPlanNode {
 
     @Override
     public JQuickLogicalPlanNode clone() {
-        return new JQuickFilterNode(predicate, child.clone());
+        return new JQuickFilterNode(predicate.clone(), child.clone());
     }
 
-    public JQuickExpression getPredicate() {
-        return predicate;
-    }
+    public JQuickExpression getPredicate() { return predicate; }
 
-    public JQuickLogicalPlanNode getChild() {
-        return child;
-    }
+    public JQuickLogicalPlanNode getChild() { return child; }
 }

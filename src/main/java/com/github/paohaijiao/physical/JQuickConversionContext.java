@@ -15,8 +15,6 @@
  */
 package com.github.paohaijiao.physical;
 
-import com.github.paohaijiao.physical.node.JQuickPhysicalPlanNode;
-
 import java.util.HashMap;
 import java.util.Map;
 
