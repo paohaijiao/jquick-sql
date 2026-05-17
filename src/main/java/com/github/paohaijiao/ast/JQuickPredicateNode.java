@@ -222,33 +222,7 @@ public class JQuickPredicateNode implements JQuickASTNode {
         this.existsExpression = null;
     }
 
-    // LIKE谓词构造器
-    public JQuickPredicateNode(JQuickPredicateNode predicate, boolean not, JQuickPredicateNode pattern) {
-        this.type = PredicateType.LIKE;
-        this.expressionAtom = null;
-        this.isNullPredicate = null;
-        this.isNotNull = false;
-        this.left = null;
-        this.right = null;
-        this.comparisonOperator = null;
-        this.betweenPredicate = null;
-        this.betweenNot = false;
-        this.betweenLow = null;
-        this.betweenHigh = null;
-        this.inPredicate = null;
-        this.inNot = false;
-        this.inSubquery = null;
-        this.inExpressions = null;
-        this.likePredicate = predicate;
-        this.likeNot = not;
-        this.likePattern = pattern;
-        this.regexpPredicate = null;
-        this.regexpNot = false;
-        this.regexpPattern = null;
-        this.existsExpression = null;
-    }
 
-    // REGEXP谓词构造器
     public JQuickPredicateNode(JQuickPredicateNode predicate, boolean not, JQuickPredicateNode pattern) {
         this.type = PredicateType.REGEXP;
         this.expressionAtom = null;

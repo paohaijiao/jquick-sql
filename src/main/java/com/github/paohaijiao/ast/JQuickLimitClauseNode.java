@@ -23,18 +23,18 @@ import ognl.ExpressionNode;
  * | LIMIT limitWithOffset
  */
 public class JQuickLimitClauseNode implements JQuickASTNode {
-    private final ExpressionNode limit;
-    private final ExpressionNode offset;
+    private final JQuickExpressionNode limit;
+    private final JQuickExpressionNode offset;
     private final boolean hasOffset;
 
-    public JQuickLimitClauseNode(ExpressionNode limit) {
+    public JQuickLimitClauseNode(JQuickExpressionNode limit) {
         this.limit = limit;
         this.offset = null;
         this.hasOffset = false;
     }
 
     // limitWithOffset构造器
-    public JQuickLimitClauseNode(ExpressionNode offset, ExpressionNode limit) {
+    public JQuickLimitClauseNode(JQuickExpressionNode offset, JQuickExpressionNode limit) {
         this.limit = limit;
         this.offset = offset;
         this.hasOffset = true;
@@ -45,11 +45,11 @@ public class JQuickLimitClauseNode implements JQuickASTNode {
         return "LimitClause";
     }
 
-    public ExpressionNode getLimit() {
+    public JQuickExpressionNode getLimit() {
         return limit;
     }
 
-    public ExpressionNode getOffset() {
+    public JQuickExpressionNode getOffset() {
         return offset;
     }
 

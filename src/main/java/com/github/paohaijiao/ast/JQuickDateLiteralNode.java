@@ -15,26 +15,27 @@
  */
 package com.github.paohaijiao.ast;
 
-import java.util.List;
-
 /**
- * orderByClause : ORDER BY orderByExpression (',' orderByExpression)*
+ * packageName com.github.paohaijiao.ast
+ *
+ * @author Martin
+ * @version 1.0.0
+ * @since 2026/5/17
  */
-public class JQuickOrderByClauseNode implements JQuickASTNode {
+public class JQuickDateLiteralNode implements JQuickASTNode {
+    private final String dateString;
+    private final String format;
 
-    private final List<JQuickOrderByExpressionNode> orderByExpressions;
-
-    public JQuickOrderByClauseNode(List<JQuickOrderByExpressionNode> orderByExpressions) {
-        this.orderByExpressions = orderByExpressions;
+    public JQuickDateLiteralNode(String dateString, String format) {
+        this.dateString = dateString;
+        this.format = format;
     }
 
     @Override
     public String getNodeType() {
-        return "OrderByClause";
+        return "DateLiteral";
     }
 
-    public List<JQuickOrderByExpressionNode> getOrderByExpressions() {
-        return orderByExpressions;
-    }
+    public String getDateString() { return dateString; }
+    public String getFormat() { return format; }
 }
-

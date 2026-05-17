@@ -15,12 +15,17 @@
  */
 package com.github.paohaijiao.ast;
 
+import java.util.List;
+
 /**
  * functionCall : uid '(' arg? ')'
  */
 public class JQuickFunctionCallNode implements JQuickASTNode {
+
     private final String functionName;
+
     private final List<JQuickFunctionArgNode> arguments;
+
     private final boolean isStarArg;
 
     public JQuickFunctionCallNode(String functionName, List<JQuickFunctionArgNode> arguments, boolean isStarArg) {

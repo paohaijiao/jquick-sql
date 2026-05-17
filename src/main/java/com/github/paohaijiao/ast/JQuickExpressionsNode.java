@@ -15,10 +15,13 @@
  */
 package com.github.paohaijiao.ast;
 
+import java.util.List;
+
 /**
  * expressions : expression (',' expression)*
  */
 public class JQuickExpressionsNode implements JQuickASTNode {
+
     private final List<JQuickExpressionNode> expressions;
 
     public JQuickExpressionsNode(List<JQuickExpressionNode> expressions) {
