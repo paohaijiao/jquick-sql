@@ -17,44 +17,78 @@ package com.github.paohaijiao.exchange;
 
 import com.github.paohaijiao.expression.JQuickExpression;
 
+import java.util.List;
+import java.util.UUID;
+
 /**
- * packageName com.github.paohaijiao.exchange
- *
- * @author Martin
- * @version 1.0.0
- * @since 2026/5/17
+ * 数据交换节点 - 连接不同 Fragment 的数据通道
  */
 public class ExchangeNode {
+
+    private final String exchangeId;
+
     private final ExchangeType type;
+
     private final PartitionStrategy partitionStrategy;
+
     private final JQuickExpression partitionKey;
+
+    private final List<JQuickExpression> partitionKeys;
+
     private final int parallelism;
 
     public enum ExchangeType {
-        SHUFFLE,      // 哈希重分区
-        BROADCAST,    // 广播
-        FORWARD,      // 转发（保持分区）
-        GATHER        // 收集到单节点
+        SHUFFLE,        // 全量数据重分布
+        BROADCAST,      // 广播到所有节点
+        REPARTITION,    // 重新分区
+        GATHER,         // 汇总到单个节点
+        RECEIVE,        // 接收数据（输入侧）
+        FORWARD         // 直接转发
     }
 
     public enum PartitionStrategy {
-        HASH,         // 哈希分区
-        RANGE,        // 范围分区
-        ROUND_ROBIN,  // 轮询
-        REPLICATE     // 复制（广播）
+        HASH,           // 哈希分区
+        RANGE,          // 范围分区
+        ROUND_ROBIN,    // 轮询分区
+        BUCKET,         // 桶分区
+        REPLICATE       // 复制（广播）
     }
 
-    public ExchangeNode(ExchangeType type, PartitionStrategy partitionStrategy,
-                        JQuickExpression partitionKey, int parallelism) {
+    public ExchangeNode(String exchangeId, ExchangeType type, PartitionStrategy partitionStrategy, JQuickExpression partitionKey, int parallelism) {
+        this(exchangeId, type, partitionStrategy, partitionKey, null, parallelism);
+    }
+
+    public ExchangeNode(String exchangeId, ExchangeType type, PartitionStrategy partitionStrategy, List<JQuickExpression> partitionKeys, int parallelism) {
+        this(exchangeId, type, partitionStrategy, null, partitionKeys, parallelism);
+    }
+
+    private ExchangeNode(String exchangeId, ExchangeType type, PartitionStrategy partitionStrategy, JQuickExpression partitionKey, List<JQuickExpression> partitionKeys, int parallelism) {
+        this.exchangeId = exchangeId != null ? exchangeId : UUID.randomUUID().toString();
         this.type = type;
         this.partitionStrategy = partitionStrategy;
         this.partitionKey = partitionKey;
+        this.partitionKeys = partitionKeys;
         this.parallelism = parallelism;
     }
 
-    // Getters
+    public String getExchangeId() { return exchangeId; }
+
     public ExchangeType getType() { return type; }
+
     public PartitionStrategy getPartitionStrategy() { return partitionStrategy; }
+
     public JQuickExpression getPartitionKey() { return partitionKey; }
+
+    public List<JQuickExpression> getPartitionKeys() { return partitionKeys; }
+
     public int getParallelism() { return parallelism; }
+
+    public boolean isInput() { return type == ExchangeType.RECEIVE; }
+
+    public boolean isOutput() { return type != ExchangeType.RECEIVE; }
+
+    @Override
+    public String toString() {
+        return String.format("ExchangeNode{id=%s, type=%s, strategy=%s, parallelism=%d}", exchangeId, type, partitionStrategy, parallelism);
+    }
 }

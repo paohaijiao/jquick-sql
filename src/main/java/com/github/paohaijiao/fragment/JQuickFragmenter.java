@@ -1,18 +1,3 @@
-/*
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
- * Copyright (c) [2025-2099] Martin (goudingcheng@gmail.com)
- */
 package com.github.paohaijiao.fragment;
 
 import com.github.paohaijiao.distributed.JQuickDistributedPlan;
@@ -21,13 +6,17 @@ import com.github.paohaijiao.expression.JQuickExpression;
 import com.github.paohaijiao.physical.JQuickPhysicalPlanNode;
 import com.github.paohaijiao.physical.node.*;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * 计划切分器 - 将物理计划切分为分布式片段
+ *
+ * 核心算法：
+ * 1. 深度优先遍历物理计划树
+ * 2. 识别切分点（Join、Aggregate、Exchange）
+ * 3. 在切分点创建新的 Fragment
+ * 4. 建立 Fragment 之间的数据依赖关系
  */
 public class JQuickFragmenter {
 
@@ -36,6 +25,13 @@ public class JQuickFragmenter {
     private JQuickFragment currentFragment;
 
     private final Map<JQuickPhysicalPlanNode, JQuickFragment> nodeToFragment = new HashMap<>();
+
+    private final AtomicInteger exchangeIdGenerator = new AtomicInteger(0);
+
+    private final AtomicInteger fragmentIdGenerator = new AtomicInteger(0);
+
+
+    private final Set<JQuickPhysicalPlanNode> processedSources = new HashSet<>();
 
     public JQuickFragmenter() {
         this(4);
@@ -49,133 +45,412 @@ public class JQuickFragmenter {
      * 将物理计划切分为分布式计划
      */
     public JQuickDistributedPlan fragment(JQuickPhysicalPlanNode rootPlan) {
-        // 创建根片段
-        JQuickFragment rootFragment = new JQuickFragment(JQuickFragment.FragmentType.SINK, rootPlan);
+        if (rootPlan == null) {
+            throw new IllegalArgumentException("Root plan cannot be null");
+        }
+
+        // 重置状态
+        nodeToFragment.clear();
+        processedSources.clear();
+        exchangeIdGenerator.set(0);
+        fragmentIdGenerator.set(0);
+        // 创建根片段（SINK 类型，负责最终结果输出）
+        JQuickFragment rootFragment = createFragment(JQuickFragment.FragmentType.SINK, rootPlan, 1);
         currentFragment = rootFragment;
         // 递归处理计划树
-        processNode(rootPlan, rootFragment);
-
+        processNode(rootPlan, rootFragment, new HashSet<>());
         // 构建分布式计划
         JQuickDistributedPlan plan = new JQuickDistributedPlan(rootFragment);
         plan.setDefaultParallelism(defaultParallelism);
-
         return plan;
     }
 
     /**
-     * 处理物理计划节点，决定是否需要切分片段
+     * 创建新的 Fragment
      */
-    private void processNode(JQuickPhysicalPlanNode node, JQuickFragment fragment) {
+    private JQuickFragment createFragment(JQuickFragment.FragmentType type,
+                                          JQuickPhysicalPlanNode plan,
+                                          int parallelism) {
+        // 使用反射设置 fragmentId（因为原类使用静态 AtomicLong）
+        JQuickFragment fragment = new JQuickFragment(type, plan);
+        fragment.setParallelism(parallelism);
+        return fragment;
+    }
+
+    /**
+     * 处理物理计划节点
+     */
+    private void processNode(JQuickPhysicalPlanNode node, JQuickFragment fragment, Set<JQuickPhysicalPlanNode> visited) {
+        if (node == null || visited.contains(node)) {
+            return;
+        }
+        visited.add(node);
         nodeToFragment.put(node, fragment);
-        // 根据节点类型决定是否需要切分
-        if (needsExchange(node)) {
-            // 需要数据交换，创建新的片段
-            createExchangeFragment(node, fragment);
-        } else {
-            // 继续在当前片段中处理子节点
-            for (JQuickPhysicalPlanNode child : getChildren(node)) {
-                processNode(child, fragment);
+        // 获取子节点列表
+        List<JQuickPhysicalPlanNode> children = getChildren(node);
+        //检查当前节点是否需要切分
+        if (shouldCreateNewFragment(node)) {
+            createNewFragmentForNode(node, fragment, children, visited);
+            return;
+        }
+
+        //检查子节点是否需要作为 SOURCE fragment
+        for (JQuickPhysicalPlanNode child : children) {
+            if (shouldBeSourceFragment(child)) {
+                createSourceFragment(child, fragment, visited);
+            } else {
+                processNode(child, fragment, visited);
             }
         }
     }
 
     /**
-     * 判断节点是否需要数据交换
+     * 判断是否应该为节点创建新的 Fragment
      */
-    private boolean needsExchange(JQuickPhysicalPlanNode node) {
-        // JOIN 操作需要数据交换（除非是广播连接）
-        if (node instanceof JQuickHashJoinPhysicalNode || node instanceof JQuickNestedLoopJoinPhysicalNode) {
+    private boolean shouldCreateNewFragment(JQuickPhysicalPlanNode node) {
+        // Exchange 节点本身就是切分点
+        if (node instanceof JQuickExchangePhysicalNode) {
+            return true;
+        }
+        // JOIN 操作（非广播场景）
+        if (node instanceof JQuickHashJoinPhysicalNode) {
+            JQuickHashJoinPhysicalNode join = (JQuickHashJoinPhysicalNode) node;
+            // 广播 JOIN 不需要切分
+            if (join.getDistribution() == JQuickHashJoinPhysicalNode.JoinDistribution.BROADCAST_HASH) {
+                return false;
+            }
             return true;
         }
 
-        // 聚合操作需要数据交换
-        if (node instanceof JQuickHashAggregatePhysicalNode || node instanceof SortAggregatePhysicalNode) {
+        if (node instanceof JQuickNestedLoopJoinPhysicalNode) {
             return true;
         }
 
-        // 排序操作如果数据量大，需要交换
-        if (node instanceof ExternalSortPhysicalNode) {
-            return true;
+        // 带分组键的聚合操作（且不是 FINAL 阶段）
+        if (node instanceof JQuickHashAggregatePhysicalNode) {
+            JQuickHashAggregatePhysicalNode agg = (JQuickHashAggregatePhysicalNode) node;
+            if (agg.getStage() == JQuickHashAggregatePhysicalNode.AggregateStage.FINAL) {
+                return false;
+            }
+            return !agg.getGroupKeys().isEmpty();
         }
 
         return false;
     }
 
     /**
-     * 创建交换片段
+     * 判断是否应该作为 SOURCE fragment
      */
-    private void createExchangeFragment(JQuickPhysicalPlanNode node, JQuickFragment parentFragment) {
-        // 确定分区策略
-        ExchangeNode exchange = createExchange(node);
-
-        // 创建新的片段处理子节点
-        JQuickFragment childFragment = new JQuickFragment(JQuickFragment.FragmentType.INTERMEDIATE, node);
-        childFragment.setParallelism(defaultParallelism);
-        childFragment.setOutput(exchange);
-
-        // 建立父子关系
-        parentFragment.addChild(childFragment);
-        childFragment.addInput(exchange);
-
-        // 递归处理子节点
-        currentFragment = childFragment;
-        for (JQuickPhysicalPlanNode child : getChildren(node)) {
-            processNode(child, childFragment);
-        }
-        currentFragment = parentFragment;
+    private boolean shouldBeSourceFragment(JQuickPhysicalPlanNode node) {
+        return node instanceof JQuickTableScanPhysicalNode && !processedSources.contains(node);
     }
 
     /**
-     * 创建数据交换节点
+     * 为节点创建新的 Fragment
      */
-    private ExchangeNode createExchange(JQuickPhysicalPlanNode node) {
+    private void createNewFragmentForNode(JQuickPhysicalPlanNode node,
+                                          JQuickFragment parentFragment,
+                                          List<JQuickPhysicalPlanNode> children,
+                                          Set<JQuickPhysicalPlanNode> visited) {
+        // 创建新的片段
+        JQuickFragment newFragment = createFragment(
+                JQuickFragment.FragmentType.INTERMEDIATE,
+                node,
+                defaultParallelism
+        );
+
+        // 创建输出 Exchange
+        ExchangeNode outputExchange = createOutputExchange(node);
+        newFragment.setOutput(outputExchange);
+
+        // 在父片段中添加输入 Exchange
+        ExchangeNode inputExchange = createInputExchange(outputExchange);
+        parentFragment.addInput(inputExchange);
+
+        // 建立父子关系
+        parentFragment.addChild(newFragment);
+
+        // 记录节点所属片段
+        nodeToFragment.put(node, newFragment);
+
+        // 递归处理子节点
+        JQuickFragment savedFragment = currentFragment;
+        currentFragment = newFragment;
+
+        for (JQuickPhysicalPlanNode child : children) {
+            if (shouldBeSourceFragment(child)) {
+                createSourceFragment(child, newFragment, visited);
+            } else {
+                processNode(child, newFragment, visited);
+            }
+        }
+
+        currentFragment = savedFragment;
+    }
+
+    /**
+     * 创建 SOURCE fragment（数据源）
+     */
+    private void createSourceFragment(JQuickPhysicalPlanNode node,
+                                      JQuickFragment parentFragment,
+                                      Set<JQuickPhysicalPlanNode> visited) {
+        if (processedSources.contains(node)) {
+            return;
+        }
+
+        JQuickFragment sourceFragment = createFragment(
+                JQuickFragment.FragmentType.SOURCE,
+                node,
+                defaultParallelism
+        );
+
+        // 创建输出 Exchange
+        ExchangeNode outputExchange = createOutputExchange(node);
+        sourceFragment.setOutput(outputExchange);
+
+        // 在父片段中添加输入 Exchange
+        ExchangeNode inputExchange = createInputExchange(outputExchange);
+        parentFragment.addInput(inputExchange);
+
+        // 建立父子关系
+        parentFragment.addChild(sourceFragment);
+
+        // 记录
+        nodeToFragment.put(node, sourceFragment);
+        processedSources.add(node);
+
+        // SOURCE 节点没有子节点需要处理
+    }
+
+    /**
+     * 创建输出 Exchange
+     */
+    private ExchangeNode createOutputExchange(JQuickPhysicalPlanNode node) {
+        String exchangeId = "exchange_" + exchangeIdGenerator.incrementAndGet();
+
         if (node instanceof JQuickHashJoinPhysicalNode) {
-            // 哈希连接需要根据连接键进行哈希重分区
             JQuickHashJoinPhysicalNode join = (JQuickHashJoinPhysicalNode) node;
+            List<JQuickExpression> partitionKeys = extractJoinPartitionKeys(join);
             return new ExchangeNode(
+                    exchangeId,
                     ExchangeNode.ExchangeType.SHUFFLE,
                     ExchangeNode.PartitionStrategy.HASH,
-                    extractJoinKey(join),
+                    partitionKeys,
                     defaultParallelism
             );
         }
 
         if (node instanceof JQuickHashAggregatePhysicalNode) {
-            // 聚合需要根据分组键进行哈希重分区
             JQuickHashAggregatePhysicalNode agg = (JQuickHashAggregatePhysicalNode) node;
+            List<JQuickExpression> groupKeys = agg.getGroupKeys();
+            if (!groupKeys.isEmpty()) {
+                return new ExchangeNode(
+                        exchangeId,
+                        ExchangeNode.ExchangeType.SHUFFLE,
+                        ExchangeNode.PartitionStrategy.HASH,
+                        groupKeys,
+                        defaultParallelism
+                );
+            }
+            // 无分组键的聚合，需要 GATHER 到单节点
             return new ExchangeNode(
-                    ExchangeNode.ExchangeType.SHUFFLE,
-                    ExchangeNode.PartitionStrategy.HASH,
-                    extractGroupKey(agg),
+                    exchangeId,
+                    ExchangeNode.ExchangeType.GATHER,
+                    ExchangeNode.PartitionStrategy.REPLICATE,
+                    (List<JQuickExpression>) null,
+                    1
+            );
+        }
+
+        if (node instanceof JQuickTableScanPhysicalNode) {
+            // 表扫描使用 round-robin 分发
+            return new ExchangeNode(
+                    exchangeId,
+                    ExchangeNode.ExchangeType.REPARTITION,
+                    ExchangeNode.PartitionStrategy.ROUND_ROBIN,
+                    (List<JQuickExpression>) null,
                     defaultParallelism
             );
         }
 
+        if (node instanceof JQuickExchangePhysicalNode) {
+            JQuickExchangePhysicalNode exchange = (JQuickExchangePhysicalNode) node;
+            // 透传 exchange 的分区策略
+            return new ExchangeNode(
+                    exchangeId,
+                    convertExchangeType(exchange.getExchangeType()),
+                    convertPartitionStrategy(exchange.getPartitionStrategy()),
+                    exchange.getPartitionKeys(),
+                    exchange.getTargetParallelism()
+            );
+        }
+
         // 默认：广播
-        return new ExchangeNode(ExchangeNode.ExchangeType.BROADCAST, ExchangeNode.PartitionStrategy.REPLICATE, null, defaultParallelism);
+        return new ExchangeNode(
+                exchangeId,
+                ExchangeNode.ExchangeType.BROADCAST,
+                ExchangeNode.PartitionStrategy.REPLICATE,
+                (List<JQuickExpression>) null,
+                defaultParallelism
+        );
     }
 
     /**
-     * 提取连接键
+     * 创建输入 Exchange（接收数据）
      */
-    private JQuickExpression extractJoinKey(JQuickHashJoinPhysicalNode join) {
-        // 从连接条件中提取连接键
-        return null;
+    private ExchangeNode createInputExchange(ExchangeNode outputExchange) {
+        return new ExchangeNode(
+                "input_" + outputExchange.getExchangeId(),
+                ExchangeNode.ExchangeType.RECEIVE,
+                outputExchange.getPartitionStrategy(),
+                outputExchange.getPartitionKeys(),
+                outputExchange.getParallelism()
+        );
     }
 
     /**
-     * 提取分组键
+     * 提取 JOIN 的分区键
      */
-    private JQuickExpression extractGroupKey(JQuickHashAggregatePhysicalNode agg) {
-        // 提取分组键
-        return null;
+    private List<JQuickExpression> extractJoinPartitionKeys(JQuickHashJoinPhysicalNode join) {
+        List<JQuickHashJoinPhysicalNode.JoinKeyPair> joinKeys = join.getJoinKeys();
+        List<JQuickExpression> partitionKeys = new ArrayList<>();
+
+        if (joinKeys != null && !joinKeys.isEmpty()) {
+            // 根据 build side 决定使用哪一侧的键作为分区键
+            for (JQuickHashJoinPhysicalNode.JoinKeyPair keyPair : joinKeys) {
+                if (join.getBuildSide() == JQuickHashJoinPhysicalNode.BuildSide.LEFT) {
+                    partitionKeys.add(keyPair.getRightKey());
+                } else {
+                    partitionKeys.add(keyPair.getLeftKey());
+                }
+            }
+        }
+
+        return partitionKeys;
+    }
+
+    /**
+     * 转换 ExchangeType
+     */
+    private ExchangeNode.ExchangeType convertExchangeType(
+            JQuickExchangePhysicalNode.ExchangeType type) {
+        switch (type) {
+            case SHUFFLE:
+                return ExchangeNode.ExchangeType.SHUFFLE;
+            case BROADCAST:
+                return ExchangeNode.ExchangeType.BROADCAST;
+            case REPARTITION:
+                return ExchangeNode.ExchangeType.REPARTITION;
+            case GATHER:
+                return ExchangeNode.ExchangeType.GATHER;
+            default:
+                return ExchangeNode.ExchangeType.FORWARD;
+        }
+    }
+
+    /**
+     * 转换 PartitionStrategy
+     */
+    private ExchangeNode.PartitionStrategy convertPartitionStrategy(
+            JQuickExchangePhysicalNode.PartitionStrategy strategy) {
+        switch (strategy) {
+            case HASH:
+                return ExchangeNode.PartitionStrategy.HASH;
+            case RANGE:
+                return ExchangeNode.PartitionStrategy.RANGE;
+            case ROUND_ROBIN:
+                return ExchangeNode.PartitionStrategy.ROUND_ROBIN;
+            case BUCKET:
+                return ExchangeNode.PartitionStrategy.BUCKET;
+            case REPLICATE:
+                return ExchangeNode.PartitionStrategy.REPLICATE;
+            default:
+                return ExchangeNode.PartitionStrategy.HASH;
+        }
     }
 
     /**
      * 获取物理节点的子节点
      */
     private List<JQuickPhysicalPlanNode> getChildren(JQuickPhysicalPlanNode node) {
-        // 简化实现，实际需要根据节点类型返回子节点
-        return new ArrayList<>();
+        if (node == null) {
+            return Collections.emptyList();
+        }
+
+        // 使用节点自带的 getChildren 方法
+        List<JQuickPhysicalPlanNode> children = node.getChildren();
+        if (children != null && !children.isEmpty()) {
+            return children;
+        }
+
+        // 针对特定节点的特殊处理
+        if (node instanceof JQuickHashJoinPhysicalNode) {
+            JQuickHashJoinPhysicalNode join = (JQuickHashJoinPhysicalNode) node;
+            List<JQuickPhysicalPlanNode> result = new ArrayList<>();
+            JQuickPhysicalPlanNode left = join.getLeft();
+            JQuickPhysicalPlanNode right = join.getRight();
+            if (left != null) result.add(left);
+            if (right != null) result.add(right);
+            return result;
+        }
+
+        if (node instanceof JQuickHashAggregatePhysicalNode) {
+            JQuickHashAggregatePhysicalNode agg = (JQuickHashAggregatePhysicalNode) node;
+            JQuickPhysicalPlanNode child = agg.getChild();
+            return child != null ? Collections.singletonList(child) : Collections.emptyList();
+        }
+
+        if (node instanceof JQuickAbstractPhysicalNode) {
+            JQuickAbstractPhysicalNode absNode = (JQuickAbstractPhysicalNode) node;
+            return absNode.getChildren();
+        }
+
+        return Collections.emptyList();
+    }
+
+    /**
+     * 打印片段信息（用于调试）
+     */
+    public void printFragments(JQuickDistributedPlan plan) {
+        System.out.println("=== JQuickDistributedPlan ===");
+        System.out.println("Default Parallelism: " + plan.getDefaultParallelism());
+        System.out.println();
+
+        JQuickFragment root = plan.getRootFragment();
+        printFragment(root, 0);
+    }
+
+    private void printFragment(JQuickFragment fragment, int depth) {
+        StringBuilder indent = new StringBuilder();
+        for (int i = 0; i < depth; i++) {
+            indent.append("  ");
+        }
+
+        System.out.println(indent + "┌─ Fragment " + fragment.getFragmentId());
+        System.out.println(indent + "│   Type: " + fragment.getType());
+        System.out.println(indent + "│   Parallelism: " + fragment.getParallelism());
+        System.out.println(indent + "│   Plan Node: " + fragment.getPlan().getNodeType());
+
+        ExchangeNode output = fragment.getOutput();
+        if (output != null) {
+            System.out.println(indent + "│   Output: " + output);
+        }
+
+        if (!fragment.getInputs().isEmpty()) {
+            System.out.println(indent + "│   Inputs: " + fragment.getInputs().size());
+        }
+
+        List<JQuickFragment> children = fragment.getChildren();
+        if (!children.isEmpty()) {
+            System.out.println(indent + "│");
+            for (int i = 0; i < children.size(); i++) {
+                boolean isLast = (i == children.size() - 1);
+                System.out.println(indent + (isLast ? "└── " : "├── ") + "Child Fragment " +
+                        children.get(i).getFragmentId());
+                printFragment(children.get(i), depth + 1);
+            }
+        } else {
+            System.out.println(indent + "└── (leaf)");
+        }
     }
 }

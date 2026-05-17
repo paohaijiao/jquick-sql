@@ -17,72 +17,111 @@ package com.github.paohaijiao.distributed;
 
 import com.github.paohaijiao.fragment.JQuickFragment;
 
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
+import java.util.*;
 
 /**
- * packageName com.github.paohaijiao.distributed
- *
- * @author Martin
- * @version 1.0.0
- * @since 2026/5/17
+ * 分布式执行计划
  */
 public class JQuickDistributedPlan {
 
-    private final Map<Long, JQuickFragment> fragments;
-
     private final JQuickFragment rootFragment;
 
-    private final Map<String, Integer> clusterTopology;
+    private int defaultParallelism;
 
-    private final int defaultParallelism;
+    private final Map<Long, JQuickFragment> fragmentMap;
 
     public JQuickDistributedPlan(JQuickFragment rootFragment) {
-        this.fragments = new LinkedHashMap<>();
         this.rootFragment = rootFragment;
-        this.clusterTopology = new HashMap<>();
-        this.defaultParallelism = 4;
+        this.fragmentMap = new HashMap<>();
         buildFragmentMap(rootFragment);
     }
 
     private void buildFragmentMap(JQuickFragment fragment) {
-        fragments.put(fragment.getFragmentId(), fragment);
+        fragmentMap.put(fragment.getFragmentId(), fragment);
         for (JQuickFragment child : fragment.getChildren()) {
             buildFragmentMap(child);
         }
     }
 
-    public void addWorker(String host, int cores) {
-        clusterTopology.put(host, cores);
+    public JQuickFragment getRootFragment() {
+        return rootFragment;
     }
 
-    public JQuickFragment getRootFragment() { return rootFragment; }
-
-    public Map<Long, JQuickFragment> getFragments() { return fragments; }
-
-    public Map<String, Integer> getClusterTopology() { return clusterTopology; }
-
-    public int getDefaultParallelism() { return defaultParallelism; }
-
-    public void printPlan() {
-        System.out.println("=== Distributed Plan ===");
-        printFragment(rootFragment, 0);
+    public void setDefaultParallelism(int parallelism) {
+        this.defaultParallelism = parallelism;
     }
 
-    private void printFragment(JQuickFragment fragment, int level) {
-        String  indent = IntStream.range(0, level).mapToObj(i -> " ").collect(Collectors.joining());
-        System.out.println(indent + fragment);
-        if (fragment.getOutput() != null) {
-            System.out.println(indent + "  └── Exchange: " + fragment.getOutput().getType());
+    public int getDefaultParallelism() {
+        return defaultParallelism;
+    }
+
+    /**
+     * 获取所有 Fragment（广度优先遍历）
+     */
+    public List<JQuickFragment> getAllFragments() {
+        List<JQuickFragment> result = new ArrayList<>();
+        Queue<JQuickFragment> queue = new LinkedList<>();
+        queue.add(rootFragment);
+        while (!queue.isEmpty()) {
+            JQuickFragment fragment = queue.poll();
+            result.add(fragment);
+            queue.addAll(fragment.getChildren());
         }
+        return result;
+    }
+
+    /**
+     * 获取所有 SOURCE 类型的 Fragment
+     */
+    public List<JQuickFragment> getSourceFragments() {
+        List<JQuickFragment> result = new ArrayList<>();
+        for (JQuickFragment fragment : getAllFragments()) {
+            if (fragment.getType() == JQuickFragment.FragmentType.SOURCE) {
+                result.add(fragment);
+            }
+        }
+        return result;
+    }
+
+    /**
+     * 获取 Fragment 的执行顺序（拓扑排序）
+     */
+    public List<JQuickFragment> getExecutionOrder() {
+        List<JQuickFragment> order = new ArrayList<>();
+        Set<Long> visited = new HashSet<>();
+        for (JQuickFragment fragment : getAllFragments()) {
+            if (!visited.contains(fragment.getFragmentId())) {
+                topologicalSort(fragment, order, visited);
+            }
+        }
+        return order;
+    }
+
+    private void topologicalSort(JQuickFragment fragment, List<JQuickFragment> order, Set<Long> visited) {
+        visited.add(fragment.getFragmentId());
         for (JQuickFragment child : fragment.getChildren()) {
-            printFragment(child, level + 1);
+            if (!visited.contains(child.getFragmentId())) {
+                topologicalSort(child, order, visited);
+            }
         }
+        order.add(fragment);
     }
 
-    public void setDefaultParallelism(int defaultParallelism) {
+    public JQuickFragment getFragmentById(long id) {
+        return fragmentMap.get(id);
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("JQuickDistributedPlan {\n");
+        sb.append("  defaultParallelism: ").append(defaultParallelism).append("\n");
+        sb.append("  fragments: [\n");
+        for (JQuickFragment fragment : getAllFragments()) {
+            sb.append("    ").append(fragment).append("\n");
+        }
+        sb.append("  ]\n");
+        sb.append("}");
+        return sb.toString();
     }
 }
