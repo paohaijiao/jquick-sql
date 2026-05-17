@@ -16,23 +16,23 @@
 package com.github.paohaijiao.fragment;
 
 
-
 import com.github.paohaijiao.exchange.ExchangeNode;
 import com.github.paohaijiao.physical.node.JQuickPhysicalPlanNode;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * 执行片段 - 分布式执行的最小单元
  */
-public class Fragment {
+public class JQuickFragment {
     private static final AtomicLong idGenerator = new AtomicLong(0);
 
     private final long fragmentId;
     private final FragmentType type;
     private final JQuickPhysicalPlanNode plan;
-    private final List<Fragment> children;
+    private final List<JQuickFragment> children;
     private final List<ExchangeNode> inputs;
     private ExchangeNode output;
     private int parallelism;
@@ -44,7 +44,7 @@ public class Fragment {
         SINK         // 汇片段（输出结果）
     }
 
-    public Fragment(FragmentType type, JQuickPhysicalPlanNode plan) {
+    public JQuickFragment(FragmentType type, JQuickPhysicalPlanNode plan) {
         this.fragmentId = idGenerator.incrementAndGet();
         this.type = type;
         this.plan = plan;
@@ -53,7 +53,7 @@ public class Fragment {
         this.parallelism = 1;
     }
 
-    public void addChild(Fragment child) {
+    public void addChild(JQuickFragment child) {
         this.children.add(child);
     }
 
@@ -76,7 +76,7 @@ public class Fragment {
     public long getFragmentId() { return fragmentId; }
     public FragmentType getType() { return type; }
     public JQuickPhysicalPlanNode getPlan() { return plan; }
-    public List<Fragment> getChildren() { return children; }
+    public List<JQuickFragment> getChildren() { return children; }
     public List<ExchangeNode> getInputs() { return inputs; }
     public ExchangeNode getOutput() { return output; }
     public int getParallelism() { return parallelism; }

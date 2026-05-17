@@ -17,7 +17,6 @@ package com.github.paohaijiao.executor;
 
 import com.github.paohaijiao.antlr.impl.JAbstractAntlrExecutor;
 import com.github.paohaijiao.ast.JQuickQueryNode;
-import com.github.paohaijiao.ast.JQuickSelectStatementNode;
 import com.github.paohaijiao.config.JQuickSqlConfig;
 import com.github.paohaijiao.console.JConsole;
 import com.github.paohaijiao.exception.JAntlrExecutionException;
@@ -37,7 +36,7 @@ import org.antlr.v4.runtime.TokenStream;
  * @version 1.0.0
  * @since 2026/5/17
  */
-public class JQuickSQLExecutor extends JAbstractAntlrExecutor<String, JQuickSelectStatementNode> {
+public class JQuickSQLExecutor extends JAbstractAntlrExecutor<String, JQuickQueryNode> {
 
     private JContext context=new JContext();
 
@@ -73,11 +72,11 @@ public class JQuickSQLExecutor extends JAbstractAntlrExecutor<String, JQuickSele
     }
 
     @Override
-    protected JQuickSelectStatementNode parse(Parser parser) throws JAntlrExecutionException {
+    protected JQuickQueryNode parse(Parser parser) throws JAntlrExecutionException {
         JQuickSQLParser calcParser = (JQuickSQLParser) parser;
         JQuickSQLParser.QueryContext tree = calcParser.query();
         JQuickSQLCommonVisistor visitor = new JQuickSQLCommonVisistor(this.context,this.config);
-        JQuickSelectStatementNode queryNode= visitor.visitQuery(tree);
+        JQuickQueryNode queryNode= visitor.visitQuery(tree);
         return queryNode;
     }
 }

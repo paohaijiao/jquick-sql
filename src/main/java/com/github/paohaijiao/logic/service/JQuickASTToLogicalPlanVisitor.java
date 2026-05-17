@@ -19,13 +19,15 @@ import com.github.paohaijiao.ast.*;
 import com.github.paohaijiao.enums.JQuickBinaryOperator;
 import com.github.paohaijiao.enums.JQuickJoinType;
 import com.github.paohaijiao.enums.JQuickSQLOperationType;
-import com.github.paohaijiao.expression.*;
+import com.github.paohaijiao.expression.JQuickExpression;
 import com.github.paohaijiao.expression.domain.*;
 import com.github.paohaijiao.logic.JQuickLogicalPlanNode;
 import com.github.paohaijiao.logic.domain.*;
 
-
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -182,7 +184,6 @@ public class JQuickASTToLogicalPlanVisitor {
             );
             condition = new JQuickBinaryExpression(leftExpr, rightExpr, JQuickBinaryOperator.EQ);
         }
-
         return new JQuickJoinNode(joinType, left, right, condition);
     }
 

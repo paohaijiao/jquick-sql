@@ -16,6 +16,7 @@
 package com.github.paohaijiao.logic.domain;
 
 import com.github.paohaijiao.context.JQuickExecutionContext;
+import com.github.paohaijiao.enums.JQuickSubqueryType;
 import com.github.paohaijiao.logic.JQuickLogicalPlanNode;
 import com.github.paohaijiao.logic.JQuickLogicalPlanVisitor;
 import com.github.paohaijiao.statement.JQuickDataSet;
@@ -29,9 +30,9 @@ import java.util.List;
 public class JQuickSubqueryNode implements JQuickLogicalPlanNode {
 
     private final JQuickLogicalPlanNode subquery;
-    private final SubqueryType type;
+    private final JQuickSubqueryType type;
 
-    public JQuickSubqueryNode(JQuickLogicalPlanNode subquery, SubqueryType type) {
+    public JQuickSubqueryNode(JQuickLogicalPlanNode subquery, JQuickSubqueryType type) {
         this.subquery = subquery;
         this.type = type;
     }
@@ -70,15 +71,9 @@ public class JQuickSubqueryNode implements JQuickLogicalPlanNode {
         return subquery;
     }
 
-    public SubqueryType getType() {
+    public JQuickSubqueryType getType() {
         return type;
     }
 
-    public enum SubqueryType {
-        SCALAR,      // 标量子查询（返回单行单列）
-        EXISTS,      // EXISTS 子查询
-        IN,          // IN 子查询
-        ANY,         // ANY 子查询
-        ALL          // ALL 子查询
-    }
+
 }

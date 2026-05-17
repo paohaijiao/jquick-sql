@@ -15,11 +15,13 @@
  */
 package com.github.paohaijiao.distributed;
 
-import com.github.paohaijiao.fragment.Fragment;
+import com.github.paohaijiao.fragment.JQuickFragment;
 
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 /**
  * packageName com.github.paohaijiao.distributed
@@ -28,17 +30,17 @@ import java.util.Map;
  * @version 1.0.0
  * @since 2026/5/17
  */
-public class DistributedPlan {
+public class JQuickDistributedPlan {
 
-    private final Map<Long, Fragment> fragments;
+    private final Map<Long, JQuickFragment> fragments;
 
-    private final Fragment rootFragment;
+    private final JQuickFragment rootFragment;
 
     private final Map<String, Integer> clusterTopology;
 
     private final int defaultParallelism;
 
-    public DistributedPlan(Fragment rootFragment) {
+    public JQuickDistributedPlan(JQuickFragment rootFragment) {
         this.fragments = new LinkedHashMap<>();
         this.rootFragment = rootFragment;
         this.clusterTopology = new HashMap<>();
@@ -46,9 +48,9 @@ public class DistributedPlan {
         buildFragmentMap(rootFragment);
     }
 
-    private void buildFragmentMap(Fragment fragment) {
+    private void buildFragmentMap(JQuickFragment fragment) {
         fragments.put(fragment.getFragmentId(), fragment);
-        for (Fragment child : fragment.getChildren()) {
+        for (JQuickFragment child : fragment.getChildren()) {
             buildFragmentMap(child);
         }
     }
@@ -57,9 +59,12 @@ public class DistributedPlan {
         clusterTopology.put(host, cores);
     }
 
-    public Fragment getRootFragment() { return rootFragment; }
-    public Map<Long, Fragment> getFragments() { return fragments; }
+    public JQuickFragment getRootFragment() { return rootFragment; }
+
+    public Map<Long, JQuickFragment> getFragments() { return fragments; }
+
     public Map<String, Integer> getClusterTopology() { return clusterTopology; }
+
     public int getDefaultParallelism() { return defaultParallelism; }
 
     public void printPlan() {
@@ -67,13 +72,13 @@ public class DistributedPlan {
         printFragment(rootFragment, 0);
     }
 
-    private void printFragment(Fragment fragment, int level) {
-        String indent = "  ".repeat(level);
+    private void printFragment(JQuickFragment fragment, int level) {
+        String  indent = IntStream.range(0, level).mapToObj(i -> " ").collect(Collectors.joining());
         System.out.println(indent + fragment);
         if (fragment.getOutput() != null) {
             System.out.println(indent + "  └── Exchange: " + fragment.getOutput().getType());
         }
-        for (Fragment child : fragment.getChildren()) {
+        for (JQuickFragment child : fragment.getChildren()) {
             printFragment(child, level + 1);
         }
     }

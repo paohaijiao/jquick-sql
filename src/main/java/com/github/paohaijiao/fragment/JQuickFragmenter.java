@@ -15,7 +15,7 @@
  */
 package com.github.paohaijiao.fragment;
 
-import com.github.paohaijiao.distributed.DistributedPlan;
+import com.github.paohaijiao.distributed.JQuickDistributedPlan;
 import com.github.paohaijiao.exchange.ExchangeNode;
 import com.github.paohaijiao.expression.JQuickExpression;
 import com.github.paohaijiao.physical.node.*;
@@ -28,34 +28,34 @@ import java.util.Map;
 /**
  * 计划切分器 - 将物理计划切分为分布式片段
  */
-public class Fragmenter {
+public class JQuickFragmenter {
 
     private final int defaultParallelism;
 
-    private Fragment currentFragment;
+    private JQuickFragment currentFragment;
 
-    private final Map<JQuickPhysicalPlanNode, Fragment> nodeToFragment = new HashMap<>();
+    private final Map<JQuickPhysicalPlanNode, JQuickFragment> nodeToFragment = new HashMap<>();
 
-    public Fragmenter() {
+    public JQuickFragmenter() {
         this(4);
     }
 
-    public Fragmenter(int defaultParallelism) {
+    public JQuickFragmenter(int defaultParallelism) {
         this.defaultParallelism = defaultParallelism;
     }
 
     /**
      * 将物理计划切分为分布式计划
      */
-    public DistributedPlan fragment(JQuickPhysicalPlanNode rootPlan) {
+    public JQuickDistributedPlan fragment(JQuickPhysicalPlanNode rootPlan) {
         // 创建根片段
-        Fragment rootFragment = new Fragment(Fragment.FragmentType.SINK, rootPlan);
+        JQuickFragment rootFragment = new JQuickFragment(JQuickFragment.FragmentType.SINK, rootPlan);
         currentFragment = rootFragment;
         // 递归处理计划树
         processNode(rootPlan, rootFragment);
 
         // 构建分布式计划
-        DistributedPlan plan = new DistributedPlan(rootFragment);
+        JQuickDistributedPlan plan = new JQuickDistributedPlan(rootFragment);
         plan.setDefaultParallelism(defaultParallelism);
 
         return plan;
@@ -64,7 +64,7 @@ public class Fragmenter {
     /**
      * 处理物理计划节点，决定是否需要切分片段
      */
-    private void processNode(JQuickPhysicalPlanNode node, Fragment fragment) {
+    private void processNode(JQuickPhysicalPlanNode node, JQuickFragment fragment) {
         nodeToFragment.put(node, fragment);
         // 根据节点类型决定是否需要切分
         if (needsExchange(node)) {
@@ -103,12 +103,12 @@ public class Fragmenter {
     /**
      * 创建交换片段
      */
-    private void createExchangeFragment(JQuickPhysicalPlanNode node, Fragment parentFragment) {
+    private void createExchangeFragment(JQuickPhysicalPlanNode node, JQuickFragment parentFragment) {
         // 确定分区策略
         ExchangeNode exchange = createExchange(node);
 
         // 创建新的片段处理子节点
-        Fragment childFragment = new Fragment(Fragment.FragmentType.INTERMEDIATE, node);
+        JQuickFragment childFragment = new JQuickFragment(JQuickFragment.FragmentType.INTERMEDIATE, node);
         childFragment.setParallelism(defaultParallelism);
         childFragment.setOutput(exchange);
 

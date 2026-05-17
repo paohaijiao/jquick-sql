@@ -27,6 +27,7 @@ import java.util.List;
 public class JQuickColumnRefExpression implements JQuickExpression {
 
     private final String columnName;
+
     private final String tableAlias;
 
     public JQuickColumnRefExpression(String columnName) {

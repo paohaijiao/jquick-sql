@@ -16,6 +16,7 @@
 package com.github.paohaijiao.logic.domain;
 
 import com.github.paohaijiao.context.JQuickExecutionContext;
+import com.github.paohaijiao.enums.JQuickJoinType;
 import com.github.paohaijiao.expression.JQuickExpression;
 import com.github.paohaijiao.logic.JQuickLogicalPlanNode;
 import com.github.paohaijiao.logic.JQuickLogicalPlanVisitor;
@@ -30,11 +31,15 @@ import java.util.*;
  */
 public class JQuickJoinNode implements JQuickLogicalPlanNode {
 
-    private final JoinType joinType;
+    private final JQuickJoinType joinType;
+
     private final JQuickLogicalPlanNode left;
+
     private final JQuickLogicalPlanNode right;
+
     private final JQuickExpression condition;
-    public JQuickJoinNode(JoinType joinType, JQuickLogicalPlanNode left, JQuickLogicalPlanNode right, JQuickExpression condition) {
+
+    public JQuickJoinNode(JQuickJoinType joinType, JQuickLogicalPlanNode left, JQuickLogicalPlanNode right, JQuickExpression condition) {
         this.joinType = joinType;
         this.left = left;
         this.right = right;
@@ -76,7 +81,6 @@ public class JQuickJoinNode implements JQuickLogicalPlanNode {
 
         // 合并列元数据
         List<JQuickColumnMeta> mergedColumns = mergeColumns(leftData, rightData);
-
         return new JQuickDataSet(mergedColumns, resultRows);
     }
 
@@ -263,7 +267,7 @@ public class JQuickJoinNode implements JQuickLogicalPlanNode {
         return new JQuickJoinNode(joinType, left.clone(), right.clone(), condition);
     }
 
-    public JoinType getJoinType() {
+    public JQuickJoinType getJoinType() {
         return joinType;
     }
 
@@ -279,7 +283,5 @@ public class JQuickJoinNode implements JQuickLogicalPlanNode {
         return condition;
     }
 
-    public enum JoinType {
-        INNER, LEFT, RIGHT, FULL, CROSS, SEMI, ANTI
-    }
+
 }

@@ -26,8 +26,11 @@ import java.util.List;
 public class JQuickBetweenExpression implements JQuickExpression {
 
     private final JQuickExpression expression;
+
     private final JQuickExpression low;
+
     private final JQuickExpression high;
+
     private final boolean isNot;
 
     public JQuickBetweenExpression(JQuickExpression expression, JQuickExpression low, JQuickExpression high, boolean isNot) {
@@ -91,7 +94,10 @@ public class JQuickBetweenExpression implements JQuickExpression {
     }
 
     public JQuickExpression getExpression() { return expression; }
+
     public JQuickExpression getLow() { return low; }
+
     public JQuickExpression getHigh() { return high; }
+
     public boolean isNot() { return isNot; }
 }

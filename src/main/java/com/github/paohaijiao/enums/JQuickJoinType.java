@@ -2,5 +2,5 @@ package com.github.paohaijiao.enums;
 
 public enum JQuickJoinType {
 
-    INNER, CROSS, LEFT, RIGHT, NATURAL, FULL
+    INNER, CROSS, LEFT, RIGHT, NATURAL, FULL,SEMI,ANTI
 }

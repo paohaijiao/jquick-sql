@@ -29,7 +29,9 @@ import java.util.List;
 public class JQuickBinaryExpression implements JQuickExpression {
 
     private final JQuickExpression left;
+
     private final JQuickExpression right;
+
     private final JQuickBinaryOperator operator;
 
     public JQuickBinaryExpression(JQuickExpression left, JQuickExpression right, JQuickBinaryOperator operator) {

@@ -48,10 +48,11 @@ public class JQuickSQLCommonVisistor extends JQuickSQLCoreVisistor {
         this(null,null);
     }
 
+
     @Override
-    public JQuickSelectStatementNode visitQuery(JQuickSQLParser.QueryContext ctx) {
-        JQuickSelectStatementNode statementNode=null;
-        return statementNode;
+    public JQuickQueryNode visitQuery(JQuickSQLParser.QueryContext ctx) {
+        JQuickSelectStatementNode selectStatement = (JQuickSelectStatementNode) visit(ctx.selectStatement());
+        return new JQuickQueryNode(selectStatement);
     }
 
 

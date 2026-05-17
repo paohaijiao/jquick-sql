@@ -28,7 +28,9 @@ import java.util.List;
 public class JQuickCaseWhenExpression implements JQuickExpression {
 
     private final List<JQuickExpression> conditions;
+
     private final List<JQuickExpression> results;
+
     private final JQuickExpression elseResult;
 
     public JQuickCaseWhenExpression(List<JQuickExpression> conditions, List<JQuickExpression> results, JQuickExpression elseResult) {

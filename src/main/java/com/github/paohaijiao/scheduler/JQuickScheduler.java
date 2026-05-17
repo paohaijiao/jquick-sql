@@ -15,8 +15,12 @@
  */
 package com.github.paohaijiao.scheduler;
 
-import com.github.paohaijiao.distributed.DistributedPlan;
-import com.github.paohaijiao.fragment.Fragment;
+import com.github.paohaijiao.distributed.JQuickDistributedPlan;
+import com.github.paohaijiao.fragment.JQuickFragment;
+import com.github.paohaijiao.worker.JQuickFragmentResult;
+import com.github.paohaijiao.worker.JQuickJobExecution;
+import com.github.paohaijiao.worker.JQuickTaskExecution;
+import com.github.paohaijiao.worker.JQuickWorkerManager;
 
 import java.util.*;
 import java.util.concurrent.*;
@@ -25,15 +29,15 @@ import java.util.concurrent.atomic.AtomicLong;
 /**
  * 分布式调度器 - 负责任务调度和资源管理
  */
-public class Scheduler {
+public class JQuickScheduler {
 
-    private final DistributedPlan plan;
-    private final WorkerManager workerManager;
+    private final JQuickDistributedPlan plan;
+    private final JQuickWorkerManager workerManager;
     private final ExecutorService schedulerExecutor;
-    private final Map<Long, TaskExecution> runningTasks;
+    private final Map<Long, JQuickTaskExecution> runningTasks;
     private final AtomicLong taskIdGenerator;
 
-    public Scheduler(DistributedPlan plan, WorkerManager workerManager) {
+    public JQuickScheduler(JQuickDistributedPlan plan, JQuickWorkerManager workerManager) {
         this.plan = plan;
         this.workerManager = workerManager;
         this.schedulerExecutor = Executors.newFixedThreadPool(4);
@@ -44,11 +48,11 @@ public class Scheduler {
     /**
      * 提交分布式计划执行
      */
-    public JobExecution submit() {
-        JobExecution job = new JobExecution(plan);
+    public JQuickJobExecution submit() {
+        JQuickJobExecution job = new JQuickJobExecution(plan);
 
         // 拓扑排序，确定执行顺序
-        List<Fragment> executionOrder = topologicalSort();
+        List<JQuickFragment> executionOrder = topologicalSort();
 
         // 提交任务
         schedulerExecutor.submit(() -> {
@@ -65,11 +69,11 @@ public class Scheduler {
     /**
      * 拓扑排序片段
      */
-    private List<Fragment> topologicalSort() {
-        List<Fragment> order = new ArrayList<>();
+    private List<JQuickFragment> topologicalSort() {
+        List<JQuickFragment> order = new ArrayList<>();
         Set<Long> visited = new HashSet<>();
 
-        for (Fragment fragment : plan.getFragments().values()) {
+        for (JQuickFragment fragment : plan.getFragments().values()) {
             if (!visited.contains(fragment.getFragmentId())) {
                 dfs(fragment, visited, order);
             }
@@ -78,9 +82,9 @@ public class Scheduler {
         return order;
     }
 
-    private void dfs(Fragment fragment, Set<Long> visited, List<Fragment> order) {
+    private void dfs(JQuickFragment fragment, Set<Long> visited, List<JQuickFragment> order) {
         visited.add(fragment.getFragmentId());
-        for (Fragment child : fragment.getChildren()) {
+        for (JQuickFragment child : fragment.getChildren()) {
             if (!visited.contains(child.getFragmentId())) {
                 dfs(child, visited, order);
             }
@@ -91,9 +95,9 @@ public class Scheduler {
     /**
      * 执行片段
      */
-    private void executeFragments(List<Fragment> fragments, JobExecution job) {
+    private void executeFragments(List<JQuickFragment> fragments, JQuickJobExecution job) {
         // 按拓扑顺序执行
-        for (Fragment fragment : fragments) {
+        for (JQuickFragment fragment : fragments) {
             if (job.isCancelled()) {
                 break;
             }
@@ -103,7 +107,7 @@ public class Scheduler {
                     fragment.getParallelism());
 
             // 创建任务
-            TaskExecution task = new TaskExecution(
+            JQuickTaskExecution task = new JQuickTaskExecution(
                     taskIdGenerator.incrementAndGet(),
                     fragment,
                     assignedWorkers
@@ -113,16 +117,16 @@ public class Scheduler {
             job.addTask(task);
 
             // 提交到工作节点
-            List<Future<FragmentResult>> futures = new ArrayList<>();
+            List<Future<JQuickFragmentResult>> futures = new ArrayList<>();
             for (String worker : assignedWorkers) {
-                Future<FragmentResult> future = workerManager.submitTask(worker, fragment);
+                Future<JQuickFragmentResult> future = workerManager.submitTask(worker, fragment);
                 futures.add(future);
             }
 
             // 等待任务完成
-            for (Future<FragmentResult> future : futures) {
+            for (Future<JQuickFragmentResult> future : futures) {
                 try {
-                    FragmentResult result = future.get(30, TimeUnit.MINUTES);
+                    JQuickFragmentResult result = future.get(30, TimeUnit.MINUTES);
                     task.addResult(result);
                 } catch (Exception e) {
                     // 故障处理：重试或失败
@@ -140,7 +144,7 @@ public class Scheduler {
     /**
      * 故障处理
      */
-    private void handleFailure(TaskExecution task, Exception e) {
+    private void handleFailure(JQuickTaskExecution task, Exception e) {
         // 简化实现：重试一次
         if (task.getRetryCount() < 3) {
             task.incrementRetry();
@@ -155,7 +159,7 @@ public class Scheduler {
      */
     public void cancelJob(String jobId) {
         // 取消所有运行中的任务
-        for (TaskExecution task : runningTasks.values()) {
+        for (JQuickTaskExecution task : runningTasks.values()) {
             workerManager.cancelTask(task.getTaskId());
         }
     }

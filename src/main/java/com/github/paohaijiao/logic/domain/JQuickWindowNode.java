@@ -99,7 +99,7 @@ public class JQuickWindowNode implements JQuickLogicalPlanNode {
     /**
      * 按分区键分组
      */
-    private Map<Object, List<JQuickRow>> partitionRows(List<JQuickRow> rows, List<Expression> partitionKeys) {
+    private Map<Object, List<JQuickRow>> partitionRows(List<JQuickRow> rows, List<JQuickExpression> partitionKeys) {
         if (partitionKeys.isEmpty()) {
             Map<Object, List<JQuickRow>> result = new HashMap<>();
             result.put("__single_partition__", new ArrayList<>(rows));
@@ -308,7 +308,7 @@ public class JQuickWindowNode implements JQuickLogicalPlanNode {
         return defaultValue;
     }
 
-    private Object computeNthValue(List<JQuickRow> frameRows, Expression arg) {
+    private Object computeNthValue(List<JQuickRow> frameRows, JQuickExpression arg) {
         // Nth_value 需要指定第几个，简化处理返回第一个
         if (frameRows.isEmpty()) return null;
         return arg.evaluate(frameRows.get(0));
@@ -611,8 +611,7 @@ public class JQuickWindowNode implements JQuickLogicalPlanNode {
         private final JQuickExpression startOffset;
         private final BoundaryType endType;
         private final JQuickExpression endOffset;
-        public WindowFrame(FrameType frameType, BoundaryType startType, Expression startOffset,
-                           BoundaryType endType, JQuickExpression endOffset) {
+        public WindowFrame(FrameType frameType, BoundaryType startType, JQuickExpression startOffset, BoundaryType endType, JQuickExpression endOffset) {
             this.frameType = frameType;
             this.startType = startType;
             this.startOffset = startOffset;

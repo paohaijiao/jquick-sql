@@ -14,46 +14,235 @@
  * Copyright (c) [2025-2099] Martin (goudingcheng@gmail.com)
  */
 package com.github.paohaijiao.context;
+import com.github.paohaijiao.logic.JQuickLogicalPlanNode;
+import com.github.paohaijiao.logic.domain.JQuickLimitNode;
+import com.github.paohaijiao.logic.domain.JQuickProjectNode;
+import com.github.paohaijiao.logic.domain.JQuickSortNode;
 import com.github.paohaijiao.statement.JQuickDataSet;
+import com.github.paohaijiao.stats.JQuickExecutionStats;
+import lombok.Data;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * 执行上下文 - 在整个SQL执行过程中传递状态和缓存
  */
+@Data
 public class JQuickExecutionContext {
 
     private final Map<String, JQuickDataSet> cteCache = new ConcurrentHashMap<>();
 
-    // 参数映射（用于预处理语句）
     private final Map<String, Object> parameters = new HashMap<>();
 
-    // 变量映射（用于运行时变量）
     private final Map<String, Object> variables = new ConcurrentHashMap<>();
 
-    // 临时表缓存
     private final Map<String, JQuickDataSet> tempTables = new HashMap<>();
 
-    // 执行ID（用于追踪）
     private final String executionId;
 
-    // 父上下文（用于子查询）
     private JQuickExecutionContext parent;
 
-    // 查询超时时间（毫秒）
     private long queryTimeout = 30000;
 
-    // 开始时间
     private long startTime;
 
-    // 是否已取消
     private boolean cancelled = false;
 
-    // 执行统计
-    private final ExecutionStats stats = new ExecutionStats();
+    private final JQuickExecutionStats stats = new JQuickExecutionStats();
+    // 全局排序要求
+    private boolean globalSort = false;
+
+    private List<JQuickSortNode.OrderByItem> globalSortItems = new ArrayList<>();
+
+    // 全局去重要求
+    private boolean globalDistinct = false;
+
+    // 全局LIMIT
+    private boolean hasLimit = false;
+
+    private int limit = -1;
+
+    private int offset = 0;
+
+    // 性能分析开关
+    private boolean profileEnabled = false;
+
+    private long resultSize = 0;
+
+    // 子查询结果缓存
+    private final Map<String, JQuickDataSet> subqueryCache = new ConcurrentHashMap<>();
+
+    // 分布式执行相关
+    private boolean distributedMode = false;
+
+    private String jobId;
+
+
+    /**
+     * 设置全局排序
+     */
+    public void setGlobalSort(List<JQuickSortNode.OrderByItem> sortItems) {
+        this.globalSort = true;
+        this.globalSortItems = sortItems != null ? new ArrayList<>(sortItems) : new ArrayList<>();
+    }
+
+    /**
+     * 添加排序项
+     */
+    public void addGlobalSortItem(String columnName, boolean ascending) {
+        this.globalSort = true;
+        this.globalSortItems.add(new JQuickSortNode.OrderByItem(columnName, ascending));
+    }
+
+    /**
+     * 是否有全局排序要求
+     */
+    public boolean hasGlobalSort() {
+        return globalSort && !globalSortItems.isEmpty();
+    }
+
+    /**
+     * 获取全局排序项
+     */
+    public List<JQuickSortNode.OrderByItem> getGlobalSortItems() {
+        return new ArrayList<>(globalSortItems);
+    }
+
+    /**
+     * 设置全局去重
+     */
+    public void setGlobalDistinct(boolean distinct) {
+        this.globalDistinct = distinct;
+    }
+
+    /**
+     * 是否有全局去重要求
+     */
+    public boolean hasGlobalDistinct() {
+        return globalDistinct;
+    }
+
+    /**
+     * 设置全局LIMIT
+     */
+    public void setGlobalLimit(int limit, int offset) {
+        this.hasLimit = true;
+        this.limit = limit;
+        this.offset = offset;
+    }
+
+    /**
+     * 设置全局LIMIT（无偏移量）
+     */
+    public void setGlobalLimit(int limit) {
+        this.hasLimit = true;
+        this.limit = limit;
+        this.offset = 0;
+    }
+
+    /**
+     * 是否有LIMIT要求
+     */
+    public boolean hasLimit() {
+        return hasLimit && limit > 0;
+    }
+
+    /**
+     * 获取LIMIT值
+     */
+    public int getLimit() {
+        return limit;
+    }
+
+    /**
+     * 获取OFFSET值
+     */
+    public int getOffset() {
+        return offset;
+    }
+
+    /**
+     * 启用/禁用性能分析
+     */
+    public void setProfileEnabled(boolean enabled) {
+        this.profileEnabled = enabled;
+    }
+
+    /**
+     * 是否启用性能分析
+     */
+    public boolean isProfileEnabled() {
+        return profileEnabled;
+    }
+
+    /**
+     * 记录结果集大小
+     */
+    public void recordResultSize(long size) {
+        this.resultSize = size;
+        if (profileEnabled) {
+            stats.addReturnedRows(size);
+        }
+    }
+
+    /**
+     * 获取结果集大小
+     */
+    public long getResultSize() {
+        return resultSize;
+    }
+
+    /**
+     * 缓存子查询结果
+     */
+    public void cacheSubqueryResult(String key, JQuickDataSet result) {
+        subqueryCache.put(key, result);
+    }
+
+    /**
+     * 获取缓存的子查询结果
+     */
+    public JQuickDataSet getCachedSubqueryResult(String key) {
+        return subqueryCache.get(key);
+    }
+
+    /**
+     * 清除子查询缓存
+     */
+    public void clearSubqueryCache() {
+        subqueryCache.clear();
+    }
+
+    /**
+     * 设置分布式模式
+     */
+    public void setDistributedMode(boolean enabled) {
+        this.distributedMode = enabled;
+    }
+
+    /**
+     * 是否分布式模式
+     */
+    public boolean isDistributedMode() {
+        return distributedMode;
+    }
+
+    /**
+     * 设置作业ID
+     */
+    public void setJobId(String jobId) {
+        this.jobId = jobId;
+    }
+
+    /**
+     * 获取作业ID
+     */
+    public String getJobId() {
+        return jobId;
+    }
+
+    // ========== 原有的构造器和方法保持不变 ==========
 
     public JQuickExecutionContext() {
         this.executionId = UUID.randomUUID().toString();
@@ -66,285 +255,62 @@ public class JQuickExecutionContext {
         this.parameters.putAll(parent.parameters);
         this.startTime = System.currentTimeMillis();
         this.queryTimeout = parent.queryTimeout;
+        // 继承全局设置
+        this.globalSort = parent.globalSort;
+        this.globalSortItems = new ArrayList<>(parent.globalSortItems);
+        this.globalDistinct = parent.globalDistinct;
+        this.hasLimit = parent.hasLimit;
+        this.limit = parent.limit;
+        this.offset = parent.offset;
+        this.profileEnabled = parent.profileEnabled;
     }
 
-    /**
-     * 缓存CTE结果
-     */
-    public void cacheCTE(String name, JQuickDataSet data) {
-        cteCache.put(name.toLowerCase(), data);
-    }
 
     /**
-     * 获取缓存的CTE结果
-     */
-    public JQuickDataSet getCTE(String name) {
-        JQuickDataSet data = cteCache.get(name.toLowerCase());
-        if (data == null && parent != null) {
-            return parent.getCTE(name);
-        }
-        return data;
-    }
-
-    /**
-     * 检查CTE是否已缓存
-     */
-    public boolean hasCTE(String name) {
-        return cteCache.containsKey(name.toLowerCase()) ||
-                (parent != null && parent.hasCTE(name));
-    }
-
-    /**
-     * 设置参数（位置参数，如 ?）
-     */
-    public void setParameter(int index, Object value) {
-        parameters.put(String.valueOf(index), value);
-    }
-
-    /**
-     * 设置参数（命名参数，如 :name）
-     */
-    public void setParameter(String name, Object value) {
-        parameters.put(name, value);
-    }
-
-    /**
-     * 获取参数
-     */
-    @SuppressWarnings("unchecked")
-    public <T> T getParameter(String name) {
-        Object value = parameters.get(name);
-        if (value == null && parent != null) {
-            return parent.getParameter(name);
-        }
-        return (T) value;
-    }
-
-    /**
-     * 获取参数（带默认值）
-     */
-    @SuppressWarnings("unchecked")
-    public <T> T getParameter(String name, T defaultValue) {
-        Object value = parameters.get(name);
-        if (value == null && parent != null) {
-            return parent.getParameter(name, defaultValue);
-        }
-        return value != null ? (T) value : defaultValue;
-    }
-
-    /**
-     * 获取位置参数
-     */
-    public Object getParameter(int index) {
-        return getParameter(String.valueOf(index));
-    }
-
-    /**
-     * 批量设置参数
-     */
-    public void setParameters(Map<String, Object> params) {
-        this.parameters.putAll(params);
-    }
-
-    /**
-     * 获取所有参数
-     */
-    public Map<String, Object> getParameters() {
-        return new HashMap<>(parameters);
-    }
-
-    /**
-     * 设置变量
-     */
-    public void setVariable(String name, Object value) {
-        variables.put(name, value);
-    }
-
-    /**
-     * 获取变量
-     */
-    @SuppressWarnings("unchecked")
-    public <T> T getVariable(String name) {
-        Object value = variables.get(name);
-        if (value == null && parent != null) {
-            return parent.getVariable(name);
-        }
-        return (T) value;
-    }
-
-    /**
-     * 检查变量是否存在
-     */
-    public boolean hasVariable(String name) {
-        return variables.containsKey(name) || (parent != null && parent.hasVariable(name));
-    }
-
-    /**
-     * 移除变量
-     */
-    public void removeVariable(String name) {
-        variables.remove(name);
-    }
-
-    /**
-     * 创建临时表
-     */
-    public void createTempTable(String name, JQuickDataSet data) {
-        tempTables.put(name, data);
-    }
-
-    /**
-     * 获取临时表
-     */
-    public JQuickDataSet getTempTable(String name) {
-        return tempTables.get(name);
-    }
-
-    /**
-     * 删除临时表
-     */
-    public void dropTempTable(String name) {
-        tempTables.remove(name);
-    }
-
-    /**
-     * 创建子上下文（用于子查询）
+     * 创建子上下文（用于子查询）- 需要覆盖以继承全局设置
      */
     public JQuickExecutionContext createChildContext() {
         return new JQuickExecutionContext(this);
     }
 
     /**
-     * 获取父上下文
+     * 重置全局设置（用于新的查询）
      */
-    public JQuickExecutionContext getParent() {
-        return parent;
+    public void resetGlobalSettings() {
+        this.globalSort = false;
+        this.globalSortItems.clear();
+        this.globalDistinct = false;
+        this.hasLimit = false;
+        this.limit = -1;
+        this.offset = 0;
+        this.resultSize = 0;
+        this.subqueryCache.clear();
     }
 
     /**
-     * 设置查询超时时间
+     * 从SQL查询中提取全局设置
+     * 例如：ORDER BY, DISTINCT, LIMIT 等
      */
-    public void setQueryTimeout(long timeoutMillis) {
-        this.queryTimeout = timeoutMillis;
-    }
-
-    /**
-     * 检查是否超时
-     */
-    public void checkTimeout() {
-        if (cancelled) {
-            throw new RuntimeException("Query execution cancelled");
-        }
-        if (System.currentTimeMillis() - startTime > queryTimeout) {
-            throw new RuntimeException("Query execution timeout after " + queryTimeout + " ms");
-        }
-    }
-
-    /**
-     * 取消执行
-     */
-    public void cancel() {
-        this.cancelled = true;
-    }
-
-    /**
-     * 是否已取消
-     */
-    public boolean isCancelled() {
-        return cancelled;
-    }
-
-    /**
-     * 记录步骤执行时间
-     */
-    public void recordStep(String stepName, long duration) {
-        stats.recordStep(stepName, duration);
-    }
-
-    /**
-     * 增加扫描行数
-     */
-    public void addScannedRows(long count) {
-        stats.addScannedRows(count);
-    }
-
-    /**
-     * 增加返回行数
-     */
-    public void addReturnedRows(long count) {
-        stats.addReturnedRows(count);
-    }
-
-    /**
-     * 获取执行统计
-     */
-    public ExecutionStats getStats() {
-        return stats;
-    }
-
-    /**
-     * 打印执行统计
-     */
-    public void printStats() {
-        stats.print();
-    }
-
-    /**
-     * 获取执行ID
-     */
-    public String getExecutionId() {
-        return executionId;
-    }
-
-    /**
-     * 获取执行耗时
-     */
-    public long getElapsedTime() {
-        return System.currentTimeMillis() - startTime;
-    }
-
-
-    public static class ExecutionStats {
-        private final Map<String, Long> stepDurations = new HashMap<>();
-
-        private long scannedRows = 0;
-
-        private long returnedRows = 0;
-
-        public void recordStep(String stepName, long duration) {
-            stepDurations.merge(stepName, duration, Long::sum);
+    public void extractGlobalSettingsFromPlan(JQuickLogicalPlanNode plan) {
+        if (plan instanceof JQuickSortNode) {
+            JQuickSortNode sortNode = (JQuickSortNode) plan;
+            setGlobalSort(sortNode.getOrderByItems());
         }
 
-        public void addScannedRows(long count) {
-            this.scannedRows += count;
-        }
-
-        public void addReturnedRows(long count) {
-            this.returnedRows += count;
-        }
-
-        public void print() {
-            System.out.println("=== Execution Statistics ===");
-            System.out.println("Execution ID: " + UUID.randomUUID().toString());
-            System.out.println("Scanned Rows: " + scannedRows);
-            System.out.println("Returned Rows: " + returnedRows);
-            System.out.println("Step Details:");
-            for (Map.Entry<String, Long> entry : stepDurations.entrySet()) {
-                System.out.println("  " + entry.getKey() + ": " + entry.getValue() + " ms");
+        if (plan instanceof JQuickProjectNode) {
+            JQuickProjectNode projectNode = (JQuickProjectNode) plan;
+            if (projectNode.isDistinct()) {
+                setGlobalDistinct(true);
             }
-            System.out.println("============================");
         }
 
-        public Map<String, Long> getStepDurations() {
-            return new HashMap<>(stepDurations);
+        if (plan instanceof JQuickLimitNode) {
+            JQuickLimitNode limitNode = (JQuickLimitNode) plan;
+            setGlobalLimit(limitNode.getLimit(), limitNode.getOffset());
         }
-
-        public long getScannedRows() {
-            return scannedRows;
-        }
-
-        public long getReturnedRows() {
-            return returnedRows;
+        for (JQuickLogicalPlanNode child : plan.getChildren()) {
+            extractGlobalSettingsFromPlan(child);
         }
     }
+
 }
