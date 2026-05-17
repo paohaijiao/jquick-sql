@@ -15,6 +15,9 @@
  */
 package com.github.paohaijiao.ast;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * selectClause
  * : SELECT selectSpec? selectElements

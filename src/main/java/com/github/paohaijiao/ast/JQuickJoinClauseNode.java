@@ -15,17 +15,18 @@
  */
 package com.github.paohaijiao.ast;
 
+import com.github.paohaijiao.enums.JQuickJoinType;
+
 /**
  * joinClause : joinType JOIN tableNameItem (ON fullColumnName '=' fullColumnName)?
  */
 public class JQuickJoinClauseNode implements JQuickASTNode {
-    private final JoinType joinType;
+    private final JQuickJoinType joinType;
     private final JQuickTableNameItemNode tableNameItem;
     private final JQuickFullColumnNameNode leftColumn;
     private final JQuickFullColumnNameNode rightColumn;
 
-    public JQuickJoinClauseNode(JoinType joinType, JQuickTableNameItemNode tableNameItem,
-                                JQuickFullColumnNameNode leftColumn, JQuickFullColumnNameNode rightColumn) {
+    public JQuickJoinClauseNode(JQuickJoinType joinType, JQuickTableNameItemNode tableNameItem, JQuickFullColumnNameNode leftColumn, JQuickFullColumnNameNode rightColumn) {
         this.joinType = joinType;
         this.tableNameItem = tableNameItem;
         this.leftColumn = leftColumn;
@@ -37,7 +38,7 @@ public class JQuickJoinClauseNode implements JQuickASTNode {
         return "JoinClause";
     }
 
-    public JoinType getJoinType() {
+    public JQuickJoinType getJoinType() {
         return joinType;
     }
 
@@ -57,7 +58,4 @@ public class JQuickJoinClauseNode implements JQuickASTNode {
         return leftColumn != null && rightColumn != null;
     }
 
-    public enum JoinType {
-        INNER, CROSS, LEFT, RIGHT, NATURAL, FULL
-    }
 }

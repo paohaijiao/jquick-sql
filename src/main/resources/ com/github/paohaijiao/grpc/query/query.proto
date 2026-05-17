@@ -1,0 +1,89 @@
+// query.proto
+syntax = "proto3";
+
+package com.github.paohaijiao.grpc.query;
+
+option java_multiple_files = true;
+option java_package = "com.github.paohaijiao.grpc.query";
+
+message QueryTask {
+  string taskId = 1;           // 任务ID
+  string queryId = 2;          // 查询ID
+  PhysicalPlanProto plan = 3;   // 物理计划（序列化）
+  int32 parallelism = 4;        // 并行度
+  repeated string dataShards = 5; // 数据分片位置
+}
+
+// 物理计划序列化
+message PhysicalPlanProto {
+  string type = 1;              // SCAN, FILTER, PROJECT, JOIN, AGGREGATE, SORT
+  string tableName = 2;
+  string predicate = 3;
+  repeated string columns = 4;
+  PhysicalPlanProto child = 5;
+  JoinInfo joinInfo = 6;
+  AggregateInfo aggInfo = 7;
+}
+
+message JoinInfo {
+  string leftTable = 1;
+  string rightTable = 2;
+  string leftKey = 3;
+  string rightKey = 4;
+  string joinType = 5; // INNER, LEFT, RIGHT
+}
+
+message AggregateInfo {
+  repeated string groupBy = 1;
+  repeated AggExpr aggregations = 2;
+}
+
+message AggExpr {
+  string function = 1; // SUM, COUNT, AVG, MAX, MIN
+  string column = 2;
+  string alias = 3;
+}
+
+// 查询结果
+message QueryResult {
+  string queryId = 1;
+  string taskId = 2;
+  bool success = 3;
+  string error = 4;
+  repeated RowProto rows = 5;
+  QueryMetrics metrics = 6;
+}
+
+message RowProto {
+  map<string, Value> fields = 1;
+}
+
+message Value {
+  oneof value_type {
+    string stringValue = 1;
+    int64 intValue = 2;
+    double doubleValue = 3;
+    bool boolValue = 4;
+    bytes bytesValue = 5;
+  }
+}
+
+message QueryMetrics {
+  int64 rowCount = 1;
+  int64 processedBytes = 2;
+  int64 executionTimeMs = 3;
+  int64 cpuTimeMs = 4;
+  map<string, double> customMetrics = 5;
+}
+
+// 健康检查
+message HealthCheck {
+  string nodeId = 1;
+  int64 timestamp = 2;
+}
+
+message HealthResponse {
+  bool healthy = 1;
+  int32 activeTasks = 2;
+  int32 availableMemory = 3;
+}

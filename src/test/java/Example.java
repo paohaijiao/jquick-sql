@@ -16,14 +16,14 @@
 
 import com.github.paohaijiao.datasource.JQuickDataSourceManager;
 import com.github.paohaijiao.enums.JQuickBinaryOperator;
-import com.github.paohaijiao.executor.JQuickExecutionContext;
+import com.github.paohaijiao.context.JQuickExecutionContext;
 import com.github.paohaijiao.expression.JQuickExpression;
 import com.github.paohaijiao.expression.domain.JQuickBinaryExpression;
 import com.github.paohaijiao.expression.domain.JQuickColumnRefExpression;
 import com.github.paohaijiao.expression.domain.JQuickLiteralExpression;
+import com.github.paohaijiao.logic.domain.*;
 import com.github.paohaijiao.optimizer.JQuickLogicalPlanOptimizer;
-import com.github.paohaijiao.plan.logic.JQuickLogicalPlanNode;
-import com.github.paohaijiao.plan.logic.domain.*;
+import com.github.paohaijiao.logic.JQuickLogicalPlanNode;
 import com.github.paohaijiao.statement.JQuickDataSet;
 import com.github.paohaijiao.statement.JQuickRow;
 

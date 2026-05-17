@@ -16,15 +16,16 @@
 package com.github.paohaijiao.engine;
 
 import com.github.paohaijiao.ast.JQuickSelectStatementNode;
-import com.github.paohaijiao.executor.JQuickExecutionContext;
+import com.github.paohaijiao.context.JQuickExecutionContext;
+import com.github.paohaijiao.executor.JQuickSQLExecutor;
+import com.github.paohaijiao.logic.service.JQuickASTToLogicalPlanVisitor;
 import com.github.paohaijiao.optimizer.JQuickLogicalPlanOptimizer;
 import com.github.paohaijiao.parser.JQuickSQLLexer;
 import com.github.paohaijiao.parser.JQuickSQLParser;
-import com.github.paohaijiao.plan.logic.JQuickLogicalPlanNode;
-import com.github.paohaijiao.plan.physical.JQuickPhysicalPlanGenerator;
-import com.github.paohaijiao.plan.physical.node.JQuickPhysicalPlanNode;
+import com.github.paohaijiao.logic.JQuickLogicalPlanNode;
+import com.github.paohaijiao.physical.JQuickPhysicalPlanGenerator;
+import com.github.paohaijiao.physical.node.JQuickPhysicalPlanNode;
 import com.github.paohaijiao.statement.JQuickDataSet;
-import com.github.paohaijiao.visitor.ASTToLogicalPlanVisitor;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 
@@ -36,7 +37,8 @@ public class JQuickSQLEngine {
     private final JQuickLogicalPlanOptimizer optimizer = new JQuickLogicalPlanOptimizer();
     private final JQuickPhysicalPlanGenerator physicalGenerator = new JQuickPhysicalPlanGenerator();
 
-    private JQuickSQLEngine() {}
+    private JQuickSQLEngine() {
+    }
 
     public static JQuickSQLEngine getInstance() {
         if (instance == null) {
@@ -57,18 +59,14 @@ public class JQuickSQLEngine {
         try {
             JQuickSQLLexer lexer = new JQuickSQLLexer(CharStreams.fromString(sql));
             CommonTokenStream tokens = new CommonTokenStream(lexer);
-            // 2. 语法分析
+            //语法分析
             JQuickSQLParser parser = new JQuickSQLParser(tokens);
             JQuickSQLParser.QueryContext parseTree = parser.query();
-
-            // 3. 构建AST (需要通过ParseTreeWalker或自定义构建器)
-            // 这里简化处理，实际需要完整的AST构建
-            JQuickSelectStatementNode ast = buildAST(parseTree);
-
-            // 4. AST → 逻辑计划
-            ASTToLogicalPlanVisitor visitor = new ASTToLogicalPlanVisitor();
+            // 构建AST
+            JQuickSelectStatementNode ast = buildAST(sql);
+            // AST → 逻辑计划
+            JQuickASTToLogicalPlanVisitor visitor = new JQuickASTToLogicalPlanVisitor();
             JQuickLogicalPlanNode logicalPlan = visitor.visit(ast);
-
             // 5. 逻辑计划优化
             JQuickLogicalPlanNode optimizedPlan = optimizer.optimize(logicalPlan);
 
@@ -91,6 +89,9 @@ public class JQuickSQLEngine {
         return execute(sql, context);
     }
 
-    private JQuickSelectStatementNode buildAST(JQuickSQLParser.QueryContext parseTree) {
-        return null;
+    private JQuickSelectStatementNode buildAST(String sql) {
+        JQuickSQLExecutor executor=new JQuickSQLExecutor();
+        JQuickSelectStatementNode node=executor.execute(sql);
+        return node;
     }
+}

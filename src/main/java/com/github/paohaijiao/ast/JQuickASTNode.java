@@ -5,3 +5,4 @@ public interface JQuickASTNode {
     public String getNodeType();
 
 }
+

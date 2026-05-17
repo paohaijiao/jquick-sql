@@ -16,14 +16,15 @@
 package com.github.paohaijiao.optimizer;
 
 import com.github.paohaijiao.enums.JQuickBinaryOperator;
-import com.github.paohaijiao.executor.JQuickExecutionContext;
+import com.github.paohaijiao.context.JQuickExecutionContext;
 import com.github.paohaijiao.expression.JQuickExpression;
 import com.github.paohaijiao.expression.domain.JQuickBinaryExpression;
 import com.github.paohaijiao.expression.domain.JQuickColumnRefExpression;
 import com.github.paohaijiao.expression.domain.JQuickLiteralExpression;
-import com.github.paohaijiao.plan.logic.JQuickLogicalPlanNode;
-import com.github.paohaijiao.plan.logic.JQuickLogicalPlanVisitor;
-import com.github.paohaijiao.plan.logic.domain.*;
+import com.github.paohaijiao.expression.domain.JQuickUnaryExpression;
+import com.github.paohaijiao.logic.JQuickLogicalPlanNode;
+import com.github.paohaijiao.logic.JQuickLogicalPlanVisitor;
+import com.github.paohaijiao.logic.domain.*;
 import com.github.paohaijiao.statement.JQuickDataSet;
 
 import java.util.*;
@@ -87,11 +88,9 @@ public class JQuickLogicalPlanOptimizer {
             }
             iteration++;
         } while (changed && iteration < maxIterations);
-
         if (enableRuleTracing) {
             System.out.println("Optimization completed after " + iteration + " iterations");
         }
-
         return current;
     }
 
@@ -131,13 +130,11 @@ public class JQuickLogicalPlanOptimizer {
                 JQuickBinaryExpression binary = (JQuickBinaryExpression) expr;
                 JQuickExpression left = foldConstants(binary.getLeft());
                 JQuickExpression right = foldConstants(binary.getRight());
-
                 if (left.isConstant() && right.isConstant()) {
                     Object value = binary.getOperator().apply(
                             left.evaluate(null), right.evaluate(null));
                     return new JQuickLiteralExpression(value);
                 }
-
                 // 简化：x + 0 → x
                 if (binary.getOperator() == JQuickBinaryOperator.PLUS) {
                     if (isZero(right)) return left;
@@ -195,16 +192,13 @@ public class JQuickLogicalPlanOptimizer {
                     JQuickTableScanNode scan = (JQuickTableScanNode) child;
                     // 将过滤条件下推到表扫描节点
                     JQuickExpression existingFilter = scan.getFilterPredicate();
-                    JQuickExpression combined = existingFilter != null ?
-                            new JQuickBinaryExpression(existingFilter, predicate, BinaryOperator.AND) : predicate;
-                    return new JQuickTableScanNode(scan.getTableName(), scan.getAlias(),
-                            scan.getRequiredColumns(), combined);
+                    JQuickExpression combined = existingFilter != null ? new JQuickBinaryExpression(existingFilter, predicate, JQuickBinaryOperator.AND) : predicate;
+                    return new JQuickTableScanNode(scan.getTableName(), scan.getAlias(), scan.getRequiredColumns(), combined);
                 } else if (child instanceof JQuickProjectNode) {
                     // 投影和过滤交换（如果过滤列都在投影中）
                     JQuickProjectNode project = (JQuickProjectNode) child;
                     if (canPushdown(predicate, project)) {
-                        return new JQuickProjectNode(project.getSelectItems(),
-                                new JQuickFilterNode(predicate, project.getChild()), project.isDistinct());
+                        return new JQuickProjectNode(project.getSelectItems(), new JQuickFilterNode(predicate, project.getChild()), project.isDistinct());
                     }
                 } else if (child instanceof JQuickJoinNode) {
                     // 将过滤条件推入Join
@@ -215,9 +209,7 @@ public class JQuickLogicalPlanOptimizer {
         }
 
         private boolean canPushdown(JQuickExpression predicate, JQuickProjectNode project) {
-            Set<String> projectColumns = project.getSelectItems().stream()
-                    .map(JQuickProjectNode.SelectItem::getAlias)
-                    .collect(Collectors.toSet());
+            Set<String> projectColumns = project.getSelectItems().stream().map(JQuickProjectNode.SelectItem::getAlias).collect(Collectors.toSet());
             return projectColumns.containsAll(predicate.getReferencedColumns());
         }
 
@@ -225,42 +217,33 @@ public class JQuickLogicalPlanOptimizer {
             JQuickExpression predicate = filter.getPredicate();
             Set<String> leftColumns = getColumnNames(join.getLeft());
             Set<String> rightColumns = getColumnNames(join.getRight());
-
             // 分离过滤条件
             List<JQuickExpression> leftFilters = new ArrayList<>();
             List<JQuickExpression> rightFilters = new ArrayList<>();
             List<JQuickExpression> joinFilters = new ArrayList<>();
-
             splitPredicate(predicate, leftColumns, rightColumns, leftFilters, rightFilters, joinFilters);
-
             JQuickLogicalPlanNode newLeft = join.getLeft();
             JQuickLogicalPlanNode newRight = join.getRight();
-
             if (!leftFilters.isEmpty()) {
                 JQuickExpression leftFilter = combinePredicates(leftFilters);
                 newLeft = new JQuickFilterNode(leftFilter, newLeft);
             }
-
             if (!rightFilters.isEmpty()) {
                 JQuickExpression rightFilter = combinePredicates(rightFilters);
                 newRight = new JQuickFilterNode(rightFilter, newRight);
             }
-
             JQuickExpression joinFilter = combinePredicates(joinFilters);
             JQuickJoinNode newJoin = new JQuickJoinNode(join.getJoinType(), newLeft, newRight, joinFilter);
-
             return newJoin;
         }
 
         private void splitPredicate(JQuickExpression expr, Set<String> leftCols, Set<String> rightCols, List<JQuickExpression> leftFilters, List<JQuickExpression> rightFilters, List<JQuickExpression> joinFilters) {
-            if (expr instanceof JQuickBinaryExpression &&
-                    ((JQuickBinaryExpression) expr).getOperator() == BinaryOperator.AND) {
+            if (expr instanceof JQuickBinaryExpression && ((JQuickBinaryExpression) expr).getOperator() == JQuickBinaryOperator.AND) {
                 JQuickBinaryExpression binary = (JQuickBinaryExpression) expr;
                 splitPredicate(binary.getLeft(), leftCols, rightCols, leftFilters, rightFilters, joinFilters);
                 splitPredicate(binary.getRight(), leftCols, rightCols, leftFilters, rightFilters, joinFilters);
                 return;
             }
-
             Set<String> referenced = new HashSet<>(expr.getReferencedColumns());
             if (referenced.stream().allMatch(leftCols::contains)) {
                 leftFilters.add(expr);
@@ -277,7 +260,7 @@ public class JQuickLogicalPlanOptimizer {
 
             JQuickExpression result = predicates.get(0);
             for (int i = 1; i < predicates.size(); i++) {
-                result = new JQuickBinaryExpression(result, predicates.get(i), BinaryOperator.AND);
+                result = new JQuickBinaryExpression(result, predicates.get(i), JQuickBinaryOperator.AND);
             }
             return result;
         }
@@ -409,8 +392,7 @@ public class JQuickLogicalPlanOptimizer {
                 JQuickFilterNode outer = (JQuickFilterNode) node;
                 if (outer.getChild() instanceof JQuickFilterNode) {
                     JQuickFilterNode inner = (JQuickFilterNode) outer.getChild();
-                    JQuickExpression combined = new JQuickBinaryExpression(
-                            outer.getPredicate(), inner.getPredicate(), BinaryOperator.AND);
+                    JQuickExpression combined = new JQuickBinaryExpression(outer.getPredicate(), inner.getPredicate(), JQuickBinaryOperator.AND);
                     return new JQuickFilterNode(combined, inner.getChild());
                 }
             }
@@ -623,7 +605,7 @@ public class JQuickLogicalPlanOptimizer {
                 JQuickExpression left = simplifyExpression(binary.getLeft());
                 JQuickExpression right = simplifyExpression(binary.getRight());
                 // NOT (x = y) → x != y
-                if (binary.getOperator() == JQuickBinaryOperator.EQ && left instanceof UnaryExpression) {
+                if (binary.getOperator() == JQuickBinaryOperator.EQ && left instanceof JQuickUnaryExpression) {
                     // 处理NOT
                 }
 
@@ -667,7 +649,7 @@ public class JQuickLogicalPlanOptimizer {
 
                 if (child instanceof JQuickJoinNode) {
                     // 如果聚合只依赖一侧，可以下推
-                    return pushAggregateToJoinSide(groupBy, (JoinNode) child);
+                    return pushAggregateToJoinSide(groupBy, (JQuickJoinNode) child);
                 } else if (child instanceof JQuickFilterNode) {
                     // 交换聚合和过滤（如果可能）
                     return new JQuickFilterNode(((JQuickFilterNode) child).getPredicate(),
@@ -686,12 +668,10 @@ public class JQuickLogicalPlanOptimizer {
 
             if (leftColumns.containsAll(groupColumns)) {
                 // 聚合只依赖左表，可以先聚合再Join
-                JQuickGroupByNode leftAgg = new JQuickGroupByNode(groupBy.getGroupKeys(),
-                        groupBy.getAggregateItems(), join.getLeft(), null);
+                JQuickGroupByNode leftAgg = new JQuickGroupByNode(groupBy.getGroupKeys(), groupBy.getAggregateItems(), join.getLeft(), null);
                 return new JQuickJoinNode(join.getJoinType(), leftAgg, join.getRight(), join.getCondition());
             } else if (rightColumns.containsAll(groupColumns)) {
-                JQuickGroupByNode rightAgg = new JQuickGroupByNode(groupBy.getGroupKeys(),
-                        groupBy.getAggregateItems(), join.getRight(), null);
+                JQuickGroupByNode rightAgg = new JQuickGroupByNode(groupBy.getGroupKeys(), groupBy.getAggregateItems(), join.getRight(), null);
                 return new JQuickJoinNode(join.getJoinType(), join.getLeft(), rightAgg, join.getCondition());
             }
 

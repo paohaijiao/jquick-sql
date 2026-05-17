@@ -17,7 +17,7 @@ package com.github.paohaijiao.expression.domain;
 
 
 import com.github.paohaijiao.expression.JQuickExpression;
-import com.github.paohaijiao.plan.logic.domain.JQuickSubqueryNode;
+import com.github.paohaijiao.logic.domain.JQuickSubqueryNode;
 import com.github.paohaijiao.statement.JQuickDataSet;
 import com.github.paohaijiao.statement.JQuickRow;
 
