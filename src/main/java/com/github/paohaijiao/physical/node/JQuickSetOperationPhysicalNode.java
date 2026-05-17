@@ -15,37 +15,36 @@
  */
 package com.github.paohaijiao.physical.node;
 
-
+import com.github.paohaijiao.enums.JQuickSQLOperationType;
 import com.github.paohaijiao.physical.JQuickPhysicalPlanNode;
 import com.github.paohaijiao.physical.JQuickPhysicalPlanVisitor;
+import com.github.paohaijiao.physical.domain.JQuickPhysicalColumn;
 
-import java.util.ArrayList;
 import java.util.List;
 
-public class JQuickTopNPhysicalNode extends JQuickSortPhysicalNode {
+public class JQuickSetOperationPhysicalNode extends JQuickAbstractPhysicalNode {
 
-    private final int limit;
+    private final JQuickSQLOperationType operationType;
 
-    private final int offset;
-
-    public JQuickTopNPhysicalNode(List<OrderByItem> orderByItems, int limit, int offset, JQuickPhysicalPlanNode child) {
-        super(orderByItems, child);
-        this.limit = limit;
-        this.offset = offset;
+    public JQuickSetOperationPhysicalNode(JQuickSQLOperationType operationType, JQuickPhysicalPlanNode left, JQuickPhysicalPlanNode right) {
+        super(left, right);
+        this.operationType = operationType;
     }
 
     @Override
     public String getNodeType() {
-        return "TopN";
+        return "SetOperation";
+    }
+
+    @Override
+    public List<JQuickPhysicalColumn> getOutputSchema() {
+        return children.get(0).getOutputSchema();
     }
 
     @Override
     public JQuickPhysicalPlanNode clone() {
-        List<OrderByItem> clonedItems = new ArrayList<>();
-        for (OrderByItem item : getOrderByItems()) {
-            clonedItems.add(item.clone());
-        }
-        return new JQuickTopNPhysicalNode(clonedItems, limit, offset, children.get(0).clone());
+        return new JQuickSetOperationPhysicalNode(operationType,
+                children.get(0).clone(), children.get(1).clone());
     }
 
     @Override
@@ -53,7 +52,5 @@ public class JQuickTopNPhysicalNode extends JQuickSortPhysicalNode {
         visitor.visit(this);
     }
 
-    public int getLimit() { return limit; }
-
-    public int getOffset() { return offset; }
+    public JQuickSQLOperationType getOperationType() { return operationType; }
 }

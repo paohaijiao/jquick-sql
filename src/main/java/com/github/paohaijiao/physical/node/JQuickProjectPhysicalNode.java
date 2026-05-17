@@ -15,47 +15,45 @@
  */
 package com.github.paohaijiao.physical.node;
 
-import com.github.paohaijiao.context.JQuickExecutionContext;
-import com.github.paohaijiao.logic.domain.JQuickProjectNode;
+
+import com.github.paohaijiao.expression.JQuickExpression;
 import com.github.paohaijiao.physical.JQuickPhysicalPlanNode;
-import com.github.paohaijiao.statement.JQuickDataSet;
-import com.github.paohaijiao.statement.JQuickRow;
+import com.github.paohaijiao.physical.JQuickPhysicalPlanVisitor;
+import com.github.paohaijiao.physical.domain.JQuickPhysicalColumn;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
-public class JQuickProjectPhysicalNode implements JQuickPhysicalPlanNode {
-    private final List<JQuickProjectNode.SelectItem> selectItems;
-    private final JQuickPhysicalPlanNode child;
+public class JQuickProjectPhysicalNode extends JQuickAbstractPhysicalNode {
+
+    private final List<SelectItem> selectItems;
     private final boolean distinct;
 
-    public JQuickProjectPhysicalNode(List<JQuickProjectNode.SelectItem> selectItems, JQuickPhysicalPlanNode child, boolean distinct) {
-        this.selectItems = selectItems;
-        this.child = child;
-        this.distinct = distinct;
+    public static class SelectItem {
+
+        private final JQuickExpression expression;
+
+        private final String alias;
+
+        public SelectItem(JQuickExpression expression, String alias) {
+            this.expression = expression;
+            this.alias = alias;
+        }
+
+        public JQuickExpression getExpression() { return expression; }
+
+        public String getAlias() { return alias; }
+
+        public SelectItem clone() {
+            return new SelectItem(expression.clone(), alias);
+        }
     }
 
-    @Override
-    public JQuickDataSet execute(JQuickExecutionContext context) {
-        JQuickDataSet data = child.execute(context);
-        JQuickDataSet.Builder builder = JQuickDataSet.builder();
-        for (JQuickProjectNode.SelectItem item : selectItems) {
-            builder.addColumn(item.getAlias(), item.getExpression().getType(), "projection");
-        }
-
-        for (JQuickRow row : data.getRows()) {
-            JQuickRow newRow = new JQuickRow();
-            for (JQuickProjectNode.SelectItem item : selectItems) {
-                newRow.put(item.getAlias(), item.getExpression().evaluate(row));
-            }
-            builder.addRow(newRow);
-        }
-
-        JQuickDataSet result = builder.build();
-        if (distinct) {
-            result = result.distinct();
-        }
-
-        return result;
+    public JQuickProjectPhysicalNode(List<SelectItem> selectItems, JQuickPhysicalPlanNode child, boolean distinct) {
+        super(child);
+        this.selectItems = new ArrayList<>(selectItems);
+        this.distinct = distinct;
     }
 
     @Override
@@ -64,7 +62,25 @@ public class JQuickProjectPhysicalNode implements JQuickPhysicalPlanNode {
     }
 
     @Override
-    public long getEstimatedCost() {
-        return child.getEstimatedCost();
+    public List<JQuickPhysicalColumn> getOutputSchema() {
+        return selectItems.stream()
+                .map(item -> new JQuickPhysicalColumn(item.getAlias(), Object.class, null, true))
+                .collect(Collectors.toList());
     }
+
+    @Override
+    public JQuickPhysicalPlanNode clone() {
+        List<SelectItem> clonedItems = selectItems.stream()
+                .map(SelectItem::clone)
+                .collect(Collectors.toList());
+        return new JQuickProjectPhysicalNode(clonedItems, children.get(0).clone(), distinct);
+    }
+
+    @Override
+    public void accept(JQuickPhysicalPlanVisitor visitor) {
+        visitor.visit(this);
+    }
+
+    public List<SelectItem> getSelectItems() { return selectItems; }
+    public boolean isDistinct() { return distinct; }
 }

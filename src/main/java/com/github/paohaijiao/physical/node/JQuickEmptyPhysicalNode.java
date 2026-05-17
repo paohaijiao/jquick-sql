@@ -18,42 +18,45 @@ package com.github.paohaijiao.physical.node;
 
 import com.github.paohaijiao.physical.JQuickPhysicalPlanNode;
 import com.github.paohaijiao.physical.JQuickPhysicalPlanVisitor;
+import com.github.paohaijiao.physical.domain.JQuickPhysicalColumn;
+import com.github.paohaijiao.physical.domain.JQuickPhysicalStats;
 
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
-public class JQuickTopNPhysicalNode extends JQuickSortPhysicalNode {
+public class JQuickEmptyPhysicalNode implements JQuickPhysicalPlanNode {
 
-    private final int limit;
+    public static final JQuickEmptyPhysicalNode INSTANCE = new JQuickEmptyPhysicalNode();
 
-    private final int offset;
-
-    public JQuickTopNPhysicalNode(List<OrderByItem> orderByItems, int limit, int offset, JQuickPhysicalPlanNode child) {
-        super(orderByItems, child);
-        this.limit = limit;
-        this.offset = offset;
-    }
+    private JQuickEmptyPhysicalNode() {}
 
     @Override
     public String getNodeType() {
-        return "TopN";
+        return "Empty";
+    }
+
+    @Override
+    public List<JQuickPhysicalPlanNode> getChildren() {
+        return Collections.emptyList();
+    }
+
+    @Override
+    public List<JQuickPhysicalColumn> getOutputSchema() {
+        return Collections.emptyList();
+    }
+
+    @Override
+    public JQuickPhysicalStats getStats() {
+        return JQuickPhysicalStats.empty();
     }
 
     @Override
     public JQuickPhysicalPlanNode clone() {
-        List<OrderByItem> clonedItems = new ArrayList<>();
-        for (OrderByItem item : getOrderByItems()) {
-            clonedItems.add(item.clone());
-        }
-        return new JQuickTopNPhysicalNode(clonedItems, limit, offset, children.get(0).clone());
+        return INSTANCE;
     }
 
     @Override
     public void accept(JQuickPhysicalPlanVisitor visitor) {
         visitor.visit(this);
     }
-
-    public int getLimit() { return limit; }
-
-    public int getOffset() { return offset; }
 }

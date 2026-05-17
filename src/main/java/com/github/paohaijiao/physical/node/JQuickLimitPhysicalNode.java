@@ -14,29 +14,28 @@
  * Copyright (c) [2025-2099] Martin (goudingcheng@gmail.com)
  */
 package com.github.paohaijiao.physical.node;
-import com.github.paohaijiao.physical.JQuickPhysicalPlanNode;
-import com.github.paohaijiao.plan.logical.ExecutionContext;
-import com.github.paohaijiao.statement.JQuickDataSet;
 
-public class JQuickLimitPhysicalNode implements JQuickPhysicalPlanNode {
+
+import com.github.paohaijiao.physical.JQuickPhysicalPlanNode;
+import com.github.paohaijiao.physical.JQuickPhysicalPlanVisitor;
+import com.github.paohaijiao.physical.domain.JQuickPhysicalColumn;
+
+import java.util.List;
+
+public class JQuickLimitPhysicalNode extends JQuickAbstractPhysicalNode {
+
     private final int limit;
+
     private final int offset;
-    private final JQuickPhysicalPlanNode child;
 
     public JQuickLimitPhysicalNode(int limit, int offset, JQuickPhysicalPlanNode child) {
+        super(child);
         this.limit = limit;
         this.offset = offset;
-        this.child = child;
     }
 
-    @Override
-    public JQuickDataSet execute(ExecutionContext context) {
-        JQuickDataSet data = child.execute(context);
-
-        if (offset > 0) {
-            data = data.skip(offset);
-        }
-        return data.limit(limit);
+    public JQuickLimitPhysicalNode(int limit, JQuickPhysicalPlanNode child) {
+        this(limit, 0, child);
     }
 
     @Override
@@ -45,7 +44,21 @@ public class JQuickLimitPhysicalNode implements JQuickPhysicalPlanNode {
     }
 
     @Override
-    public long getEstimatedCost() {
-        return Math.min(child.getEstimatedCost(), limit + offset);
+    public List<JQuickPhysicalColumn> getOutputSchema() {
+        return children.get(0).getOutputSchema();
     }
+
+    @Override
+    public JQuickPhysicalPlanNode clone() {
+        return new JQuickLimitPhysicalNode(limit, offset, children.get(0).clone());
+    }
+
+    @Override
+    public void accept(JQuickPhysicalPlanVisitor visitor) {
+        visitor.visit(this);
+    }
+
+    public int getLimit() { return limit; }
+
+    public int getOffset() { return offset; }
 }

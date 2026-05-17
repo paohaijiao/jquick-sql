@@ -15,124 +15,61 @@
  */
 package com.github.paohaijiao.physical.node;
 
-
-import com.github.paohaijiao.enums.JQuickBinaryOperator;
-import com.github.paohaijiao.context.JQuickExecutionContext;
+import com.github.paohaijiao.enums.JQuickJoinType;
 import com.github.paohaijiao.expression.JQuickExpression;
-import com.github.paohaijiao.expression.domain.JQuickBinaryExpression;
-import com.github.paohaijiao.expression.domain.JQuickColumnRefExpression;
-import com.github.paohaijiao.logic.domain.JQuickJoinNode;
 import com.github.paohaijiao.physical.JQuickPhysicalPlanNode;
-import com.github.paohaijiao.statement.JQuickColumnMeta;
-import com.github.paohaijiao.statement.JQuickDataSet;
-import com.github.paohaijiao.statement.JQuickRow;
+import com.github.paohaijiao.physical.JQuickPhysicalPlanVisitor;
+import com.github.paohaijiao.physical.domain.JQuickPhysicalColumn;
+import com.github.paohaijiao.physical.domain.JQuickPhysicalStats;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 
-public class JQuickHashJoinPhysicalNode implements JQuickPhysicalPlanNode {
-    private final JQuickJoinNode.JoinType joinType;
-    private final JQuickPhysicalPlanNode left;
-    private final JQuickPhysicalPlanNode right;
+public class JQuickHashJoinPhysicalNode extends JQuickAbstractPhysicalNode {
+
+    private final JQuickJoinType joinType;
+
     private final JQuickExpression condition;
-    private final boolean buildFromLeft;
 
-    public JQuickHashJoinPhysicalNode(JQuickJoinNode.JoinType joinType, JQuickPhysicalPlanNode left, JQuickPhysicalPlanNode right, JQuickExpression condition, boolean buildFromLeft) {
+    private final List<JoinKeyPair> joinKeys;
+
+    private final BuildSide buildSide;
+
+    private final JoinDistribution distribution;
+
+    public enum BuildSide { LEFT, RIGHT }
+
+    public enum JoinDistribution {
+        LOCAL, SHUFFLE_HASH, BROADCAST_HASH, PARTITIONED
+    }
+
+    public static class JoinKeyPair {
+
+        private final JQuickExpression leftKey;
+
+        private final JQuickExpression rightKey;
+
+        public JoinKeyPair(JQuickExpression leftKey, JQuickExpression rightKey) {
+            this.leftKey = leftKey;
+            this.rightKey = rightKey;
+        }
+
+        public JQuickExpression getLeftKey() { return leftKey; }
+        public JQuickExpression getRightKey() { return rightKey; }
+
+        public JoinKeyPair clone() {
+            return new JoinKeyPair(leftKey.clone(), rightKey.clone());
+        }
+    }
+
+    public JQuickHashJoinPhysicalNode(JQuickJoinType joinType, JQuickPhysicalPlanNode left, JQuickPhysicalPlanNode right, JQuickExpression condition, List<JoinKeyPair> joinKeys, BuildSide buildSide, JoinDistribution distribution) {
+        super(left, right);
         this.joinType = joinType;
-        this.left = left;
-        this.right = right;
         this.condition = condition;
-        this.buildFromLeft = buildFromLeft;
-    }
-
-    @Override
-    public JQuickDataSet execute(JQuickExecutionContext context) {
-        JQuickDataSet buildData = buildFromLeft ? left.execute(context) : right.execute(context);
-        JQuickDataSet probeData = buildFromLeft ? right.execute(context) : left.execute(context);
-
-        String joinColumn = extractJoinColumn();
-
-        // 构建哈希表
-        Map<Object, List<JQuickRow>> hashTable = new HashMap<>();
-        for (JQuickRow row : buildData.getRows()) {
-            Object key = row.get(joinColumn);
-            hashTable.computeIfAbsent(key, k -> new ArrayList<>()).add(row);
-        }
-
-        // 探测
-        List<JQuickRow> resultRows = new ArrayList<>();
-        Set<JQuickRow> matchedBuildRows = new HashSet<>();
-
-        for (JQuickRow probeRow : probeData.getRows()) {
-            Object key = probeRow.get(joinColumn);
-            List<JQuickRow> matchingRows = hashTable.get(key);
-
-            if (matchingRows != null) {
-                for (JQuickRow buildRow : matchingRows) {
-                    matchedBuildRows.add(buildRow);
-                    JQuickRow merged = buildFromLeft ?
-                            mergeRows(buildRow, probeRow) : mergeRows(probeRow, buildRow);
-                    resultRows.add(merged);
-                }
-            } else if (joinType ==JQuickJoinNode.JoinType.LEFT && buildFromLeft) {
-                resultRows.add(mergeRows(probeRow, createNullRow(buildData)));
-            } else if (joinType == JQuickJoinNode.JoinType.RIGHT && !buildFromLeft) {
-                resultRows.add(mergeRows(createNullRow(buildData), probeRow));
-            }
-        }
-
-        // FULL JOIN 添加未匹配的build侧行
-        if (joinType == JQuickJoinNode.JoinType.FULL) {
-            for (List<JQuickRow> rows : hashTable.values()) {
-                for (JQuickRow buildRow : rows) {
-                    if (!matchedBuildRows.contains(buildRow)) {
-                        JQuickRow merged = buildFromLeft ?
-                                mergeRows(buildRow, createNullRow(probeData)) :
-                                mergeRows(createNullRow(probeData), buildRow);
-                        resultRows.add(merged);
-                    }
-                }
-            }
-        }
-
-        List<JQuickColumnMeta> mergedColumns = mergeColumns(buildData, probeData);
-        return new JQuickDataSet(mergedColumns, resultRows);
-    }
-
-    private String extractJoinColumn() {
-        if (condition instanceof JQuickBinaryExpression) {
-            JQuickBinaryExpression binary = (JQuickBinaryExpression) condition;
-            if (binary.getOperator() == JQuickBinaryOperator.EQ) {
-                if (binary.getLeft() instanceof JQuickColumnRefExpression) {
-                    return ((JQuickColumnRefExpression) binary.getLeft()).getColumnName();
-                }
-                if (binary.getRight() instanceof JQuickColumnRefExpression) {
-                    return ((JQuickColumnRefExpression) binary.getRight()).getColumnName();
-                }
-            }
-        }
-        return null;
-    }
-
-    private JQuickRow mergeRows(JQuickRow outer, JQuickRow inner) {
-        JQuickRow merged = new JQuickRow();
-        merged.putAll(outer);
-        merged.putAll(inner);
-        return merged;
-    }
-
-    private JQuickRow createNullRow(JQuickDataSet dataSet) {
-        JQuickRow nullRow = new JQuickRow();
-        for (JQuickColumnMeta col : dataSet.getColumns()) {
-            nullRow.put(col.getName(), null);
-        }
-        return nullRow;
-    }
-
-    private List<JQuickColumnMeta> mergeColumns(JQuickDataSet left, JQuickDataSet right) {
-        List<JQuickColumnMeta> merged = new ArrayList<>();
-        merged.addAll(left.getColumns());
-        merged.addAll(right.getColumns());
-        return merged;
+        this.joinKeys = joinKeys != null ? new ArrayList<>(joinKeys) : new ArrayList<>();
+        this.buildSide = buildSide;
+        this.distribution = distribution;
     }
 
     @Override
@@ -141,7 +78,48 @@ public class JQuickHashJoinPhysicalNode implements JQuickPhysicalPlanNode {
     }
 
     @Override
-    public long getEstimatedCost() {
-        return left.getEstimatedCost() + right.getEstimatedCost();
+    public List<JQuickPhysicalColumn> getOutputSchema() {
+        List<JQuickPhysicalColumn> schema = new ArrayList<>();
+        schema.addAll(children.get(0).getOutputSchema());
+        schema.addAll(children.get(1).getOutputSchema());
+        return schema;
     }
+
+    @Override
+    public JQuickPhysicalStats getStats() {
+        long leftRows = children.get(0).getStats().getEstimatedRowCount();
+        long rightRows = children.get(1).getStats().getEstimatedRowCount();
+        long estimatedRows = Math.min(leftRows, rightRows);
+        return new JQuickPhysicalStats(estimatedRows, estimatedRows * 200, new HashMap<>());
+    }
+
+    @Override
+    public JQuickPhysicalPlanNode clone() {
+        List<JoinKeyPair> clonedKeys = joinKeys.stream()
+                .map(JoinKeyPair::clone)
+                .collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
+        return new JQuickHashJoinPhysicalNode(joinType,
+                children.get(0).clone(), children.get(1).clone(),
+                condition != null ? condition.clone() : null,
+                clonedKeys, buildSide, distribution);
+    }
+
+    @Override
+    public void accept(JQuickPhysicalPlanVisitor visitor) {
+        visitor.visit(this);
+    }
+
+    public JQuickJoinType getJoinType() { return joinType; }
+
+    public JQuickExpression getCondition() { return condition; }
+
+    public List<JoinKeyPair> getJoinKeys() { return joinKeys; }
+
+    public BuildSide getBuildSide() { return buildSide; }
+
+    public JoinDistribution getDistribution() { return distribution; }
+
+    public JQuickPhysicalPlanNode getLeft() { return children.get(0); }
+
+    public JQuickPhysicalPlanNode getRight() { return children.get(1); }
 }

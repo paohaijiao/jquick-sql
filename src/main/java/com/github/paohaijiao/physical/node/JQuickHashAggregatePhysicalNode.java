@@ -14,185 +14,108 @@
  * Copyright (c) [2025-2099] Martin (goudingcheng@gmail.com)
  */
 package com.github.paohaijiao.physical.node;
-
-
-import com.github.paohaijiao.context.JQuickExecutionContext;
 import com.github.paohaijiao.expression.JQuickExpression;
-import com.github.paohaijiao.logic.domain.JQuickGroupByNode;
-
-import com.github.paohaijiao.physical.JQuickPhysicalPlanNode;
-import com.github.paohaijiao.statement.JQuickDataSet;
-import com.github.paohaijiao.statement.JQuickRow;
+import com.github.paohaijiao.physical.*;
+import com.github.paohaijiao.physical.domain.JQuickPhysicalColumn;
+import com.github.paohaijiao.physical.domain.JQuickPhysicalStats;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
-public class JQuickHashAggregatePhysicalNode implements JQuickPhysicalPlanNode {
+public class JQuickHashAggregatePhysicalNode extends JQuickAbstractPhysicalNode {
+
     private final List<JQuickExpression> groupKeys;
-    private final List<JQuickGroupByNode.AggregateItem> aggregateItems;
+
+    private final List<AggregateFunction> aggregates;
+
     private final JQuickExpression havingCondition;
-    private final JQuickPhysicalPlanNode child;
 
-    public JQuickHashAggregatePhysicalNode(List<JQuickExpression> groupKeys,
-                                           List<JQuickGroupByNode.AggregateItem> aggregateItems,
-                                           JQuickExpression havingCondition,
-                                           JQuickPhysicalPlanNode child) {
-        this.groupKeys = groupKeys;
-        this.aggregateItems = aggregateItems;
+    private final AggregateStage stage;
+
+    private final List<GroupingSet> groupingSets;
+
+    public enum AggregateStage {
+        PARTIAL, FINAL, SINGLE
+    }
+
+    public static class AggregateFunction {
+
+        private final String functionName;
+
+        private final JQuickExpression argument;
+
+        private final boolean distinct;
+
+        private final String alias;
+
+        private final boolean isCountStar;
+
+        private final String separator;
+
+        private final AggregateStage internalStage;
+
+        public AggregateFunction(String functionName, JQuickExpression argument, boolean distinct, String alias, boolean isCountStar, String separator, AggregateStage internalStage) {
+            this.functionName = functionName;
+            this.argument = argument;
+            this.distinct = distinct;
+            this.alias = alias;
+            this.isCountStar = isCountStar;
+            this.separator = separator;
+            this.internalStage = internalStage;
+        }
+
+        public AggregateFunction(String functionName, JQuickExpression argument, boolean distinct, String alias) {
+            this(functionName, argument, distinct, alias, false, null, AggregateStage.SINGLE);
+        }
+
+        public String getFunctionName() { return functionName; }
+
+        public JQuickExpression getArgument() { return argument; }
+
+        public boolean isDistinct() { return distinct; }
+
+        public String getAlias() { return alias; }
+
+        public boolean isCountStar() { return isCountStar; }
+
+        public String getSeparator() { return separator; }
+
+        public AggregateStage getInternalStage() { return internalStage; }
+
+        public AggregateFunction clone() {
+            return new AggregateFunction(functionName, argument != null ? argument.clone() : null, distinct, alias, isCountStar, separator, internalStage);
+        }
+    }
+
+    public static class GroupingSet {
+
+        private final List<JQuickExpression> keys;
+
+        private final GroupingSetType type;
+
+        public enum GroupingSetType { SIMPLE, ROLLUP, CUBE }
+
+        public GroupingSet(List<JQuickExpression> keys, GroupingSetType type) {
+            this.keys = new ArrayList<>(keys);
+            this.type = type;
+        }
+
+        public List<JQuickExpression> getKeys() { return keys; }
+
+        public GroupingSetType getType() { return type; }
+    }
+
+    public JQuickHashAggregatePhysicalNode(List<JQuickExpression> groupKeys, List<AggregateFunction> aggregates, JQuickPhysicalPlanNode child, JQuickExpression havingCondition, AggregateStage stage) {
+        this(groupKeys, aggregates, child, havingCondition, stage, null);
+    }
+
+    public JQuickHashAggregatePhysicalNode(List<JQuickExpression> groupKeys, List<AggregateFunction> aggregates, JQuickPhysicalPlanNode child, JQuickExpression havingCondition, AggregateStage stage, List<GroupingSet> groupingSets) {
+        super(child);
+        this.groupKeys = groupKeys != null ? new ArrayList<>(groupKeys) : new ArrayList<>();
+        this.aggregates = new ArrayList<>(aggregates);
         this.havingCondition = havingCondition;
-        this.child = child;
-    }
-
-    @Override
-    public JQuickDataSet execute(JQuickExecutionContext context) {
-        JQuickDataSet data = child.execute(context);
-        // 分组聚合
-        Map<GroupKey, Map<String, Object>> groups = new LinkedHashMap<>();
-
-        for (JQuickRow row : data.getRows()) {
-            GroupKey key = new GroupKey(groupKeys, row);
-            Map<String, Object> aggState = groups.computeIfAbsent(key, k -> new HashMap<>());
-
-            // 初始化分组键值
-            for (int i = 0; i < groupKeys.size(); i++) {
-                String colName = "group_" + i;
-                if (!aggState.containsKey(colName)) {
-                    aggState.put(colName, groupKeys.get(i).evaluate(row));
-                }
-            }
-
-            // 执行聚合
-            for (JQuickGroupByNode.AggregateItem item : aggregateItems) {
-                updateAggregate(aggState, item, row);
-            }
-        }
-
-        // 完成聚合计算（如AVG需要最终计算）
-        for (Map<String, Object> aggState : groups.values()) {
-            for (JQuickGroupByNode.AggregateItem item : aggregateItems) {
-                finalizeAggregate(aggState, item);
-            }
-        }
-
-        // 构建结果
-        JQuickDataSet.Builder builder = JQuickDataSet.builder();
-
-        for (int i = 0; i < groupKeys.size(); i++) {
-            builder.addColumn("group_" + i, Object.class, "group_by");
-        }
-        for (JQuickGroupByNode.AggregateItem item : aggregateItems) {
-            builder.addColumn(item.getAlias(), item.getOutputType(), "aggregate");
-        }
-
-        for (Map<String, Object> aggState : groups.values()) {
-            JQuickRow row = new JQuickRow();
-            for (Map.Entry<String, Object> entry : aggState.entrySet()) {
-                if (!entry.getKey().endsWith("_state")) {
-                    row.put(entry.getKey(), entry.getValue());
-                }
-            }
-            builder.addRow(row);
-        }
-
-        JQuickDataSet result = builder.build();
-
-        // 应用HAVING过滤
-        if (havingCondition != null) {
-            result = result.filter(row -> {
-                Object val = havingCondition.evaluate(row);
-                return val instanceof Boolean && (Boolean) val;
-            });
-        }
-
-        return result;
-    }
-
-    @SuppressWarnings("unchecked")
-    private void updateAggregate(Map<String, Object> state, JQuickGroupByNode.AggregateItem item, JQuickRow row) {
-        String key = item.getAlias();
-        String funcName = item.getFunctionName().toLowerCase();
-        Object value = item.getExpression().evaluate(row);
-
-        switch (funcName) {
-            case "count":
-                Long count = (Long) state.get(key);
-                if (count == null) count = 0L;
-                if (value != null || item.isCountStar()) count++;
-                state.put(key, count);
-                break;
-
-            case "sum":
-                Double sum = (Double) state.get(key);
-                if (sum == null) sum = 0.0;
-                if (value instanceof Number) {
-                    sum += ((Number) value).doubleValue();
-                }
-                state.put(key, sum);
-                break;
-
-            case "avg":
-                Map<String, Object> avgState = (Map<String, Object>) state.get(key + "_state");
-                if (avgState == null) {
-                    avgState = new HashMap<>();
-                    avgState.put("sum", 0.0);
-                    avgState.put("count", 0L);
-                    state.put(key + "_state", avgState);
-                }
-                if (value instanceof Number) {
-                    avgState.put("sum", ((Double) avgState.get("sum")) + ((Number) value).doubleValue());
-                    avgState.put("count", ((Long) avgState.get("count")) + 1);
-                }
-                break;
-
-            case "max":
-                if (state.get(key) == null || (value instanceof Comparable &&
-                        ((Comparable) value).compareTo(state.get(key)) > 0)) {
-                    state.put(key, value);
-                }
-                break;
-
-            case "min":
-                if (state.get(key) == null || (value instanceof Comparable &&
-                        ((Comparable) value).compareTo(state.get(key)) < 0)) {
-                    state.put(key, value);
-                }
-                break;
-        }
-    }
-
-    @SuppressWarnings("unchecked")
-    private void finalizeAggregate(Map<String, Object> state, JQuickGroupByNode.AggregateItem item) {
-        if (item.getFunctionName().equalsIgnoreCase("avg")) {
-            Map<String, Object> avgState = (Map<String, Object>) state.get(item.getAlias() + "_state");
-            if (avgState != null) {
-                Double sum = (Double) avgState.get("sum");
-                Long count = (Long) avgState.get("count");
-                state.put(item.getAlias(), count > 0 ? sum / count : null);
-            }
-        }
-    }
-
-    private static class GroupKey {
-        private final List<Object> values;
-
-        GroupKey(List<JQuickExpression> groupKeys, JQuickRow row) {
-            this.values = new ArrayList<>();
-            for (JQuickExpression key : groupKeys) {
-                values.add(key.evaluate(row));
-            }
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-            GroupKey groupKey = (GroupKey) o;
-            return Objects.equals(values, groupKey.values);
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(values);
-        }
+        this.stage = stage;
+        this.groupingSets = groupingSets;
     }
 
     @Override
@@ -201,7 +124,51 @@ public class JQuickHashAggregatePhysicalNode implements JQuickPhysicalPlanNode {
     }
 
     @Override
-    public long getEstimatedCost() {
-        return child.getEstimatedCost();
+    public List<JQuickPhysicalColumn> getOutputSchema() {
+        List<JQuickPhysicalColumn> schema = new ArrayList<>();
+        for (int i = 0; i < groupKeys.size(); i++) {
+            schema.add(new JQuickPhysicalColumn("group_key_" + i, Object.class, null, false));
+        }
+        for (AggregateFunction agg : aggregates) {
+            schema.add(new JQuickPhysicalColumn(agg.getAlias(), Object.class, null, true));
+        }
+        return schema;
+    }
+
+    @Override
+    public JQuickPhysicalStats getStats() {
+        long estimatedGroups = Math.min(1000, getChild().getStats().getEstimatedRowCount());
+        return new JQuickPhysicalStats(estimatedGroups, estimatedGroups * 200, new HashMap<>());
+    }
+
+    @Override
+    public JQuickPhysicalPlanNode clone() {
+        List<JQuickExpression> clonedKeys = groupKeys.stream().map(JQuickExpression::clone).collect(Collectors.toList());
+        List<AggregateFunction> clonedAggs = aggregates.stream().map(AggregateFunction::clone).collect(Collectors.toList());
+        JQuickExpression clonedHaving = havingCondition != null ? havingCondition.clone() : null;
+        return new JQuickHashAggregatePhysicalNode(clonedKeys, clonedAggs, getChild().clone(), clonedHaving, stage);
+    }
+
+    @Override
+    public void accept(JQuickPhysicalPlanVisitor visitor) {
+        visitor.visit(this);
+    }
+
+
+    public List<JQuickExpression> getGroupKeys() { return groupKeys; }
+
+    public List<AggregateFunction> getAggregates() { return aggregates; }
+
+    public JQuickExpression getHavingCondition() { return havingCondition; }
+
+    public AggregateStage getStage() { return stage; }
+
+    public List<GroupingSet> getGroupingSets() { return groupingSets; }
+
+    /**
+     * 获取子节点（聚合节点的第一个子节点）
+     */
+    public JQuickPhysicalPlanNode getChild() {
+        return children.isEmpty() ? null : children.get(0);
     }
 }

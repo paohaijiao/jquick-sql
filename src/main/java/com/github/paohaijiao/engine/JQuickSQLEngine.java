@@ -22,6 +22,7 @@ import com.github.paohaijiao.executor.JQuickSQLExecutor;
 import com.github.paohaijiao.fragment.JQuickFragmenter;
 import com.github.paohaijiao.logic.JQuickLogicalPlanNode;
 import com.github.paohaijiao.logic.domain.JQuickSortNode;
+import com.github.paohaijiao.logic2physical.JQuickPhysicalPlanGenerator;
 import com.github.paohaijiao.optimizer.JQuickLogicalPlanOptimizer;
 import com.github.paohaijiao.parser.JQuickSQLLexer;
 import com.github.paohaijiao.parser.JQuickSQLParser;
@@ -36,6 +37,7 @@ import org.antlr.v4.runtime.CommonTokenStream;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 public class JQuickSQLEngine {
 
@@ -79,13 +81,16 @@ public class JQuickSQLEngine {
             JQuickLogicalPlanNode optimizedPlan = optimizer.optimize(logicalPlan);
 
             // 6. 逻辑计划 → 物理计划（带成本优化）
+            JQuickPhysicalPlanGenerator physicalGenerator = new JQuickPhysicalPlanGenerator();
             JQuickPhysicalPlanNode physicalPlan = physicalGenerator.generate(optimizedPlan);
-
-            // 7. 执行物理计划
-            JQuickDataSet result = physicalPlan.execute(context);
-
-            return finalizeResult(result, context);
-
+            // 7. 根据执行模式选择执行方式
+            if (isDistributedMode()) {
+                // 分布式执行
+                return executeDistributed(physicalPlan, context);
+            } else {
+                // 单机执行（使用执行器）
+                return executeLocal(physicalPlan, context);
+            }
         } catch (Exception e) {
             throw new RuntimeException("Failed to execute SQL: " + sql, e);
         }
@@ -107,25 +112,109 @@ public class JQuickSQLEngine {
     }
 
     /**
-     * 等待分布式执行结果
+     * 分布式执行模式
      */
-    private JQuickDataSet waitForResult(JQuickJobExecution job) throws InterruptedException {
-        while (job.getStatus() == JQuickJobExecution.JobStatus.RUNNING || job.getStatus() == JQuickJobExecution.JobStatus.PENDING) {
-            Thread.sleep(100);
-            // 超时检查
-            if (job.getExecutionTime() > 300000) { // 5分钟超时
-                job.cancel();
-                throw new RuntimeException("Query execution timeout");
+    private JQuickDataSet executeDistributed(JQuickPhysicalPlanNode physicalPlan, JQuickExecutionContext context) {
+        // 1. 获取集群拓扑
+        ClusterTopology cluster = context.getClusterTopology();
+        if (cluster == null) {
+            // 没有集群配置，回退到单机执行
+            return executeLocal(physicalPlan, context);
+        }
+
+        // 2. 调度器生成执行计划
+        JQuickScheduler scheduler = new JQuickScheduler(cluster);
+        JQuickExecutionPlan executionPlan = scheduler.schedule(physicalPlan);
+
+        // 3. 提交任务到各Worker
+        List<CompletableFuture<TaskResult>> futures = new ArrayList<>();
+        Map<String, JQuickWorker> workers = cluster.getWorkers();
+
+        for (Map.Entry<String, JQuickWorker> entry : workers.entrySet()) {
+            String workerId = entry.getKey();
+            JQuickWorker worker = entry.getValue();
+            List<JQuickTask> tasks = executionPlan.getTasksForWorker(workerId);
+
+            for (JQuickTask task : tasks) {
+                futures.add(worker.executeTask(task));
             }
         }
 
-        if (job.getStatus() == JQuickJobExecution.JobStatus.FAILED) {
-            throw new RuntimeException("Query execution failed", job.getError());
+        // 4. 等待所有任务完成
+        CompletableFuture<Void> allFutures = CompletableFuture.allOf(
+                futures.toArray(new CompletableFuture[0])
+        );
+
+        try {
+            allFutures.get(executionPlan.getTimeout(), executionPlan.getTimeoutUnit());
+        } catch (Exception e) {
+            throw new JQuickSQLException("Distributed execution failed", e);
         }
 
-        return job.getResult();
-    }
+        // 5. 收集并合并结果
+        List<TaskResult> results = futures.stream()
+                .map(CompletableFuture::join)
+                .collect(Collectors.toList());
 
+        return mergeResults(results, executionPlan);
+    }
+    /**
+     * 单机执行模式（使用执行器）
+     */
+    private JQuickDataSet executeLocal(JQuickPhysicalPlanNode physicalPlan, JQuickExecutionContext context) {
+        // 使用物理计划执行器执行
+        JQuickPhysicalPlanExecutor executor = new JQuickPhysicalPlanExecutor();
+        return executor.execute(physicalPlan, context);
+    }
+    /**
+     * 判断是否为分布式模式
+     */
+    private boolean isDistributedMode() {
+        // 可以从配置中读取
+        return System.getProperty("jquick.distributed.enabled", "false").equals("true");
+    }
+    private JQuickDataSet mergeResults(List<TaskResult> results, JQuickExecutionPlan plan) {
+        if (results.isEmpty()) {
+            return new JQuickDataSet(new ArrayList<>(), new ArrayList<>());
+        }
+
+        // 获取输出Schema
+        List<PhysicalColumn> schema = plan.getOutputSchema();
+        List<String> columnNames = schema.stream()
+                .map(PhysicalColumn::getName)
+                .collect(Collectors.toList());
+
+        // 收集所有行
+        List<List<Object>> allRows = new ArrayList<>();
+        for (TaskResult result : results) {
+            if (result.isSuccess() && result.getData() != null) {
+                if (result.getData() instanceof JQuickDataSet) {
+                    allRows.addAll(((JQuickDataSet) result.getData()).getRows());
+                } else if (result.getData() instanceof List) {
+                    allRows.addAll((List<List<Object>>) result.getData());
+                }
+            }
+        }
+
+        // 如果有ORDER BY，需要排序
+        if (plan.hasGlobalSort()) {
+            allRows.sort(plan.getComparator());
+        }
+
+        // 如果有LIMIT，需要截断
+        if (plan.hasLimit()) {
+            int limit = plan.getLimit();
+            int offset = plan.getOffset();
+            if (offset < allRows.size()) {
+                int end = Math.min(offset + limit, allRows.size());
+                allRows = allRows.subList(offset, end);
+            } else {
+                allRows = new ArrayList<>();
+            }
+        }
+
+        return new JQuickDataSet(allRows, columnNames);
+    }
     /**
      * 汇聚最终结果集
      * 包括：排序、去重、聚合等最终处理

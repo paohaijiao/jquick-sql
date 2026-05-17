@@ -15,94 +15,27 @@
  */
 package com.github.paohaijiao.physical.node;
 
-import com.github.paohaijiao.context.JQuickExecutionContext;
+import com.github.paohaijiao.enums.JQuickJoinType;
 import com.github.paohaijiao.expression.JQuickExpression;
-import com.github.paohaijiao.logic.domain.JQuickJoinNode;
 import com.github.paohaijiao.physical.JQuickPhysicalPlanNode;
-import com.github.paohaijiao.statement.JQuickColumnMeta;
-import com.github.paohaijiao.statement.JQuickDataSet;
-import com.github.paohaijiao.statement.JQuickRow;
+import com.github.paohaijiao.physical.JQuickPhysicalPlanVisitor;
+import com.github.paohaijiao.physical.domain.JQuickPhysicalColumn;
+import com.github.paohaijiao.physical.domain.JQuickPhysicalStats;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
-public class JQuickNestedLoopJoinPhysicalNode implements JQuickPhysicalPlanNode {
-    private final JQuickJoinNode.JoinType joinType;
-    private final JQuickPhysicalPlanNode left;
-    private final JQuickPhysicalPlanNode right;
+public class JQuickNestedLoopJoinPhysicalNode extends JQuickAbstractPhysicalNode {
+
+    private final JQuickJoinType joinType;
+
     private final JQuickExpression condition;
-    private final boolean leftIsSmaller;
 
-    public JQuickNestedLoopJoinPhysicalNode(JQuickJoinNode.JoinType joinType, JQuickPhysicalPlanNode left, JQuickPhysicalPlanNode right, JQuickExpression condition, boolean leftIsSmaller) {
+    public JQuickNestedLoopJoinPhysicalNode(JQuickJoinType joinType, JQuickPhysicalPlanNode left, JQuickPhysicalPlanNode right, JQuickExpression condition) {
+        super(left, right);
         this.joinType = joinType;
-        this.left = left;
-        this.right = right;
         this.condition = condition;
-        this.leftIsSmaller = leftIsSmaller;
-    }
-
-    @Override
-    public JQuickDataSet execute(JQuickExecutionContext context) {
-        JQuickDataSet leftData = left.execute(context);
-        JQuickDataSet rightData = right.execute(context);
-
-        // 选择小表作为外层循环
-        if (leftIsSmaller) {
-            return executeNestedLoop(leftData, rightData);
-        } else {
-            return executeNestedLoop(rightData, leftData);
-        }
-    }
-
-    private JQuickDataSet executeNestedLoop(JQuickDataSet outer, JQuickDataSet inner) {
-        List<JQuickRow> resultRows = new ArrayList<>();
-
-        for (JQuickRow outerRow : outer.getRows()) {
-            int matchCount = 0;
-            for (JQuickRow innerRow : inner.getRows()) {
-                JQuickRow merged = mergeRows(outerRow, innerRow);
-                if (evaluateCondition(merged)) {
-                    resultRows.add(merged);
-                    matchCount++;
-                }
-            }
-
-            // LEFT JOIN 需要添加未匹配的行
-            if (joinType == JQuickJoinNode.JoinType.LEFT && matchCount == 0) {
-                resultRows.add(mergeRows(outerRow, createNullRow(inner)));
-            }
-        }
-
-        List<JQuickColumnMeta> mergedColumns = mergeColumns(outer, inner);
-        return new JQuickDataSet(mergedColumns, resultRows);
-    }
-
-    private JQuickRow mergeRows(JQuickRow outer, JQuickRow inner) {
-        JQuickRow merged = new JQuickRow();
-        merged.putAll(outer);
-        merged.putAll(inner);
-        return merged;
-    }
-
-    private JQuickRow createNullRow(JQuickDataSet dataSet) {
-        JQuickRow nullRow = new JQuickRow();
-        for (JQuickColumnMeta col : dataSet.getColumns()) {
-            nullRow.put(col.getName(), null);
-        }
-        return nullRow;
-    }
-
-    private boolean evaluateCondition(JQuickRow row) {
-        if (condition == null) return true;
-        Object result = condition.evaluate(row);
-        return result instanceof Boolean && (Boolean) result;
-    }
-
-    private List<JQuickColumnMeta> mergeColumns(JQuickDataSet left, JQuickDataSet right) {
-        List<JQuickColumnMeta> merged = new ArrayList<>();
-        merged.addAll(left.getColumns());
-        merged.addAll(right.getColumns());
-        return merged;
     }
 
     @Override
@@ -111,7 +44,29 @@ public class JQuickNestedLoopJoinPhysicalNode implements JQuickPhysicalPlanNode 
     }
 
     @Override
-    public long getEstimatedCost() {
-        return left.getEstimatedCost() * right.getEstimatedCost();
+    public List<JQuickPhysicalColumn> getOutputSchema() {
+        List<JQuickPhysicalColumn> schema = new ArrayList<>();
+        schema.addAll(children.get(0).getOutputSchema());
+        schema.addAll(children.get(1).getOutputSchema());
+        return schema;
     }
+
+    @Override
+    public JQuickPhysicalStats getStats() {
+        long leftRows = children.get(0).getStats().getEstimatedRowCount();
+        long rightRows = children.get(1).getStats().getEstimatedRowCount();
+        return new JQuickPhysicalStats(leftRows * rightRows, leftRows * rightRows * 200, new HashMap<>());
+    }
+
+    @Override
+    public JQuickPhysicalPlanNode clone() {
+        return new JQuickNestedLoopJoinPhysicalNode(joinType, children.get(0).clone(), children.get(1).clone(), condition != null ? condition.clone() : null);
+    }
+
+    @Override
+    public void accept(JQuickPhysicalPlanVisitor visitor) {
+        visitor.visit(this);
+    }
+
+    public JQuickJoinType getJoinType() { return joinType; }public JQuickExpression getCondition() { return condition; }
 }

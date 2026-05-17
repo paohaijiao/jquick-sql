@@ -14,27 +14,21 @@
  * Copyright (c) [2025-2099] Martin (goudingcheng@gmail.com)
  */
 package com.github.paohaijiao.physical.node;
-import com.github.paohaijiao.context.JQuickExecutionContext;
+
 import com.github.paohaijiao.expression.JQuickExpression;
 import com.github.paohaijiao.physical.JQuickPhysicalPlanNode;
-import com.github.paohaijiao.statement.JQuickDataSet;
+import com.github.paohaijiao.physical.JQuickPhysicalPlanVisitor;
+import com.github.paohaijiao.physical.domain.JQuickPhysicalColumn;
 
-public class JQuickFilterPhysicalNode implements JQuickPhysicalPlanNode {
+import java.util.List;
+
+public class JQuickFilterPhysicalNode extends JQuickAbstractPhysicalNode {
+
     private final JQuickExpression predicate;
-    private final JQuickPhysicalPlanNode child;
 
     public JQuickFilterPhysicalNode(JQuickExpression predicate, JQuickPhysicalPlanNode child) {
+        super(child);
         this.predicate = predicate;
-        this.child = child;
-    }
-
-    @Override
-    public JQuickDataSet execute(JQuickExecutionContext context) {
-        JQuickDataSet data = child.execute(context);
-        return data.filter(row -> {
-            Object result = predicate.evaluate(row);
-            return result instanceof Boolean && (Boolean) result;
-        });
     }
 
     @Override
@@ -43,7 +37,19 @@ public class JQuickFilterPhysicalNode implements JQuickPhysicalPlanNode {
     }
 
     @Override
-    public long getEstimatedCost() {
-        return child.getEstimatedCost();
+    public List<JQuickPhysicalColumn> getOutputSchema() {
+        return children.get(0).getOutputSchema();
     }
+
+    @Override
+    public JQuickPhysicalPlanNode clone() {
+        return new JQuickFilterPhysicalNode(predicate.clone(), children.get(0).clone());
+    }
+
+    @Override
+    public void accept(JQuickPhysicalPlanVisitor visitor) {
+        visitor.visit(this);
+    }
+
+    public JQuickExpression getPredicate() { return predicate; }
 }
