@@ -22,6 +22,7 @@ import com.github.paohaijiao.param.JContext;
 import com.github.paohaijiao.parser.JQuickSQLParser;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -33,7 +34,7 @@ import java.util.List;
  * @version 1.0.0
  * @since 2026/5/17
  */
-public class JQuickSQLCommonVisistor extends JQuickSQLCoreVisistor {
+public class JQuickSQLCommonVisistor extends JQuickSQLValueVisistor {
 
     public JQuickSQLCommonVisistor(JContext jcontext, JQuickSqlConfig config){
         if(null!=jcontext&&!jcontext.isEmpty()){
@@ -43,12 +44,15 @@ public class JQuickSQLCommonVisistor extends JQuickSQLCoreVisistor {
             this.config=config;
         }
     }
+
     public JQuickSQLCommonVisistor(JQuickSqlConfig config){
         this(null,config);
     }
+
     public JQuickSQLCommonVisistor(JContext context){
         this(context,null);
     }
+
     public JQuickSQLCommonVisistor( ){
         this(null,null);
     }
@@ -612,10 +616,18 @@ public class JQuickSQLCommonVisistor extends JQuickSQLCoreVisistor {
         if (ctx.dateLiteral() != null) {
             String dateStr = ctx.dateLiteral().stringLiteral().getText();
             dateStr = dateStr.substring(1, dateStr.length() - 1);
-            return new JQuickConstantNode(dateStr, JQuickConstantNode.ConstantType.DATE);
+            String format=ctx.dateLiteral().format().getText();
+            format = format.substring(1, dateStr.length() - 1);
+            SimpleDateFormat sdf = new SimpleDateFormat(format);
+            try{
+                return new JQuickConstantNode(sdf.parse(dateStr), JQuickConstantNode.ConstantType.DATE);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
         throw new RuntimeException("Unknown constant: " + ctx.getText());
     }
+
     @Override
     public JQuickExpressionAtomNode.MathOperator visitMathOperator(JQuickSQLParser.MathOperatorContext ctx) {
         String operator = ctx.getText();
@@ -689,45 +701,9 @@ public class JQuickSQLCommonVisistor extends JQuickSQLCoreVisistor {
                 throw new RuntimeException("Unknown comparison operator: " + operator);
         }
     }
-    @Override
-    public String visitDecimal_literal(JQuickSQLParser.Decimal_literalContext ctx) {
-        return ctx.DECIMAL_LITERAL().getText();
-    }
-    @Override
-    public String visitNull_literal(JQuickSQLParser.Null_literalContext ctx) {
-        return ctx.NULL().getText();
-    }
-    @Override
-    public JQuickDateLiteralNode visitDateLiteral(JQuickSQLParser.DateLiteralContext ctx) {
-        String dateString = visitStringLiteral(ctx.stringLiteral());
-        String format = visitFormat(ctx.format());
-        return new JQuickDateLiteralNode(dateString, format);
-    }
 
-    @Override
-    public String visitFormat(JQuickSQLParser.FormatContext ctx) {
-        return visitStringLiteral(ctx.stringLiteral());
-    }
-    @Override
-    public Boolean visitBooleanLiteral(JQuickSQLParser.BooleanLiteralContext ctx) {
-        return ctx.TRUE() != null;
-    }
 
-    @Override
-    public String visitDottedId(JQuickSQLParser.DottedIdContext ctx) {
-        return visitUid(ctx.uid());
-    }
-    @Override
-    public String visitUid(JQuickSQLParser.UidContext ctx) {
-        return visitSimpleId(ctx.simpleId());
-    }
-    @Override
-    public String visitStringLiteral(JQuickSQLParser.StringLiteralContext ctx) {
-        String text = ctx.STRING_LITERAL().getText();
-        return text.substring(1, text.length() - 1);
-    }
-    @Override
-    public String visitSimpleId(JQuickSQLParser.SimpleIdContext ctx) {
-        return ctx.IDENTIFIER().getText();
-    }
+
+
+
 }
