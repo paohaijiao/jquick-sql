@@ -55,12 +55,15 @@ public class JQuickSQLExecutor extends JAbstractAntlrExecutor<String, JQuickQuer
     public JQuickSQLExecutor(JQuickSqlConfig config){
         this(null,config);
     }
+
     public JQuickSQLExecutor(JContext context){
         this(context,null);
     }
+
     public JQuickSQLExecutor( ){
         this(null,null);
     }
+
     @Override
     protected Lexer createLexer(CharStream input) {
         return new JQuickSQLLexer(input);
