@@ -465,7 +465,7 @@ public class JQuickLogicalPlanOptimizer {
 
                 // 检查是否为恒假条件
                 if (isAlwaysFalse(predicate)) {
-                    return new EmptyNode();
+                    return new JQuickEmptyNode();
                 }
             }
             return node;
@@ -697,35 +697,4 @@ public class JQuickLogicalPlanOptimizer {
         }
     }
 
-
-    /**
-     * 空节点 - 表示空数据集
-     */
-    private static class EmptyNode implements JQuickLogicalPlanNode {
-
-        @Override
-        public String getNodeType() {
-            return "Empty";
-        }
-
-        @Override
-        public List<JQuickLogicalPlanNode> getChildren() {
-            return Collections.emptyList();
-        }
-
-        @Override
-        public void accept(JQuickLogicalPlanVisitor visitor) {
-            // visitor.visit(this);
-        }
-
-        @Override
-        public List<String> getOutputColumns() {
-            return Collections.emptyList();
-        }
-
-        @Override
-        public JQuickLogicalPlanNode clone() {
-            return null;
-        }
-    }
 }

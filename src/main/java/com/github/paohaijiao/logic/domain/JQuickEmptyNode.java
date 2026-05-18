@@ -33,7 +33,7 @@ public class JQuickEmptyNode implements JQuickLogicalPlanNode {
 
     public static final JQuickEmptyNode INSTANCE = new JQuickEmptyNode();
 
-    private JQuickEmptyNode() {}
+    public JQuickEmptyNode() {}
 
     @Override
     public String getNodeType() {
