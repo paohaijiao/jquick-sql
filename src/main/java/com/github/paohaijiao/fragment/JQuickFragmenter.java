@@ -1,7 +1,7 @@
 package com.github.paohaijiao.fragment;
 
 import com.github.paohaijiao.distributed.JQuickDistributedPlan;
-import com.github.paohaijiao.exchange.ExchangeNode;
+import com.github.paohaijiao.exchange.JQuickExchangeNode;
 import com.github.paohaijiao.expression.JQuickExpression;
 import com.github.paohaijiao.physical.JQuickPhysicalPlanNode;
 import com.github.paohaijiao.physical.node.*;
@@ -160,11 +160,11 @@ public class JQuickFragmenter {
         );
 
         // 创建输出 Exchange
-        ExchangeNode outputExchange = createOutputExchange(node);
+        JQuickExchangeNode outputExchange = createOutputExchange(node);
         newFragment.setOutput(outputExchange);
 
         // 在父片段中添加输入 Exchange
-        ExchangeNode inputExchange = createInputExchange(outputExchange);
+        JQuickExchangeNode inputExchange = createInputExchange(outputExchange);
         parentFragment.addInput(inputExchange);
 
         // 建立父子关系
@@ -205,11 +205,11 @@ public class JQuickFragmenter {
         );
 
         // 创建输出 Exchange
-        ExchangeNode outputExchange = createOutputExchange(node);
+        JQuickExchangeNode outputExchange = createOutputExchange(node);
         sourceFragment.setOutput(outputExchange);
 
         // 在父片段中添加输入 Exchange
-        ExchangeNode inputExchange = createInputExchange(outputExchange);
+        JQuickExchangeNode inputExchange = createInputExchange(outputExchange);
         parentFragment.addInput(inputExchange);
 
         // 建立父子关系
@@ -225,16 +225,16 @@ public class JQuickFragmenter {
     /**
      * 创建输出 Exchange
      */
-    private ExchangeNode createOutputExchange(JQuickPhysicalPlanNode node) {
+    private JQuickExchangeNode createOutputExchange(JQuickPhysicalPlanNode node) {
         String exchangeId = "exchange_" + exchangeIdGenerator.incrementAndGet();
 
         if (node instanceof JQuickHashJoinPhysicalNode) {
             JQuickHashJoinPhysicalNode join = (JQuickHashJoinPhysicalNode) node;
             List<JQuickExpression> partitionKeys = extractJoinPartitionKeys(join);
-            return new ExchangeNode(
+            return new JQuickExchangeNode(
                     exchangeId,
-                    ExchangeNode.ExchangeType.SHUFFLE,
-                    ExchangeNode.PartitionStrategy.HASH,
+                    JQuickExchangeNode.ExchangeType.SHUFFLE,
+                    JQuickExchangeNode.PartitionStrategy.HASH,
                     partitionKeys,
                     defaultParallelism
             );
@@ -244,19 +244,19 @@ public class JQuickFragmenter {
             JQuickHashAggregatePhysicalNode agg = (JQuickHashAggregatePhysicalNode) node;
             List<JQuickExpression> groupKeys = agg.getGroupKeys();
             if (!groupKeys.isEmpty()) {
-                return new ExchangeNode(
+                return new JQuickExchangeNode(
                         exchangeId,
-                        ExchangeNode.ExchangeType.SHUFFLE,
-                        ExchangeNode.PartitionStrategy.HASH,
+                        JQuickExchangeNode.ExchangeType.SHUFFLE,
+                        JQuickExchangeNode.PartitionStrategy.HASH,
                         groupKeys,
                         defaultParallelism
                 );
             }
             // 无分组键的聚合，需要 GATHER 到单节点
-            return new ExchangeNode(
+            return new JQuickExchangeNode(
                     exchangeId,
-                    ExchangeNode.ExchangeType.GATHER,
-                    ExchangeNode.PartitionStrategy.REPLICATE,
+                    JQuickExchangeNode.ExchangeType.GATHER,
+                    JQuickExchangeNode.PartitionStrategy.REPLICATE,
                     (List<JQuickExpression>) null,
                     1
             );
@@ -264,10 +264,10 @@ public class JQuickFragmenter {
 
         if (node instanceof JQuickTableScanPhysicalNode) {
             // 表扫描使用 round-robin 分发
-            return new ExchangeNode(
+            return new JQuickExchangeNode(
                     exchangeId,
-                    ExchangeNode.ExchangeType.REPARTITION,
-                    ExchangeNode.PartitionStrategy.ROUND_ROBIN,
+                    JQuickExchangeNode.ExchangeType.REPARTITION,
+                    JQuickExchangeNode.PartitionStrategy.ROUND_ROBIN,
                     (List<JQuickExpression>) null,
                     defaultParallelism
             );
@@ -276,7 +276,7 @@ public class JQuickFragmenter {
         if (node instanceof JQuickExchangePhysicalNode) {
             JQuickExchangePhysicalNode exchange = (JQuickExchangePhysicalNode) node;
             // 透传 exchange 的分区策略
-            return new ExchangeNode(
+            return new JQuickExchangeNode(
                     exchangeId,
                     convertExchangeType(exchange.getExchangeType()),
                     convertPartitionStrategy(exchange.getPartitionStrategy()),
@@ -286,10 +286,10 @@ public class JQuickFragmenter {
         }
 
         // 默认：广播
-        return new ExchangeNode(
+        return new JQuickExchangeNode(
                 exchangeId,
-                ExchangeNode.ExchangeType.BROADCAST,
-                ExchangeNode.PartitionStrategy.REPLICATE,
+                JQuickExchangeNode.ExchangeType.BROADCAST,
+                JQuickExchangeNode.PartitionStrategy.REPLICATE,
                 (List<JQuickExpression>) null,
                 defaultParallelism
         );
@@ -298,10 +298,10 @@ public class JQuickFragmenter {
     /**
      * 创建输入 Exchange（接收数据）
      */
-    private ExchangeNode createInputExchange(ExchangeNode outputExchange) {
-        return new ExchangeNode(
+    private JQuickExchangeNode createInputExchange(JQuickExchangeNode outputExchange) {
+        return new JQuickExchangeNode(
                 "input_" + outputExchange.getExchangeId(),
-                ExchangeNode.ExchangeType.RECEIVE,
+                JQuickExchangeNode.ExchangeType.RECEIVE,
                 outputExchange.getPartitionStrategy(),
                 outputExchange.getPartitionKeys(),
                 outputExchange.getParallelism()
@@ -332,40 +332,40 @@ public class JQuickFragmenter {
     /**
      * 转换 ExchangeType
      */
-    private ExchangeNode.ExchangeType convertExchangeType(
+    private JQuickExchangeNode.ExchangeType convertExchangeType(
             JQuickExchangePhysicalNode.ExchangeType type) {
         switch (type) {
             case SHUFFLE:
-                return ExchangeNode.ExchangeType.SHUFFLE;
+                return JQuickExchangeNode.ExchangeType.SHUFFLE;
             case BROADCAST:
-                return ExchangeNode.ExchangeType.BROADCAST;
+                return JQuickExchangeNode.ExchangeType.BROADCAST;
             case REPARTITION:
-                return ExchangeNode.ExchangeType.REPARTITION;
+                return JQuickExchangeNode.ExchangeType.REPARTITION;
             case GATHER:
-                return ExchangeNode.ExchangeType.GATHER;
+                return JQuickExchangeNode.ExchangeType.GATHER;
             default:
-                return ExchangeNode.ExchangeType.FORWARD;
+                return JQuickExchangeNode.ExchangeType.FORWARD;
         }
     }
 
     /**
      * 转换 PartitionStrategy
      */
-    private ExchangeNode.PartitionStrategy convertPartitionStrategy(
+    private JQuickExchangeNode.PartitionStrategy convertPartitionStrategy(
             JQuickExchangePhysicalNode.PartitionStrategy strategy) {
         switch (strategy) {
             case HASH:
-                return ExchangeNode.PartitionStrategy.HASH;
+                return JQuickExchangeNode.PartitionStrategy.HASH;
             case RANGE:
-                return ExchangeNode.PartitionStrategy.RANGE;
+                return JQuickExchangeNode.PartitionStrategy.RANGE;
             case ROUND_ROBIN:
-                return ExchangeNode.PartitionStrategy.ROUND_ROBIN;
+                return JQuickExchangeNode.PartitionStrategy.ROUND_ROBIN;
             case BUCKET:
-                return ExchangeNode.PartitionStrategy.BUCKET;
+                return JQuickExchangeNode.PartitionStrategy.BUCKET;
             case REPLICATE:
-                return ExchangeNode.PartitionStrategy.REPLICATE;
+                return JQuickExchangeNode.PartitionStrategy.REPLICATE;
             default:
-                return ExchangeNode.PartitionStrategy.HASH;
+                return JQuickExchangeNode.PartitionStrategy.HASH;
         }
     }
 
@@ -431,7 +431,7 @@ public class JQuickFragmenter {
         System.out.println(indent + "│   Parallelism: " + fragment.getParallelism());
         System.out.println(indent + "│   Plan Node: " + fragment.getPlan().getNodeType());
 
-        ExchangeNode output = fragment.getOutput();
+        JQuickExchangeNode output = fragment.getOutput();
         if (output != null) {
             System.out.println(indent + "│   Output: " + output);
         }

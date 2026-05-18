@@ -17,7 +17,7 @@ package com.github.paohaijiao.scheduler;
 
 
 import com.github.paohaijiao.distributed.JQuickDistributedPlan;
-import com.github.paohaijiao.exchange.ExchangeNode;
+import com.github.paohaijiao.exchange.JQuickExchangeNode;
 import com.github.paohaijiao.fragment.JQuickFragment;
 
 import java.util.*;
@@ -127,7 +127,7 @@ public class JQuickTaskScheduler {
             if (tasks == null || tasks.isEmpty()) continue;
 
             // 处理输入依赖
-            for (ExchangeNode input : fragment.getInputs()) {
+            for (JQuickExchangeNode input : fragment.getInputs()) {
                 // 找到产生这个输入的源 Fragment
                 JQuickFragment sourceFragment = findSourceFragmentForInput(input);
                 if (sourceFragment != null) {
@@ -146,7 +146,7 @@ public class JQuickTaskScheduler {
      */
     private void buildShuffleDependencies(List<JQuickTask> sourceTasks,
                                           List<JQuickTask> targetTasks,
-                                          ExchangeNode exchange) {
+                                          JQuickExchangeNode exchange) {
         for (JQuickTask targetTask : targetTasks) {
             for (JQuickTask sourceTask : sourceTasks) {
                 // 根据分区策略确定是否建立连接
@@ -179,8 +179,8 @@ public class JQuickTaskScheduler {
     /**
      * 判断是否应该建立连接
      */
-    private boolean shouldConnect(JQuickTask sourceTask, JQuickTask targetTask, ExchangeNode exchange) {
-        ExchangeNode.PartitionStrategy strategy = exchange.getPartitionStrategy();
+    private boolean shouldConnect(JQuickTask sourceTask, JQuickTask targetTask, JQuickExchangeNode exchange) {
+        JQuickExchangeNode.PartitionStrategy strategy = exchange.getPartitionStrategy();
 
         switch (strategy) {
             case HASH:
@@ -204,7 +204,7 @@ public class JQuickTaskScheduler {
     /**
      * Hash 分区逻辑
      */
-    private boolean getHashPartition(int sourceIndex, int targetIndex, ExchangeNode exchange) {
+    private boolean getHashPartition(int sourceIndex, int targetIndex, JQuickExchangeNode exchange) {
         // 简化的 hash 分区：sourceIndex % targetCount == targetIndex
         int targetCount = exchange.getParallelism();
         return (sourceIndex % targetCount) == targetIndex;
@@ -213,9 +213,9 @@ public class JQuickTaskScheduler {
     /**
      * 为输入找到源 Fragment
      */
-    private JQuickFragment findSourceFragmentForInput(ExchangeNode input) {
+    private JQuickFragment findSourceFragmentForInput(JQuickExchangeNode input) {
         for (JQuickFragment fragment : distributedPlan.getAllFragments()) {
-            ExchangeNode output = fragment.getOutput();
+            JQuickExchangeNode output = fragment.getOutput();
             if (output != null && input.getExchangeId().equals(output.getExchangeId())) {
                 return fragment;
             }
@@ -228,7 +228,7 @@ public class JQuickTaskScheduler {
      */
     private JQuickExchangeChannel createExchangeChannel(JQuickTask source,
                                                         JQuickTask target,
-                                                        ExchangeNode exchange) {
+                                                        JQuickExchangeNode exchange) {
         String channelId = String.format("channel_%d_%d", source.getTaskId(), target.getTaskId());
         String sourceWorker = source.getAssignedWorker();
         String targetWorker = target.getAssignedWorker();
@@ -252,7 +252,7 @@ public class JQuickTaskScheduler {
         );
     }
 
-    private JQuickTaskInput.InputType getInputType(ExchangeNode exchange) {
+    private JQuickTaskInput.InputType getInputType(JQuickExchangeNode exchange) {
         switch (exchange.getType()) {
             case BROADCAST:
                 return JQuickTaskInput.InputType.BROADCAST;
@@ -263,7 +263,7 @@ public class JQuickTaskScheduler {
         }
     }
 
-    private JQuickTaskOutput.OutputType getOutputType(ExchangeNode exchange) {
+    private JQuickTaskOutput.OutputType getOutputType(JQuickExchangeNode exchange) {
         switch (exchange.getType()) {
             case BROADCAST:
                 return JQuickTaskOutput.OutputType.BROADCAST;

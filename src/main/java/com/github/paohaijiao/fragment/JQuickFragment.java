@@ -16,7 +16,7 @@
 package com.github.paohaijiao.fragment;
 
 
-import com.github.paohaijiao.exchange.ExchangeNode;
+import com.github.paohaijiao.exchange.JQuickExchangeNode;
 import com.github.paohaijiao.physical.JQuickPhysicalPlanNode;
 
 import java.util.ArrayList;
@@ -33,8 +33,8 @@ public class JQuickFragment {
     private final FragmentType type;
     private final JQuickPhysicalPlanNode plan;
     private final List<JQuickFragment> children;
-    private final List<ExchangeNode> inputs;
-    private ExchangeNode output;
+    private final List<JQuickExchangeNode> inputs;
+    private JQuickExchangeNode output;
     private int parallelism;
     private String assignedHost;
 
@@ -57,11 +57,11 @@ public class JQuickFragment {
         this.children.add(child);
     }
 
-    public void addInput(ExchangeNode input) {
+    public void addInput(JQuickExchangeNode input) {
         this.inputs.add(input);
     }
 
-    public void setOutput(ExchangeNode output) {
+    public void setOutput(JQuickExchangeNode output) {
         this.output = output;
     }
 
@@ -77,8 +77,8 @@ public class JQuickFragment {
     public FragmentType getType() { return type; }
     public JQuickPhysicalPlanNode getPlan() { return plan; }
     public List<JQuickFragment> getChildren() { return children; }
-    public List<ExchangeNode> getInputs() { return inputs; }
-    public ExchangeNode getOutput() { return output; }
+    public List<JQuickExchangeNode> getInputs() { return inputs; }
+    public JQuickExchangeNode getOutput() { return output; }
     public int getParallelism() { return parallelism; }
     public String getAssignedHost() { return assignedHost; }
 

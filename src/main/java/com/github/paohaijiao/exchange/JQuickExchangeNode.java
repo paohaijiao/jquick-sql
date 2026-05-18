@@ -23,7 +23,7 @@ import java.util.UUID;
 /**
  * 数据交换节点 - 连接不同 Fragment 的数据通道
  */
-public class ExchangeNode {
+public class JQuickExchangeNode {
 
     private final String exchangeId;
 
@@ -54,15 +54,15 @@ public class ExchangeNode {
         REPLICATE       // 复制（广播）
     }
 
-    public ExchangeNode(String exchangeId, ExchangeType type, PartitionStrategy partitionStrategy, JQuickExpression partitionKey, int parallelism) {
+    public JQuickExchangeNode(String exchangeId, ExchangeType type, PartitionStrategy partitionStrategy, JQuickExpression partitionKey, int parallelism) {
         this(exchangeId, type, partitionStrategy, partitionKey, null, parallelism);
     }
 
-    public ExchangeNode(String exchangeId, ExchangeType type, PartitionStrategy partitionStrategy, List<JQuickExpression> partitionKeys, int parallelism) {
+    public JQuickExchangeNode(String exchangeId, ExchangeType type, PartitionStrategy partitionStrategy, List<JQuickExpression> partitionKeys, int parallelism) {
         this(exchangeId, type, partitionStrategy, null, partitionKeys, parallelism);
     }
 
-    private ExchangeNode(String exchangeId, ExchangeType type, PartitionStrategy partitionStrategy, JQuickExpression partitionKey, List<JQuickExpression> partitionKeys, int parallelism) {
+    private JQuickExchangeNode(String exchangeId, ExchangeType type, PartitionStrategy partitionStrategy, JQuickExpression partitionKey, List<JQuickExpression> partitionKeys, int parallelism) {
         this.exchangeId = exchangeId != null ? exchangeId : UUID.randomUUID().toString();
         this.type = type;
         this.partitionStrategy = partitionStrategy;

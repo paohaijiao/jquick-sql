@@ -32,14 +32,20 @@ import java.util.concurrent.atomic.AtomicLong;
 public class JQuickCleanup {
 
     private final ExecutorService cleanupExecutor;
+
     private final AtomicBoolean isCleaningUp;
+
     private final AtomicLong cleanupCount;
+
     private final Set<JQuickTask> runningTasks;
+
     private final Set<JQuickExchangeChannel> activeChannels;
 
     // 清理配置
     private long taskCancellationTimeoutMs = 30000;
+
     private long workerStopTimeoutMs = 60000;
+
     private long channelCloseTimeoutMs = 10000;
 
     public JQuickCleanup() {
@@ -60,43 +66,25 @@ public class JQuickCleanup {
     /**
      * 清理所有资源 - 带 Worker Map 和任务列表
      */
-    public CleanupResult cleanup(Map<String, JQuickWorker> workers,
-                                 Collection<JQuickTask> tasks,
-                                 JQuickSchedulePlan schedulePlan) {
+    public CleanupResult cleanup(Map<String, JQuickWorker> workers, Collection<JQuickTask> tasks, JQuickSchedulePlan schedulePlan) {
         if (!isCleaningUp.compareAndSet(false, true)) {
             return new CleanupResult(false, "Cleanup already in progress");
         }
-
         long startTime = System.currentTimeMillis();
         CleanupResult result = new CleanupResult();
-
         try {
-            // 1. 取消调度计划
             result.addPhase("Cancel schedule plan", cancelSchedulePlan(schedulePlan));
-
-            // 2. 取消所有运行中的任务
             result.addPhase("Cancel running tasks", cancelTasks(tasks));
-
-            // 3. 关闭所有数据通道
             result.addPhase("Close data channels", closeChannels());
-
-            // 4. 停止所有 Worker
             result.addPhase("Stop workers", stopWorkers(workers));
-
-            // 5. 关闭清理执行器
             result.addPhase("Shutdown executor", shutdownExecutor());
-
-            // 6. 清理临时文件
             result.addPhase("Clean temp files", cleanupTempFiles());
-
             long cleanupTime = System.currentTimeMillis() - startTime;
             result.setSuccess(true);
             result.setMessage("Cleanup completed successfully");
             result.setCleanupTimeMs(cleanupTime);
             result.setCleanupCount(cleanupCount.incrementAndGet());
-
             System.out.println("Cleanup completed in " + cleanupTime + "ms");
-
         } catch (Exception e) {
             result.setSuccess(false);
             result.setMessage("Cleanup failed: " + e.getMessage());
@@ -150,16 +138,13 @@ public class JQuickCleanup {
         if (tasks == null || tasks.isEmpty()) {
             return true;
         }
-
         boolean allCancelled = true;
         ExecutorService taskCancellationExecutor = Executors.newCachedThreadPool();
         List<CompletableFuture<Boolean>> futures = new ArrayList<>();
-
         for (JQuickTask task : tasks) {
             if (task.getStatus() == JQuickTask.TaskStatus.RUNNING ||
                     task.getStatus() == JQuickTask.TaskStatus.PENDING ||
                     task.getStatus() == JQuickTask.TaskStatus.SCHEDULED) {
-
                 CompletableFuture<Boolean> future = CompletableFuture.supplyAsync(() -> {
                     try {
                         cancelSingleTask(task);
@@ -174,9 +159,7 @@ public class JQuickCleanup {
         }
 
         try {
-            CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
-                    .get(taskCancellationTimeoutMs, TimeUnit.MILLISECONDS);
-
+            CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).get(taskCancellationTimeoutMs, TimeUnit.MILLISECONDS);
             for (CompletableFuture<Boolean> future : futures) {
                 if (!future.getNow(true)) {
                     allCancelled = false;
@@ -198,19 +181,16 @@ public class JQuickCleanup {
      */
     private void cancelSingleTask(JQuickTask task) {
         task.setStatus(JQuickTask.TaskStatus.CANCELLED);
-
         // 关闭任务的输出
         if (task.getOutput() != null) {
             task.getOutput().complete();
         }
-
         // 清理任务的输入通道
         for (com.github.paohaijiao.scheduler.JQuickTaskInput input : task.getInputs()) {
             if (input.getChannel() != null) {
                 activeChannels.remove(input.getChannel());
             }
         }
-
         System.out.println("Cancelled task: " + task.getTaskId());
     }
 
@@ -221,11 +201,9 @@ public class JQuickCleanup {
         if (activeChannels.isEmpty()) {
             return true;
         }
-
         boolean allClosed = true;
         ExecutorService channelExecutor = Executors.newCachedThreadPool();
         List<CompletableFuture<Boolean>> futures = new ArrayList<>();
-
         for (JQuickExchangeChannel channel : activeChannels) {
             CompletableFuture<Boolean> future = CompletableFuture.supplyAsync(() -> {
                 try {
@@ -238,11 +216,8 @@ public class JQuickCleanup {
             }, channelExecutor);
             futures.add(future);
         }
-
         try {
-            CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
-                    .get(channelCloseTimeoutMs, TimeUnit.MILLISECONDS);
-
+            CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).get(channelCloseTimeoutMs, TimeUnit.MILLISECONDS);
             for (CompletableFuture<Boolean> future : futures) {
                 if (!future.getNow(true)) {
                     allClosed = false;
@@ -254,7 +229,6 @@ public class JQuickCleanup {
         } finally {
             channelExecutor.shutdown();
         }
-
         activeChannels.clear();
         return allClosed;
     }
@@ -263,9 +237,6 @@ public class JQuickCleanup {
      * 关闭单个通道
      */
     private void closeChannel(JQuickExchangeChannel channel) {
-        // 发送关闭信号
-        // 释放网络连接
-        // 清理缓冲区
         System.out.println("Closed channel: " + channel.getChannelId());
     }
 
@@ -276,15 +247,12 @@ public class JQuickCleanup {
         if (workers == null || workers.isEmpty()) {
             return true;
         }
-
         boolean allStopped = true;
         ExecutorService workerExecutor = Executors.newCachedThreadPool();
         List<CompletableFuture<Boolean>> futures = new ArrayList<>();
-
         for (Map.Entry<String, JQuickWorker> entry : workers.entrySet()) {
             String workerId = entry.getKey();
             JQuickWorker worker = entry.getValue();
-
             CompletableFuture<Boolean> future = CompletableFuture.supplyAsync(() -> {
                 try {
                     stopSingleWorker(worker);
@@ -299,9 +267,7 @@ public class JQuickCleanup {
         }
 
         try {
-            CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
-                    .get(workerStopTimeoutMs, TimeUnit.MILLISECONDS);
-
+            CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).get(workerStopTimeoutMs, TimeUnit.MILLISECONDS);
             for (CompletableFuture<Boolean> future : futures) {
                 if (!future.getNow(true)) {
                     allStopped = false;
@@ -313,7 +279,6 @@ public class JQuickCleanup {
         } finally {
             workerExecutor.shutdown();
         }
-
         return allStopped;
     }
 
@@ -428,11 +393,17 @@ public class JQuickCleanup {
      * 清理结果类
      */
     public static class CleanupResult {
+
         private boolean success;
+
         private String message;
+
         private Throwable error;
+
         private final Map<String, Boolean> phases;
+
         private long cleanupTimeMs;
+
         private long cleanupCount;
 
         public CleanupResult() {
@@ -450,16 +421,25 @@ public class JQuickCleanup {
         }
 
         public void setSuccess(boolean success) { this.success = success; }
+
         public void setMessage(String message) { this.message = message; }
+
         public void setError(Throwable error) { this.error = error; }
+
         public void setCleanupTimeMs(long timeMs) { this.cleanupTimeMs = timeMs; }
+
         public void setCleanupCount(long count) { this.cleanupCount = count; }
 
         public boolean isSuccess() { return success; }
+
         public String getMessage() { return message; }
+
         public Throwable getError() { return error; }
+
         public Map<String, Boolean> getPhases() { return phases; }
+
         public long getCleanupTimeMs() { return cleanupTimeMs; }
+
         public long getCleanupCount() { return cleanupCount; }
 
         public String getSummary() {
@@ -470,8 +450,7 @@ public class JQuickCleanup {
 
         @Override
         public String toString() {
-            return String.format("CleanupResult{success=%s, message='%s', time=%dms, count=%d, %s}",
-                    success, message, cleanupTimeMs, cleanupCount, getSummary());
+            return String.format("CleanupResult{success=%s, message='%s', time=%dms, count=%d, %s}", success, message, cleanupTimeMs, cleanupCount, getSummary());
         }
     }
 }

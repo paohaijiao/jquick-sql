@@ -14,11 +14,14 @@
  * Copyright (c) [2025-2099] Martin (goudingcheng@gmail.com)
  */
 package com.github.paohaijiao.logic.domain;
+
 import com.github.paohaijiao.expression.JQuickExpression;
 import com.github.paohaijiao.logic.JQuickLogicalPlanNode;
 import com.github.paohaijiao.logic.JQuickLogicalPlanVisitor;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.stream.Collectors;
 
 /**
@@ -29,6 +32,8 @@ public class JQuickProjectNode implements JQuickLogicalPlanNode {
     private final List<SelectItem> selectItems;
 
     private final JQuickLogicalPlanNode child;
+
+
     private final boolean distinct;
 
     public JQuickProjectNode(List<SelectItem> selectItems, JQuickLogicalPlanNode child) {

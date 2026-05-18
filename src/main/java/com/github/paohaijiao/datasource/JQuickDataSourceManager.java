@@ -59,7 +59,6 @@ public class JQuickDataSourceManager {
     public static void createIndex(String tableName, String columnName) {
         JQuickDataSet table = getTable(tableName);
         Map<Object, JQuickDataSet> indexMap = new HashMap<>();
-
         Map<Object, java.util.List<JQuickRow>> grouped = table.groupBy(columnName);
         for (Map.Entry<Object, java.util.List<JQuickRow>> entry : grouped.entrySet()) {
             indexMap.put(entry.getKey(), new JQuickDataSet(table.getColumns(), entry.getValue()));

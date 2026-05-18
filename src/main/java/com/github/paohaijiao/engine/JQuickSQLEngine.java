@@ -71,10 +71,6 @@ public class JQuickSQLEngine {
 
     private JQuickSchedulePlan currentSchedulePlan;
 
-
-
-
-
     public JQuickSQLEngine() {
         this.optimizer = new JQuickLogicalPlanOptimizer();
         this.cleanup = new JQuickCleanup();
@@ -94,62 +90,43 @@ public class JQuickSQLEngine {
         try {
             System.out.println("=== SQL Execution Started ===");
             System.out.println("SQL: " + sql);
-
             // 1. 词法分析
             JQuickSQLLexer lexer = new JQuickSQLLexer(CharStreams.fromString(sql));
             CommonTokenStream tokens = new CommonTokenStream(lexer);
-
             // 2. 语法分析
             JQuickSQLParser parser = new JQuickSQLParser(tokens);
             JQuickSQLParser.QueryContext parseTree = parser.query();
-
             // 3. 构建AST
             JQuickQueryNode ast = buildAST(sql);
-
             // 4. AST → 逻辑计划
             JQuickASTToLogicalPlanVisitor visitor = new JQuickASTToLogicalPlanVisitor();
             JQuickLogicalPlanNode logicalPlan = visitor.visit(ast);
-
             // 5. 逻辑计划优化
             JQuickLogicalPlanNode optimizedPlan = optimizer.optimize(logicalPlan);
-
             // 6. 逻辑计划 → 物理计划
             JQuickPhysicalPlanNode physicalPlan = physicalGenerator.generate(optimizedPlan);
-
             // 7. 物理计划 → 分布式计划
             JQuickDistributedPlan distributedPlan = fragmenter.fragment(physicalPlan);
             fragmenter.printFragments(distributedPlan);
-
             // 8. 启动 Worker 发现服务
             workerManager.startDiscovery(9999);
             workerManager.registerWorker(new WorkerInfo("worker-1", "localhost", 8001, 9001, 4));
             workerManager.registerWorker(new WorkerInfo("worker-2", "localhost", 8002, 9002, 4));
             workerManager.registerWorker(new WorkerInfo("worker-3", "localhost", 8003, 9003, 4));
-
             // 9. 任务调度
-            JQuickTaskScheduler scheduler = new JQuickTaskScheduler(
-                    distributedPlan,
-                    workerManager,
-                    JQuickTaskScheduler.SchedulingStrategy.DATA_LOCALITY
-            );
+            JQuickTaskScheduler scheduler = new JQuickTaskScheduler(distributedPlan, workerManager, JQuickTaskScheduler.SchedulingStrategy.DATA_LOCALITY);
             JQuickSchedulePlan currentSchedulePlan = scheduler.schedule();
             printSchedulePlan(currentSchedulePlan);
-
             // 10. 启动 Workers 并执行任务
             Map<String, JQuickWorker> workers = startWorkers(workerManager);
-
             // 11. 注册结果收集器
             registerResultCollector(currentSchedulePlan);
-
             // 12. 提交任务并收集结果
             JQuickDataSet result = executeAndCollect(currentSchedulePlan, workers);
-
             //清理资源
             cleanup(workers);
-
             System.out.println("=== SQL Execution Completed ===");
             System.out.println("Result rows: " + result.size());
-
             return result;
         } catch (Exception e) {
             throw new RuntimeException("Failed to execute SQL: " + sql, e);
@@ -522,7 +499,6 @@ public class JQuickSQLEngine {
         if (schemaInfo == null || schemaInfo.isEmpty()) {
             return Collections.emptyList();
         }
-
         return schemaInfo.entrySet().stream()
                 .map(entry -> new JQuickColumnMeta(
                         entry.getKey(),

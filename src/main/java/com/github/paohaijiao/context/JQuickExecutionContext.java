@@ -246,8 +246,6 @@ public class JQuickExecutionContext {
         return jobId;
     }
 
-    // ========== 原有的构造器和方法保持不变 ==========
-
     public JQuickExecutionContext() {
         this.executionId = UUID.randomUUID().toString();
         this.startTime = System.currentTimeMillis();
@@ -259,7 +257,6 @@ public class JQuickExecutionContext {
         this.parameters.putAll(parent.parameters);
         this.startTime = System.currentTimeMillis();
         this.queryTimeout = parent.queryTimeout;
-        // 继承全局设置
         this.globalSort = parent.globalSort;
         this.globalSortItems = new ArrayList<>(parent.globalSortItems);
         this.globalDistinct = parent.globalDistinct;

@@ -105,7 +105,6 @@ public class JQuickASTToLogicalPlanVisitor {
             root = new JQuickFilterNode(predicate, root);
         }
 
-
         if (node.getGroupByClause() != null) { //处理 GROUP BY 和 HAVING
             List<JQuickExpression> groupKeys = visitExpressions(node.getGroupByClause().getExpressions());// 提取分组键
             List<JQuickGroupByNode.AggregateItem> aggregates = extractAggregates(node.getSelectElements());// 提取聚合函数
