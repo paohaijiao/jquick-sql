@@ -306,4 +306,158 @@ public class JQuickPredicateTest {
         Object a=tv.visit(tree);
         System.out.println(a);
     }
+    @Test
+    public void predicate_expressionAtom() {
+        String rule="1";
+        JQuickSQLLexer lexer = new JQuickSQLLexer(CharStreams.fromString(rule));
+        CommonTokenStream tokens = new CommonTokenStream(lexer);
+        JQuickSQLParser parser = new JQuickSQLParser(tokens);
+        JQuickSQLParser.ExpressionAtomContext tree = parser.expressionAtom();
+        JQuickSQLCommonVisistor tv = new JQuickSQLCommonVisistor();
+        Object a=tv.visit(tree);
+        System.out.println(a);
+    }
+    @Test
+    public void predicate_fullColumnName() {
+        String rule="a.name";
+        JQuickSQLLexer lexer = new JQuickSQLLexer(CharStreams.fromString(rule));
+        CommonTokenStream tokens = new CommonTokenStream(lexer);
+        JQuickSQLParser parser = new JQuickSQLParser(tokens);
+        JQuickSQLParser.ExpressionAtomContext tree = parser.expressionAtom();
+        JQuickSQLCommonVisistor tv = new JQuickSQLCommonVisistor();
+        Object a=tv.visit(tree);
+        System.out.println(a);
+    }
+    @Test
+    public void predicate_expressionAtom1() {
+        String rule="sum(3)";
+        JQuickSQLLexer lexer = new JQuickSQLLexer(CharStreams.fromString(rule));
+        CommonTokenStream tokens = new CommonTokenStream(lexer);
+        JQuickSQLParser parser = new JQuickSQLParser(tokens);
+        JQuickSQLParser.ExpressionAtomContext tree = parser.expressionAtom();
+        JQuickSQLCommonVisistor tv = new JQuickSQLCommonVisistor();
+        Object a=tv.visit(tree);
+        System.out.println(a);
+    }
+    @Test
+    public void predicate_expressionAtom2() {
+        String rule="(1,2,3,4)";
+        JQuickSQLLexer lexer = new JQuickSQLLexer(CharStreams.fromString(rule));
+        CommonTokenStream tokens = new CommonTokenStream(lexer);
+        JQuickSQLParser parser = new JQuickSQLParser(tokens);
+        JQuickSQLParser.ExpressionAtomContext tree = parser.expressionAtom();
+        JQuickSQLCommonVisistor tv = new JQuickSQLCommonVisistor();
+        Object a=tv.visit(tree);
+        System.out.println(a);
+    }
+    @Test
+    public void predicate_expressionAtom3() {
+        String rule="(select a.name from student a where a.id=1)";
+        JQuickSQLLexer lexer = new JQuickSQLLexer(CharStreams.fromString(rule));
+        CommonTokenStream tokens = new CommonTokenStream(lexer);
+        JQuickSQLParser parser = new JQuickSQLParser(tokens);
+        JQuickSQLParser.ExpressionAtomContext tree = parser.expressionAtom();
+        JQuickSQLCommonVisistor tv = new JQuickSQLCommonVisistor();
+        Object a=tv.visit(tree);
+        System.out.println(a);
+    }
+    @Test
+    public void predicate_expressionAtom4() {
+        String rule="1+3";
+        JQuickSQLLexer lexer = new JQuickSQLLexer(CharStreams.fromString(rule));
+        CommonTokenStream tokens = new CommonTokenStream(lexer);
+        JQuickSQLParser parser = new JQuickSQLParser(tokens);
+        JQuickSQLParser.ExpressionAtomContext tree = parser.expressionAtom();
+        JQuickSQLCommonVisistor tv = new JQuickSQLCommonVisistor();
+        Object a=tv.visit(tree);
+        System.out.println(a);
+    }
+    @Test
+    public void predicate_expressionAtom5() {
+        String rule="-7";
+        JQuickSQLLexer lexer = new JQuickSQLLexer(CharStreams.fromString(rule));
+        CommonTokenStream tokens = new CommonTokenStream(lexer);
+        JQuickSQLParser parser = new JQuickSQLParser(tokens);
+        JQuickSQLParser.ExpressionAtomContext tree = parser.expressionAtom();
+        JQuickSQLCommonVisistor tv = new JQuickSQLCommonVisistor();
+        Object a=tv.visit(tree);
+        System.out.println(a);
+    }
+    @Test
+    public void predicate_predicate() {
+        String rule="1";
+        JQuickSQLLexer lexer = new JQuickSQLLexer(CharStreams.fromString(rule));
+        CommonTokenStream tokens = new CommonTokenStream(lexer);
+        JQuickSQLParser parser = new JQuickSQLParser(tokens);
+        JQuickSQLParser.PredicateContext tree = parser.predicate();
+        JQuickSQLCommonVisistor tv = new JQuickSQLCommonVisistor();
+        Object a=tv.visit(tree);
+        System.out.println(a);
+    }
+    @Test
+    public void predicate_predicate1() {
+        String rule="a is null";
+        JQuickSQLLexer lexer = new JQuickSQLLexer(CharStreams.fromString(rule));
+        CommonTokenStream tokens = new CommonTokenStream(lexer);
+        JQuickSQLParser parser = new JQuickSQLParser(tokens);
+        JQuickSQLParser.PredicateContext tree = parser.predicate();
+        JQuickSQLCommonVisistor tv = new JQuickSQLCommonVisistor();
+        Object a=tv.visit(tree);
+        System.out.println(a);
+    }
+    @Test
+    public void predicate_predicate2() {
+        String rule="3>4";
+        JQuickSQLLexer lexer = new JQuickSQLLexer(CharStreams.fromString(rule));
+        CommonTokenStream tokens = new CommonTokenStream(lexer);
+        JQuickSQLParser parser = new JQuickSQLParser(tokens);
+        JQuickSQLParser.PredicateContext tree = parser.predicate();
+        JQuickSQLCommonVisistor tv = new JQuickSQLCommonVisistor();
+        Object a=tv.visit(tree);
+        System.out.println(a);
+    }
+    @Test
+    public void predicate_predicate3() {
+        String rule=" a.name BETWEEN 3 and 4";
+        JQuickSQLLexer lexer = new JQuickSQLLexer(CharStreams.fromString(rule));
+        CommonTokenStream tokens = new CommonTokenStream(lexer);
+        JQuickSQLParser parser = new JQuickSQLParser(tokens);
+        JQuickSQLParser.PredicateContext tree = parser.predicate();
+        JQuickSQLCommonVisistor tv = new JQuickSQLCommonVisistor();
+        Object a=tv.visit(tree);
+        System.out.println(a);
+    }
+    @Test
+    public void predicate_predicate4() {
+        String rule=" a.name in  ('aaa','bbbb')";
+        JQuickSQLLexer lexer = new JQuickSQLLexer(CharStreams.fromString(rule));
+        CommonTokenStream tokens = new CommonTokenStream(lexer);
+        JQuickSQLParser parser = new JQuickSQLParser(tokens);
+        JQuickSQLParser.PredicateContext tree = parser.predicate();
+        JQuickSQLCommonVisistor tv = new JQuickSQLCommonVisistor();
+        Object a=tv.visit(tree);
+        System.out.println(a);
+    }
+    @Test
+    public void predicate_predicate5() {
+        String rule=" a.name like  '%hehe%'";
+        JQuickSQLLexer lexer = new JQuickSQLLexer(CharStreams.fromString(rule));
+        CommonTokenStream tokens = new CommonTokenStream(lexer);
+        JQuickSQLParser parser = new JQuickSQLParser(tokens);
+        JQuickSQLParser.PredicateContext tree = parser.predicate();
+        JQuickSQLCommonVisistor tv = new JQuickSQLCommonVisistor();
+        Object a=tv.visit(tree);
+        System.out.println(a);
+    }
+    @Test
+    public void predicate_predicate6() {
+        String rule=" a.name exisitsPredicate  true";
+        JQuickSQLLexer lexer = new JQuickSQLLexer(CharStreams.fromString(rule));
+        CommonTokenStream tokens = new CommonTokenStream(lexer);
+        JQuickSQLParser parser = new JQuickSQLParser(tokens);
+        JQuickSQLParser.PredicateContext tree = parser.predicate();
+        JQuickSQLCommonVisistor tv = new JQuickSQLCommonVisistor();
+        Object a=tv.visit(tree);
+        System.out.println(a);
+    }
 }

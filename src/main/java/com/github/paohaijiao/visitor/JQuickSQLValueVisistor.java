@@ -15,9 +15,12 @@
  */
 package com.github.paohaijiao.visitor;
 
+import com.github.paohaijiao.ast.JQuickConstantNode;
 import com.github.paohaijiao.ast.JQuickDateLiteralNode;
 import com.github.paohaijiao.ast.JQuickUidNode;
 import com.github.paohaijiao.parser.JQuickSQLParser;
+
+import java.text.SimpleDateFormat;
 
 /**
  * packageName com.github.paohaijiao.visitor
@@ -70,7 +73,48 @@ public class JQuickSQLValueVisistor extends JQuickSQLCoreVisistor {
     public String visitDecimal_literal(JQuickSQLParser.Decimal_literalContext ctx) {
         return ctx.DECIMAL_LITERAL().getText();
     }
+    @Override
+    public JQuickConstantNode visitConstant(JQuickSQLParser.ConstantContext ctx) {
+        if (ctx.stringLiteral() != null && ctx.dateLiteral() == null) {
+            String text = ctx.stringLiteral().getText();
+            String value = text.substring(1, text.length() - 1);
+            return new JQuickConstantNode(value, JQuickConstantNode.ConstantType.STRING);
+        }
+        if (ctx.decimal_literal() != null) {
+            String fullText = ctx.getText();
+            Number value;
+            if (fullText.startsWith("-")) {
+                String numStr = fullText.substring(1);
+                value = numStr.contains(".") ? Double.parseDouble(numStr) : Long.parseLong(numStr);
+                value = value instanceof Long ? -(Long) value : -(Double) value;
+            } else {
+                value = fullText.contains(".") ? Double.parseDouble(fullText) : Long.parseLong(fullText);
+            }
+            return new JQuickConstantNode(value, JQuickConstantNode.ConstantType.DECIMAL);
+        }
 
+        if (ctx.booleanLiteral() != null) {
+            boolean value = ctx.booleanLiteral().getText().equalsIgnoreCase("TRUE");
+            return new JQuickConstantNode(value, JQuickConstantNode.ConstantType.BOOLEAN);
+        }
+
+        if (ctx.null_literal() != null) {
+            return new JQuickConstantNode(null, JQuickConstantNode.ConstantType.NULL);
+        }
+        if (ctx.dateLiteral() != null) {
+            String dateStr = ctx.dateLiteral().stringLiteral().getText();
+            dateStr = dateStr.substring(1, dateStr.length() - 1);
+            String format=ctx.dateLiteral().format().getText();
+            format = format.substring(1, dateStr.length() - 1);
+            SimpleDateFormat sdf = new SimpleDateFormat(format);
+            try{
+                return new JQuickConstantNode(sdf.parse(dateStr), JQuickConstantNode.ConstantType.DATE);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        throw new RuntimeException("Unknown constant: " + ctx.getText());
+    }
 
 
 }

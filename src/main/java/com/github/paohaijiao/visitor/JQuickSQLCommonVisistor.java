@@ -32,7 +32,7 @@ import java.util.List;
  * @version 1.0.0
  * @since 2026/5/17
  */
-public class JQuickSQLCommonVisistor extends JQuickSQLValueVisistor {
+public class JQuickSQLCommonVisistor extends JQuickSQLPredictVisistor {
 
     public JQuickSQLCommonVisistor(JContext jcontext, JQuickSqlConfig config){
         if(null!=jcontext&&!jcontext.isEmpty()){
@@ -246,15 +246,7 @@ public class JQuickSQLCommonVisistor extends JQuickSQLValueVisistor {
         }
         throw new RuntimeException("Invalid filter condition structure: " + ctx.getText());
     }
-    @Override
-    public JQuickExpressionsNode visitExpressions(JQuickSQLParser.ExpressionsContext ctx) {
-        List<JQuickExpressionNode> expressions = new ArrayList<>();
-        for (JQuickSQLParser.ExpressionContext exprCtx : ctx.expression()) {
-            JQuickExpressionNode expression = (JQuickExpressionNode) visit(exprCtx);
-            expressions.add(expression);
-        }
-        return new JQuickExpressionsNode(expressions);
-    }
+
     @Override
     public JQuickSelectElementNode visitSelectElement(JQuickSQLParser.SelectElementContext ctx) {
         JQuickExpressionNode expression = (JQuickExpressionNode) visit(ctx.expression());
@@ -265,30 +257,7 @@ public class JQuickSQLCommonVisistor extends JQuickSQLValueVisistor {
         }
         return new JQuickSelectElementNode(expression, alias);
     }
-    @Override
-    public JQuickExpressionNode visitParenExpression(JQuickSQLParser.ParenExpressionContext ctx) {
-        JQuickExpressionNode innerExpression = (JQuickExpressionNode) visit(ctx.expression());
-        return new JQuickExpressionNode(innerExpression, true);
-    }
 
-    @Override
-    public JQuickExpressionNode visitNotExpression(JQuickSQLParser.NotExpressionContext ctx) {
-        JQuickExpressionNode expression = (JQuickExpressionNode) visit(ctx.expression());
-        boolean isNot = true;
-        return new JQuickExpressionNode(isNot, expression);
-    }
-
-    @Override
-    public JQuickExpressionNode visitPredicateExpression(JQuickSQLParser.PredicateExpressionContext ctx) {
-        JQuickExpressionAtomNode expressionAtom = (JQuickExpressionAtomNode) visit(ctx.expressionAtom());
-        return new JQuickExpressionNode(expressionAtom);
-    }
-
-    @Override
-    public JQuickExpressionNode visitSelectResult(JQuickSQLParser.SelectResultContext ctx) {
-        JQuickSelectClauseNode selectClause = (JQuickSelectClauseNode) visit(ctx.selectClause());
-        return new JQuickExpressionNode(selectClause);
-    }
 
     @Override
     public JQuickTableNameItemNode visitTableNameItem(JQuickSQLParser.TableNameItemContext ctx) {
@@ -430,275 +399,25 @@ public class JQuickSQLCommonVisistor extends JQuickSQLValueVisistor {
         JQuickExpressionNode expression = (JQuickExpressionNode) visit(ctx.expression());
         return new JQuickFunctionArgNode(expression);
     }
-    @Override
-    public JQuickPredicateNode visitExpressionAtomPredicate(JQuickSQLParser.ExpressionAtomPredicateContext ctx) {
-        JQuickExpressionAtomNode expressionAtom = (JQuickExpressionAtomNode) visit(ctx.expressionAtom());
-        return new JQuickPredicateNode(expressionAtom);
-    }
-    @Override
-    public JQuickPredicateNode visitIsNullPredicate(JQuickSQLParser.IsNullPredicateContext ctx) {
-        JQuickPredicateNode predicate = (JQuickPredicateNode) visit(ctx.predicate());
-        boolean isNotNull = ctx.NOT() != null;
-        return new JQuickPredicateNode(predicate, isNotNull);
-    }
 
-    @Override
-    public JQuickPredicateNode visitBinaryComparisonPredicate(JQuickSQLParser.BinaryComparisonPredicateContext ctx) {
-        JQuickPredicateNode left = (JQuickPredicateNode) visit(ctx.left);
-        JQuickPredicateNode right = (JQuickPredicateNode) visit(ctx.right);
-        JQuickPredicateNode.ComparisonOperator operator = parseComparisonOperator(ctx.comparisonOperator());
-        return new JQuickPredicateNode(left, right, operator);
-    }
 
-    @Override
-    public JQuickPredicateNode visitBetweenPredicate(JQuickSQLParser.BetweenPredicateContext ctx) {
-        JQuickPredicateNode predicate = (JQuickPredicateNode) visit(ctx.predicate(0));
-        boolean not = ctx.NOT() != null;
-        JQuickPredicateNode low = (JQuickPredicateNode) visit(ctx.predicate(1));
-        JQuickPredicateNode high = (JQuickPredicateNode) visit(ctx.predicate(2));
-        return new JQuickPredicateNode(predicate, not, low, high);
-    }
 
-    @Override
-    public JQuickPredicateNode visitInPredicate(JQuickSQLParser.InPredicateContext ctx) {
-        JQuickPredicateNode predicate = (JQuickPredicateNode) visit(ctx.predicate());
-        boolean not = ctx.NOT() != null;
-        if (ctx.selectStatement() != null) {
-            JQuickSelectStatementNode subquery = (JQuickSelectStatementNode) visit(ctx.selectStatement());
-            return new JQuickPredicateNode(predicate, not, subquery);
-        } else {
-            JQuickExpressionsNode expressions = (JQuickExpressionsNode) visit(ctx.expressions());
-            return new JQuickPredicateNode(predicate, not, expressions);
-        }
-    }
 
-    @Override
-    public JQuickPredicateNode visitLikePredicate(JQuickSQLParser.LikePredicateContext ctx) {
-        JQuickPredicateNode predicate = (JQuickPredicateNode) visit(ctx.predicate(0));
-        boolean not = ctx.NOT() != null;
-        JQuickPredicateNode pattern = (JQuickPredicateNode) visit(ctx.predicate(1));
-        return new JQuickPredicateNode(predicate, not, pattern);
-    }
 
-    @Override
-    public JQuickPredicateNode visitRegexpPredicate(JQuickSQLParser.RegexpPredicateContext ctx) {
-        JQuickPredicateNode predicate = (JQuickPredicateNode) visit(ctx.predicate(0));
-        boolean not = ctx.NOT() != null;
-        JQuickPredicateNode pattern = (JQuickPredicateNode) visit(ctx.predicate(1));
-        return new JQuickPredicateNode(predicate, not, pattern);
-    }
 
-    @Override
-    public JQuickPredicateNode visitExisitsPredicate(JQuickSQLParser.ExisitsPredicateContext ctx) {
-        JQuickExpressionNode expression = (JQuickExpressionNode) visit(ctx.expression());
-        return new JQuickPredicateNode(expression, true);
-    }
 
-    private JQuickPredicateNode.ComparisonOperator parseComparisonOperator(JQuickSQLParser.ComparisonOperatorContext ctx) {
-        String operator = ctx.getText();
-        switch (operator) {
-            case "=": return JQuickPredicateNode.ComparisonOperator.EQ;
-            case ">": return JQuickPredicateNode.ComparisonOperator.GT;
-            case "<": return JQuickPredicateNode.ComparisonOperator.LT;
-            case "<=": return JQuickPredicateNode.ComparisonOperator.LE;
-            case ">=": return JQuickPredicateNode.ComparisonOperator.GE;
-            case "!=": return JQuickPredicateNode.ComparisonOperator.NE;
-            default: throw new RuntimeException("Unknown comparison operator: " + operator);
-        }
-    }
-    @Override
-    public JQuickExpressionAtomNode visitConstantExpressionAtom(JQuickSQLParser.ConstantExpressionAtomContext ctx) {
-        JQuickConstantNode constant = (JQuickConstantNode) visit(ctx.constant());
-        return new JQuickExpressionAtomNode(constant);
-    }
 
-    @Override
-    public JQuickExpressionAtomNode visitFullColumnNameExpressionAtom(JQuickSQLParser.FullColumnNameExpressionAtomContext ctx) {
-        JQuickFullColumnNameNode fullColumnName = (JQuickFullColumnNameNode) visit(ctx.fullColumnName());
-        return new JQuickExpressionAtomNode(fullColumnName);
-    }
 
-    @Override
-    public JQuickExpressionAtomNode visitFunctionCallExpressionAtom(JQuickSQLParser.FunctionCallExpressionAtomContext ctx) {
-        JQuickFunctionCallNode functionCall = (JQuickFunctionCallNode) visit(ctx.functionCall());
-        return new JQuickExpressionAtomNode(functionCall);
-    }
 
-    @Override
-    public JQuickExpressionAtomNode visitNestedExpressionAtom(JQuickSQLParser.NestedExpressionAtomContext ctx) {
-        List<JQuickExpressionNode> expressions = new ArrayList<>();
-        for (JQuickSQLParser.ExpressionContext exprCtx : ctx.expression()) {
-            expressions.add((JQuickExpressionNode) visit(exprCtx));
-        }
-        return new JQuickExpressionAtomNode(expressions);
-    }
 
-    @Override
-    public JQuickExpressionAtomNode visitSubqueryExperssionAtom(JQuickSQLParser.SubqueryExperssionAtomContext ctx) {
-        JQuickSelectStatementNode subquery = (JQuickSelectStatementNode) visit(ctx.selectStatement());
-        return new JQuickExpressionAtomNode(subquery);
-    }
 
-    @Override
-    public JQuickExpressionAtomNode visitMathExpressionAtom(JQuickSQLParser.MathExpressionAtomContext ctx) {
-        JQuickExpressionAtomNode left = (JQuickExpressionAtomNode) visit(ctx.left);
-        JQuickExpressionAtomNode right = (JQuickExpressionAtomNode) visit(ctx.right);
-        JQuickExpressionAtomNode.MathOperator operator = parseMathOperator(ctx.mathOperator());
-        return new JQuickExpressionAtomNode(left, right, operator);
-    }
 
-    @Override
-    public JQuickExpressionAtomNode visitUnaryExpressionAtom(JQuickSQLParser.UnaryExpressionAtomContext ctx) {
-        JQuickExpressionAtomNode expression = (JQuickExpressionAtomNode) visit(ctx.expressionAtom());
-        JQuickExpressionAtomNode.UnaryOperator operator = parseUnaryOperator(ctx.unaryOperator());
-        return new JQuickExpressionAtomNode(operator, expression);
-    }
 
-    private JQuickExpressionAtomNode.MathOperator parseMathOperator(JQuickSQLParser.MathOperatorContext ctx) {
-        String operator = ctx.getText();
-        switch (operator) {
-            case "*": return JQuickExpressionAtomNode.MathOperator.MULTIPLY;
-            case "/": return JQuickExpressionAtomNode.MathOperator.DIVIDE;
-            case "%": return JQuickExpressionAtomNode.MathOperator.MODULO;
-            case "+": return JQuickExpressionAtomNode.MathOperator.PLUS;
-            case "-": return JQuickExpressionAtomNode.MathOperator.MINUS;
-            default: throw new RuntimeException("Unknown math operator: " + operator);
-        }
-    }
 
-    private JQuickExpressionAtomNode.UnaryOperator parseUnaryOperator(JQuickSQLParser.UnaryOperatorContext ctx) {
-        String operator = ctx.getText();
-        switch (operator) {
-            case "!":
-                return JQuickExpressionAtomNode.UnaryOperator.NOT;
-            case "~":
-                return JQuickExpressionAtomNode.UnaryOperator.BIT_NOT;
-            case "+":
-                return JQuickExpressionAtomNode.UnaryOperator.PLUS;
-            case "-":
-                return JQuickExpressionAtomNode.UnaryOperator.MINUS;
-            case "NOT":
-                return JQuickExpressionAtomNode.UnaryOperator.NOT;
-            default:
-                throw new RuntimeException("Unknown unary operator: " + operator);
-        }
-    }
-    @Override
-    public JQuickConstantNode visitConstant(JQuickSQLParser.ConstantContext ctx) {
-        if (ctx.stringLiteral() != null && ctx.dateLiteral() == null) {
-            String text = ctx.stringLiteral().getText();
-            String value = text.substring(1, text.length() - 1);
-            return new JQuickConstantNode(value, JQuickConstantNode.ConstantType.STRING);
-        }
-        if (ctx.decimal_literal() != null) {
-            String fullText = ctx.getText();
-            Number value;
-            if (fullText.startsWith("-")) {
-                String numStr = fullText.substring(1);
-                value = numStr.contains(".") ? Double.parseDouble(numStr) : Long.parseLong(numStr);
-                value = value instanceof Long ? -(Long) value : -(Double) value;
-            } else {
-                value = fullText.contains(".") ? Double.parseDouble(fullText) : Long.parseLong(fullText);
-            }
-            return new JQuickConstantNode(value, JQuickConstantNode.ConstantType.DECIMAL);
-        }
 
-        if (ctx.booleanLiteral() != null) {
-            boolean value = ctx.booleanLiteral().getText().equalsIgnoreCase("TRUE");
-            return new JQuickConstantNode(value, JQuickConstantNode.ConstantType.BOOLEAN);
-        }
 
-        if (ctx.null_literal() != null) {
-            return new JQuickConstantNode(null, JQuickConstantNode.ConstantType.NULL);
-        }
-        if (ctx.dateLiteral() != null) {
-            String dateStr = ctx.dateLiteral().stringLiteral().getText();
-            dateStr = dateStr.substring(1, dateStr.length() - 1);
-            String format=ctx.dateLiteral().format().getText();
-            format = format.substring(1, dateStr.length() - 1);
-            SimpleDateFormat sdf = new SimpleDateFormat(format);
-            try{
-                return new JQuickConstantNode(sdf.parse(dateStr), JQuickConstantNode.ConstantType.DATE);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-        throw new RuntimeException("Unknown constant: " + ctx.getText());
-    }
 
-    @Override
-    public JQuickExpressionAtomNode.MathOperator visitMathOperator(JQuickSQLParser.MathOperatorContext ctx) {
-        String operator = ctx.getText();
-        switch (operator) {
-            case "*":
-                return JQuickExpressionAtomNode.MathOperator.MULTIPLY;
-            case "/":
-                return JQuickExpressionAtomNode.MathOperator.DIVIDE;
-            case "%":
-                return JQuickExpressionAtomNode.MathOperator.MODULO;
-            case "+":
-                return JQuickExpressionAtomNode.MathOperator.PLUS;
-            case "-":
-                return JQuickExpressionAtomNode.MathOperator.MINUS;
-            case "--":
-                return JQuickExpressionAtomNode.MathOperator.MINUS;
-            default:
-                throw new RuntimeException("Unknown math operator: " + operator);
-        }
-    }
-    @Override
-    public JQuickExpressionAtomNode.UnaryOperator visitUnaryOperator(JQuickSQLParser.UnaryOperatorContext ctx) {
-        String operator = ctx.getText();
-        switch (operator) {
-            case "!":
-                return JQuickExpressionAtomNode.UnaryOperator.NOT;
-            case "~":
-                return JQuickExpressionAtomNode.UnaryOperator.BIT_NOT;
-            case "+":
-                return JQuickExpressionAtomNode.UnaryOperator.PLUS;
-            case "-":
-                return JQuickExpressionAtomNode.UnaryOperator.MINUS;
-            case "NOT":
-                return JQuickExpressionAtomNode.UnaryOperator.NOT;
-            default:
-                throw new RuntimeException("Unknown unary operator: " + operator);
-        }
-    }
-    @Override
-    public JQuickFilterConditionNode.LogicalOperator visitLogicalOperator(JQuickSQLParser.LogicalOperatorContext ctx) {
-        String operator = ctx.getText();
-        switch (operator.toUpperCase()) {
-            case "AND":
-                return JQuickFilterConditionNode.LogicalOperator.AND;
-            case "OR":
-                return JQuickFilterConditionNode.LogicalOperator.OR;
-            case "XOR":
-                throw new RuntimeException("XOR operator not supported yet");
-            default:
-                throw new RuntimeException("Unknown logical operator: " + operator);
-        }
-    }
-    @Override
-    public JQuickPredicateNode.ComparisonOperator visitComparisonOperator(JQuickSQLParser.ComparisonOperatorContext ctx) {
-        String operator = ctx.getText();
 
-        switch (operator) {
-            case "=":
-                return JQuickPredicateNode.ComparisonOperator.EQ;
-            case ">":
-                return JQuickPredicateNode.ComparisonOperator.GT;
-            case "<":
-                return JQuickPredicateNode.ComparisonOperator.LT;
-            case "<=":
-                return JQuickPredicateNode.ComparisonOperator.LE;
-            case ">=":
-                return JQuickPredicateNode.ComparisonOperator.GE;
-            case "!=":
-                return JQuickPredicateNode.ComparisonOperator.NE;
-            default:
-                throw new RuntimeException("Unknown comparison operator: " + operator);
-        }
-    }
 
 
 
