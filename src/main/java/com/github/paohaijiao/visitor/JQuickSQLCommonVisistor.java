@@ -20,11 +20,9 @@ import com.github.paohaijiao.config.JQuickSqlConfig;
 import com.github.paohaijiao.enums.JQuickJoinType;
 import com.github.paohaijiao.param.JContext;
 import com.github.paohaijiao.parser.JQuickSQLParser;
-import org.antlr.v4.runtime.tree.TerminalNode;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 
 /**

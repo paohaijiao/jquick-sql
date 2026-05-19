@@ -16,7 +16,6 @@
 package com.github.paohaijiao.optimizer;
 
 import com.github.paohaijiao.enums.JQuickBinaryOperator;
-import com.github.paohaijiao.context.JQuickExecutionContext;
 import com.github.paohaijiao.enums.JQuickJoinType;
 import com.github.paohaijiao.expression.JQuickExpression;
 import com.github.paohaijiao.expression.domain.JQuickBinaryExpression;
@@ -24,9 +23,7 @@ import com.github.paohaijiao.expression.domain.JQuickColumnRefExpression;
 import com.github.paohaijiao.expression.domain.JQuickLiteralExpression;
 import com.github.paohaijiao.expression.domain.JQuickUnaryExpression;
 import com.github.paohaijiao.logic.JQuickLogicalPlanNode;
-import com.github.paohaijiao.logic.JQuickLogicalPlanVisitor;
 import com.github.paohaijiao.logic.domain.*;
-import com.github.paohaijiao.statement.JQuickDataSet;
 
 import java.util.*;
 import java.util.stream.Collectors;

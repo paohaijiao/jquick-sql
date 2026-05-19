@@ -19,7 +19,9 @@ package com.github.paohaijiao.logic.domain;
 import com.github.paohaijiao.logic.JQuickLogicalPlanNode;
 import com.github.paohaijiao.logic.JQuickLogicalPlanVisitor;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * 排序节点 - 描述 ORDER BY 子句

@@ -20,11 +20,14 @@ package com.github.paohaijiao.logic.domain;
  * @version 1.0.0
  * @since 2026/5/17
  */
+
 import com.github.paohaijiao.expression.JQuickExpression;
 import com.github.paohaijiao.logic.JQuickLogicalPlanNode;
 import com.github.paohaijiao.logic.JQuickLogicalPlanVisitor;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * 分组聚合节点 - 描述 GROUP BY 子句

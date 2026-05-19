@@ -15,9 +15,9 @@
  */
 package com.github.paohaijiao.cleanup;
 
+import com.github.paohaijiao.scheduler.JQuickExchangeChannel;
 import com.github.paohaijiao.scheduler.JQuickSchedulePlan;
 import com.github.paohaijiao.scheduler.JQuickTask;
-import com.github.paohaijiao.scheduler.JQuickExchangeChannel;
 import com.github.paohaijiao.scheduler.JQuickWorker;
 
 import java.io.File;

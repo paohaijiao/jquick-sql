@@ -14,10 +14,11 @@
  * Copyright (c) [2025-2099] Martin (goudingcheng@gmail.com)
  */
 package com.github.paohaijiao.scheduler;
+
 import com.github.paohaijiao.collector.JQuickResultCollector;
+import com.github.paohaijiao.physical.domain.JQuickPhysicalColumn;
 import com.github.paohaijiao.statement.JQuickColumnMeta;
 import com.github.paohaijiao.statement.JQuickRow;
-import com.github.paohaijiao.physical.domain.JQuickPhysicalColumn;
 
 import java.util.*;
 import java.util.concurrent.BlockingQueue;

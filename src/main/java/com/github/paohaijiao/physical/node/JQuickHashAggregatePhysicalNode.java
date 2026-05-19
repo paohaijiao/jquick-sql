@@ -14,12 +14,16 @@
  * Copyright (c) [2025-2099] Martin (goudingcheng@gmail.com)
  */
 package com.github.paohaijiao.physical.node;
+
 import com.github.paohaijiao.expression.JQuickExpression;
-import com.github.paohaijiao.physical.*;
+import com.github.paohaijiao.physical.JQuickPhysicalPlanNode;
+import com.github.paohaijiao.physical.JQuickPhysicalPlanVisitor;
 import com.github.paohaijiao.physical.domain.JQuickPhysicalColumn;
 import com.github.paohaijiao.physical.domain.JQuickPhysicalStats;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.stream.Collectors;
 
 public class JQuickHashAggregatePhysicalNode extends JQuickAbstractPhysicalNode {

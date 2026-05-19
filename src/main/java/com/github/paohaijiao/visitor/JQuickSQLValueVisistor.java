@@ -16,10 +16,6 @@
 package com.github.paohaijiao.visitor;
 
 import com.github.paohaijiao.ast.JQuickDateLiteralNode;
-import com.github.paohaijiao.ast.JQuickSimpleIdNode;
-import com.github.paohaijiao.config.JQuickSqlConfig;
-import com.github.paohaijiao.param.JContext;
-import com.github.paohaijiao.parser.JQuickSQLBaseVisitor;
 import com.github.paohaijiao.parser.JQuickSQLParser;
 
 /**

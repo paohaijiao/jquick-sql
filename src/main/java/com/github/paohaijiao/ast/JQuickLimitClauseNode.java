@@ -15,8 +15,6 @@
  */
 package com.github.paohaijiao.ast;
 
-import ognl.ExpressionNode;
-
 /**
  * limitClause
  * : LIMIT limitOnly

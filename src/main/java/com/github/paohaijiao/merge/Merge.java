@@ -20,7 +20,6 @@ import com.github.paohaijiao.statement.JQuickDataSet;
 import com.github.paohaijiao.statement.JQuickRow;
 
 import java.util.*;
-import java.util.concurrent.*;
 
 /**
  * 结果合并器 - 合并多个工作节点的结果
