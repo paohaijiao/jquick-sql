@@ -35,32 +35,53 @@ JQuickSQL 是一个轻量级 SQL 查询引擎，支持异构数据库,文件,res
 操作，适用于通用数据的查询和分析。
 ## 总体架构
 ```mermaid
-flowchart TD
-    A[SQL 字符串输入] --> B[1. 词法分析<br>JQuickSQLLexer]
-    B --> C[2. 语法分析<br>JQuickSQLParser]
-    C --> D[3. 构建 AST<br>buildAST]
-    D --> E[4. AST 转 逻辑计划<br>JQuickASTToLogicalPlanVisitor]
-    E --> F[5. 逻辑计划优化<br>optimizer.optimize]
-    F --> G[6. 逻辑计划转物理计划<br>physicalGenerator.generate]
-    G --> H[7. 物理计划转分布式计划<br>fragmenter.fragment]
-    
-    H --> I[8. Worker发现服务<br>workerManager.startDiscovery]
-    I --> J[注册Worker节点<br>worker-1,2,3]
-    
-    H --> K[9. 任务调度<br>JQuickTaskScheduler<br>策略: DATA_LOCALITY]
-    K --> L[生成调度计划<br>JQuickSchedulePlan]
-    
-    L --> M[10. 启动Workers<br>startWorkers]
-    M --> N[11. 注册结果收集器<br>registerResultCollector]
-    N --> O[12. 提交任务并收集结果<br>executeAndCollect]
-    O --> P[JQuickDataSet 结果]
-    
-    P --> Q[输出结果行数<br>result.size]
+flowchart TB
+    %% 入口
+    A["📄 SQL 输入"] ==> B["🔍 词法 & 语法分析<br>(Lexer/Parser)"]
 
-    style A fill:#e1f5fe
-    style H fill:#fff3e0
-    style K fill:#fff3e0
-    style P fill:#c8e6c9
+    %% 编译阶段
+    subgraph Phase1 [<b>🔷 阶段一：SQL 编译与解析</b>]
+        direction LR
+        B --> C["🌳 抽象语法树 (AST)<br>buildAST()"]
+    end
+
+    %% 计划生成阶段
+    subgraph Phase2 [<b>🟠 阶段二：计划生成与优化</b>]
+        direction LR
+        C --> D["📋 逻辑计划<br>JQuickASTToLogicalPlanVisitor"]
+        D --> E["⚡ 逻辑计划优化<br>Optimizer"]
+        E --> F["⚙️ 物理计划<br>PhysicalPlanGenerator"]
+        F --> G["🌐 分布式计划<br>Fragmenter"]
+    end
+
+    %% 调度阶段
+    subgraph Phase3 [<b>🟢 阶段三：资源发现与任务调度</b>]
+        direction LR
+        G --> H["📡 Worker 发现服务<br>WorkerManager (Port 9999)"]
+        H --> I["🗺️ 注册 Worker 节点"]
+        I --> J["🎯 任务调度器<br>JQuickTaskScheduler<br>策略: DATA_LOCALITY"]
+        J --> K["📅 生成调度计划<br>JQuickSchedulePlan"]
+    end
+
+    %% 执行阶段
+    subgraph Phase4 [<b>🟣 阶段四：分布式执行与结果汇集</b>]
+        direction LR
+        K --> L["🚀 启动 Workers<br>Worker-1,2,3"]
+        L --> M["📥 注册结果收集器"]
+        M --> N["💾 提交任务 & 执行"]
+        N --> O["📊 结果数据集<br>JQuickDataSet"]
+    end
+
+    %% 最终输出
+    O ==> P["✅ 输出结果行数<br>result.size()"]
+
+    %% 样式定义
+    style Phase1 fill:#e3f2fd,stroke:#1e88e5,stroke-width:2px,color:#0d47a1
+    style Phase2 fill:#fff3e0,stroke:#fb8c00,stroke-width:2px,color:#e65100
+    style Phase3 fill:#e8f5e9,stroke:#43a047,stroke-width:2px,color:#1b5e20
+    style Phase4 fill:#f3e5f5,stroke:#8e24aa,stroke-width:2px,color:#4a148c
+    style A fill:#bbdefb,stroke:#1976d2,stroke-width:2px,color:#000
+    style P fill:#c8e6c9,stroke:#388e3c,stroke-width:2px,color:#000
 ```
 ## 基本语法结构
 ### SELECT 语句
