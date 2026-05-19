@@ -295,4 +295,15 @@ public class JQuickPredicateTest {
         Object a=tv.visit(tree);
         System.out.println(a);
     }
+    @Test
+    public void predicate_expressions() {
+        String rule="1,3";
+        JQuickSQLLexer lexer = new JQuickSQLLexer(CharStreams.fromString(rule));
+        CommonTokenStream tokens = new CommonTokenStream(lexer);
+        JQuickSQLParser parser = new JQuickSQLParser(tokens);
+        JQuickSQLParser.ExpressionsContext tree = parser.expressions();
+        JQuickSQLCommonVisistor tv = new JQuickSQLCommonVisistor();
+        Object a=tv.visit(tree);
+        System.out.println(a);
+    }
 }
