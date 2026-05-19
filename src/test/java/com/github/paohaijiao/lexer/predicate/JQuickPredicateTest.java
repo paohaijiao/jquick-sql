@@ -450,8 +450,8 @@ public class JQuickPredicateTest {
         System.out.println(a);
     }
     @Test
-    public void predicate_predicate6() {
-        String rule=" a.name exisitsPredicate  true";
+    public void predicate_predicate6() {// error
+        String rule=" a.name EXISTS   true";
         JQuickSQLLexer lexer = new JQuickSQLLexer(CharStreams.fromString(rule));
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         JQuickSQLParser parser = new JQuickSQLParser(tokens);
