@@ -1,4 +1,4 @@
-package com.github.paohaijiao.lexer;
+package com.github.paohaijiao.lexer.value;
 import com.github.paohaijiao.parser.JQuickSQLLexer;
 import com.github.paohaijiao.parser.JQuickSQLParser;
 import com.github.paohaijiao.visitor.JQuickSQLCommonVisistor;

@@ -16,6 +16,7 @@
 package com.github.paohaijiao.visitor;
 
 import com.github.paohaijiao.ast.JQuickDateLiteralNode;
+import com.github.paohaijiao.ast.JQuickUidNode;
 import com.github.paohaijiao.parser.JQuickSQLParser;
 
 /**
@@ -37,11 +38,12 @@ public class JQuickSQLValueVisistor extends JQuickSQLCoreVisistor {
         return text.substring(1, text.length() - 1);
     }
     @Override
-    public String visitUid(JQuickSQLParser.UidContext ctx) {
-        return visitSimpleId(ctx.simpleId());
+    public JQuickUidNode visitUid(JQuickSQLParser.UidContext ctx) {
+        String uid=visitSimpleId(ctx.simpleId());
+        return new JQuickUidNode(uid);
     }
     @Override
-    public String visitDottedId(JQuickSQLParser.DottedIdContext ctx) {
+    public JQuickUidNode visitDottedId(JQuickSQLParser.DottedIdContext ctx) {
         return visitUid(ctx.uid());
     }
     @Override
