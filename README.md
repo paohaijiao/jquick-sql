@@ -33,6 +33,42 @@
 ## 概述
 JQuickSQL 是一个轻量级 SQL 查询引擎，支持异构数据库,文件,restful 请求等进行关联查询，JOIN，提供了标准 SQL 语法和 OLAP
 操作，适用于通用数据的查询和分析。
+## 总体架构
+```mermaid
+flowchart TD
+    A[SQL 字符串输入] --> B[1. 词法分析<br>JQuickSQLLexer]
+    B --> C[2. 语法分析<br>JQuickSQLParser]
+    C --> D[3. 构建 AST<br>buildAST]
+    D --> E[4. AST → 逻辑计划<br>JQuickASTToLogicalPlanVisitor]
+    E --> F[5. 逻辑计划优化<br>optimizer.optimize]
+    F --> G[6. 逻辑计划 → 物理计划<br>physicalGenerator.generate]
+    G --> H[7. 物理计划 → 分布式计划<br>fragmenter.fragment]
+    
+    H --> I[8. Worker 发现服务<br>workerManager.startDiscovery]
+    I --> J[注册 Worker 节点<br>worker-1,2,3]
+    
+    H --> K[9. 任务调度<br>JQuickTaskScheduler<br>策略: DATA_LOCALITY]
+    K --> L[生成调度计划<br>JQuickSchedulePlan]
+    
+    L --> M[10. 启动 Workers<br>startWorkers]
+    M --> N[11. 注册结果收集器<br>registerResultCollector]
+    N --> O[12. 提交任务并收集结果<br>executeAndCollect]
+    O --> P[JQuickDataSet 结果]
+    
+    P --> Q[输出结果行数<br>result.size]
+    
+    subgraph 编译阶段
+        B C D
+    end
+    
+    subgraph 计划生成与优化
+        E F G H
+    end
+    
+    subgraph 分布式执行层
+        I J K L M N O
+    end
+```
 ## 基本语法结构
 ### SELECT 语句
 ```sql
