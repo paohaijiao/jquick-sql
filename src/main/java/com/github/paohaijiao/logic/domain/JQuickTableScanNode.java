@@ -36,7 +36,9 @@ public class JQuickTableScanNode implements JQuickLogicalPlanNode {
     private final String tableName;
 
     private final String alias;
-
+    /**
+     * 列裁剪（Column Pruning）优化
+     */
     private final Set<String> requiredColumns;
 
     private final JQuickExpression filterPredicate;
