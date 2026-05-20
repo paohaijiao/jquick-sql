@@ -15,6 +15,7 @@
  */
 package com.github.paohaijiao.visitor;
 
+import com.github.paohaijiao.ast.JQuickExpressionAtomNode;
 import com.github.paohaijiao.config.JQuickSqlConfig;
 import com.github.paohaijiao.enums.JQuickJoinType;
 import com.github.paohaijiao.param.JContext;
@@ -49,5 +50,34 @@ public class JQuickSQLCoreVisistor extends JQuickSQLBaseVisitor {
             return JQuickJoinType.FULL;
         }
         return JQuickJoinType.INNER;
+    }
+    protected JQuickExpressionAtomNode.MathOperator parseMathOperator(JQuickSQLParser.MathOperatorContext ctx) {
+        String operator = ctx.getText();
+        switch (operator) {
+            case "*": return JQuickExpressionAtomNode.MathOperator.MULTIPLY;
+            case "/": return JQuickExpressionAtomNode.MathOperator.DIVIDE;
+            case "%": return JQuickExpressionAtomNode.MathOperator.MODULO;
+            case "+": return JQuickExpressionAtomNode.MathOperator.PLUS;
+            case "-": return JQuickExpressionAtomNode.MathOperator.MINUS;
+            default: throw new RuntimeException("Unknown math operator: " + operator);
+        }
+    }
+
+    protected JQuickExpressionAtomNode.UnaryOperator parseUnaryOperator(JQuickSQLParser.UnaryOperatorContext ctx) {
+        String operator = ctx.getText();
+        switch (operator) {
+            case "!":
+                return JQuickExpressionAtomNode.UnaryOperator.NOT;
+            case "~":
+                return JQuickExpressionAtomNode.UnaryOperator.BIT_NOT;
+            case "+":
+                return JQuickExpressionAtomNode.UnaryOperator.PLUS;
+            case "-":
+                return JQuickExpressionAtomNode.UnaryOperator.MINUS;
+            case "NOT":
+                return JQuickExpressionAtomNode.UnaryOperator.NOT;
+            default:
+                throw new RuntimeException("Unknown unary operator: " + operator);
+        }
     }
 }

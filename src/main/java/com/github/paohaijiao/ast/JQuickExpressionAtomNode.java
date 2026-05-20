@@ -39,6 +39,7 @@ public class JQuickExpressionAtomNode implements JQuickASTNode {
     private final MathOperator mathOperator;
     private final UnaryOperator unaryOperator;
     private final AtomType type;
+    private final JQuickCaseWhenNode caseWhen;
 
     // 常量
     public JQuickExpressionAtomNode(JQuickConstantNode constant) {
@@ -52,6 +53,7 @@ public class JQuickExpressionAtomNode implements JQuickASTNode {
         this.mathOperator = null;
         this.unaryOperator = null;
         this.type = AtomType.CONSTANT;
+        this.caseWhen = null;
     }
 
     // 列引用
@@ -66,6 +68,7 @@ public class JQuickExpressionAtomNode implements JQuickASTNode {
         this.mathOperator = null;
         this.unaryOperator = null;
         this.type = AtomType.COLUMN;
+        this.caseWhen = null;
     }
 
     // 函数调用
@@ -80,6 +83,7 @@ public class JQuickExpressionAtomNode implements JQuickASTNode {
         this.mathOperator = null;
         this.unaryOperator = null;
         this.type = AtomType.FUNCTION;
+        this.caseWhen = null;
     }
 
     // 嵌套表达式
@@ -94,6 +98,7 @@ public class JQuickExpressionAtomNode implements JQuickASTNode {
         this.mathOperator = null;
         this.unaryOperator = null;
         this.type = AtomType.NESTED;
+        this.caseWhen = null;
     }
 
     // 子查询
@@ -108,6 +113,7 @@ public class JQuickExpressionAtomNode implements JQuickASTNode {
         this.mathOperator = null;
         this.unaryOperator = null;
         this.type = AtomType.SUBQUERY;
+        this.caseWhen = null;
     }
 
     // 数学运算
@@ -122,6 +128,7 @@ public class JQuickExpressionAtomNode implements JQuickASTNode {
         this.mathOperator = mathOperator;
         this.unaryOperator = null;
         this.type = AtomType.MATH;
+        this.caseWhen = null;
     }
 
     // 一元运算
@@ -136,6 +143,20 @@ public class JQuickExpressionAtomNode implements JQuickASTNode {
         this.mathOperator = null;
         this.unaryOperator = unaryOperator;
         this.type = AtomType.UNARY;
+        this.caseWhen = null;
+    }
+    public JQuickExpressionAtomNode(JQuickCaseWhenNode caseWhen) {
+        this.constant = null;
+        this.fullColumnName = null;
+        this.functionCall = null;
+        this.nestedExpressions = null;
+        this.subquery = null;
+        this.left = null;
+        this.right = null;
+        this.mathOperator = null;
+        this.unaryOperator = null;
+        this.caseWhen = caseWhen;
+        this.type = AtomType.CASE_WHEN;
     }
 
     @Override
@@ -184,7 +205,7 @@ public class JQuickExpressionAtomNode implements JQuickASTNode {
     }
 
     public enum AtomType {
-        CONSTANT, COLUMN, FUNCTION, NESTED, SUBQUERY, MATH, UNARY
+        CONSTANT, COLUMN, FUNCTION, NESTED, SUBQUERY, MATH, UNARY, CASE_WHEN
     }
 
     public enum MathOperator {
@@ -211,5 +232,8 @@ public class JQuickExpressionAtomNode implements JQuickASTNode {
         public String getSymbol() {
             return symbol;
         }
+    }
+    public JQuickCaseWhenNode getCaseWhen() {
+        return caseWhen;
     }
 }

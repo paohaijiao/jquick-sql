@@ -32,7 +32,7 @@ import java.util.List;
  * @version 1.0.0
  * @since 2026/5/17
  */
-public class JQuickSQLCommonVisistor extends JQuickSelectSpecVisitor {
+public class JQuickSQLCommonVisistor extends JQuickSQLSelectStatement {
 
     public JQuickSQLCommonVisistor(JContext jcontext, JQuickSqlConfig config){
         if(null!=jcontext&&!jcontext.isEmpty()){
@@ -77,102 +77,6 @@ public class JQuickSQLCommonVisistor extends JQuickSelectSpecVisitor {
         JQuickSelectExpressionNode selectExpression = (JQuickSelectExpressionNode) visit(ctx.selectExpression());
         return new JQuickSelectStatementNode(selectExpression);
     }
-    @Override
-    public JQuickSelectExpressionNode visitSelectExpression(JQuickSQLParser.SelectExpressionContext ctx) {
-        JQuickDataSetOpNode dataSetOp = (JQuickDataSetOpNode) visit(ctx.datasetOp());
-        return new JQuickSelectExpressionNode(dataSetOp);
-    }
-    @Override
-    public JQuickDataSetOpNode visitDatasetOp(JQuickSQLParser.DatasetOpContext ctx) {
-        List<JQuickSelectClauseNode> selectClauses = new ArrayList<>();
-        List<JQuickSQLOperationType> operators = new ArrayList<>();
-        selectClauses.add((JQuickSelectClauseNode) visit(ctx.selectClause(0)));
-        for (int i = 1; i < ctx.selectClause().size(); i++) {
-            int operatorIndex = i * 2 - 1;
-            TerminalNode operatorNode = (TerminalNode) ctx.getChild(operatorIndex);
-            if (operatorNode.getSymbol().getType() == JQuickSQLParser.UNION) {
-                operators.add(JQuickSQLOperationType.UNION);
-            } else if (operatorNode.getSymbol().getType() == JQuickSQLParser.MINUS) {
-                operators.add(JQuickSQLOperationType.MINUS);
-            } else if (operatorNode.getSymbol().getType() == JQuickSQLParser.INTERSECT) {
-                operators.add(JQuickSQLOperationType.INTERSECT);
-            }
-            selectClauses.add((JQuickSelectClauseNode) visit(ctx.selectClause(i)));
-        }
-        return new JQuickDataSetOpNode(selectClauses, operators);
-    }
-    @Override
-    public JQuickSelectClauseNode visitSelectClause(JQuickSQLParser.SelectClauseContext ctx) {
-        JQuickSelectClauseNode.Builder builder = new JQuickSelectClauseNode.Builder();
-        if (ctx.selectSpec() != null) {
-            JQuickSelectSpecNode selectSpec = (JQuickSelectSpecNode) visit(ctx.selectSpec());
-            builder.setSelectSpec(selectSpec);
-        }
-        JQuickSelectElementsNode selectElements = (JQuickSelectElementsNode) visit(ctx.selectElements());
-        builder.setSelectElements(selectElements);
-        JQuickFromClauseNode fromClause = (JQuickFromClauseNode) visit(ctx.fromClause());
-        builder.setFromClause(fromClause);
-        for (JQuickSQLParser.JoinClauseContext joinCtx : ctx.joinClause()) {
-            JQuickJoinClauseNode joinClause = (JQuickJoinClauseNode) visit(joinCtx);
-            builder.addJoinClause(joinClause);
-        }
-        if (ctx.whereClause() != null) {
-            JQuickWhereClauseNode whereClause = (JQuickWhereClauseNode) visit(ctx.whereClause());
-            builder.setWhereClause(whereClause);
-        }
-        if (ctx.groupByClause() != null) {
-            JQuickGroupByClauseNode groupByClause = (JQuickGroupByClauseNode) visit(ctx.groupByClause());
-            builder.setGroupByClause(groupByClause);
-        }
-        if (ctx.havingClause() != null) {
-            JQuickHavingClauseNode havingClause = (JQuickHavingClauseNode) visit(ctx.havingClause());
-            builder.setHavingClause(havingClause);
-        }
-        if (ctx.orderByClause() != null) {
-            JQuickOrderByClauseNode orderByClause = (JQuickOrderByClauseNode) visit(ctx.orderByClause());
-            builder.setOrderByClause(orderByClause);
-        }
-        if (ctx.limitClause() != null) {
-            JQuickLimitClauseNode limitClause = (JQuickLimitClauseNode) visit(ctx.limitClause());
-            builder.setLimitClause(limitClause);
-        }
-        return builder.build();
-    }
-
-
-
-
-
-    @Override
-    public JQuickWhereClauseNode visitWhereClause(JQuickSQLParser.WhereClauseContext ctx) {
-        JQuickFilterConditionNode filterCondition = (JQuickFilterConditionNode) visit(ctx.filterCondition());
-        return new JQuickWhereClauseNode(filterCondition);
-    }
-    @Override
-    public JQuickGroupByClauseNode visitGroupByClause(JQuickSQLParser.GroupByClauseContext ctx) {
-        JQuickExpressionsNode expressions = (JQuickExpressionsNode) visit(ctx.expressions());
-        return new JQuickGroupByClauseNode(expressions);
-    }
-    @Override
-    public JQuickHavingClauseNode visitHavingClause(JQuickSQLParser.HavingClauseContext ctx) {
-        JQuickFilterConditionNode filterCondition = (JQuickFilterConditionNode) visit(ctx.filterCondition());
-        return new JQuickHavingClauseNode(filterCondition);
-    }
-
-    @Override
-    public JQuickLimitClauseNode visitLimitClause(JQuickSQLParser.LimitClauseContext ctx) {
-        if (ctx.limitOnly() != null) {
-            JQuickExpressionNode limitExpr = (JQuickExpressionNode) visit(ctx.limitOnly().expression());
-            return new JQuickLimitClauseNode(limitExpr);
-        }
-        if (ctx.limitWithOffset() != null) {
-            JQuickExpressionNode offsetExpr = (JQuickExpressionNode) visit(ctx.limitWithOffset().offset);
-            JQuickExpressionNode limitExpr = (JQuickExpressionNode) visit(ctx.limitWithOffset().limit);
-            return new JQuickLimitClauseNode(offsetExpr, limitExpr);
-        }
-        throw new RuntimeException("Unknown limit clause type");
-    }
-
 
     @Override
     public JQuickSelectElementNode visitSelectElement(JQuickSQLParser.SelectElementContext ctx) {
@@ -185,9 +89,6 @@ public class JQuickSQLCommonVisistor extends JQuickSelectSpecVisitor {
         return new JQuickSelectElementNode(expression, alias);
     }
 
-
-
-
     @Override
     public JQuickFullColumnNameNode visitFullColumnName(JQuickSQLParser.FullColumnNameContext ctx) {
         JQuickUidNode uid = (JQuickUidNode) visit(ctx.uid());
@@ -199,36 +100,5 @@ public class JQuickSQLCommonVisistor extends JQuickSelectSpecVisitor {
         }
         return new JQuickFullColumnNameNode(uidValue, dottedId);
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 }

@@ -7,7 +7,7 @@ import com.github.paohaijiao.parser.JQuickSQLParser;
 import java.util.ArrayList;
 import java.util.List;
 
-public class JQuickSelectSpecVisitor extends JQuickSQLPredictVisistor{
+public class JQuickSQLSelectSpecVisitor extends JQuickSQLPredictVisistor{
     @Override
     public JQuickFilterConditionNode visitFilterCondition(JQuickSQLParser.FilterConditionContext ctx) {
         int childCount = ctx.getChildCount();
@@ -108,7 +108,19 @@ public class JQuickSelectSpecVisitor extends JQuickSQLPredictVisistor{
     public JQuickExpressionNode visitLimitOnly(JQuickSQLParser.LimitOnlyContext ctx) {
         return (JQuickExpressionNode) visit(ctx.expression());
     }
-
+    @Override
+    public JQuickLimitClauseNode visitLimitClause(JQuickSQLParser.LimitClauseContext ctx) {
+        if (ctx.limitOnly() != null) {
+            JQuickExpressionNode limitExpr = (JQuickExpressionNode) visit(ctx.limitOnly().expression());
+            return new JQuickLimitClauseNode(limitExpr);
+        }
+        if (ctx.limitWithOffset() != null) {
+            JQuickExpressionNode offsetExpr = (JQuickExpressionNode) visit(ctx.limitWithOffset().offset);
+            JQuickExpressionNode limitExpr = (JQuickExpressionNode) visit(ctx.limitWithOffset().limit);
+            return new JQuickLimitClauseNode(offsetExpr, limitExpr);
+        }
+        throw new RuntimeException("Unknown limit clause type");
+    }
     @Override
     public JQuickOrderByExpressionNode visitOrderByExpression(JQuickSQLParser.OrderByExpressionContext ctx) {
         JQuickExpressionNode expression = (JQuickExpressionNode) visit(ctx.expression());

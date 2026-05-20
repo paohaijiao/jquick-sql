@@ -1,4 +1,4 @@
-// Generated from D:/idea/jthornruleGrammer/distrubutionsql/JQuickSQL.g4 by ANTLR 4.13.2
+// Generated from D:/my/jthornruleGrammer/distrubutionsql/JQuickSQL.g4 by ANTLR 4.13.2
 package com.github.paohaijiao.parser;
 import org.antlr.v4.runtime.tree.ParseTreeVisitor;
 
@@ -290,6 +290,13 @@ public interface JQuickSQLVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitFullColumnNameExpressionAtom(JQuickSQLParser.FullColumnNameExpressionAtomContext ctx);
 	/**
+	 * Visit a parse tree produced by the {@code caseWhenExpressionAtom}
+	 * labeled alternative in {@link JQuickSQLParser#expressionAtom}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitCaseWhenExpressionAtom(JQuickSQLParser.CaseWhenExpressionAtomContext ctx);
+	/**
 	 * Visit a parse tree produced by the {@code nestedExpressionAtom}
 	 * labeled alternative in {@link JQuickSQLParser#expressionAtom}.
 	 * @param ctx the parse tree
@@ -303,6 +310,24 @@ public interface JQuickSQLVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitMathExpressionAtom(JQuickSQLParser.MathExpressionAtomContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link JQuickSQLParser#caseWhen}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitCaseWhen(JQuickSQLParser.CaseWhenContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link JQuickSQLParser#caseBase}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitCaseBase(JQuickSQLParser.CaseBaseContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link JQuickSQLParser#whenClause}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitWhenClause(JQuickSQLParser.WhenClauseContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link JQuickSQLParser#expressions}.
 	 * @param ctx the parse tree
@@ -362,6 +387,12 @@ public interface JQuickSQLVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitComparisonOperator(JQuickSQLParser.ComparisonOperatorContext ctx);
 	/**
+	 * Visit a parse tree produced by {@link JQuickSQLParser#fullColumnName}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitFullColumnName(JQuickSQLParser.FullColumnNameContext ctx);
+	/**
 	 * Visit a parse tree produced by {@link JQuickSQLParser#constant}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
@@ -392,18 +423,6 @@ public interface JQuickSQLVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitFormat(JQuickSQLParser.FormatContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link JQuickSQLParser#booleanLiteral}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitBooleanLiteral(JQuickSQLParser.BooleanLiteralContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link JQuickSQLParser#fullColumnName}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitFullColumnName(JQuickSQLParser.FullColumnNameContext ctx);
-	/**
 	 * Visit a parse tree produced by {@link JQuickSQLParser#dottedId}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
@@ -415,6 +434,12 @@ public interface JQuickSQLVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitUid(JQuickSQLParser.UidContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link JQuickSQLParser#booleanLiteral}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitBooleanLiteral(JQuickSQLParser.BooleanLiteralContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link JQuickSQLParser#stringLiteral}.
 	 * @param ctx the parse tree

@@ -28,6 +28,7 @@ public class JQuickExpressionNode implements JQuickASTNode {
     private final boolean isNot;
     private final JQuickExpressionAtomNode expressionAtom;
     private final JQuickSelectClauseNode selectClause;
+    private final JQuickCaseWhenNode caseWhenNode;
     private final ExpressionType type;
 
     // 括号表达式
@@ -37,6 +38,7 @@ public class JQuickExpressionNode implements JQuickASTNode {
         this.isNot = false;
         this.expressionAtom = null;
         this.selectClause = null;
+        this.caseWhenNode = null;
         this.type = ExpressionType.PAREN;
     }
 
@@ -47,6 +49,7 @@ public class JQuickExpressionNode implements JQuickASTNode {
         this.isNot = isNot;
         this.expressionAtom = null;
         this.selectClause = null;
+        this.caseWhenNode = null;
         this.type = ExpressionType.NOT;
     }
 
@@ -57,6 +60,7 @@ public class JQuickExpressionNode implements JQuickASTNode {
         this.isNot = false;
         this.expressionAtom = expressionAtom;
         this.selectClause = null;
+        this.caseWhenNode = null;
         this.type = ExpressionType.ATOM;
     }
 
@@ -67,7 +71,17 @@ public class JQuickExpressionNode implements JQuickASTNode {
         this.isNot = false;
         this.expressionAtom = null;
         this.selectClause = selectClause;
+        this.caseWhenNode = null;
         this.type = ExpressionType.SELECT;
+    }
+    public JQuickExpressionNode(JQuickCaseWhenNode caseWhenNode) {
+        this.innerExpression = null;
+        this.isParen = false;
+        this.isNot = false;
+        this.expressionAtom = null;
+        this.caseWhenNode = caseWhenNode;
+        this.selectClause = null;
+        this.type = ExpressionType.CASEWHEN;
     }
 
     @Override
@@ -100,6 +114,6 @@ public class JQuickExpressionNode implements JQuickASTNode {
     }
 
     public enum ExpressionType {
-        PAREN, NOT, ATOM, SELECT
+        PAREN, NOT, ATOM, SELECT,CASEWHEN
     }
 }

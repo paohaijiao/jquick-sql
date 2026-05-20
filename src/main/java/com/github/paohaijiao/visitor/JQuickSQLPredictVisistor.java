@@ -183,36 +183,39 @@ public class JQuickSQLPredictVisistor extends JQuickSQLValueVisistor {
         JQuickExpressionAtomNode.UnaryOperator operator = parseUnaryOperator(ctx.unaryOperator());
         return new JQuickExpressionAtomNode(operator, expression);
     }
-
-    private JQuickExpressionAtomNode.MathOperator parseMathOperator(JQuickSQLParser.MathOperatorContext ctx) {
-        String operator = ctx.getText();
-        switch (operator) {
-            case "*": return JQuickExpressionAtomNode.MathOperator.MULTIPLY;
-            case "/": return JQuickExpressionAtomNode.MathOperator.DIVIDE;
-            case "%": return JQuickExpressionAtomNode.MathOperator.MODULO;
-            case "+": return JQuickExpressionAtomNode.MathOperator.PLUS;
-            case "-": return JQuickExpressionAtomNode.MathOperator.MINUS;
-            default: throw new RuntimeException("Unknown math operator: " + operator);
+    /**
+     * 访问表达式原子节点中的 CASE WHEN
+     */
+    @Override
+    public JQuickExpressionAtomNode visitCaseWhenExpressionAtom(JQuickSQLParser.CaseWhenExpressionAtomContext ctx) {
+        JQuickCaseWhenNode caseWhenNode= (JQuickCaseWhenNode) visit(ctx.caseWhen());
+        return new JQuickExpressionAtomNode(caseWhenNode);
+    }
+    @Override
+    public JQuickCaseWhenNode visitCaseWhen(JQuickSQLParser.CaseWhenContext ctx) {
+        JQuickExpressionNode caseBase = null;
+        if (ctx.caseBase() != null) {
+            caseBase = (JQuickExpressionNode) visit(ctx.caseBase());
         }
+        List<JQuickCaseWhenNode.WhenClause> whenClauses = new ArrayList<>();
+        for (JQuickSQLParser.WhenClauseContext whenCtx : ctx.whenClause()) {
+            JQuickPredicateNode condition = (JQuickPredicateNode) visit(whenCtx.condition);
+            JQuickExpressionNode result = (JQuickExpressionNode) visit(whenCtx.result);
+            whenClauses.add(new JQuickCaseWhenNode.WhenClause(condition, result));
+        }
+        JQuickExpressionNode elseExpression = null;
+        if (ctx.ELSE() != null) {
+            elseExpression = (JQuickExpressionNode) visit(ctx.expression());
+        }
+        return new JQuickCaseWhenNode(caseBase, whenClauses, elseExpression);
+    }
+    @Override
+    public JQuickExpressionNode visitCaseBase(JQuickSQLParser.CaseBaseContext ctx) {
+        return (JQuickExpressionNode) visit(ctx.expression());
     }
 
-    private JQuickExpressionAtomNode.UnaryOperator parseUnaryOperator(JQuickSQLParser.UnaryOperatorContext ctx) {
-        String operator = ctx.getText();
-        switch (operator) {
-            case "!":
-                return JQuickExpressionAtomNode.UnaryOperator.NOT;
-            case "~":
-                return JQuickExpressionAtomNode.UnaryOperator.BIT_NOT;
-            case "+":
-                return JQuickExpressionAtomNode.UnaryOperator.PLUS;
-            case "-":
-                return JQuickExpressionAtomNode.UnaryOperator.MINUS;
-            case "NOT":
-                return JQuickExpressionAtomNode.UnaryOperator.NOT;
-            default:
-                throw new RuntimeException("Unknown unary operator: " + operator);
-        }
-    }
+
+
     @Override
     public JQuickPredicateNode visitExpressionAtomPredicate(JQuickSQLParser.ExpressionAtomPredicateContext ctx) {
         JQuickExpressionAtomNode expressionAtom = (JQuickExpressionAtomNode) visit(ctx.expressionAtom());

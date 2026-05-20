@@ -1,4 +1,4 @@
-// Generated from D:/idea/jthornruleGrammer/distrubutionsql/JQuickSQL.g4 by ANTLR 4.13.2
+// Generated from D:/my/jthornruleGrammer/distrubutionsql/JQuickSQL.g4 by ANTLR 4.13.2
 package com.github.paohaijiao.parser;
 import org.antlr.v4.runtime.tree.ParseTreeListener;
 
@@ -478,6 +478,18 @@ public interface JQuickSQLListener extends ParseTreeListener {
 	 */
 	void exitFullColumnNameExpressionAtom(JQuickSQLParser.FullColumnNameExpressionAtomContext ctx);
 	/**
+	 * Enter a parse tree produced by the {@code caseWhenExpressionAtom}
+	 * labeled alternative in {@link JQuickSQLParser#expressionAtom}.
+	 * @param ctx the parse tree
+	 */
+	void enterCaseWhenExpressionAtom(JQuickSQLParser.CaseWhenExpressionAtomContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code caseWhenExpressionAtom}
+	 * labeled alternative in {@link JQuickSQLParser#expressionAtom}.
+	 * @param ctx the parse tree
+	 */
+	void exitCaseWhenExpressionAtom(JQuickSQLParser.CaseWhenExpressionAtomContext ctx);
+	/**
 	 * Enter a parse tree produced by the {@code nestedExpressionAtom}
 	 * labeled alternative in {@link JQuickSQLParser#expressionAtom}.
 	 * @param ctx the parse tree
@@ -501,6 +513,36 @@ public interface JQuickSQLListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitMathExpressionAtom(JQuickSQLParser.MathExpressionAtomContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link JQuickSQLParser#caseWhen}.
+	 * @param ctx the parse tree
+	 */
+	void enterCaseWhen(JQuickSQLParser.CaseWhenContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link JQuickSQLParser#caseWhen}.
+	 * @param ctx the parse tree
+	 */
+	void exitCaseWhen(JQuickSQLParser.CaseWhenContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link JQuickSQLParser#caseBase}.
+	 * @param ctx the parse tree
+	 */
+	void enterCaseBase(JQuickSQLParser.CaseBaseContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link JQuickSQLParser#caseBase}.
+	 * @param ctx the parse tree
+	 */
+	void exitCaseBase(JQuickSQLParser.CaseBaseContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link JQuickSQLParser#whenClause}.
+	 * @param ctx the parse tree
+	 */
+	void enterWhenClause(JQuickSQLParser.WhenClauseContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link JQuickSQLParser#whenClause}.
+	 * @param ctx the parse tree
+	 */
+	void exitWhenClause(JQuickSQLParser.WhenClauseContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link JQuickSQLParser#expressions}.
 	 * @param ctx the parse tree
@@ -600,6 +642,16 @@ public interface JQuickSQLListener extends ParseTreeListener {
 	 */
 	void exitComparisonOperator(JQuickSQLParser.ComparisonOperatorContext ctx);
 	/**
+	 * Enter a parse tree produced by {@link JQuickSQLParser#fullColumnName}.
+	 * @param ctx the parse tree
+	 */
+	void enterFullColumnName(JQuickSQLParser.FullColumnNameContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link JQuickSQLParser#fullColumnName}.
+	 * @param ctx the parse tree
+	 */
+	void exitFullColumnName(JQuickSQLParser.FullColumnNameContext ctx);
+	/**
 	 * Enter a parse tree produced by {@link JQuickSQLParser#constant}.
 	 * @param ctx the parse tree
 	 */
@@ -650,26 +702,6 @@ public interface JQuickSQLListener extends ParseTreeListener {
 	 */
 	void exitFormat(JQuickSQLParser.FormatContext ctx);
 	/**
-	 * Enter a parse tree produced by {@link JQuickSQLParser#booleanLiteral}.
-	 * @param ctx the parse tree
-	 */
-	void enterBooleanLiteral(JQuickSQLParser.BooleanLiteralContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link JQuickSQLParser#booleanLiteral}.
-	 * @param ctx the parse tree
-	 */
-	void exitBooleanLiteral(JQuickSQLParser.BooleanLiteralContext ctx);
-	/**
-	 * Enter a parse tree produced by {@link JQuickSQLParser#fullColumnName}.
-	 * @param ctx the parse tree
-	 */
-	void enterFullColumnName(JQuickSQLParser.FullColumnNameContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link JQuickSQLParser#fullColumnName}.
-	 * @param ctx the parse tree
-	 */
-	void exitFullColumnName(JQuickSQLParser.FullColumnNameContext ctx);
-	/**
 	 * Enter a parse tree produced by {@link JQuickSQLParser#dottedId}.
 	 * @param ctx the parse tree
 	 */
@@ -689,6 +721,16 @@ public interface JQuickSQLListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitUid(JQuickSQLParser.UidContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link JQuickSQLParser#booleanLiteral}.
+	 * @param ctx the parse tree
+	 */
+	void enterBooleanLiteral(JQuickSQLParser.BooleanLiteralContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link JQuickSQLParser#booleanLiteral}.
+	 * @param ctx the parse tree
+	 */
+	void exitBooleanLiteral(JQuickSQLParser.BooleanLiteralContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link JQuickSQLParser#stringLiteral}.
 	 * @param ctx the parse tree

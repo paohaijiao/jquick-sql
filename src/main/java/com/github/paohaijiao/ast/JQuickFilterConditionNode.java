@@ -23,10 +23,15 @@ package com.github.paohaijiao.ast;
  * | predicate
  */
 public class JQuickFilterConditionNode implements JQuickASTNode {
+
     private final JQuickFilterConditionNode left;
+
     private final JQuickFilterConditionNode right;
+
     private final LogicalOperator operator;
+
     private final JQuickPredicateNode predicate;
+
     private final boolean isParenExpression;
 
     // 二元逻辑运算构造器
