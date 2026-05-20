@@ -85,4 +85,116 @@ public class JQuickSelectStatementTest {
         Object a=tv.visit(tree);
         System.out.println(a);
     }
+    @Test
+    public void selectStatement_datasetOp() {
+        String rule="select * from a union  select * from b";
+        System.out.println(rule);
+        JQuickSQLLexer lexer = new JQuickSQLLexer(CharStreams.fromString(rule));
+        CommonTokenStream tokens = new CommonTokenStream(lexer);
+        JQuickSQLParser parser = new JQuickSQLParser(tokens);
+        JQuickSQLParser.DatasetOpContext tree = parser.datasetOp();
+        JQuickSQLCommonVisistor tv = new JQuickSQLCommonVisistor();
+        Object a=tv.visit(tree);
+        System.out.println(a);
+    }
+    @Test
+    public void selectStatement_datasetOp1() {
+        String rule="select * from a MINUS  select * from b";
+        System.out.println(rule);
+        JQuickSQLLexer lexer = new JQuickSQLLexer(CharStreams.fromString(rule));
+        CommonTokenStream tokens = new CommonTokenStream(lexer);
+        JQuickSQLParser parser = new JQuickSQLParser(tokens);
+        JQuickSQLParser.DatasetOpContext tree = parser.datasetOp();
+        JQuickSQLCommonVisistor tv = new JQuickSQLCommonVisistor();
+        Object a=tv.visit(tree);
+        System.out.println(a);
+    }
+    @Test
+    public void selectStatement_datasetOp2() {
+        String rule="select * from a INTERSECT  select * from b";
+        System.out.println(rule);
+        JQuickSQLLexer lexer = new JQuickSQLLexer(CharStreams.fromString(rule));
+        CommonTokenStream tokens = new CommonTokenStream(lexer);
+        JQuickSQLParser parser = new JQuickSQLParser(tokens);
+        JQuickSQLParser.DatasetOpContext tree = parser.datasetOp();
+        JQuickSQLCommonVisistor tv = new JQuickSQLCommonVisistor();
+        Object a=tv.visit(tree);
+        System.out.println(a);
+    }
+    @Test
+    public void selectStatement_selectExpression() {
+        String rule="select * from a ";
+        System.out.println(rule);
+        JQuickSQLLexer lexer = new JQuickSQLLexer(CharStreams.fromString(rule));
+        CommonTokenStream tokens = new CommonTokenStream(lexer);
+        JQuickSQLParser parser = new JQuickSQLParser(tokens);
+        JQuickSQLParser.SelectExpressionContext tree = parser.selectExpression();
+        JQuickSQLCommonVisistor tv = new JQuickSQLCommonVisistor();
+        Object a=tv.visit(tree);
+        System.out.println(a);
+    }
+    @Test
+    public void selectStatement_selectStatement() {
+        String rule="select * from a ";
+        System.out.println(rule);
+        JQuickSQLLexer lexer = new JQuickSQLLexer(CharStreams.fromString(rule));
+        CommonTokenStream tokens = new CommonTokenStream(lexer);
+        JQuickSQLParser parser = new JQuickSQLParser(tokens);
+        JQuickSQLParser.SelectStatementContext tree = parser.selectStatement();
+        JQuickSQLCommonVisistor tv = new JQuickSQLCommonVisistor();
+        Object a=tv.visit(tree);
+        System.out.println(a);
+    }
+    @Test
+    public void selectStatement_selectStatement1() {
+        String rule="WITH sales_cte AS (\n" +
+                "    SELECT \n" +
+                "        product_id,\n" +
+                "        SUM(amount) AS total_sales\n" +
+                "    FROM orders\n" +
+                "    GROUP BY product_id\n" +
+                ")\n" +
+                "SELECT \n" +
+                "    s.product_id,\n" +
+                "    s.total_sales,\n" +
+                "    p.product_name\n" +
+                "FROM sales_cte s\n" +
+                "INNER JOIN products p ON s.product_id = p.product_id\n" +
+                "WHERE s.total_sales > 1000\n" +
+                "ORDER BY s.total_sales DESC;";
+        System.out.println(rule);
+        JQuickSQLLexer lexer = new JQuickSQLLexer(CharStreams.fromString(rule));
+        CommonTokenStream tokens = new CommonTokenStream(lexer);
+        JQuickSQLParser parser = new JQuickSQLParser(tokens);
+        JQuickSQLParser.SelectStatementContext tree = parser.selectStatement();
+        JQuickSQLCommonVisistor tv = new JQuickSQLCommonVisistor();
+        Object a=tv.visit(tree);
+        System.out.println(a);
+    }
+    @Test
+    public void selectStatement_query() {
+        String rule="WITH sales_cte AS (\n" +
+                "    SELECT \n" +
+                "        product_id,\n" +
+                "        SUM(amount) AS total_sales\n" +
+                "    FROM orders\n" +
+                "    GROUP BY product_id\n" +
+                ")\n" +
+                "SELECT \n" +
+                "    s.product_id,\n" +
+                "    s.total_sales,\n" +
+                "    p.product_name\n" +
+                "FROM sales_cte s\n" +
+                "INNER JOIN products p ON s.product_id = p.product_id\n" +
+                "WHERE s.total_sales > 1000\n" +
+                "ORDER BY s.total_sales DESC;";
+        System.out.println(rule);
+        JQuickSQLLexer lexer = new JQuickSQLLexer(CharStreams.fromString(rule));
+        CommonTokenStream tokens = new CommonTokenStream(lexer);
+        JQuickSQLParser parser = new JQuickSQLParser(tokens);
+        JQuickSQLParser.QueryContext tree = parser.query();
+        JQuickSQLCommonVisistor tv = new JQuickSQLCommonVisistor();
+        Object a=tv.visit(tree);
+        System.out.println(a);
+    }
 }
