@@ -16,8 +16,10 @@
 package com.github.paohaijiao.visitor;
 
 import com.github.paohaijiao.config.JQuickSqlConfig;
+import com.github.paohaijiao.enums.JQuickJoinType;
 import com.github.paohaijiao.param.JContext;
 import com.github.paohaijiao.parser.JQuickSQLBaseVisitor;
+import com.github.paohaijiao.parser.JQuickSQLParser;
 
 /**
  * packageName com.github.paohaijiao.visitor
@@ -31,4 +33,21 @@ public class JQuickSQLCoreVisistor extends JQuickSQLBaseVisitor {
     protected JContext context=new JContext();
 
     protected JQuickSqlConfig config=new JQuickSqlConfig();
+
+    protected JQuickJoinType parseJoinType(JQuickSQLParser.JoinTypeContext ctx) {
+        if (ctx.INNER() != null) {
+            return JQuickJoinType.INNER;
+        } else if (ctx.CROSS() != null) {
+            return JQuickJoinType.CROSS;
+        } else if (ctx.LEFT() != null) {
+            return JQuickJoinType.LEFT;
+        } else if (ctx.RIGHT() != null) {
+            return JQuickJoinType.RIGHT;
+        } else if (ctx.NATURAL() != null) {
+            return JQuickJoinType.NATURAL;
+        } else if (ctx.FULL() != null) {
+            return JQuickJoinType.FULL;
+        }
+        return JQuickJoinType.INNER;
+    }
 }
