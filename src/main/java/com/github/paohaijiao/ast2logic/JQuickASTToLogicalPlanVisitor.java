@@ -17,10 +17,7 @@ package com.github.paohaijiao.ast2logic;
 
 
 import com.github.paohaijiao.ast.*;
-import com.github.paohaijiao.enums.JQuickBinaryOperator;
-import com.github.paohaijiao.enums.JQuickJoinType;
-import com.github.paohaijiao.enums.JQuickSQLOperationType;
-import com.github.paohaijiao.enums.JQuickUnaryOperator;
+import com.github.paohaijiao.enums.*;
 import com.github.paohaijiao.expression.JQuickExpression;
 import com.github.paohaijiao.expression.domain.*;
 import com.github.paohaijiao.logic.JQuickLogicalPlanNode;
@@ -40,7 +37,10 @@ public class JQuickASTToLogicalPlanVisitor {
 
 
     /**
-     * 转换查询节点
+     * 转换查询节点（最顶层入口）
+     * @param node JQuickQueryNode - 整个SQL查询的根节点
+     * @return JQuickLogicalPlanNode - 转换后的逻辑计划根节点
+     * AST结构：Query -> SelectStatement
      */
     public JQuickLogicalPlanNode visit(JQuickQueryNode node) {
         return visit(node.getSelectStatement());
@@ -48,13 +48,18 @@ public class JQuickASTToLogicalPlanVisitor {
 
     /**
      * 转换 SELECT 语句节点
+     * @param node JQuickSelectStatementNode - SELECT语句节点
+     * @return JQuickLogicalPlanNode - 逻辑计划节点
+     * 处理两种类型：
+     * 1. WITH CTE查询：SELECT ... FROM (WITH ...) 或 WITH ... SELECT ...
+     * 2. 普通查询：直接SELECT
      */
     public JQuickLogicalPlanNode visit(JQuickSelectStatementNode node) {
-        if (node.isCteQuery()) {
+        if (node.isCteQuery()) { // 判断是否为CTE查询（WITH子句）
             Map<String, JQuickLogicalPlanNode> cteMap = new LinkedHashMap<>();
-            for (JQuickCommonTableExpressionNode cte : node.getCtes()) {
-                JQuickLogicalPlanNode ctePlan = visit(cte.getQuery());
-                cteMap.put(cte.getName(), ctePlan);
+            for (JQuickCommonTableExpressionNode cte : node.getCtes()) { // 遍历所有CTE定义
+                JQuickLogicalPlanNode ctePlan = visit(cte.getQuery());// 递归转换CTE内部的查询为逻辑计划
+                cteMap.put(cte.getName(), ctePlan);// 将CTE名称与逻辑计划关联，存入Map
             }
             JQuickLogicalPlanNode mainPlan = visit(node.getSelectExpression());
             return new JQuickWithNode(mainPlan, cteMap);
@@ -65,13 +70,22 @@ public class JQuickASTToLogicalPlanVisitor {
 
     /**
      * 转换 SELECT 表达式节点
+     * @param node JQuickSelectExpressionNode - SELECT表达式节点
+     * @return JQuickLogicalPlanNode - 逻辑计划节点
+     * SelectExpression 是 DataSetOp 的包装
+     * DataSetOp 可能包含多个SELECT子句通过集合操作连接
      */
     public JQuickLogicalPlanNode visit(JQuickSelectExpressionNode node) {
         return visit(node.getDataSetOp());
     }
 
     /**
-     * 转换数据集操作节点（UNION/INTERSECT/MINUS）
+     * 转换数据集操作节点（UNION/INTERSECT/MINUS/EXCEPT）
+     * @param node JQuickDataSetOpNode - 数据集操作节点
+     * @return JQuickLogicalPlanNode - 逻辑计划节点
+     * 处理三种情况：
+     * 1. 单个SELECT：直接返回SELECT的逻辑计划
+     * 2. 多个SELECT通过UNION等连接：构建二叉树结构的集合操作
      */
     public JQuickLogicalPlanNode visit(JQuickDataSetOpNode node) {
         List<JQuickSelectClauseNode> clauses = node.getSelectClauses();
@@ -81,7 +95,7 @@ public class JQuickASTToLogicalPlanVisitor {
         JQuickLogicalPlanNode result = visit(clauses.get(0)); // 多个子查询的集合操作
         for (int i = 1; i < clauses.size(); i++) {
             JQuickLogicalPlanNode right = visit(clauses.get(i));
-            JQuickSQLOperationType opType = convertSetOperator(node.getOperators().get(i - 1));
+            JQuickSQLOperationType opType = node.getOperators().get(i - 1);
             result = new JQuickSetOperationNode(opType, result, right);
         }
         return result;
@@ -89,10 +103,29 @@ public class JQuickASTToLogicalPlanVisitor {
 
     /**
      * 转换 SELECT 子句节点 - 核心转换逻辑
+     * @param node JQuickSelectClauseNode - SELECT子句节点
+     * @return JQuickLogicalPlanNode - 逻辑计划节点
+     *
+     * 转换顺序（从数据流向看是反的，但从构建顺序看是从底向上）：
+     * 1. FROM + JOIN -> TableScan
+     * 2. WHERE -> Filter
+     * 3. GROUP BY -> GroupBy
+     * 4. HAVING -> 附加到GroupBy
+     * 5. SELECT -> Project
+     * 6. ORDER BY -> Sort
+     * 7. LIMIT -> Limit
+     *
+     * 逻辑计划的执行顺序是从叶子节点向上执行：
+     * Limit
+     *   Sort
+     *     Project
+     *       GroupBy
+     *         Filter
+     *           Join
+     *             TableScan
      */
     public JQuickLogicalPlanNode visit(JQuickSelectClauseNode node) {
-        //处理 FROM 和 JOIN
-        JQuickLogicalPlanNode root = visit(node.getFromClause());
+        JQuickLogicalPlanNode root = visit(node.getFromClause());        //数据来源的起点
         //处理 JOIN
         if (node.getJoinClauses() != null && !node.getJoinClauses().isEmpty()) {
             for (JQuickJoinClauseNode join : node.getJoinClauses()) {
@@ -128,6 +161,9 @@ public class JQuickASTToLogicalPlanVisitor {
 
     /**
      * 转换 FROM 子句
+     * @param node JQuickFromClauseNode - FROM子句节点
+     * @return JQuickLogicalPlanNode - 逻辑计划节点
+     * FROM子句只包含一个表名项，直接转发
      */
     public JQuickLogicalPlanNode visit(JQuickFromClauseNode node) {
         return visit(node.getTableNameItem());
@@ -135,6 +171,11 @@ public class JQuickASTToLogicalPlanVisitor {
 
     /**
      * 转换表名项（表或子查询）
+     * @param node JQuickTableNameItemNode - 表名项节点
+     * @return JQuickLogicalPlanNode - 逻辑计划节点
+     * 处理两种类型：
+     * 1. 普通表：创建TableScan节点
+     * 2. 子查询：递归转换子查询为逻辑计划
      */
     public JQuickLogicalPlanNode visit(JQuickTableNameItemNode node) {
         if (node.isSubquery()) {// 子查询作为派生表
@@ -147,13 +188,16 @@ public class JQuickASTToLogicalPlanVisitor {
 
     /**
      * 转换 JOIN 子句
+     * @param left 左子树逻辑计划
+     * @param join JOIN子句节点
+     * @return JQuickLogicalPlanNode - Join节点
+     * 创建Join节点，连接左右两个数据源
      */
     public JQuickLogicalPlanNode visitJoin(JQuickLogicalPlanNode left, JQuickJoinClauseNode join) {
         JQuickLogicalPlanNode right = visit(join.getTableNameItem());
-        JQuickJoinType joinType = convertJoinType(join.getJoinType());
+        JQuickJoinType joinType = join.getJoinType();
         JQuickExpression condition = null;
         if (join.hasOnCondition()) {
-            // 构建等值条件
             JQuickExpression leftExpr = new JQuickColumnRefExpression(join.getLeftColumn().getColumnName(), join.getLeftColumn().getTableAlias());
             JQuickExpression rightExpr = new JQuickColumnRefExpression(join.getRightColumn().getColumnName(), join.getRightColumn().getTableAlias());
             condition = new JQuickBinaryExpression(leftExpr, rightExpr, JQuickBinaryOperator.EQ);
@@ -163,6 +207,11 @@ public class JQuickASTToLogicalPlanVisitor {
 
     /**
      * 转换 SELECT 元素列表
+     * @param node JQuickSelectElementsNode - SELECT元素列表节点
+     * @return List<JQuickProjectNode.SelectItem> - 投影项列表
+     * 处理两种形式：
+     * 1. SELECT * - 通配符选择所有列
+     * 2. SELECT col1, col2, ... - 显式列出列
      */
     public List<JQuickProjectNode.SelectItem> visitSelectElements(JQuickSelectElementsNode node) {
         List<JQuickProjectNode.SelectItem> items = new ArrayList<>();
@@ -180,6 +229,10 @@ public class JQuickASTToLogicalPlanVisitor {
 
     /**
      * 转换单个 SELECT 元素
+     * @param node JQuickSelectElementNode - 单个SELECT元素节点
+     * @return JQuickProjectNode.SelectItem - 投影项
+     * 处理：expression AS alias
+     * 例如：SELECT id AS user_id, name
      */
     public JQuickProjectNode.SelectItem visitSelectElement(JQuickSelectElementNode node) {
         JQuickExpression expr = visitExpression(node.getExpression());
@@ -189,6 +242,13 @@ public class JQuickASTToLogicalPlanVisitor {
 
     /**
      * 转换表达式
+     * @param node JQuickExpressionNode - 表达式节点
+     * @return JQuickExpression - 逻辑计划表达式
+     * 处理四种表达式类型：
+     * 1. 原子表达式（常量、列、函数调用等）
+     * 2. 括号表达式
+     * 3. NOT表达式（逻辑非）
+     * 4. SELECT子查询表达式
      */
     public JQuickExpression visitExpression(JQuickExpressionNode node) {
         switch (node.getType()) {
@@ -210,6 +270,16 @@ public class JQuickASTToLogicalPlanVisitor {
 
     /**
      * 转换表达式原子
+     * @param node JQuickExpressionAtomNode - 表达式原子节点
+     * @return JQuickExpression - 逻辑计划表达式
+     * 处理所有原子表达式类型：
+     * 1. CONSTANT - 常量（数字、字符串、布尔、NULL、日期）
+     * 2. COLUMN - 列引用（如：users.id 或 name）
+     * 3. FUNCTION - 函数调用（如：COUNT(*), UPPER(name)）
+     * 4. NESTED - 嵌套表达式（如：(1+2)）
+     * 5. SUBQUERY - 子查询
+     * 6. MATH - 数学运算（+、-、*、/、%）
+     * 7. UNARY - 一元运算（!、~、+、-）
      */
     public JQuickExpression visitExpressionAtom(JQuickExpressionAtomNode node) {
         switch (node.getType()) {
@@ -244,6 +314,8 @@ public class JQuickASTToLogicalPlanVisitor {
 
     /**
      * 转换常量
+     * @param node JQuickConstantNode - 常量节点
+     * @return JQuickExpression - 字面量表达式
      */
     public JQuickExpression visitConstant(JQuickConstantNode node) {
         return JQuickLiteralExpression.fromConstant(node);
@@ -251,6 +323,9 @@ public class JQuickASTToLogicalPlanVisitor {
 
     /**
      * 转换列引用
+     * @param node JQuickFullColumnNameNode - 完整列名节点
+     * @return JQuickExpression - 列引用表达式
+     * 处理：tableAlias.columnName 或 columnName
      */
     public JQuickExpression visitColumn(JQuickFullColumnNameNode node) {
         return new JQuickColumnRefExpression(node.getColumnName(), node.getTableAlias());
@@ -258,6 +333,10 @@ public class JQuickASTToLogicalPlanVisitor {
 
     /**
      * 转换函数调用
+     * @param node JQuickFunctionCallNode - 函数调用节点
+     * @return JQuickExpression - 函数调用表达式
+     * 支持普通函数和聚合函数
+     * 例如：UPPER(name), COUNT(*), SUM(price)
      */
     public JQuickExpression visitFunction(JQuickFunctionCallNode node) {
         List<JQuickExpression> args = new ArrayList<>();
@@ -270,7 +349,13 @@ public class JQuickASTToLogicalPlanVisitor {
     }
 
     /**
-     * 转换过滤条件
+     * 转换过滤条件（WHERE/HAVING）
+     * @param node JQuickFilterConditionNode - 过滤条件节点
+     * @return JQuickExpression - 布尔表达式
+     * 处理三种形式：
+     * 1. 谓词：id = 1, name LIKE '%John%'
+     * 2. 二元逻辑：condition1 AND condition2
+     * 3. 括号表达式：(condition)
      */
     public JQuickExpression visit(JQuickFilterConditionNode node) {
         if (node.isPredicate()) {
@@ -288,31 +373,34 @@ public class JQuickASTToLogicalPlanVisitor {
 
     /**
      * 转换谓词
+     * @param node JQuickPredicateNode - 谓词节点
+     * @return JQuickExpression - 布尔表达式
+     * 支持所有SQL谓词类型：
+     * 1. EXPRESSION_ATOM - 原子表达式（如：id）
+     * 2. IS_NULL - IS NULL / IS NOT NULL
+     * 3. BINARY_COMPARISON - 比较运算（=, !=, >, <, >=, <=）
+     * 4. BETWEEN - BETWEEN ... AND ...
+     * 5. IN - IN (...)
+     * 6. LIKE - LIKE
+     * 7. EXISTS - EXISTS
      */
     public JQuickExpression visitPredicate(JQuickPredicateNode node) {
         switch (node.getType()) {
             case EXPRESSION_ATOM:
                 return visitExpressionAtom(node.getExpressionAtom());
-
             case IS_NULL:
                 JQuickExpression expr = visitPredicate(node.getIsNullPredicate());
-                return new JQuickUnaryExpression(
-                        node.isNotNull() ? JQuickUnaryOperator.IS_NOT_NULL : JQuickUnaryOperator.IS_NULL,
-                        expr
-                );
-
+                return new JQuickUnaryExpression(node.isNotNull() ? JQuickUnaryOperator.IS_NOT_NULL : JQuickUnaryOperator.IS_NULL, expr);
             case BINARY_COMPARISON:
                 JQuickExpression left = visitPredicate(node.getLeft());
                 JQuickExpression right = visitPredicate(node.getRight());
                 JQuickBinaryOperator op = convertComparisonOperator(node.getComparisonOperator());
                 return new JQuickBinaryExpression(left, right, op);
-
             case BETWEEN:
                 JQuickExpression target = visitPredicate(node.getBetweenPredicate());
                 JQuickExpression low = visitPredicate(node.getBetweenLow());
                 JQuickExpression high = visitPredicate(node.getBetweenHigh());
                 return new JQuickBetweenExpression(target, low, high, node.isBetweenNot());
-
             case IN:
                 JQuickExpression inTarget = visitPredicate(node.getInPredicate());
                 List<JQuickExpression> inValues = new ArrayList<>();
@@ -328,11 +416,9 @@ public class JQuickASTToLogicalPlanVisitor {
                 JQuickExpression pattern = visitPredicate(node.getLikePattern());
                 JQuickBinaryOperator likeOp = node.isLikeNot() ? JQuickBinaryOperator.NOT_LIKE : JQuickBinaryOperator.LIKE;
                 return new JQuickBinaryExpression(likeTarget, pattern, likeOp);
-
             case EXISTS:
                 JQuickExpression existsExpr = visitExpression(node.getExistsExpression());
                 return existsExpr;
-
             default:
                 throw new RuntimeException("Unknown predicate type: " + node.getType());
         }
@@ -340,6 +426,9 @@ public class JQuickASTToLogicalPlanVisitor {
 
     /**
      * 转换 ORDER BY 子句
+     * @param node JQuickOrderByClauseNode - ORDER BY子句节点
+     * @return List<JQuickSortNode.OrderByItem> - 排序项列表
+     * 处理：ORDER BY col1 ASC, col2 DESC
      */
     public List<JQuickSortNode.OrderByItem> visitOrderByClause(JQuickOrderByClauseNode node) {
         List<JQuickSortNode.OrderByItem> items = new ArrayList<>();
@@ -352,6 +441,12 @@ public class JQuickASTToLogicalPlanVisitor {
 
     /**
      * 转换 LIMIT 子句
+     * @param node JQuickLimitClauseNode - LIMIT子句节点
+     * @param child - 子逻辑计划
+     * @return JQuickLimitNode - 限制节点
+     * 处理两种形式：
+     * 1. LIMIT n
+     * 2. LIMIT m, n 或 LIMIT n OFFSET m
      */
     public JQuickLimitNode visitLimit(JQuickLimitClauseNode node, JQuickLogicalPlanNode child) {
         int limit = evaluateConstant(node.getLimit());
@@ -361,6 +456,9 @@ public class JQuickASTToLogicalPlanVisitor {
 
     /**
      * 转换表达式列表
+     * @param node JQuickExpressionsNode - 表达式列表节点
+     * @return List<JQuickExpression> - 表达式列表
+     * 用于GROUP BY子句：GROUP BY col1, col2
      */
     public List<JQuickExpression> visitExpressions(JQuickExpressionsNode node) {
         return node.getExpressions().stream()
@@ -371,11 +469,14 @@ public class JQuickASTToLogicalPlanVisitor {
 
     /**
      * 提取 SELECT 中的聚合函数
+     * @param selectElements SELECT元素列表
+     * @return List<JQuickGroupByNode.AggregateItem> - 聚合项列表
+     * 聚合函数包括：COUNT, SUM, AVG, MAX, MIN
+     * 用于GROUP BY分析
      */
     private List<JQuickGroupByNode.AggregateItem> extractAggregates(JQuickSelectElementsNode selectElements) {
         List<JQuickGroupByNode.AggregateItem> aggregates = new ArrayList<>();
         if (selectElements.isStar()) return aggregates;
-
         for (JQuickSelectElementNode elem : selectElements.getSelectElements()) {
             extractAggregatesFromExpression(elem.getExpression(), aggregates, elem.getAlias());
         }
@@ -384,6 +485,10 @@ public class JQuickASTToLogicalPlanVisitor {
 
     /**
      * 从表达式中提取聚合函数
+     * @param expr 表达式节点
+     * @param aggregates 聚合项列表（输出参数）
+     * @param alias 别名
+     * 递归提取表达式中的聚合函数
      */
     private void extractAggregatesFromExpression(JQuickExpressionNode expr, List<JQuickGroupByNode.AggregateItem> aggregates, String alias) {
         // 表达式可能是包装类型，需要获取内部的 ExpressionAtom
@@ -392,7 +497,7 @@ public class JQuickASTToLogicalPlanVisitor {
             JQuickFunctionCallNode func = atom.getFunctionCall();
             if (func != null) {
                 String funcName = func.getFunctionName().toLowerCase();
-                if (isAggregateFunction(funcName)) {
+                if (JQuickAggregateFunction.isAggregateFunction(funcName)) {
                     // 获取函数参数
                     JQuickExpressionNode arg = null;
                     if (func.getArguments() != null && !func.getArguments().isEmpty()) {
@@ -411,6 +516,9 @@ public class JQuickASTToLogicalPlanVisitor {
 
     /**
      * 从 JQuickExpressionNode 中获取 JQuickExpressionAtomNode
+     * @param expr 表达式节点
+     * @return 最内层的表达式原子
+     * 跳过括号和NOT包装，获取真正的原子表达式
      */
     private JQuickExpressionAtomNode getExpressionAtom(JQuickExpressionNode expr) {
         if (expr == null) {
@@ -430,12 +538,22 @@ public class JQuickASTToLogicalPlanVisitor {
 
     /**
      * 重建 SELECT 项（用于 GROUP BY 后）
+     * @param original 原始的SELECT元素列表
+     * @param groupKeys 分组键列表
+     * @param aggregates 聚合项列表
+     * @return 新的投影项列表
+     * GROUP BY后的SELECT只能包含：
+     * 1. 分组键列
+     * 2. 聚合函数结果
      */
     private List<JQuickProjectNode.SelectItem> rebuildSelectItems(JQuickSelectElementsNode original, List<JQuickExpression> groupKeys, List<JQuickGroupByNode.AggregateItem> aggregates) {
         List<JQuickProjectNode.SelectItem> items = new ArrayList<>();
         for (int i = 0; i < groupKeys.size(); i++) { // 添加分组键
-            String alias = "group_" + i;
-            items.add(new JQuickProjectNode.SelectItem(new JQuickColumnRefExpression(alias), alias));
+            JQuickExpression expression=groupKeys.get(i);
+            if(expression instanceof JQuickColumnRefExpression) {
+                JQuickColumnRefExpression columnRefExpr = (JQuickColumnRefExpression) expression;
+                items.add(new JQuickProjectNode.SelectItem(new JQuickColumnRefExpression(columnRefExpr.getColumnName()), columnRefExpr.getTableAlias()));
+            }
         }
         for (JQuickGroupByNode.AggregateItem agg : aggregates) {// 添加聚合结果
             items.add(new JQuickProjectNode.SelectItem(new JQuickColumnRefExpression(agg.getAlias()), agg.getAlias()));
@@ -445,6 +563,9 @@ public class JQuickASTToLogicalPlanVisitor {
 
     /**
      * 提取列名（用于 ORDER BY）
+     * @param node 表达式节点
+     * @return 列名字符串
+     * 简化处理，从表达式中提取列名
      */
     private String extractColumnName(JQuickExpressionNode node) {
         if (node == null) {
@@ -462,12 +583,13 @@ public class JQuickASTToLogicalPlanVisitor {
         }
 
     }
-
+    /**
+     * 从表达式原子中提取列名
+     */
     private String extractColumnNameFromAtom(JQuickExpressionAtomNode atom) {
         if (atom == null) {
             return "";
         }
-
         switch (atom.getType()) {
             case COLUMN:
                 JQuickFullColumnNameNode column = atom.getFullColumnName();
@@ -550,32 +672,11 @@ public class JQuickASTToLogicalPlanVisitor {
     }
 
 
-    private boolean isAggregateFunction(String funcName) {
-        return funcName.equals("count") || funcName.equals("sum") ||
-                funcName.equals("avg") || funcName.equals("max") ||
-                funcName.equals("min");
-    }
 
-    private JQuickSQLOperationType convertSetOperator(JQuickSQLOperationType op) {
-        return op;
-    }
 
-    private JQuickJoinType convertJoinType(JQuickJoinType joinType) {
-        switch (joinType) {
-            case INNER:
-                return JQuickJoinType.INNER;
-            case LEFT:
-                return JQuickJoinType.LEFT;
-            case RIGHT:
-                return JQuickJoinType.RIGHT;
-            case FULL:
-                return JQuickJoinType.FULL;
-            case CROSS:
-                return JQuickJoinType.CROSS;
-            default:
-                return JQuickJoinType.INNER;
-        }
-    }
+
+
+
 
     private JQuickBinaryOperator convertComparisonOperator(JQuickPredicateNode.ComparisonOperator op) {
         switch (op) {

@@ -19,6 +19,7 @@ package com.github.paohaijiao.ast;
  * selectExpression: datasetOp
  */
 public class JQuickSelectExpressionNode implements JQuickASTNode {
+
     private final JQuickDataSetOpNode dataSetOp;
 
     public JQuickSelectExpressionNode(JQuickDataSetOpNode dataSetOp) {
