@@ -16,6 +16,7 @@
 package com.github.paohaijiao.physical.node;
 
 
+import com.github.paohaijiao.enums.JQuickExchangeType;
 import com.github.paohaijiao.expression.JQuickExpression;
 import com.github.paohaijiao.physical.JQuickPhysicalPlanNode;
 import com.github.paohaijiao.physical.JQuickPhysicalPlanVisitor;
@@ -28,7 +29,7 @@ import java.util.stream.Collectors;
 
 public class JQuickExchangePhysicalNode extends JQuickAbstractPhysicalNode {
 
-    private final ExchangeType exchangeType;
+    private final JQuickExchangeType exchangeType;
 
     private final PartitionStrategy partitionStrategy;
 
@@ -36,15 +37,13 @@ public class JQuickExchangePhysicalNode extends JQuickAbstractPhysicalNode {
 
     private final int targetParallelism;
 
-    public enum ExchangeType {
-        SHUFFLE, BROADCAST, REPARTITION, GATHER
-    }
+
 
     public enum PartitionStrategy {
         HASH, RANGE, ROUND_ROBIN, BUCKET, REPLICATE
     }
 
-    public JQuickExchangePhysicalNode(ExchangeType exchangeType, PartitionStrategy partitionStrategy, List<JQuickExpression> partitionKeys, int targetParallelism, JQuickPhysicalPlanNode child) {
+    public JQuickExchangePhysicalNode(JQuickExchangeType exchangeType, PartitionStrategy partitionStrategy, List<JQuickExpression> partitionKeys, int targetParallelism, JQuickPhysicalPlanNode child) {
         super(child);
         this.exchangeType = exchangeType;
         this.partitionStrategy = partitionStrategy;
@@ -81,7 +80,7 @@ public class JQuickExchangePhysicalNode extends JQuickAbstractPhysicalNode {
         visitor.visit(this);
     }
 
-    public ExchangeType getExchangeType() { return exchangeType; }
+    public JQuickExchangeType getExchangeType() { return exchangeType; }
 
     public PartitionStrategy getPartitionStrategy() { return partitionStrategy; }
 

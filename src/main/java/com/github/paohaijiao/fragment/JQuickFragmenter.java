@@ -1,6 +1,7 @@
 package com.github.paohaijiao.fragment;
 
 import com.github.paohaijiao.distributed.JQuickDistributedPlan;
+import com.github.paohaijiao.enums.JQuickExchangeType;
 import com.github.paohaijiao.exchange.JQuickExchangeNode;
 import com.github.paohaijiao.expression.JQuickExpression;
 import com.github.paohaijiao.physical.JQuickPhysicalPlanNode;
@@ -332,8 +333,7 @@ public class JQuickFragmenter {
     /**
      * 转换 ExchangeType
      */
-    private JQuickExchangeNode.ExchangeType convertExchangeType(
-            JQuickExchangePhysicalNode.ExchangeType type) {
+    private JQuickExchangeNode.ExchangeType convertExchangeType(JQuickExchangeType type) {
         switch (type) {
             case SHUFFLE:
                 return JQuickExchangeNode.ExchangeType.SHUFFLE;

@@ -15,6 +15,7 @@
  */
 package com.github.paohaijiao.optimizer;
 
+import com.github.paohaijiao.enums.JQuickExchangeType;
 import com.github.paohaijiao.expression.JQuickExpression;
 import com.github.paohaijiao.physical.JQuickPhysicalPlanNode;
 import com.github.paohaijiao.physical.node.*;
@@ -86,69 +87,40 @@ public class JQuickPhysicalPlanOptimizer {
         for (JQuickHashAggregatePhysicalNode.AggregateFunction func : agg.getAggregates()) {
             switch (func.getFunctionName().toLowerCase()) {
                 case "count":
-                    partialAggs.add(new JQuickHashAggregatePhysicalNode.AggregateFunction(
-                            "sum", func.getArgument(), false, func.getAlias() + "_partial",
-                            false, null, JQuickHashAggregatePhysicalNode.AggregateStage.PARTIAL));
+                    partialAggs.add(new JQuickHashAggregatePhysicalNode.AggregateFunction("sum", func.getArgument(), false, func.getAlias() + "_partial", false, null, JQuickHashAggregatePhysicalNode.AggregateStage.PARTIAL));
                     break;
                 case "sum":
-                    partialAggs.add(new JQuickHashAggregatePhysicalNode.AggregateFunction(
-                            "sum", func.getArgument(), false, func.getAlias(),
-                            false, null, JQuickHashAggregatePhysicalNode.AggregateStage.PARTIAL));
+                    partialAggs.add(new JQuickHashAggregatePhysicalNode.AggregateFunction("sum", func.getArgument(), false, func.getAlias(), false, null, JQuickHashAggregatePhysicalNode.AggregateStage.PARTIAL));
                     break;
                 case "avg":
-                    partialAggs.add(new JQuickHashAggregatePhysicalNode.AggregateFunction(
-                            "sum", func.getArgument(), false, func.getAlias() + "_sum",
-                            false, null, JQuickHashAggregatePhysicalNode.AggregateStage.PARTIAL));
-                    partialAggs.add(new JQuickHashAggregatePhysicalNode.AggregateFunction(
-                            "count", func.getArgument(), false, func.getAlias() + "_count",
-                            false, null, JQuickHashAggregatePhysicalNode.AggregateStage.PARTIAL));
+                    partialAggs.add(new JQuickHashAggregatePhysicalNode.AggregateFunction("sum", func.getArgument(), false, func.getAlias() + "_sum", false, null, JQuickHashAggregatePhysicalNode.AggregateStage.PARTIAL));
+                    partialAggs.add(new JQuickHashAggregatePhysicalNode.AggregateFunction("count", func.getArgument(), false, func.getAlias() + "_count", false, null, JQuickHashAggregatePhysicalNode.AggregateStage.PARTIAL));
                     break;
                 default:
                     partialAggs.add(func);
             }
         }
-
-        JQuickHashAggregatePhysicalNode partialAgg = new JQuickHashAggregatePhysicalNode(
-                agg.getGroupKeys(), partialAggs, agg.getChild(), null,
-                JQuickHashAggregatePhysicalNode.AggregateStage.PARTIAL);
-
-        JQuickExchangePhysicalNode exchange = new JQuickExchangePhysicalNode(
-                JQuickExchangePhysicalNode.ExchangeType.SHUFFLE,
-                JQuickExchangePhysicalNode.PartitionStrategy.HASH,
-                agg.getGroupKeys(),
-                4,
-                partialAgg
-        );
-
+        JQuickHashAggregatePhysicalNode partialAgg = new JQuickHashAggregatePhysicalNode(agg.getGroupKeys(), partialAggs, agg.getChild(), null, JQuickHashAggregatePhysicalNode.AggregateStage.PARTIAL);
+        JQuickExchangePhysicalNode exchange = new JQuickExchangePhysicalNode(JQuickExchangeType.SHUFFLE, JQuickExchangePhysicalNode.PartitionStrategy.HASH, agg.getGroupKeys(), 4, partialAgg);
         List<JQuickHashAggregatePhysicalNode.AggregateFunction> finalAggs = new ArrayList<>();
         for (JQuickHashAggregatePhysicalNode.AggregateFunction func : agg.getAggregates()) {
             if (func.getFunctionName().equalsIgnoreCase("avg")) {
-                finalAggs.add(new JQuickHashAggregatePhysicalNode.AggregateFunction(
-                        "divide", null, false, func.getAlias(),
-                        false, null, JQuickHashAggregatePhysicalNode.AggregateStage.FINAL));
+                finalAggs.add(new JQuickHashAggregatePhysicalNode.AggregateFunction("divide", null, false, func.getAlias(), false, null, JQuickHashAggregatePhysicalNode.AggregateStage.FINAL));
             } else {
                 finalAggs.add(func);
             }
         }
 
-        return new JQuickHashAggregatePhysicalNode(
-                agg.getGroupKeys(), finalAggs, exchange,
-                agg.getHavingCondition(), JQuickHashAggregatePhysicalNode.AggregateStage.FINAL);
+        return new JQuickHashAggregatePhysicalNode(agg.getGroupKeys(), finalAggs, exchange, agg.getHavingCondition(), JQuickHashAggregatePhysicalNode.AggregateStage.FINAL);
     }
 
     private JQuickPhysicalPlanNode pushdownLimit(JQuickPhysicalPlanNode node) {
         if (node instanceof JQuickLimitPhysicalNode) {
             JQuickLimitPhysicalNode limit = (JQuickLimitPhysicalNode) node;
             JQuickPhysicalPlanNode child = limit.getChildren().get(0);
-
             if (child instanceof JQuickSortPhysicalNode) {
                 JQuickSortPhysicalNode sort = (JQuickSortPhysicalNode) child;
-                return new JQuickTopNPhysicalNode(
-                        sort.getOrderByItems(),
-                        limit.getLimit(),
-                        limit.getOffset(),
-                        sort.getChildren().get(0)
-                );
+                return new JQuickTopNPhysicalNode(sort.getOrderByItems(), limit.getLimit(), limit.getOffset(), sort.getChildren().get(0));
             }
         }
 
@@ -164,13 +136,7 @@ public class JQuickPhysicalPlanOptimizer {
     private JQuickPhysicalPlanNode addRequiredExchanges(JQuickPhysicalPlanNode node) {
         if (needsExchange(node)) {
             int parallelism = 4;
-            JQuickExchangePhysicalNode exchange = new JQuickExchangePhysicalNode(
-                    JQuickExchangePhysicalNode.ExchangeType.SHUFFLE,
-                    JQuickExchangePhysicalNode.PartitionStrategy.HASH,
-                    extractPartitionKeys(node),
-                    parallelism,
-                    node
-            );
+            JQuickExchangePhysicalNode exchange = new JQuickExchangePhysicalNode(JQuickExchangeType.SHUFFLE, JQuickExchangePhysicalNode.PartitionStrategy.HASH, extractPartitionKeys(node), parallelism, node);
             return exchange;
         }
 
@@ -184,8 +150,7 @@ public class JQuickPhysicalPlanOptimizer {
     }
 
     private boolean needsExchange(JQuickPhysicalPlanNode node) {
-        return node instanceof JQuickHashJoinPhysicalNode ||
-                node instanceof JQuickHashAggregatePhysicalNode;
+        return node instanceof JQuickHashJoinPhysicalNode || node instanceof JQuickHashAggregatePhysicalNode;
     }
 
     private List<JQuickExpression> extractPartitionKeys(JQuickPhysicalPlanNode node) {
@@ -201,9 +166,7 @@ public class JQuickPhysicalPlanOptimizer {
         return new ArrayList<>();
     }
 
-    private JQuickPhysicalPlanNode replaceChild(JQuickPhysicalPlanNode parent,
-                                                int childIndex,
-                                                JQuickPhysicalPlanNode newChild) {
+    private JQuickPhysicalPlanNode replaceChild(JQuickPhysicalPlanNode parent, int childIndex, JQuickPhysicalPlanNode newChild) {
         if (parent instanceof JQuickFilterPhysicalNode) {
             JQuickFilterPhysicalNode filter = (JQuickFilterPhysicalNode) parent;
             return new JQuickFilterPhysicalNode(filter.getPredicate(), newChild);
@@ -214,12 +177,10 @@ public class JQuickPhysicalPlanOptimizer {
             JQuickHashJoinPhysicalNode join = (JQuickHashJoinPhysicalNode) parent;
             JQuickPhysicalPlanNode left = childIndex == 0 ? newChild : join.getLeft();
             JQuickPhysicalPlanNode right = childIndex == 1 ? newChild : join.getRight();
-            return new JQuickHashJoinPhysicalNode(join.getJoinType(), left, right,
-                    join.getCondition(), join.getJoinKeys(), join.getBuildSide(), join.getDistribution());
+            return new JQuickHashJoinPhysicalNode(join.getJoinType(), left, right, join.getCondition(), join.getJoinKeys(), join.getBuildSide(), join.getDistribution());
         } else if (parent instanceof JQuickHashAggregatePhysicalNode) {
             JQuickHashAggregatePhysicalNode agg = (JQuickHashAggregatePhysicalNode) parent;
-            return new JQuickHashAggregatePhysicalNode(agg.getGroupKeys(), agg.getAggregates(),
-                    newChild, agg.getHavingCondition(), agg.getStage());
+            return new JQuickHashAggregatePhysicalNode(agg.getGroupKeys(), agg.getAggregates(), newChild, agg.getHavingCondition(), agg.getStage());
         } else if (parent instanceof JQuickSortPhysicalNode) {
             JQuickSortPhysicalNode sort = (JQuickSortPhysicalNode) parent;
             return new JQuickSortPhysicalNode(sort.getOrderByItems(), newChild);
