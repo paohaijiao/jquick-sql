@@ -3,6 +3,7 @@ package com.github.paohaijiao.fragment;
 import com.github.paohaijiao.distributed.JQuickDistributedPlan;
 import com.github.paohaijiao.enums.JQuickExchangeType;
 import com.github.paohaijiao.enums.JQuickFragmentType;
+import com.github.paohaijiao.enums.JQuickPartitionStrategy;
 import com.github.paohaijiao.exchange.JQuickExchangeNode;
 import com.github.paohaijiao.expression.JQuickExpression;
 import com.github.paohaijiao.physical.JQuickPhysicalPlanNode;
@@ -205,22 +206,22 @@ public class JQuickFragmenter {
         if (node instanceof JQuickHashJoinPhysicalNode) {
             JQuickHashJoinPhysicalNode join = (JQuickHashJoinPhysicalNode) node;
             List<JQuickExpression> partitionKeys = extractJoinPartitionKeys(join);
-            return new JQuickExchangeNode(exchangeId, JQuickExchangeType.SHUFFLE, JQuickExchangeNode.PartitionStrategy.HASH, partitionKeys, defaultParallelism);
+            return new JQuickExchangeNode(exchangeId, JQuickExchangeType.SHUFFLE, JQuickPartitionStrategy.HASH, partitionKeys, defaultParallelism);
         }
 
         if (node instanceof JQuickHashAggregatePhysicalNode) {
             JQuickHashAggregatePhysicalNode agg = (JQuickHashAggregatePhysicalNode) node;
             List<JQuickExpression> groupKeys = agg.getGroupKeys();
             if (!groupKeys.isEmpty()) {
-                return new JQuickExchangeNode(exchangeId, JQuickExchangeType.SHUFFLE, JQuickExchangeNode.PartitionStrategy.HASH, groupKeys, defaultParallelism);
+                return new JQuickExchangeNode(exchangeId, JQuickExchangeType.SHUFFLE, JQuickPartitionStrategy.HASH, groupKeys, defaultParallelism);
             }
             // 无分组键的聚合，需要 GATHER 到单节点
-            return new JQuickExchangeNode(exchangeId, JQuickExchangeType.GATHER, JQuickExchangeNode.PartitionStrategy.REPLICATE, (List<JQuickExpression>) null, 1);
+            return new JQuickExchangeNode(exchangeId, JQuickExchangeType.GATHER, JQuickPartitionStrategy.REPLICATE, (List<JQuickExpression>) null, 1);
         }
 
         if (node instanceof JQuickTableScanPhysicalNode) {
             // 表扫描使用 round-robin 分发
-            return new JQuickExchangeNode(exchangeId, JQuickExchangeType.REPARTITION, JQuickExchangeNode.PartitionStrategy.ROUND_ROBIN, (List<JQuickExpression>) null, defaultParallelism);
+            return new JQuickExchangeNode(exchangeId, JQuickExchangeType.REPARTITION,JQuickPartitionStrategy.ROUND_ROBIN, (List<JQuickExpression>) null, defaultParallelism);
         }
 
         if (node instanceof JQuickExchangePhysicalNode) {
@@ -230,7 +231,7 @@ public class JQuickFragmenter {
         }
 
         // 默认：广播
-        return new JQuickExchangeNode(exchangeId, JQuickExchangeType.BROADCAST, JQuickExchangeNode.PartitionStrategy.REPLICATE, (List<JQuickExpression>) null, defaultParallelism
+        return new JQuickExchangeNode(exchangeId, JQuickExchangeType.BROADCAST, JQuickPartitionStrategy.REPLICATE, (List<JQuickExpression>) null, defaultParallelism
         );
     }
 
@@ -282,21 +283,21 @@ public class JQuickFragmenter {
     /**
      * 转换 PartitionStrategy
      */
-    private JQuickExchangeNode.PartitionStrategy convertPartitionStrategy(
+    private JQuickPartitionStrategy convertPartitionStrategy(
             JQuickExchangePhysicalNode.PartitionStrategy strategy) {
         switch (strategy) {
             case HASH:
-                return JQuickExchangeNode.PartitionStrategy.HASH;
+                return JQuickPartitionStrategy.HASH;
             case RANGE:
-                return JQuickExchangeNode.PartitionStrategy.RANGE;
+                return JQuickPartitionStrategy.RANGE;
             case ROUND_ROBIN:
-                return JQuickExchangeNode.PartitionStrategy.ROUND_ROBIN;
+                return JQuickPartitionStrategy.ROUND_ROBIN;
             case BUCKET:
-                return JQuickExchangeNode.PartitionStrategy.BUCKET;
+                return JQuickPartitionStrategy.BUCKET;
             case REPLICATE:
-                return JQuickExchangeNode.PartitionStrategy.REPLICATE;
+                return JQuickPartitionStrategy.REPLICATE;
             default:
-                return JQuickExchangeNode.PartitionStrategy.HASH;
+                return JQuickPartitionStrategy.HASH;
         }
     }
 

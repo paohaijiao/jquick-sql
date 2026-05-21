@@ -18,6 +18,7 @@ package com.github.paohaijiao.scheduler;
 
 import com.github.paohaijiao.distributed.JQuickDistributedPlan;
 import com.github.paohaijiao.enums.JQuickFragmentType;
+import com.github.paohaijiao.enums.JQuickPartitionStrategy;
 import com.github.paohaijiao.exchange.JQuickExchangeNode;
 import com.github.paohaijiao.fragment.JQuickFragment;
 
@@ -181,22 +182,17 @@ public class JQuickTaskScheduler {
      * 判断是否应该建立连接
      */
     private boolean shouldConnect(JQuickTask sourceTask, JQuickTask targetTask, JQuickExchangeNode exchange) {
-        JQuickExchangeNode.PartitionStrategy strategy = exchange.getPartitionStrategy();
-
+        JQuickPartitionStrategy strategy = exchange.getPartitionStrategy();
         switch (strategy) {
             case HASH:
                 // Hash 分区：根据分区键的 hash 值决定目标 task
                 return getHashPartition(sourceTask.getTaskIndex(), targetTask.getTaskIndex(), exchange);
-
             case ROUND_ROBIN:
                 // Round Robin：轮询分配
-                return targetTask.getTaskIndex() ==
-                        (sourceTask.getTaskIndex() % targetTask.getFragment().getParallelism());
-
+                return targetTask.getTaskIndex() == (sourceTask.getTaskIndex() % targetTask.getFragment().getParallelism());
             case REPLICATE:
                 // 广播：所有 source 连接所有 target
                 return true;
-
             default:
                 return true;
         }
@@ -227,30 +223,15 @@ public class JQuickTaskScheduler {
     /**
      * 创建交换通道
      */
-    private JQuickExchangeChannel createExchangeChannel(JQuickTask source,
-                                                        JQuickTask target,
-                                                        JQuickExchangeNode exchange) {
+    private JQuickExchangeChannel createExchangeChannel(JQuickTask source, JQuickTask target, JQuickExchangeNode exchange) {
         String channelId = String.format("channel_%d_%d", source.getTaskId(), target.getTaskId());
         String sourceWorker = source.getAssignedWorker();
         String targetWorker = target.getAssignedWorker();
-
         // 获取 Worker 地址信息
         WorkerInfo sourceInfo = workerManager.getWorker(sourceWorker);
         WorkerInfo targetInfo = workerManager.getWorker(targetWorker);
-
-        JQuickExchangeChannel.ChannelType channelType =
-                sourceWorker != null && sourceWorker.equals(targetWorker) ?
-                        JQuickExchangeChannel.ChannelType.MEMORY :
-                        JQuickExchangeChannel.ChannelType.NETTY;
-
-        return new JQuickExchangeChannel(
-                channelId,
-                sourceWorker,
-                sourceInfo != null ? sourceInfo.getDataPort() : 0,
-                targetWorker,
-                targetInfo != null ? targetInfo.getDataPort() : 0,
-                channelType
-        );
+        JQuickExchangeChannel.ChannelType channelType = sourceWorker != null && sourceWorker.equals(targetWorker) ? JQuickExchangeChannel.ChannelType.MEMORY : JQuickExchangeChannel.ChannelType.NETTY;
+        return new JQuickExchangeChannel(channelId, sourceWorker, sourceInfo != null ? sourceInfo.getDataPort() : 0, targetWorker, targetInfo != null ? targetInfo.getDataPort() : 0, channelType);
     }
 
     private JQuickTaskInput.InputType getInputType(JQuickExchangeNode exchange) {
@@ -282,7 +263,6 @@ public class JQuickTaskScheduler {
      */
     private void assignWorkers() {
         List<WorkerInfo> workers = workerManager.getAvailableWorkers();
-
         for (List<JQuickTask> tasks : fragmentTasksMap.values()) {
             for (JQuickTask task : tasks) {
                 WorkerInfo assigned = selectWorker(task, workers);
@@ -298,16 +278,13 @@ public class JQuickTaskScheduler {
      */
     private WorkerInfo selectWorker(JQuickTask task, List<WorkerInfo> workers) {
         if (workers.isEmpty()) return null;
-
         switch (strategy) {
             case ROUND_ROBIN:
                 return workers.get((int) (task.getTaskId() % workers.size()));
-
             case LEAST_LOAD:
                 return workers.stream()
                         .min(Comparator.comparingInt(WorkerInfo::getRunningTasks))
                         .orElse(workers.get(0));
-
             case DATA_LOCALITY:
                 // 对于 SOURCE 任务，优先分配到数据所在节点
                 if (task.getType() == JQuickTask.TaskType.SOURCE_TASK) {
