@@ -15,6 +15,7 @@
  */
 package com.github.paohaijiao.exchange;
 
+import com.github.paohaijiao.enums.JQuickExchangeType;
 import com.github.paohaijiao.expression.JQuickExpression;
 
 import java.util.List;
@@ -27,7 +28,7 @@ public class JQuickExchangeNode {
 
     private final String exchangeId;
 
-    private final ExchangeType type;
+    private final JQuickExchangeType type;
 
     private final PartitionStrategy partitionStrategy;
 
@@ -37,14 +38,7 @@ public class JQuickExchangeNode {
 
     private final int parallelism;
 
-    public enum ExchangeType {
-        SHUFFLE,        // 全量数据重分布
-        BROADCAST,      // 广播到所有节点
-        REPARTITION,    // 重新分区
-        GATHER,         // 汇总到单个节点
-        RECEIVE,        // 接收数据（输入侧）
-        FORWARD         // 直接转发
-    }
+
 
     public enum PartitionStrategy {
         HASH,           // 哈希分区
@@ -54,15 +48,15 @@ public class JQuickExchangeNode {
         REPLICATE       // 复制（广播）
     }
 
-    public JQuickExchangeNode(String exchangeId, ExchangeType type, PartitionStrategy partitionStrategy, JQuickExpression partitionKey, int parallelism) {
+    public JQuickExchangeNode(String exchangeId, JQuickExchangeType type, PartitionStrategy partitionStrategy, JQuickExpression partitionKey, int parallelism) {
         this(exchangeId, type, partitionStrategy, partitionKey, null, parallelism);
     }
 
-    public JQuickExchangeNode(String exchangeId, ExchangeType type, PartitionStrategy partitionStrategy, List<JQuickExpression> partitionKeys, int parallelism) {
+    public JQuickExchangeNode(String exchangeId, JQuickExchangeType type, PartitionStrategy partitionStrategy, List<JQuickExpression> partitionKeys, int parallelism) {
         this(exchangeId, type, partitionStrategy, null, partitionKeys, parallelism);
     }
 
-    private JQuickExchangeNode(String exchangeId, ExchangeType type, PartitionStrategy partitionStrategy, JQuickExpression partitionKey, List<JQuickExpression> partitionKeys, int parallelism) {
+    private JQuickExchangeNode(String exchangeId, JQuickExchangeType type, PartitionStrategy partitionStrategy, JQuickExpression partitionKey, List<JQuickExpression> partitionKeys, int parallelism) {
         this.exchangeId = exchangeId != null ? exchangeId : UUID.randomUUID().toString();
         this.type = type;
         this.partitionStrategy = partitionStrategy;
@@ -73,7 +67,7 @@ public class JQuickExchangeNode {
 
     public String getExchangeId() { return exchangeId; }
 
-    public ExchangeType getType() { return type; }
+    public JQuickExchangeType getType() { return type; }
 
     public PartitionStrategy getPartitionStrategy() { return partitionStrategy; }
 
@@ -83,9 +77,9 @@ public class JQuickExchangeNode {
 
     public int getParallelism() { return parallelism; }
 
-    public boolean isInput() { return type == ExchangeType.RECEIVE; }
+    public boolean isInput() { return type == JQuickExchangeType.RECEIVE; }
 
-    public boolean isOutput() { return type != ExchangeType.RECEIVE; }
+    public boolean isOutput() { return type != JQuickExchangeType.RECEIVE; }
 
     @Override
     public String toString() {
