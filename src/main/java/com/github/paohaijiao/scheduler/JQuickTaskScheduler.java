@@ -17,6 +17,7 @@ package com.github.paohaijiao.scheduler;
 
 
 import com.github.paohaijiao.distributed.JQuickDistributedPlan;
+import com.github.paohaijiao.enums.JQuickFragmentType;
 import com.github.paohaijiao.exchange.JQuickExchangeNode;
 import com.github.paohaijiao.fragment.JQuickFragment;
 
@@ -29,7 +30,9 @@ import java.util.concurrent.ConcurrentHashMap;
 public class JQuickTaskScheduler {
 
     private final JQuickDistributedPlan distributedPlan;
+
     private final WorkerManager workerManager;
+
     private final SchedulingStrategy strategy;
     private final Map<Long, List<JQuickTask>> fragmentTasksMap;
     private final Map<Long, JQuickTask> taskMap;
@@ -87,9 +90,7 @@ public class JQuickTaskScheduler {
     private void createTasksForFragment(JQuickFragment fragment) {
         int parallelism = fragment.getParallelism();
         List<JQuickTask> tasks = new ArrayList<>();
-
         JQuickTask.TaskType taskType = convertTaskType(fragment.getType());
-
         for (int i = 0; i < parallelism; i++) {
             JQuickTask task = new JQuickTask(
                     fragment.getFragmentId(),
@@ -107,7 +108,7 @@ public class JQuickTaskScheduler {
     /**
      * 转换 Task 类型
      */
-    private JQuickTask.TaskType convertTaskType(JQuickFragment.FragmentType fragmentType) {
+    private JQuickTask.TaskType convertTaskType(JQuickFragmentType fragmentType) {
         switch (fragmentType) {
             case SOURCE:
                 return JQuickTask.TaskType.SOURCE_TASK;

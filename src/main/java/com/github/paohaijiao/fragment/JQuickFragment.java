@@ -16,6 +16,7 @@
 package com.github.paohaijiao.fragment;
 
 
+import com.github.paohaijiao.enums.JQuickFragmentType;
 import com.github.paohaijiao.exchange.JQuickExchangeNode;
 import com.github.paohaijiao.physical.JQuickPhysicalPlanNode;
 
@@ -27,24 +28,27 @@ import java.util.concurrent.atomic.AtomicLong;
  * 执行片段 - 分布式执行的最小单元
  */
 public class JQuickFragment {
+
     private static final AtomicLong idGenerator = new AtomicLong(0);
 
     private final long fragmentId;
-    private final FragmentType type;
+
+    private final JQuickFragmentType type;
+
     private final JQuickPhysicalPlanNode plan;
+
     private final List<JQuickFragment> children;
+
     private final List<JQuickExchangeNode> inputs;
+
     private JQuickExchangeNode output;
+
     private int parallelism;
+
     private String assignedHost;
 
-    public enum FragmentType {
-        SOURCE,      // 源端片段（扫描数据）
-        INTERMEDIATE, // 中间片段（处理数据）
-        SINK         // 汇片段（输出结果）
-    }
 
-    public JQuickFragment(FragmentType type, JQuickPhysicalPlanNode plan) {
+    public JQuickFragment(JQuickFragmentType type, JQuickPhysicalPlanNode plan) {
         this.fragmentId = idGenerator.incrementAndGet();
         this.type = type;
         this.plan = plan;
@@ -74,12 +78,19 @@ public class JQuickFragment {
     }
 
     public long getFragmentId() { return fragmentId; }
-    public FragmentType getType() { return type; }
+
+    public JQuickFragmentType getType() { return type; }
+
     public JQuickPhysicalPlanNode getPlan() { return plan; }
+
     public List<JQuickFragment> getChildren() { return children; }
+
     public List<JQuickExchangeNode> getInputs() { return inputs; }
+
     public JQuickExchangeNode getOutput() { return output; }
+
     public int getParallelism() { return parallelism; }
+
     public String getAssignedHost() { return assignedHost; }
 
     @Override
@@ -88,7 +99,4 @@ public class JQuickFragment {
                 fragmentId, type, parallelism);
     }
 }
-
-
-
 
