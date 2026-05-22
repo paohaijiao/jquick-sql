@@ -188,6 +188,11 @@ public class JQuickPhysicalPlanGenerator implements JQuickLogicalPlanVisitor {
         logicalToPhysical.put(node, JQuickEmptyPhysicalNode.INSTANCE);
     }
 
+    @Override
+    public void visit(JQuickRecursiveUnionNode node) {
+
+    }
+
     private boolean isHashJoinApplicable(JQuickJoinNode join) {
         JQuickExpression condition = join.getCondition();
         if (condition == null) return false;

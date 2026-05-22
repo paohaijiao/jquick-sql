@@ -57,13 +57,40 @@ public class JQuickASTToLogicalPlanVisitor {
     public JQuickLogicalPlanNode visit(JQuickSelectStatementNode node) {
         if (node.isCteQuery()) { // 判断是否为CTE查询（WITH子句）
             Map<String, JQuickLogicalPlanNode> cteMap = new LinkedHashMap<>();
+            Map<String, JQuickLogicalPlanNode> recursiveCteMap = new LinkedHashMap<>();
             for (JQuickCommonTableExpressionNode cte : node.getCtes()) { // 遍历所有CTE定义
-                JQuickLogicalPlanNode ctePlan = visit(cte.getQuery());// 递归转换CTE内部的查询为逻辑计划
-                cteMap.put(cte.getName(), ctePlan);// 将CTE名称与逻辑计划关联，存入Map
+                if (cte.isRecursive()) {
+                    JQuickLogicalPlanNode initialPlan = null;
+                    JQuickLogicalPlanNode recursivePlan = null;
+                    if (cte.getInitialQuery() != null) {
+                        initialPlan = visit(cte.getInitialQuery());
+                    }
+                    if (cte.getRecursivePart() != null) {
+                        recursivePlan = visit(cte.getRecursivePart());
+                    }
+                    JQuickLogicalPlanNode recursiveCtePlan = buildRecursiveCTEPlan(
+                            cte.getName(),
+                            cte.getColumnNames(),
+                            initialPlan,
+                            recursivePlan,
+                            cte.isUnionAll()
+                    );
+                    recursiveCteMap.put(cte.getName(), recursiveCtePlan);
+
+                } else if (cte.getQuery() != null) {
+                    // 处理非递归CTE
+                    JQuickLogicalPlanNode ctePlan = visit(cte.getQuery());
+                    cteMap.put(cte.getName(), ctePlan);
+                }
             }
+
+            // 合并CTE Map（非递归CTE和递归CTE）
+            Map<String, JQuickLogicalPlanNode> allCteMap = new LinkedHashMap<>();
+            allCteMap.putAll(cteMap);
+            allCteMap.putAll(recursiveCteMap);
             JQuickLogicalPlanNode mainPlan = visit(node.getSelectExpression());
-            return new JQuickWithNode(mainPlan, cteMap);
-        } else {// 普通查询
+            return new JQuickWithNode(mainPlan, allCteMap);
+        } else { // 普通查询
             return visit(node.getSelectExpression());
         }
     }
@@ -76,7 +103,8 @@ public class JQuickASTToLogicalPlanVisitor {
      * DataSetOp 可能包含多个SELECT子句通过集合操作连接
      */
     public JQuickLogicalPlanNode visit(JQuickSelectExpressionNode node) {
-        return visit(node.getDataSetOp());
+        JQuickLogicalPlanNode logicalPlanNode= visit(node.getDataSetOp());
+        return logicalPlanNode;
     }
 
     /**
@@ -725,5 +753,34 @@ public class JQuickASTToLogicalPlanVisitor {
             default:
                 return JQuickUnaryOperator.NOT;
         }
+    }
+    /**
+     * 构建递归CTE的逻辑计划
+     *
+     * 递归CTE需要特殊的节点类型来处理循环引用
+     * 通常需要将initialPlan和recursivePlan通过Union操作连接
+     * 并且recursivePlan中可以引用CTE自身（通过名称）
+     *
+     * @param name CTE名称
+     * @param columnNames 列名列表（可能为null）
+     * @param initialPlan 初始查询（锚点）的逻辑计划
+     * @param recursivePlan 递归部分的逻辑计划
+     * @param isUnionAll true表示UNION ALL，false表示UNION
+     * @return 递归CTE的逻辑计划节点
+     */
+    private JQuickLogicalPlanNode buildRecursiveCTEPlan(String name, List<String> columnNames,JQuickLogicalPlanNode initialPlan, JQuickLogicalPlanNode recursivePlan, boolean isUnionAll) {
+        JQuickLogicalPlanNode result = null;
+        if (initialPlan != null && recursivePlan != null) {
+            // 递归CTE的结构: initialPlan UNION [ALL] recursivePlan
+            result = new JQuickRecursiveUnionNode(name, columnNames, initialPlan, recursivePlan, isUnionAll);
+        } else if (initialPlan != null) {
+            // 只有initialPlan，没有recursivePart（边界情况）
+            result = initialPlan;
+        } else if (recursivePlan != null) {
+            // 只有recursivePart（不应该发生，但保留处理）
+            result = recursivePlan;
+        }
+
+        return result;
     }
 }

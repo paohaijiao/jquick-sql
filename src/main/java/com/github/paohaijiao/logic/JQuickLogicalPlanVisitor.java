@@ -29,4 +29,6 @@ public interface JQuickLogicalPlanVisitor {
     void visit(JQuickValuesNode node);
 
     void visit(JQuickEmptyNode node);
+
+    void visit(JQuickRecursiveUnionNode node);
 }
