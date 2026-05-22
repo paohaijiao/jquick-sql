@@ -27,6 +27,7 @@ package com.github.paohaijiao.ast;
  * | EXISTS expression                                             #existsPredicate
  */
 public class JQuickPredicateNode implements JQuickASTNode {
+
     private final PredicateType type;
 
     // 表达式原子谓词
@@ -65,6 +66,10 @@ public class JQuickPredicateNode implements JQuickASTNode {
 
     // EXISTS谓词
     private final JQuickExpressionNode existsExpression;
+
+    public enum PredicateSubType {
+        LIKE, REGEXP
+    }
 
     // 表达式原子谓词构造器
     public JQuickPredicateNode(JQuickExpressionAtomNode expressionAtom) {
@@ -273,7 +278,39 @@ public class JQuickPredicateNode implements JQuickASTNode {
         this.regexpPattern = null;
         this.existsExpression = expression;
     }
-
+    public JQuickPredicateNode(JQuickPredicateNode predicate, boolean not, JQuickPredicateNode pattern, PredicateSubType subType) {
+        this.type = PredicateSubType.LIKE.equals(subType)?PredicateType.LIKE:PredicateType.REGEXP;
+        if( PredicateType.LIKE.equals(this.type)){
+            this.likePredicate = predicate;
+            this.likeNot = not;
+            this.likePattern = pattern;
+            this.regexpPredicate = null;
+            this.regexpNot = false;
+            this.regexpPattern = null;
+        }else{
+            this.likePredicate = null;
+            this.likeNot = false;
+            this.likePattern = null;
+            this.regexpPredicate = predicate;
+            this.regexpNot = not;
+            this.regexpPattern = pattern;
+        }
+        this.expressionAtom = null;
+        this.isNullPredicate = null;
+        this.isNotNull = false;
+        this.left = null;
+        this.right = null;
+        this.comparisonOperator = null;
+        this.betweenPredicate = null;
+        this.betweenNot = false;
+        this.betweenLow = null;
+        this.betweenHigh = null;
+        this.inPredicate = null;
+        this.inNot = false;
+        this.inSubquery = null;
+        this.inExpressions = null;
+        this.existsExpression = null;
+    }
     @Override
     public String getNodeType() {
         return "Predicate";

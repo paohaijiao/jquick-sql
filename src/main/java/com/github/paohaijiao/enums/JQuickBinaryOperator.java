@@ -22,8 +22,13 @@ public enum JQuickBinaryOperator {
 
     // 字符串运算
     LIKE("LIKE", 30, false),
+
     NOT_LIKE("NOT LIKE", 30, false),
 
+    // 字符串运算
+    REGEX("REGEX", 30, false),
+
+    NOT_REGEX("NOT REGEX", 30, false),
     // 位运算
     BIT_AND("&", 25, true),
     BIT_OR("|", 25, true),
