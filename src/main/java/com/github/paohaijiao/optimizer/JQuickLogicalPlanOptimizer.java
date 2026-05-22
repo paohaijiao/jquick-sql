@@ -15,8 +15,12 @@
  */
 package com.github.paohaijiao.optimizer;
 
+import com.github.paohaijiao.console.JConsole;
+import com.github.paohaijiao.datasource.JQuickDataSourceManager;
 import com.github.paohaijiao.enums.JQuickBinaryOperator;
 import com.github.paohaijiao.enums.JQuickJoinType;
+import com.github.paohaijiao.enums.JQuickUnaryOperator;
+import com.github.paohaijiao.exception.JAssert;
 import com.github.paohaijiao.expression.JQuickExpression;
 import com.github.paohaijiao.expression.domain.JQuickBinaryExpression;
 import com.github.paohaijiao.expression.domain.JQuickColumnRefExpression;
@@ -24,6 +28,8 @@ import com.github.paohaijiao.expression.domain.JQuickLiteralExpression;
 import com.github.paohaijiao.expression.domain.JQuickUnaryExpression;
 import com.github.paohaijiao.logic.JQuickLogicalPlanNode;
 import com.github.paohaijiao.logic.domain.*;
+import com.github.paohaijiao.statement.JQuickColumnMeta;
+import com.github.paohaijiao.statement.JQuickDataSet;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -32,6 +38,8 @@ import java.util.stream.Collectors;
  * 逻辑计划优化器 - 应用各种优化规则
  */
 public class JQuickLogicalPlanOptimizer {
+
+    private static JConsole log=JConsole.initConsoleEnvironment();
 
     private final List<OptimizerRule> rules;
 
@@ -43,22 +51,58 @@ public class JQuickLogicalPlanOptimizer {
     }
 
     private void registerDefaultRules() {
-        // 基础优化规则
-        rules.add(new ConstantFoldingRule());           // 常量折叠
-        rules.add(new PredicatePushdownRule());         // 谓词下推
-        rules.add(new ProjectionPushdownRule());        // 投影下推
-        rules.add(new LimitPushdownRule());             // Limit下推
-        rules.add(new FilterMergeRule());               // 过滤合并
-        rules.add(new ProjectionMergeRule());           // 投影合并
-        rules.add(new RedundantFilterRemovalRule());    // 冗余过滤移除
-        rules.add(new ColumnPruningRule());             // 列剪枝
-
-        // 高级优化规则
-        rules.add(new JoinReorderRule());               // Join重排序
-        rules.add(new SubqueryToJoinRule());            // 子查询转Join
-        rules.add(new AggregatePushdownRule());         // 聚合下推
-        rules.add(new SimplifyExpressionRule());        // 表达式简化
-        rules.add(new DistributionOptimizationRule());  // 分布优化
+        /**
+         * 常量折叠
+         */
+        rules.add(new ConstantFoldingRule());
+        /**
+         * 谓词下推
+         */
+        rules.add(new PredicatePushdownRule());
+        /**
+         * 投影下推
+         */
+        rules.add(new ProjectionPushdownRule());
+        /**
+         * Limit下推
+         */
+        rules.add(new LimitPushdownRule());
+        /**
+         * 过滤合并
+         */
+        rules.add(new FilterMergeRule());
+        /**
+         * 投影合并
+         */
+        rules.add(new ProjectionMergeRule());
+        /**
+         * 冗余过滤移除
+         */
+        rules.add(new RedundantFilterRemovalRule());
+        /**
+         * 列剪枝
+         */
+        rules.add(new ColumnPruningRule());
+        /**高级优化
+         * Join重排序
+         */
+        rules.add(new JoinReorderRule());
+        /**
+         * 子查询转Join
+         */
+        rules.add(new SubqueryToJoinRule());
+        /**
+         * 聚合下推
+         */
+        rules.add(new AggregatePushdownRule());
+        /**
+         * 表达式简化
+         */
+        rules.add(new SimplifyExpressionRule());
+        /**
+         * 分布优化
+         */
+        rules.add(new DistributionOptimizationRule());
     }
 
     public JQuickLogicalPlanNode optimize(JQuickLogicalPlanNode plan) {
@@ -73,21 +117,21 @@ public class JQuickLogicalPlanOptimizer {
             changed = false;
             for (OptimizerRule rule : rules) {
                 if (enableRuleTracing) {
-                    System.out.println("Applying rule: " + rule.getClass().getSimpleName());
+                    log.info("Applying rule: " + rule.getClass().getSimpleName());
                 }
                 JQuickLogicalPlanNode result = rule.apply(current);
                 if (result != current) {
                     current = result;
                     changed = true;
                     if (enableRuleTracing) {
-                        System.out.println("  -> Applied, plan changed");
+                        log.info("  -> Applied, plan changed");
                     }
                 }
             }
             iteration++;
         } while (changed && iteration < maxIterations);
         if (enableRuleTracing) {
-            System.out.println("Optimization completed after " + iteration + " iterations");
+            log.info("Optimization completed after " + iteration + " iterations");
         }
         return current;
     }
@@ -101,7 +145,9 @@ public class JQuickLogicalPlanOptimizer {
     }
 
     /**
-     * 常量折叠：将编译时就能确定的表达式计算结果替换为常量
+     * 常减少运行时计算开销
+     * 未优化：扫描100万行 → 计算100万次乘法
+     * 优化后：扫描100万行 → 计算0次（常量已提前计算）
      * 例如：1 + 2 → 3, age > 10 AND age < 20 → age BETWEEN 11 AND 19
      */
     private static class ConstantFoldingRule implements OptimizerRule {
@@ -175,8 +221,16 @@ public class JQuickLogicalPlanOptimizer {
     }
 
     /**
-     * 谓词下推：将过滤条件尽可能下推到数据源
-     * 例如：SELECT * FROM (SELECT * FROM t1) WHERE a > 10 → SELECT * FROM t1 WHERE a > 10
+     * 谓词下推：尽早过滤数据，减少后续处理的数据量
+     * 优化前：先读取所有数据 → 再过滤
+     * 优化后：先过滤数据 → 只读取需要的数据
+     * SELECT * FROM (
+     *     SELECT * FROM orders WHERE status = 'PAID'  -- 内层过滤
+     * ) t
+     * WHERE amount > 1000  -- 外层过滤
+     * -- 谓词下推后
+     * SELECT * FROM orders
+     * WHERE status = 'PAID' AND amount > 1000  -- 合并到内层
      */
     private static class PredicatePushdownRule implements OptimizerRule {
         @Override
@@ -185,7 +239,6 @@ public class JQuickLogicalPlanOptimizer {
                 JQuickFilterNode filter = (JQuickFilterNode) node;
                 JQuickLogicalPlanNode child = filter.getChild();
                 JQuickExpression predicate = filter.getPredicate();
-
                 if (child instanceof JQuickTableScanNode) {
                     JQuickTableScanNode scan = (JQuickTableScanNode) child;
                     // 将过滤条件下推到表扫描节点
@@ -310,10 +363,8 @@ public class JQuickLogicalPlanOptimizer {
                 JQuickJoinNode join = (JQuickJoinNode) child;
                 Set<String> leftColumns = extractColumnsFromJoin(join.getLeft(), requiredColumns);
                 Set<String> rightColumns = extractColumnsFromJoin(join.getRight(), requiredColumns);
-
                 JQuickLogicalPlanNode newLeft = pushdownToNode(join.getLeft(), leftColumns);
                 JQuickLogicalPlanNode newRight = pushdownToNode(join.getRight(), rightColumns);
-
                 JQuickJoinNode newJoin = new JQuickJoinNode(join.getJoinType(), newLeft, newRight, join.getCondition());
                 return new JQuickProjectNode(project.getSelectItems(), newJoin, project.isDistinct());
             }
@@ -359,22 +410,18 @@ public class JQuickLogicalPlanOptimizer {
             if (node instanceof JQuickLimitNode) {
                 JQuickLimitNode limit = (JQuickLimitNode) node;
                 JQuickLogicalPlanNode child = limit.getChild();
-
                 if (child instanceof JQuickSortNode) {
                     // LIMIT + ORDER BY 可以优化为 Top-N
                     JQuickSortNode sort = (JQuickSortNode) child;
                     return new JQuickLimitNode(limit.getLimit(), limit.getOffset(), sort);
-                } else if (child instanceof JQuickProjectNode) {
+                } else if (child instanceof JQuickProjectNode) {//安全：投影不改变行数
                     // 交换Limit和Project
                     JQuickProjectNode project = (JQuickProjectNode) child;
-                    return new JQuickProjectNode(project.getSelectItems(),
-                            new JQuickLimitNode(limit.getLimit(), limit.getOffset(), project.getChild()),
-                            project.isDistinct());
-                } else if (child instanceof JQuickFilterNode) {
+                    return new JQuickProjectNode(project.getSelectItems(), new JQuickLimitNode(limit.getLimit(), limit.getOffset(), project.getChild()), project.isDistinct());
+                } else if (child instanceof JQuickFilterNode) {//过滤不改变行数关系
                     // 保持顺序
                     JQuickFilterNode filter = (JQuickFilterNode) child;
-                    return new JQuickFilterNode(filter.getPredicate(),
-                            new JQuickLimitNode(limit.getLimit(), limit.getOffset(), filter.getChild()));
+                    return new JQuickFilterNode(filter.getPredicate(), new JQuickLimitNode(limit.getLimit(), limit.getOffset(), filter.getChild()));
                 }
             }
             return node;
@@ -382,6 +429,11 @@ public class JQuickLogicalPlanOptimizer {
     }
     /**
      * 过滤合并：将连续的Filter节点合并为一个
+     * -- 原始：嵌套过滤
+     * WHERE age > 18
+     *   AND WHERE city = 'Beijing'
+     * -- 合并后：单一过滤
+     * WHERE age > 18 AND city = 'Beijing'
      */
     private static class FilterMergeRule implements OptimizerRule {
         @Override
@@ -398,7 +450,14 @@ public class JQuickLogicalPlanOptimizer {
         }
     }
     /**
-     * 投影合并：将连续的Project节点合并为一个
+     * 投影合并：将连续的Project节点合并为一个，减少不必要的数据转换和列映射开销
+     * -- 原始：嵌套投影
+     * SELECT name, age FROM (
+     *     SELECT id, name, age, city FROM users
+     * ) t
+     *
+     * -- 合并后：单一投影
+     * SELECT name, age FROM users
      */
     private static class ProjectionMergeRule implements OptimizerRule {
         @Override
@@ -407,20 +466,15 @@ public class JQuickLogicalPlanOptimizer {
                 JQuickProjectNode outer = (JQuickProjectNode) node;
                 if (outer.getChild() instanceof JQuickProjectNode) {
                     JQuickProjectNode inner = (JQuickProjectNode) outer.getChild();
-
-                    // 构建内层投影的表达式映射
-                    Map<String, JQuickExpression> innerExprMap = new HashMap<>();
+                    Map<String, JQuickExpression> innerExprMap = new HashMap<>();// 构建内层投影的表达式映射
                     for (JQuickProjectNode.SelectItem item : inner.getSelectItems()) {
                         innerExprMap.put(item.getAlias(), item.getExpression());
                     }
-
-                    // 替换外层投影中的列引用
-                    List<JQuickProjectNode.SelectItem> merged = new ArrayList<>();
+                    List<JQuickProjectNode.SelectItem> merged = new ArrayList<>();// 替换外层投影中的列引用
                     for (JQuickProjectNode.SelectItem outerItem : outer.getSelectItems()) {
                         JQuickExpression replaced = replaceColumns(outerItem.getExpression(), innerExprMap);
                         merged.add(new JQuickProjectNode.SelectItem(replaced, outerItem.getAlias()));
                     }
-
                     return new JQuickProjectNode(merged, inner.getChild(), outer.isDistinct() || inner.isDistinct());
                 }
             }
@@ -434,11 +488,7 @@ public class JQuickLogicalPlanOptimizer {
                 return replacement != null ? replacement : expr;
             } else if (expr instanceof JQuickBinaryExpression) {
                 JQuickBinaryExpression binary = (JQuickBinaryExpression) expr;
-                return new JQuickBinaryExpression(
-                        replaceColumns(binary.getLeft(), columnMap),
-                        replaceColumns(binary.getRight(), columnMap),
-                        binary.getOperator()
-                );
+                return new JQuickBinaryExpression(replaceColumns(binary.getLeft(), columnMap), replaceColumns(binary.getRight(), columnMap), binary.getOperator());
             }
             return expr;
         }
@@ -454,12 +504,9 @@ public class JQuickLogicalPlanOptimizer {
             if (node instanceof JQuickFilterNode) {
                 JQuickFilterNode filter = (JQuickFilterNode) node;
                 JQuickExpression predicate = filter.getPredicate();
-
-                // 检查是否为恒真条件
-                if (isAlwaysTrue(predicate)) {
-                    return filter.getChild();
+                if (isAlwaysTrue(predicate)) { // 检查是否为恒真条件
+                    return filter.getChild();//直接返回子节点，移除了Filter
                 }
-
                 // 检查是否为恒假条件
                 if (isAlwaysFalse(predicate)) {
                     return new JQuickEmptyNode();
@@ -467,7 +514,6 @@ public class JQuickLogicalPlanOptimizer {
             }
             return node;
         }
-
         private boolean isAlwaysTrue(JQuickExpression expr) {
             if (expr instanceof JQuickLiteralExpression) {
                 Object value = ((JQuickLiteralExpression) expr).getValue();
@@ -475,7 +521,6 @@ public class JQuickLogicalPlanOptimizer {
             }
             return false;
         }
-
         private boolean isAlwaysFalse(JQuickExpression expr) {
             if (expr instanceof JQuickLiteralExpression) {
                 Object value = ((JQuickLiteralExpression) expr).getValue();
@@ -492,89 +537,279 @@ public class JQuickLogicalPlanOptimizer {
     private static class ColumnPruningRule implements OptimizerRule {
         @Override
         public JQuickLogicalPlanNode apply(JQuickLogicalPlanNode node) {
-            if (node instanceof JQuickProjectNode) {
-                JQuickProjectNode project = (JQuickProjectNode) node;
-                Set<String> requiredColumns = project.getSelectItems().stream()
-                        .map(JQuickProjectNode.SelectItem::getAlias)
-                        .collect(Collectors.toSet());
-                return pruneColumns(project, requiredColumns);
-            } else if (node instanceof JQuickSortNode) {
-                JQuickSortNode sort = (JQuickSortNode) node;
-                Set<String> requiredColumns = sort.getOrderByItems().stream()
-                        .map(JQuickSortNode.OrderByItem::getColumnName)
-                        .collect(Collectors.toSet());
-                return pruneColumns(sort, requiredColumns);
-            }
-            return node;
+            // 从根节点开始，向下传递需要的列
+            return pruneColumns(node, collectOutputColumns(node));
         }
 
-        private JQuickLogicalPlanNode pruneColumns(JQuickLogicalPlanNode node, Set<String> requiredColumns) {
+        private Set<String> collectOutputColumns(JQuickLogicalPlanNode node) {
+            // 收集查询最终输出的列
+            if (node instanceof JQuickProjectNode) {
+                Set<String> cols = new HashSet<>();
+                for (JQuickProjectNode.SelectItem item : ((JQuickProjectNode) node).getSelectItems()) {
+                    cols.addAll(item.getExpression().getReferencedColumns());
+                }
+                return cols;
+            }
+            return new HashSet<>();
+        }
+
+        private JQuickLogicalPlanNode pruneColumns(JQuickLogicalPlanNode node, Set<String> required) {
             if (node instanceof JQuickProjectNode) {
                 JQuickProjectNode project = (JQuickProjectNode) node;
-                List<JQuickProjectNode.SelectItem> pruned = project.getSelectItems().stream()
-                        .filter(item -> requiredColumns.contains(item.getAlias()))
-                        .collect(Collectors.toList());
-
-                if (pruned.isEmpty()) {
-                    pruned = project.getSelectItems(); // 保留至少一个
+                //分析当前投影：哪些输出被需要，需要哪些输入列
+                List<JQuickProjectNode.SelectItem> kept = new ArrayList<>();
+                Set<String> inputRequired = new HashSet<>();
+                for (JQuickProjectNode.SelectItem item : project.getSelectItems()) {
+                    if (required.contains(item.getAlias())) {
+                        kept.add(item);
+                        inputRequired.addAll(item.getExpression().getReferencedColumns());
+                    }
+                }
+                //递归处理子节点
+                JQuickLogicalPlanNode newChild = pruneColumns(project.getChild(), inputRequired);
+                //如果没有任何输出被需要，但子节点仍需执行（如COUNT(*)）
+                if (kept.isEmpty()) {
+                    // 添加一个常量投影
+                    kept.add(new JQuickProjectNode.SelectItem(new JQuickLiteralExpression(1), "dummy"));
                 }
 
-                return new JQuickProjectNode(pruned, project.getChild(), project.isDistinct());
+                return new JQuickProjectNode(kept, newChild, project.isDistinct());
+
+            } else if (node instanceof JQuickFilterNode) {
+                JQuickFilterNode filter = (JQuickFilterNode) node;
+                // Filter需要的列 = 上层需要的 + 过滤条件引用的列
+                Set<String> filterRequired = new HashSet<>(required);
+                filterRequired.addAll(filter.getPredicate().getReferencedColumns());
+                JQuickLogicalPlanNode newChild = pruneColumns(filter.getChild(), filterRequired);
+                return new JQuickFilterNode(filter.getPredicate(), newChild);
+
+            } else if (node instanceof JQuickTableScanNode) {
+                JQuickTableScanNode scan = (JQuickTableScanNode) node;
+                // 只读取需要的列
+                return new JQuickTableScanNode(scan.getTableName(), scan.getAlias(), required, scan.getFilterPredicate());
             }
+
             return node;
         }
     }
 
-
     /**
      * Join重排序：根据表大小和选择率重新排列Join顺序
+     * 只对INNER JOIN进行重排序，保持OUTER JOIN的语义
      */
     private static class JoinReorderRule implements OptimizerRule {
         @Override
         public JQuickLogicalPlanNode apply(JQuickLogicalPlanNode node) {
             if (node instanceof JQuickJoinNode) {
                 JQuickJoinNode join = (JQuickJoinNode) node;
-                return reorderJoins(join);
+                if (join.getJoinType() == JQuickJoinType.INNER) {
+                    return reorderInnerJoins(join);
+                }
             }
             return node;
         }
 
-        private JQuickLogicalPlanNode reorderJoins(JQuickJoinNode join) {
-            // 收集所有Join表
-            List<JQuickLogicalPlanNode> tables = new ArrayList<>();
-            collectTables(join, tables);
-            // 根据预估大小排序（小表优先）
-            tables.sort(Comparator.comparingLong(this::estimateSize));
-            // 重新构建Join树
-            if (tables.size() <= 1) return join;
+        /**
+         * 重排序INNER JOIN
+         * 策略：只将有过滤条件的表提前
+         */
+        private JQuickLogicalPlanNode reorderInnerJoins(JQuickJoinNode join) {
+            JoinGraph graph = buildJoinGraph(join); //收集所有参与Join的表和对应的Join条件
+            if (graph.tables.size() <= 1) {
+                return join;
+            }
+            //只做一种优化：将有过滤条件的表移到前面
+            List<JQuickLogicalPlanNode> reordered = new ArrayList<>();
+            List<JQuickLogicalPlanNode> noFilter = new ArrayList<>();
+            for (JQuickLogicalPlanNode table : graph.tables) {
+                if (hasFilterPredicate(table)) {
+                    reordered.add(table);
+                } else {
+                    noFilter.add(table);
+                }
+            }
+            reordered.addAll(noFilter);
+            if (isSameOrder(graph.tables, reordered)) { //如果顺序没变，直接返回
+                return join;
+            }
+            return buildJoinTree(reordered, graph);//重建Join树
+        }
 
-            JQuickLogicalPlanNode result = tables.get(0);
-            for (int i = 1; i < tables.size(); i++) {
-                result = new JQuickJoinNode(JQuickJoinType.INNER, result, tables.get(i), null);
+        /**
+         * 构建Join图：收集所有表和表之间的Join条件
+         */
+        private JoinGraph buildJoinGraph(JQuickJoinNode join) {
+            JoinGraph graph = new JoinGraph();
+            collectJoinInfo(join, graph);
+            return graph;
+        }
+
+        /**
+         * 递归收集Join信息
+         */
+        private void collectJoinInfo(JQuickLogicalPlanNode node, JoinGraph graph) {
+            if (node instanceof JQuickJoinNode) {
+                JQuickJoinNode join = (JQuickJoinNode) node;
+                if (join.getCondition() != null) {// 记录Join条件
+                    graph.addCondition(join);
+                }
+                collectJoinInfo(join.getLeft(), graph); // 递归处理子节点
+                collectJoinInfo(join.getRight(), graph);
+            } else {
+                graph.addTable(node);// 叶子节点（表）
+            }
+        }
+
+        /**
+         * 检查节点是否有过滤条件
+         */
+        private boolean hasFilterPredicate(JQuickLogicalPlanNode node) {
+            if (node instanceof JQuickFilterNode) {
+                return true;
+            }
+            if (node instanceof JQuickTableScanNode) {
+                return ((JQuickTableScanNode) node).getFilterPredicate() != null;
+            }
+            if (node instanceof JQuickProjectNode) {
+                return hasFilterPredicate(((JQuickProjectNode) node).getChild());
+            }
+            return false;
+        }
+
+        /**
+         * 提取表名（用于匹配Join条件）
+         */
+        private String extractTableName(JQuickLogicalPlanNode node) {
+            if (node instanceof JQuickTableScanNode) {
+                return ((JQuickTableScanNode) node).getTableName();
+            }
+            if (node instanceof JQuickProjectNode) {
+                return extractTableName(((JQuickProjectNode) node).getChild());
+            }
+            if (node instanceof JQuickFilterNode) {
+                return extractTableName(((JQuickFilterNode) node).getChild());
+            }
+            // 对于子查询或复杂节点，使用节点ID
+            JAssert.throwNewException( "tableName  is null");
+            return null;
+        }
+
+        /**
+         * 获取表涉及的列（用于匹配Join条件）
+         * 通过分析子树中的所有表达式
+         */
+        private Set<String> getTableColumns(JQuickLogicalPlanNode node) {
+            Set<String> columns = new HashSet<>();
+            if (node instanceof JQuickTableScanNode) {
+                JQuickTableScanNode scan = (JQuickTableScanNode) node;
+                if (scan.getRequiredColumns() != null) {
+                    columns.addAll(scan.getRequiredColumns());
+                }
+            } else if (node instanceof JQuickProjectNode) {
+                JQuickProjectNode project = (JQuickProjectNode) node;
+                for (JQuickProjectNode.SelectItem item : project.getSelectItems()) {
+                    columns.addAll(item.getExpression().getReferencedColumns());
+                }
+                columns.addAll(getTableColumns(project.getChild()));// 递归获取子节点列
+            } else if (node instanceof JQuickFilterNode) {
+                JQuickFilterNode filter = (JQuickFilterNode) node;
+                columns.addAll(filter.getPredicate().getReferencedColumns());
+                columns.addAll(getTableColumns(filter.getChild()));
+            } else if (node instanceof JQuickJoinNode) {
+                JQuickJoinNode join = (JQuickJoinNode) node;
+                if (join.getCondition() != null) {
+                    columns.addAll(join.getCondition().getReferencedColumns());
+                }
+                columns.addAll(getTableColumns(join.getLeft()));
+                columns.addAll(getTableColumns(join.getRight()));
             }
 
+            return columns;
+        }
+
+        /**
+         * 判断两个表是否相同
+         */
+        private boolean isSameTable(JQuickLogicalPlanNode a, JQuickLogicalPlanNode b) {
+            return extractTableName(a).equals(extractTableName(b));
+        }
+
+        /**
+         * 检查顺序是否相同
+         */
+        private boolean isSameOrder(List<JQuickLogicalPlanNode> original, List<JQuickLogicalPlanNode> reordered) {
+            if (original.size() != reordered.size()) {
+                return false;
+            }
+            for (int i = 0; i < original.size(); i++) {
+                if (!isSameTable(original.get(i), reordered.get(i))) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        /**
+         * 根据排序后的表和Join条件重建Join树
+         */
+        private JQuickLogicalPlanNode buildJoinTree(List<JQuickLogicalPlanNode> orderedTables, JoinGraph graph) {
+            if (orderedTables.isEmpty()) return null;
+            if (orderedTables.size() == 1) return orderedTables.get(0);
+            JQuickLogicalPlanNode result = orderedTables.get(0);
+            for (int i = 1; i < orderedTables.size(); i++) {
+                JQuickLogicalPlanNode right = orderedTables.get(i);
+                // 查找两个表之间的Join条件
+                JQuickExpression condition = graph.findCondition(extractTableName(result), extractTableName(right));
+                result = new JQuickJoinNode(JQuickJoinType.INNER, result, right, condition  );// 可能为null（笛卡尔积）
+            }
             return result;
         }
 
-        private void collectTables(JQuickLogicalPlanNode node, List<JQuickLogicalPlanNode> tables) {
-            if (node instanceof JQuickJoinNode) {
-                JQuickJoinNode join = (JQuickJoinNode) node;
-                collectTables(join.getLeft(), tables);
-                collectTables(join.getRight(), tables);
-            } else {
+        /**
+         * Join图：存储所有表和Join条件
+         */
+        private static class JoinGraph {
+
+            List<JQuickLogicalPlanNode> tables = new ArrayList<>();
+
+            Map<String, Map<String, JQuickExpression>> conditions = new HashMap<>();
+
+            void addTable(JQuickLogicalPlanNode node) {
                 tables.add(node);
             }
-        }
-
-        private long estimateSize(JQuickLogicalPlanNode node) {
-            if (node instanceof JQuickTableScanNode) {
-                return 1000; // 应从统计信息获取
+            void addCondition(JQuickJoinNode join) {
+                String leftName = extractTableNameFromNode(join.getLeft());
+                String rightName = extractTableNameFromNode(join.getRight());
+                conditions.computeIfAbsent(leftName, k -> new HashMap()).put(rightName, join.getCondition());
+                conditions.computeIfAbsent(rightName, k -> new HashMap()).put(leftName, join.getCondition());
             }
-            return 100;
+
+            JQuickExpression findCondition(String left, String right) {
+                Map<String, JQuickExpression> leftMap = conditions.get(left);
+                if (leftMap != null) {
+                    return leftMap.get(right);
+                }
+                return null;
+            }
+
+            private String extractTableNameFromNode(JQuickLogicalPlanNode node) {
+                if (node instanceof JQuickTableScanNode) {
+                    return ((JQuickTableScanNode) node).getTableName();
+                }
+                if (node instanceof JQuickProjectNode) {
+                    return extractTableNameFromNode(((JQuickProjectNode) node).getChild());
+                }
+                if (node instanceof JQuickFilterNode) {
+                    return extractTableNameFromNode(((JQuickFilterNode) node).getChild());
+                }
+                JAssert.throwNewException( "tableName is null");
+                if (node instanceof JQuickJoinNode) {
+                    return "subquery_" + System.identityHashCode(node);    // 如果是Join，返回组合名
+                }
+                return "unknown_" + System.identityHashCode(node);
+            }
         }
     }
-
-
     /**
      * 表达式简化：简化复杂的表达式
      */
@@ -585,34 +820,131 @@ public class JQuickLogicalPlanOptimizer {
                 JQuickFilterNode filter = (JQuickFilterNode) node;
                 JQuickExpression simplified = simplifyExpression(filter.getPredicate());
                 return new JQuickFilterNode(simplified, filter.getChild());
-            } else if (node instanceof JQuickProjectNode) {
-                JQuickProjectNode project = (JQuickProjectNode) node;
-                List<JQuickProjectNode.SelectItem> newItems = new ArrayList<>();
-                for (JQuickProjectNode.SelectItem item : project.getSelectItems()) {
-                    JQuickExpression simplified = simplifyExpression(item.getExpression());
-                    newItems.add(new JQuickProjectNode.SelectItem(simplified, item.getAlias()));
-                }
-                return new JQuickProjectNode(newItems, project.getChild(), project.isDistinct());
+
             }
             return node;
         }
 
         private JQuickExpression simplifyExpression(JQuickExpression expr) {
+            if (expr instanceof JQuickLiteralExpression) {
+                return expr;  // 常量不需要简化
+            }
             if (expr instanceof JQuickBinaryExpression) {
                 JQuickBinaryExpression binary = (JQuickBinaryExpression) expr;
                 JQuickExpression left = simplifyExpression(binary.getLeft());
                 JQuickExpression right = simplifyExpression(binary.getRight());
-                // NOT (x = y) → x != y
-                if (binary.getOperator() == JQuickBinaryOperator.EQ && left instanceof JQuickUnaryExpression) {
-                    // 处理NOT
+                //布尔代数简化
+                if (binary.getOperator() == JQuickBinaryOperator.AND) {//  x AND true → x
+                    if (isTrue(right)) return left;
+                    if (isTrue(left)) return right;
+                    // x AND false → false
+                    if (isFalse(right) || isFalse(left)) {
+                        return new JQuickLiteralExpression(false);
+                    }
+                    // x AND x → x
+                    if (left.equals(right)) return left;
+                }
+
+                // 2. x OR false → x
+                if (binary.getOperator() == JQuickBinaryOperator.OR) {
+                    if (isFalse(right)) return left;
+                    if (isFalse(left)) return right;
+                    // x OR true → true
+                    if (isTrue(right) || isTrue(left)) {
+                        return new JQuickLiteralExpression(true);
+                    }
+                    // x OR x → x
+                    if (left.equals(right)) return left;
+                }
+                // 4. x + 0 → x
+                if (binary.getOperator() == JQuickBinaryOperator.PLUS) {
+                    if (isZero(right)) return left;
+                    if (isZero(left)) return right;
+                }
+
+                // 5. x - 0 → x
+                if (binary.getOperator() == JQuickBinaryOperator.MINUS) {
+                    if (isZero(right)) return left;
+                }
+
+                // 6. x * 1 → x
+                if (binary.getOperator() == JQuickBinaryOperator.MULTIPLY) {
+                    if (isOne(right)) return left;
+                    if (isOne(left)) return right;
+                    // x * 0 → 0
+                    if (isZero(right) || isZero(left)) {
+                        return new JQuickLiteralExpression(0);
+                    }
+                }
+
+                // 7. x / 1 → x
+                if (binary.getOperator() == JQuickBinaryOperator.DIVIDE) {
+                    if (isOne(right)) return left;
+                }
+                // 8. x = x → true
+                if (binary.getOperator() == JQuickBinaryOperator.EQ) {
+                    if (left.equals(right)) {
+                        return new JQuickLiteralExpression(true);
+                    }
+                }
+
+                // 9. x != x → false
+                if (binary.getOperator() == JQuickBinaryOperator.NE) {
+                    if (left.equals(right)) {
+                        return new JQuickLiteralExpression(false);
+                    }
+                }
+
+
+                // 11. 常量比较折叠
+                if (left instanceof JQuickLiteralExpression && right instanceof JQuickLiteralExpression) {
+                    Object result = binary.getOperator().apply(((JQuickLiteralExpression) left).getValue(), ((JQuickLiteralExpression) right).getValue());
+                    return new JQuickLiteralExpression(result);
                 }
 
                 return new JQuickBinaryExpression(left, right, binary.getOperator());
             }
+
             return expr;
         }
-    }
 
+        // 辅助方法
+        private boolean isTrue(JQuickExpression expr) {
+            if (expr instanceof JQuickLiteralExpression) {
+                Object value = ((JQuickLiteralExpression) expr).getValue();
+                return Boolean.TRUE.equals(value);
+            }
+            return false;
+        }
+
+        private boolean isFalse(JQuickExpression expr) {
+            if (expr instanceof JQuickLiteralExpression) {
+                Object value = ((JQuickLiteralExpression) expr).getValue();
+                return Boolean.FALSE.equals(value);
+            }
+            return false;
+        }
+
+        private boolean isZero(JQuickExpression expr) {
+            if (expr instanceof JQuickLiteralExpression) {
+                Object value = ((JQuickLiteralExpression) expr).getValue();
+                if (value instanceof Number) {
+                    return ((Number) value).doubleValue() == 0;
+                }
+            }
+            return false;
+        }
+
+        private boolean isOne(JQuickExpression expr) {
+            if (expr instanceof JQuickLiteralExpression) {
+                Object value = ((JQuickLiteralExpression) expr).getValue();
+                if (value instanceof Number) {
+                    return ((Number) value).doubleValue() == 1;
+                }
+            }
+            return false;
+        }
+    }
 
     /**
      * 分布优化：将单机操作转换为分布式操作（当数据量大时）
@@ -644,15 +976,13 @@ public class JQuickLogicalPlanOptimizer {
             if (node instanceof JQuickGroupByNode) {
                 JQuickGroupByNode groupBy = (JQuickGroupByNode) node;
                 JQuickLogicalPlanNode child = groupBy.getChild();
-
                 if (child instanceof JQuickJoinNode) {
                     // 如果聚合只依赖一侧，可以下推
                     return pushAggregateToJoinSide(groupBy, (JQuickJoinNode) child);
                 } else if (child instanceof JQuickFilterNode) {
                     // 交换聚合和过滤（如果可能）
                     return new JQuickFilterNode(((JQuickFilterNode) child).getPredicate(),
-                            new JQuickGroupByNode(groupBy.getGroupKeys(), groupBy.getAggregateItems(),
-                                    ((JQuickFilterNode) child).getChild(), groupBy.getHavingCondition()));
+                            new JQuickGroupByNode(groupBy.getGroupKeys(), groupBy.getAggregateItems(), ((JQuickFilterNode) child).getChild(), groupBy.getHavingCondition()));
                 }
             }
             return node;
@@ -663,7 +993,6 @@ public class JQuickLogicalPlanOptimizer {
             Set<String> groupColumns = extractColumnNames(groupBy.getGroupKeys());
             Set<String> leftColumns = getTableColumns(join.getLeft());
             Set<String> rightColumns = getTableColumns(join.getRight());
-
             if (leftColumns.containsAll(groupColumns)) {
                 // 聚合只依赖左表，可以先聚合再Join
                 JQuickGroupByNode leftAgg = new JQuickGroupByNode(groupBy.getGroupKeys(), groupBy.getAggregateItems(), join.getLeft(), null);
@@ -672,7 +1001,6 @@ public class JQuickLogicalPlanOptimizer {
                 JQuickGroupByNode rightAgg = new JQuickGroupByNode(groupBy.getGroupKeys(), groupBy.getAggregateItems(), join.getRight(), null);
                 return new JQuickJoinNode(join.getJoinType(), join.getLeft(), rightAgg, join.getCondition());
             }
-
             return groupBy;
         }
 
