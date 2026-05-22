@@ -67,6 +67,23 @@ JQuickSQL 是一个轻量级 SQL 查询引擎，支持异构数据库,文件,res
     ↓
 14. 清理资源 (cleanup)
 
+
+| 序号 | 优化规则名称 | 说明 | 类型 |
+|:---:|:---|:---|:---:|
+| 1 | `ConstantFoldingRule` | 常量折叠 | 基础优化 |
+| 2 | `PredicatePushdownRule` | 谓词下推 | 基础优化 |
+| 3 | `ProjectionPushdownRule` | 投影下推 | 基础优化 |
+| 4 | `LimitPushdownRule` | Limit下推 | 基础优化 |
+| 5 | `FilterMergeRule` | 过滤合并 | 基础优化 |
+| 6 | `ProjectionMergeRule` | 投影合并 | 基础优化 |
+| 7 | `RedundantFilterRemovalRule` | 冗余过滤移除 | 基础优化 |
+| 8 | `ColumnPruningRule` | 列剪枝 | 基础优化 |
+| 9 | `JoinReorderRule` | Join重排序 | 高级优化 |
+| 10 | `SubqueryToJoinRule` | 子查询转Join | 高级优化 |
+| 11 | `AggregatePushdownRule` | 聚合下推 | 高级优化 |
+| 12 | `SimplifyExpressionRule` | 表达式简化 | 高级优化 |
+| 13 | `DistributionOptimizationRule` | 分布优化 | 分布优化 |
+
 ## 基本语法结构
 ### SELECT 语句
 ```sql
