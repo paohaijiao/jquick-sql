@@ -29,9 +29,13 @@ import java.util.concurrent.Executors;
  * Worker 发现服务（简化实现）
  */
 public class WorkerDiscovery {
+
     private final WorkerManager manager;
+
     private ServerSocket serverSocket;
+
     private ExecutorService executor;
+
     private volatile boolean running;
 
     public WorkerDiscovery(WorkerManager manager) {
@@ -41,11 +45,9 @@ public class WorkerDiscovery {
     public void start(int port) {
         running = true;
         executor = Executors.newCachedThreadPool();
-
         try {
             serverSocket = new ServerSocket(port);
             System.out.println("Worker discovery started on port " + port);
-
             executor.submit(() -> {
                 while (running) {
                     try {
@@ -64,10 +66,8 @@ public class WorkerDiscovery {
     }
 
     private void handleRegistration(Socket socket) {
-        try (BufferedReader reader = new BufferedReader(
-                new InputStreamReader(socket.getInputStream()));
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
              PrintWriter writer = new PrintWriter(socket.getOutputStream(), true)) {
-
             String line = reader.readLine();
             if (line != null && line.startsWith("REGISTER:")) {
                 String[] parts = line.split(":");

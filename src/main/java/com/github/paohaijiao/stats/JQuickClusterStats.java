@@ -56,9 +56,11 @@ public class JQuickClusterStats {
     public double getAverageCpuCores() {
         return totalWorkers > 0 ? (double) totalCpuCores / totalWorkers : 0;
     }
+
     public double getAverageMemoryBytes() {
         return totalWorkers > 0 ? (double) totalMemoryBytes / totalWorkers : 0;
     }
+
     public double getHealthyRatio() {
         return totalWorkers > 0 ? (double) healthyWorkers / totalWorkers : 0;
     }

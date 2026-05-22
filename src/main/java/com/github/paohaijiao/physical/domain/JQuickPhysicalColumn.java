@@ -38,8 +38,11 @@ public class JQuickPhysicalColumn {
     }
 
     public String getName() { return name; }
+
     public Class<?> getType() { return type; }
+
     public String getSourceTable() { return sourceTable; }
+
     public boolean isNullable() { return nullable; }
 
     @Override

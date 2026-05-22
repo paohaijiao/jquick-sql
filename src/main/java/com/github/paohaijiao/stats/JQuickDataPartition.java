@@ -23,21 +23,24 @@ import java.util.*;
 public class JQuickDataPartition {
 
     private final String partitionId;
+
     private final String tableName;
+
     private final String location;
+
     private final long size;
+
     private final long rowCount;
+
     private final Map<String, Object> partitionValues;
+
     private final List<String> hosts;
 
     public JQuickDataPartition(String partitionId, String tableName, String location) {
         this(partitionId, tableName, location, 0, 0, new HashMap<>(), new ArrayList<>());
     }
 
-    public JQuickDataPartition(String partitionId, String tableName, String location,
-                               long size, long rowCount,
-                               Map<String, Object> partitionValues,
-                               List<String> hosts) {
+    public JQuickDataPartition(String partitionId, String tableName, String location, long size, long rowCount, Map<String, Object> partitionValues, List<String> hosts) {
         this.partitionId = partitionId;
         this.tableName = tableName;
         this.location = location;
@@ -48,16 +51,21 @@ public class JQuickDataPartition {
     }
 
     public String getPartitionId() { return partitionId; }
+
     public String getTableName() { return tableName; }
+
     public String getLocation() { return location; }
+
     public long getSize() { return size; }
+
     public long getRowCount() { return rowCount; }
+
     public Map<String, Object> getPartitionValues() { return Collections.unmodifiableMap(partitionValues); }
+
     public List<String> getHosts() { return Collections.unmodifiableList(hosts); }
 
     @Override
     public String toString() {
-        return String.format("DataPartition{id='%s', table='%s', location='%s', rows=%d, size=%d}",
-                partitionId, tableName, location, rowCount, size);
+        return String.format("DataPartition{id='%s', table='%s', location='%s', rows=%d, size=%d}", partitionId, tableName, location, rowCount, size);
     }
 }

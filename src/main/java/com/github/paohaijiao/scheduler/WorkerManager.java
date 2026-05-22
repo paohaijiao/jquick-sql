@@ -25,7 +25,9 @@ import java.util.stream.Collectors;
  * Worker 管理器
  */
 public class WorkerManager {
+
     private final Map<String, WorkerInfo> workers;
+
     private final WorkerDiscovery discovery;
 
     public WorkerManager() {

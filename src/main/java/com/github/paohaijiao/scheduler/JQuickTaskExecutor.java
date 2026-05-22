@@ -24,8 +24,11 @@ import java.util.*;
  * 任务执行器 - 执行具体的物理计划节点
  */
 public class JQuickTaskExecutor {
+
     private final JQuickTask task;
+
     private final DataExchangeService dataExchange;
+
     private final JQuickPhysicalPlanNode plan;
 
     public JQuickTaskExecutor(JQuickTask task, DataExchangeService dataExchange) {
@@ -57,7 +60,6 @@ public class JQuickTaskExecutor {
      */
     private Map<String, Iterator<Object>> prepareInputs() {
         Map<String, Iterator<Object>> inputs = new HashMap<>();
-
         for (JQuickTaskInput input : task.getInputs()) {
             // 从数据交换服务获取输入流
             Iterator<Object> dataStream = dataExchange.receive(input.getChannel());

@@ -23,9 +23,13 @@ import java.util.concurrent.*;
  * 数据交换服务 - 负责 Task 之间的数据传输
  */
 public class DataExchangeService {
+
     private final int port;
+
     private final Map<String, BlockingQueue<Object>> channels;
+
     private final ExecutorService nettyWorker;
+
     private volatile boolean running;
 
     public DataExchangeService(int port) {
@@ -63,8 +67,7 @@ public class DataExchangeService {
         String channelId = channel.getChannelId();
         if (channel.isLocal()) {
             // 本地接收：从队列读取
-            BlockingQueue<Object> queue = channels.computeIfAbsent(channelId,
-                    k -> new LinkedBlockingQueue<>());
+            BlockingQueue<Object> queue = channels.computeIfAbsent(channelId, k -> new LinkedBlockingQueue<>());
             return new QueueIterator(queue);
         } else {
             // 远程接收：通过网络接收

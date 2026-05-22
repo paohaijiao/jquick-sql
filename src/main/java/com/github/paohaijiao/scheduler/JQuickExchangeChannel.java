@@ -19,11 +19,17 @@ package com.github.paohaijiao.scheduler;
  * 数据交换通道
  */
 public class JQuickExchangeChannel {
+
     private final String channelId;
+
     private final String sourceWorker;
+
     private final int sourcePort;
+
     private final String targetWorker;
+
     private final int targetPort;
+
     private final ChannelType type;
 
     public enum ChannelType {
@@ -42,12 +48,16 @@ public class JQuickExchangeChannel {
         this.type = type;
     }
 
-    // Getters
     public String getChannelId() { return channelId; }
+
     public String getSourceWorker() { return sourceWorker; }
+
     public int getSourcePort() { return sourcePort; }
+
     public String getTargetWorker() { return targetWorker; }
+
     public int getTargetPort() { return targetPort; }
+
     public ChannelType getType() { return type; }
 
     public boolean isLocal() {

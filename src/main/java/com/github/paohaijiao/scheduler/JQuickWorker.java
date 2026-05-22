@@ -25,15 +25,23 @@ import java.util.concurrent.atomic.AtomicInteger;
  * Worker 节点 - 执行任务的工作节点
  */
 public class JQuickWorker {
+
     private final String workerId;
+
     private final String host;
+
     private final int controlPort;
+
     private final int dataPort;
+
     private final int taskSlots;
 
     private final ExecutorService taskExecutor;
+
     private final Map<Long, JQuickTaskExecutor> runningTasks;
+
     private final DataExchangeService dataExchange;
+
     private final AtomicInteger activeTasks;
 
     public JQuickWorker(String workerId, String host, int controlPort, int dataPort, int taskSlots) {
@@ -54,10 +62,8 @@ public class JQuickWorker {
     public void start() {
         // 启动数据交换服务
         dataExchange.start();
-
         // 启动控制服务
         startControlServer();
-
         System.out.println("Worker " + workerId + " started on " + host + ":" + controlPort);
     }
 
@@ -108,6 +114,8 @@ public class JQuickWorker {
     }
 
     public String getWorkerId() { return workerId; }
+
     public int getActiveTasks() { return activeTasks.get(); }
+
     public int getAvailableSlots() { return taskSlots - activeTasks.get(); }
 }

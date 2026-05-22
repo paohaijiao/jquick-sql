@@ -20,9 +20,13 @@ package com.github.paohaijiao.scheduler;
  * 任务输入
  */
 public class JQuickTaskInput {
+
     private final String inputId;
+
     private final long sourceTaskId;
+
     private final JQuickExchangeChannel channel;
+
     private final InputType type;
 
     public enum InputType {

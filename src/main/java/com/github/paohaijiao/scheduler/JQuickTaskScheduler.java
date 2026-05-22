@@ -35,7 +35,9 @@ public class JQuickTaskScheduler {
     private final WorkerManager workerManager;
 
     private final SchedulingStrategy strategy;
+
     private final Map<Long, List<JQuickTask>> fragmentTasksMap;
+
     private final Map<Long, JQuickTask> taskMap;
 
     public enum SchedulingStrategy {

@@ -20,12 +20,19 @@ package com.github.paohaijiao.scheduler;
  * Worker 节点信息
  */
 public class WorkerInfo {
+
     private final String workerId;
+
     private final String host;
+
     private final int controlPort;
+
     private final int dataPort;
+
     private final int totalSlots;
+
     private int runningTasks;
+
     private WorkerStatus status;
 
     public enum WorkerStatus {
@@ -43,16 +50,24 @@ public class WorkerInfo {
     }
 
     public void incrementRunningTasks() { runningTasks++; }
+
     public void decrementRunningTasks() { runningTasks--; }
 
-    // Getters
     public String getWorkerId() { return workerId; }
+
     public String getHost() { return host; }
+
     public int getControlPort() { return controlPort; }
+
     public int getDataPort() { return dataPort; }
+
     public int getTotalSlots() { return totalSlots; }
+
     public int getRunningTasks() { return runningTasks; }
+
     public int getAvailableSlots() { return totalSlots - runningTasks; }
+
     public WorkerStatus getStatus() { return status; }
+
     public void setStatus(WorkerStatus status) { this.status = status; }
 }
