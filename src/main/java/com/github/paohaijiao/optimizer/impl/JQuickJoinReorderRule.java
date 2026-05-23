@@ -271,8 +271,7 @@ public class JQuickJoinReorderRule implements JQuickOptimizerRule {
                 String rightId = extractNodeIdFromNode(join.getRight());
                 return "subquery_" + leftId + "_" + rightId;
             }
-            JAssert.throwNewException("Cannot extract node id from node: " + node.getClass().getSimpleName());
-            return null;
+            return "joinRecord"+"_"+UUID.randomUUID();
         }
     }
 }

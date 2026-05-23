@@ -86,11 +86,6 @@ public class JQuickLogicalPlanOptimizer {
          */
         rules.add(new JQuickSubqueryToJoinRule());
         /**
-         * 聚合下推
-         */
-        rules.add(new JQuickPredicatePushdownRule());
-
-        /**
          * 分布优化
          */
         rules.add(new JQuickDistributionOptimizationRule());
