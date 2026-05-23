@@ -14,42 +14,120 @@
  * Copyright (c) [2025-2099] Martin (goudingcheng@gmail.com)
  */
 package com.github.paohaijiao.optimizer.impl;
-
+import com.github.paohaijiao.enums.JQuickJoinType;
 import com.github.paohaijiao.logic.JQuickLogicalPlanNode;
-import com.github.paohaijiao.logic.domain.JQuickFilterNode;
-import com.github.paohaijiao.logic.domain.JQuickLimitNode;
-import com.github.paohaijiao.logic.domain.JQuickProjectNode;
-import com.github.paohaijiao.logic.domain.JQuickSortNode;
+import com.github.paohaijiao.logic.domain.*;
 import com.github.paohaijiao.optimizer.JQuickOptimizerRule;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
- * packageName com.github.paohaijiao.optimizer.impl
+ * Limit下推：将Limit尽可能下推到数据源
  *
- * @author Martin
- * @version 1.0.0
- * @since 2026/5/23
+ * 优化场景：
+ * 1. LIMIT + ORDER BY → Top-N 优化
+ * 2. LIMIT 下推过 Project
+ * 3. LIMIT 下推过 Filter
+ * 4. 多层嵌套递归处理
  */
 public class JQuickLimitPushdownRule implements JQuickOptimizerRule {
 
     @Override
     public JQuickLogicalPlanNode apply(JQuickLogicalPlanNode node) {
+        node = processChildren(node);
+        return pushdownLimit(node);
+    }
+
+    /**
+     * 递归处理所有子节点
+     */
+    private JQuickLogicalPlanNode processChildren(JQuickLogicalPlanNode node) {
+        List<JQuickLogicalPlanNode> children = node.getChildren();
+        if (children == null || children.isEmpty()) {
+            return node;
+        }
+        List<JQuickLogicalPlanNode> newChildren = new ArrayList<>();
+        for (JQuickLogicalPlanNode child : children) {
+            newChildren.add(apply(child));
+        }
+        return rebuildNode(node, newChildren);
+    }
+
+    /**
+     * 根据原节点和优化后的子节点重建节点
+     */
+    private JQuickLogicalPlanNode rebuildNode(JQuickLogicalPlanNode node, List<JQuickLogicalPlanNode> newChildren) {
+        if (node instanceof JQuickProjectNode) {
+            JQuickProjectNode project = (JQuickProjectNode) node;
+            return new JQuickProjectNode(project.getSelectItems(), newChildren.get(0), project.isDistinct());
+        }
+        if (node instanceof JQuickFilterNode) {
+            JQuickFilterNode filter = (JQuickFilterNode) node;
+            return new JQuickFilterNode(filter.getPredicate(), newChildren.get(0));
+        }
+        if (node instanceof JQuickSortNode) {
+            JQuickSortNode sort = (JQuickSortNode) node;
+            return new JQuickSortNode(sort.getOrderByItems(), newChildren.get(0));
+        }
+        if (node instanceof JQuickLimitNode) {
+            JQuickLimitNode limit = (JQuickLimitNode) node;
+            return new JQuickLimitNode(limit.getLimit(), limit.getOffset(), newChildren.get(0));
+        }
+        if (node instanceof JQuickJoinNode) {
+            JQuickJoinNode join = (JQuickJoinNode) node;
+            return new JQuickJoinNode(join.getJoinType(), newChildren.get(0), newChildren.get(1), join.getCondition());
+        }
+        return node;
+    }
+
+    /**
+     * Limit 下推的核心逻辑
+     */
+    private JQuickLogicalPlanNode pushdownLimit(JQuickLogicalPlanNode node) {
         if (node instanceof JQuickLimitNode) {
             JQuickLimitNode limit = (JQuickLimitNode) node;
             JQuickLogicalPlanNode child = limit.getChild();
             if (child instanceof JQuickSortNode) {
-                // LIMIT + ORDER BY 可以优化为 Top-N
                 JQuickSortNode sort = (JQuickSortNode) child;
                 return new JQuickLimitNode(limit.getLimit(), limit.getOffset(), sort);
-            } else if (child instanceof JQuickProjectNode) {//安全：投影不改变行数
-                // 交换Limit和Project
+            }
+            else if (child instanceof JQuickProjectNode) {
                 JQuickProjectNode project = (JQuickProjectNode) child;
-                return new JQuickProjectNode(project.getSelectItems(), new JQuickLimitNode(limit.getLimit(), limit.getOffset(), project.getChild()), project.isDistinct());
-            } else if (child instanceof JQuickFilterNode) {//过滤不改变行数关系
-                // 保持顺序
+                JQuickLimitNode newLimit = new JQuickLimitNode(limit.getLimit(), limit.getOffset(), project.getChild());
+                return new JQuickProjectNode(project.getSelectItems(), newLimit, project.isDistinct());
+            }
+            else if (child instanceof JQuickFilterNode) {
                 JQuickFilterNode filter = (JQuickFilterNode) child;
-                return new JQuickFilterNode(filter.getPredicate(), new JQuickLimitNode(limit.getLimit(), limit.getOffset(), filter.getChild()));
+                JQuickLimitNode newLimit = new JQuickLimitNode(limit.getLimit(), limit.getOffset(), filter.getChild());
+                return new JQuickFilterNode(filter.getPredicate(), newLimit);
+            }
+            else if (child instanceof JQuickLimitNode) {
+                JQuickLimitNode childLimit = (JQuickLimitNode) child;
+                int newLimit = Math.min(limit.getLimit(), childLimit.getLimit());
+                int newOffset = limit.getOffset() + childLimit.getOffset();
+                return new JQuickLimitNode(newLimit, newOffset, childLimit.getChild());
+            }
+            else if (child instanceof JQuickJoinNode) {
+                return pushdownLimitOverJoin(limit, (JQuickJoinNode) child);
             }
         }
         return node;
+    }
+
+    /**
+     * LIMIT 下推过 JOIN
+     *
+     * 注意：LIMIT 下推过 JOIN 需要谨慎，因为 JOIN 可能会增加行数
+     * 这里只做安全的优化：下推到 JOIN 的左侧（如果是 LEFT JOIN 或 INNER JOIN）
+     */
+    private JQuickLogicalPlanNode pushdownLimitOverJoin(JQuickLimitNode limit, JQuickJoinNode join) {
+        JQuickJoinType joinType = join.getJoinType();
+        if (joinType == JQuickJoinType.INNER || joinType == JQuickJoinType.LEFT) {
+            JQuickLimitNode newLeftLimit = new JQuickLimitNode(limit.getLimit(), limit.getOffset(), join.getLeft());
+            JQuickJoinNode newJoin = new JQuickJoinNode(joinType, newLeftLimit, join.getRight(), join.getCondition());
+            return new JQuickLimitNode(limit.getLimit(), limit.getOffset(), newJoin);
+        }
+        return limit;
     }
 }
