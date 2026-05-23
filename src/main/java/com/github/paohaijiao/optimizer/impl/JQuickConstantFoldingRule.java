@@ -52,23 +52,21 @@ public class JQuickConstantFoldingRule extends JQuickRecursiveOptimizerRule impl
         }
         else if (node instanceof JQuickGroupByNode) {
             JQuickGroupByNode groupBy = (JQuickGroupByNode) node;
-            // 折叠 HAVING 条件
-            JQuickExpression foldedHaving = groupBy.getHavingCondition() != null ?
-                    foldConstants(groupBy.getHavingCondition()) : null;
-            // 折叠聚合项中的表达式
+            List<JQuickExpression> foldedGroupKeys = new ArrayList<>();
+            for (JQuickExpression key : groupBy.getGroupKeys()) {
+                foldedGroupKeys.add(foldConstants(key));
+            }
+            JQuickExpression foldedHaving = groupBy.getHavingCondition() != null ? foldConstants(groupBy.getHavingCondition()) : null;
             List<JQuickGroupByNode.AggregateItem> newItems = new ArrayList<>();
             for (JQuickGroupByNode.AggregateItem item : groupBy.getAggregateItems()) {
-                JQuickExpression folded = foldConstants(item.getExpression());
-                newItems.add(new JQuickGroupByNode.AggregateItem(folded, item.getFunctionName(),
-                        item.getAlias(), item.isCountStar()));
+                JQuickExpression folded = item.getExpression() != null ? foldConstants(item.getExpression()) : null;
+                newItems.add(new JQuickGroupByNode.AggregateItem(folded, item.getFunctionName(), item.getAlias(), item.isCountStar()));
             }
-            return new JQuickGroupByNode(groupBy.getGroupKeys(), newItems,
-                    groupBy.getChild(), foldedHaving);
+            return new JQuickGroupByNode(foldedGroupKeys, newItems, groupBy.getChild(), foldedHaving);
         }
         else if (node instanceof JQuickJoinNode) {
             JQuickJoinNode join = (JQuickJoinNode) node;
-            JQuickExpression folded = join.getCondition() != null ?
-                    foldConstants(join.getCondition()) : null;
+            JQuickExpression folded = join.getCondition() != null ? foldConstants(join.getCondition()) : null;
             return new JQuickJoinNode(join.getJoinType(), join.getLeft(), join.getRight(), folded);
         }
         else if (node instanceof JQuickWindowNode) {
@@ -76,8 +74,23 @@ public class JQuickConstantFoldingRule extends JQuickRecursiveOptimizerRule impl
             List<JQuickWindowNode.WindowFunction> newFunctions = new ArrayList<>();
             for (JQuickWindowNode.WindowFunction wf : window.getWindowFunctions()) {
                 JQuickExpression folded = wf.getArgument() != null ? foldConstants(wf.getArgument()) : null;
-                newFunctions.add(new JQuickWindowNode.WindowFunction(
-                        wf.getFunctionName(), folded, wf.getWindowSpec(), wf.getAlias()));
+                JQuickWindowNode.WindowSpec oldSpec = wf.getWindowSpec();
+                JQuickWindowNode.WindowSpec newSpec = null;
+                if (oldSpec != null) {
+                    List<JQuickExpression> foldedPartitionKeys = new ArrayList<>();
+                    for (JQuickExpression key : oldSpec.getPartitionKeys()) {
+                        foldedPartitionKeys.add(foldConstants(key));
+                    }
+                    JQuickWindowNode.WindowFrame oldFrame = oldSpec.getFrame();
+                    JQuickWindowNode.WindowFrame newFrame = null;
+                    if (oldFrame != null) {
+                        JQuickExpression foldedStartOffset = oldFrame.getStartOffset() != null ? foldConstants(oldFrame.getStartOffset()) : null;
+                        JQuickExpression foldedEndOffset = oldFrame.getEndOffset() != null ? foldConstants(oldFrame.getEndOffset()) : null;
+                        newFrame = new JQuickWindowNode.WindowFrame(oldFrame.getFrameType(), oldFrame.getStartType(), foldedStartOffset, oldFrame.getEndType(), foldedEndOffset);
+                    }
+                    newSpec = new JQuickWindowNode.WindowSpec(foldedPartitionKeys, oldSpec.getOrderKeys(), newFrame);
+                }
+                newFunctions.add(new JQuickWindowNode.WindowFunction(wf.getFunctionName(), folded, newSpec, wf.getAlias()));
             }
             return new JQuickWindowNode(newFunctions, window.getChild());
         }
@@ -85,9 +98,21 @@ public class JQuickConstantFoldingRule extends JQuickRecursiveOptimizerRule impl
             JQuickAggregateNode agg = (JQuickAggregateNode) node;
             JQuickExpression foldedHaving = agg.getHavingCondition() != null ? foldConstants(agg.getHavingCondition()) : null;
             if (agg.getGroupKeys() != null) {
-                return new JQuickAggregateNode(agg.getGroupKeys(), agg.getAggregates(), agg.getChild(), foldedHaving, agg.isDistinct());
+                List<JQuickExpression> foldedGroupKeys = new ArrayList<>();
+                for (JQuickExpression key : agg.getGroupKeys()) {
+                    foldedGroupKeys.add(foldConstants(key));
+                }
+                return new JQuickAggregateNode(foldedGroupKeys, agg.getAggregates(), agg.getChild(), foldedHaving, agg.isDistinct());
             } else {
-                return new JQuickAggregateNode(agg.getGroupingSets(), agg.getAggregates(), agg.getChild(), foldedHaving);
+                List<JQuickAggregateNode.GroupingSet> foldedGroupingSets = new ArrayList<>();
+                for (JQuickAggregateNode.GroupingSet gs : agg.getGroupingSets()) {
+                    List<JQuickExpression> foldedKeys = new ArrayList<>();
+                    for (JQuickExpression key : gs.getKeys()) {
+                        foldedKeys.add(foldConstants(key));
+                    }
+                    foldedGroupingSets.add(new JQuickAggregateNode.GroupingSet(foldedKeys, gs.getType()));
+                }
+                return new JQuickAggregateNode(foldedGroupingSets, agg.getAggregates(), agg.getChild(), foldedHaving);
             }
         }
 
@@ -103,7 +128,6 @@ public class JQuickConstantFoldingRule extends JQuickRecursiveOptimizerRule impl
                 Object value = binary.getOperator().apply(left.evaluate(null), right.evaluate(null));
                 return new JQuickLiteralExpression(value);
             }
-
             if (binary.getOperator() == JQuickBinaryOperator.PLUS) {
                 if (isZero(right)) return left;
                 if (isZero(left)) return right;

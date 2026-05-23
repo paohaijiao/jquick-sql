@@ -16,14 +16,13 @@
 package com.github.paohaijiao.optimizer;
 
 import com.github.paohaijiao.enums.JQuickBinaryOperator;
+import com.github.paohaijiao.enums.JQuickJoinType;
 import com.github.paohaijiao.expression.JQuickExpression;
 import com.github.paohaijiao.expression.domain.JQuickBinaryExpression;
 import com.github.paohaijiao.expression.domain.JQuickColumnRefExpression;
 import com.github.paohaijiao.expression.domain.JQuickLiteralExpression;
 import com.github.paohaijiao.logic.JQuickLogicalPlanNode;
-import com.github.paohaijiao.logic.domain.JQuickFilterNode;
-import com.github.paohaijiao.logic.domain.JQuickProjectNode;
-import com.github.paohaijiao.logic.domain.JQuickTableScanNode;
+import com.github.paohaijiao.logic.domain.*;
 import org.junit.Test;
 
 import java.util.Arrays;
@@ -440,5 +439,103 @@ public class JQuickFoldConstantsTest {
         assertTrue(resultBinary.getRight() instanceof JQuickLiteralExpression);
         assertEquals(5d, ((JQuickLiteralExpression) resultBinary.getRight()).getValue());
     }
+    /**
+     * 测试：GROUP BY 中的常量表达式折叠
+     * SQL: SELECT department, SUM(salary + 0) FROM employees GROUP BY department, 1 + 1
+     * 预期：SELECT department, SUM(salary) FROM employees GROUP BY department, 2
+     */
+    @Test
+    public void testGroupBy_ConstantFoldingInGroupKeys() {
+        JQuickExpression salaryPlusZero = binary(column("salary"), literal(0), JQuickBinaryOperator.PLUS);
+        JQuickGroupByNode.AggregateItem aggItem = new JQuickGroupByNode.AggregateItem(salaryPlusZero, "SUM", "total_salary");
+        List<JQuickExpression> groupKeys = Arrays.asList(column("department"), binary(literal(1), literal(1), JQuickBinaryOperator.PLUS));
+        JQuickGroupByNode groupBy = new JQuickGroupByNode(groupKeys, Collections.singletonList(aggItem), new JQuickTableScanNode("employees"), null);
+        JQuickLogicalPlanNode result = rule.optimize(groupBy);
+        assertTrue(result instanceof JQuickGroupByNode);
+        JQuickGroupByNode resultGroupBy = (JQuickGroupByNode) result;
+        List<JQuickExpression> resultKeys = resultGroupBy.getGroupKeys();
+        assertEquals(2, resultKeys.size());
+        assertTrue(resultKeys.get(0) instanceof JQuickColumnRefExpression);
+        assertEquals("department", ((JQuickColumnRefExpression) resultKeys.get(0)).getColumnName());
+        assertTrue(resultKeys.get(1) instanceof JQuickLiteralExpression);
+        assertEquals(2.0d, ((JQuickLiteralExpression) resultKeys.get(1)).getValue());
+        JQuickGroupByNode.AggregateItem resultAgg = resultGroupBy.getAggregateItems().get(0);
+        assertTrue(resultAgg.getExpression() instanceof JQuickColumnRefExpression);
+        assertEquals("salary", ((JQuickColumnRefExpression) resultAgg.getExpression()).getColumnName());
+        assertEquals("SUM", resultAgg.getFunctionName());
+    }
+    /**
+     * 测试：JOIN 条件中的减法常量折叠
+     * SQL: SELECT * FROM t1 JOIN t2 ON t1.value = t2.value - (10 - 5)
+     * 预期：ON t1.value = t2.value - 5
+     */
+    @Test
+    public void testJoin_SubtractionConstantFolding() {
+        JQuickExpression subtract = binary(literal(10), literal(5), JQuickBinaryOperator.MINUS);
+        JQuickExpression rightExpr = binary(column("t2.value"), subtract, JQuickBinaryOperator.MINUS);
+        JQuickExpression joinCondition = binary(column("t1.value"), rightExpr, JQuickBinaryOperator.EQ);
+        JQuickJoinNode join = new JQuickJoinNode(JQuickJoinType.INNER, new JQuickTableScanNode("table1", "t1"), new JQuickTableScanNode("table2", "t2"), joinCondition);
+        JQuickLogicalPlanNode result = rule.optimize(join);
+        assertTrue(result instanceof JQuickJoinNode);
+        JQuickJoinNode resultJoin = (JQuickJoinNode) result;
+        JQuickExpression resultCondition = resultJoin.getCondition();
+        assertTrue(resultCondition instanceof JQuickBinaryExpression);
+        JQuickBinaryExpression eqBinary = (JQuickBinaryExpression) resultCondition;
+        assertEquals(JQuickBinaryOperator.EQ, eqBinary.getOperator());
+        // 右边应该被折叠为 t2.value - 5
+        JQuickBinaryExpression rightBinary = (JQuickBinaryExpression) eqBinary.getRight();
+        assertEquals(JQuickBinaryOperator.MINUS, rightBinary.getOperator());
+        assertTrue(rightBinary.getRight() instanceof JQuickLiteralExpression);
+        assertEquals(5, ((JQuickLiteralExpression) rightBinary.getRight()).getValue());
+    }
+
+    /**
+     * 测试：PARTITION BY 中的常量表达式折叠
+     * SQL: SELECT ROW_NUMBER() OVER (PARTITION BY dept, 1 + 1 ORDER BY salary) FROM employees
+     * 预期：PARTITION BY dept, 2
+     */
+    @Test
+    public void testWindow_ConstantFoldingInPartitionBy() {
+        // 创建 PARTITION BY 键: dept, 1 + 1
+        List<JQuickExpression> partitionKeys = Arrays.asList(column("dept"), binary(literal(1), literal(1), JQuickBinaryOperator.PLUS));
+        List<JQuickSortNode.OrderByItem> orderKeys = Collections.singletonList(new JQuickSortNode.OrderByItem("salary", true));
+        JQuickWindowNode.WindowSpec windowSpec = new JQuickWindowNode.WindowSpec(partitionKeys, orderKeys, null);
+        JQuickWindowNode.WindowFunction windowFunc = new JQuickWindowNode.WindowFunction("ROW_NUMBER", null, windowSpec, "rn");
+        JQuickWindowNode windowNode = new JQuickWindowNode(Collections.singletonList(windowFunc), new JQuickTableScanNode("employees"));
+        JQuickLogicalPlanNode result = rule.optimize(windowNode);
+        assertTrue(result instanceof JQuickWindowNode);
+        JQuickWindowNode resultWindow = (JQuickWindowNode) result;
+        JQuickWindowNode.WindowFunction resultFunc = resultWindow.getWindowFunctions().get(0);
+        JQuickWindowNode.WindowSpec resultSpec = resultFunc.getWindowSpec();
+        List<JQuickExpression> resultPartitionKeys = resultSpec.getPartitionKeys();
+        assertEquals(2, resultPartitionKeys.size());
+        assertTrue(resultPartitionKeys.get(0) instanceof JQuickColumnRefExpression);
+        assertEquals("dept", ((JQuickColumnRefExpression) resultPartitionKeys.get(0)).getColumnName());
+        assertTrue(resultPartitionKeys.get(1) instanceof JQuickLiteralExpression);
+        assertEquals(2.0d, ((JQuickLiteralExpression) resultPartitionKeys.get(1)).getValue());
+    }
+    /**
+     * 测试：GROUP BY 键中的常量表达式折叠
+     * SQL: SELECT department, SUM(salary) FROM employees GROUP BY department, 1 + 1
+     * 预期：GROUP BY department, 2
+     */
+    @Test
+    public void testAggregate_ConstantFoldingInGroupKeys() {
+        List<JQuickExpression> groupKeys = Arrays.asList(column("department"), binary(literal(1), literal(1), JQuickBinaryOperator.PLUS));
+        JQuickAggregateNode.AggregateFunction sumAgg = new JQuickAggregateNode.AggregateFunction("SUM", column("salary"), false, "total_salary");
+        JQuickAggregateNode aggregate = new JQuickAggregateNode(groupKeys, Collections.singletonList(sumAgg), new JQuickTableScanNode("employees"), null, false);
+        JQuickLogicalPlanNode result = rule.optimize(aggregate);
+        assertTrue(result instanceof JQuickAggregateNode);
+        JQuickAggregateNode resultAgg = (JQuickAggregateNode) result;
+        List<JQuickExpression> resultKeys = resultAgg.getGroupKeys();
+        assertEquals(2, resultKeys.size());
+        // department 保持不变
+        assertTrue(resultKeys.get(0) instanceof JQuickColumnRefExpression);
+        assertEquals("department", ((JQuickColumnRefExpression) resultKeys.get(0)).getColumnName());
+        // 1+1 折叠为 2
+        assertTrue(resultKeys.get(1) instanceof JQuickLiteralExpression);
+        assertEquals(2.0d, ((JQuickLiteralExpression) resultKeys.get(1)).getValue());
+    }
+
 
 }
