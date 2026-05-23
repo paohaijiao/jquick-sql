@@ -46,24 +46,63 @@ import java.util.stream.Collectors;
 public class JQuickPredicatePushdownRule implements JQuickOptimizerRule {
     @Override
     public JQuickLogicalPlanNode apply(JQuickLogicalPlanNode node) {
+        node = processChildren(node);
+        return pushdownPredicate(node);
+    }
+    /**
+     * 递归处理所有子节点
+     */
+    private JQuickLogicalPlanNode processChildren(JQuickLogicalPlanNode node) {
+        List<JQuickLogicalPlanNode> children = node.getChildren();
+        if (children == null || children.isEmpty()) {
+            return node;
+        }
+        List<JQuickLogicalPlanNode> newChildren = new ArrayList<>();
+        for (JQuickLogicalPlanNode child : children) {
+            newChildren.add(apply(child));
+        }
+        return rebuildNode(node, newChildren);
+    }
+    /**
+     * 根据原节点和优化后的子节点重建节点
+     */
+    private JQuickLogicalPlanNode rebuildNode(JQuickLogicalPlanNode node, List<JQuickLogicalPlanNode> newChildren) {
+        if (node instanceof JQuickFilterNode) {
+            JQuickFilterNode filter = (JQuickFilterNode) node;
+            return new JQuickFilterNode(filter.getPredicate(), newChildren.get(0));
+        }
+        if (node instanceof JQuickProjectNode) {
+            JQuickProjectNode project = (JQuickProjectNode) node;
+            return new JQuickProjectNode(project.getSelectItems(), newChildren.get(0), project.isDistinct());
+        }
+        if (node instanceof JQuickJoinNode) {
+            JQuickJoinNode join = (JQuickJoinNode) node;
+            return new JQuickJoinNode(join.getJoinType(), newChildren.get(0), newChildren.get(1), join.getCondition());
+        }
+        return node;
+    }
+
+    /**
+     * 谓词下推的核心逻辑
+     */
+    private JQuickLogicalPlanNode pushdownPredicate(JQuickLogicalPlanNode node) {
         if (node instanceof JQuickFilterNode) {
             JQuickFilterNode filter = (JQuickFilterNode) node;
             JQuickLogicalPlanNode child = filter.getChild();
             JQuickExpression predicate = filter.getPredicate();
             if (child instanceof JQuickTableScanNode) {
                 JQuickTableScanNode scan = (JQuickTableScanNode) child;
-                // 将过滤条件下推到表扫描节点
                 JQuickExpression existingFilter = scan.getFilterPredicate();
                 JQuickExpression combined = existingFilter != null ? new JQuickBinaryExpression(existingFilter, predicate, JQuickBinaryOperator.AND) : predicate;
                 return new JQuickTableScanNode(scan.getTableName(), scan.getAlias(), scan.getRequiredColumns(), combined);
-            } else if (child instanceof JQuickProjectNode) {
-                // 投影和过滤交换（如果过滤列都在投影中）
+            }
+            else if (child instanceof JQuickProjectNode) {
                 JQuickProjectNode project = (JQuickProjectNode) child;
                 if (canPushdown(predicate, project)) {
                     return new JQuickProjectNode(project.getSelectItems(), new JQuickFilterNode(predicate, project.getChild()), project.isDistinct());
                 }
-            } else if (child instanceof JQuickJoinNode) {
-                // 将过滤条件推入Join
+            }
+            else if (child instanceof JQuickJoinNode) {
                 return pushFilterIntoJoin(filter, (JQuickJoinNode) child);
             }
         }
@@ -79,7 +118,6 @@ public class JQuickPredicatePushdownRule implements JQuickOptimizerRule {
         JQuickExpression predicate = filter.getPredicate();
         Set<String> leftColumns = getColumnNames(join.getLeft());
         Set<String> rightColumns = getColumnNames(join.getRight());
-        // 分离过滤条件
         List<JQuickExpression> leftFilters = new ArrayList<>();
         List<JQuickExpression> rightFilters = new ArrayList<>();
         List<JQuickExpression> joinFilters = new ArrayList<>();
@@ -129,7 +167,6 @@ public class JQuickPredicatePushdownRule implements JQuickOptimizerRule {
     private Set<String> getColumnNames(JQuickLogicalPlanNode node) {
         Set<String> columns = new HashSet<>();
         if (node instanceof JQuickTableScanNode) {
-            // 可以从表元数据获取
         } else if (node instanceof JQuickProjectNode) {
             JQuickProjectNode project = (JQuickProjectNode) node;
             for (JQuickProjectNode.SelectItem item : project.getSelectItems()) {
