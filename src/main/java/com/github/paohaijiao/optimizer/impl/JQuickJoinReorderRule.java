@@ -19,10 +19,7 @@ import com.github.paohaijiao.enums.JQuickJoinType;
 import com.github.paohaijiao.exception.JAssert;
 import com.github.paohaijiao.expression.JQuickExpression;
 import com.github.paohaijiao.logic.JQuickLogicalPlanNode;
-import com.github.paohaijiao.logic.domain.JQuickFilterNode;
-import com.github.paohaijiao.logic.domain.JQuickJoinNode;
-import com.github.paohaijiao.logic.domain.JQuickProjectNode;
-import com.github.paohaijiao.logic.domain.JQuickTableScanNode;
+import com.github.paohaijiao.logic.domain.*;
 import com.github.paohaijiao.optimizer.JQuickOptimizerRule;
 
 import java.util.*;
@@ -34,6 +31,7 @@ import java.util.*;
 public class JQuickJoinReorderRule implements JQuickOptimizerRule {
     @Override
     public JQuickLogicalPlanNode apply(JQuickLogicalPlanNode node) {
+        node = processChildren(node);
         if (node instanceof JQuickJoinNode) {
             JQuickJoinNode join = (JQuickJoinNode) node;
             if (join.getJoinType() == JQuickJoinType.INNER) {
@@ -44,15 +42,60 @@ public class JQuickJoinReorderRule implements JQuickOptimizerRule {
     }
 
     /**
+     * 递归处理所有子节点
+     */
+    private JQuickLogicalPlanNode processChildren(JQuickLogicalPlanNode node) {
+        List<JQuickLogicalPlanNode> children = node.getChildren();
+        if (children == null || children.isEmpty()) {
+            return node;
+        }
+        List<JQuickLogicalPlanNode> newChildren = new ArrayList<>();
+        for (JQuickLogicalPlanNode child : children) {
+            newChildren.add(apply(child));
+        }
+        return rebuildNode(node, newChildren);
+    }
+
+    /**
+     * 根据原节点和优化后的子节点重建节点
+     */
+    private JQuickLogicalPlanNode rebuildNode(JQuickLogicalPlanNode node, List<JQuickLogicalPlanNode> newChildren) {
+        if (node instanceof JQuickJoinNode) {
+            JQuickJoinNode join = (JQuickJoinNode) node;
+            return new JQuickJoinNode(join.getJoinType(), newChildren.get(0), newChildren.get(1), join.getCondition());
+        }
+        if (node instanceof JQuickProjectNode) {
+            JQuickProjectNode project = (JQuickProjectNode) node;
+            return new JQuickProjectNode(project.getSelectItems(), newChildren.get(0), project.isDistinct());
+        }
+        if (node instanceof JQuickFilterNode) {
+            JQuickFilterNode filter = (JQuickFilterNode) node;
+            return new JQuickFilterNode(filter.getPredicate(), newChildren.get(0));
+        }
+        if (node instanceof JQuickGroupByNode) {
+            JQuickGroupByNode groupBy = (JQuickGroupByNode) node;
+            return new JQuickGroupByNode(groupBy.getGroupKeys(), groupBy.getAggregateItems(), newChildren.get(0), groupBy.getHavingCondition());
+        }
+        if (node instanceof JQuickSortNode) {
+            JQuickSortNode sort = (JQuickSortNode) node;
+            return new JQuickSortNode(sort.getOrderByItems(), newChildren.get(0));
+        }
+        if (node instanceof JQuickLimitNode) {
+            JQuickLimitNode limit = (JQuickLimitNode) node;
+            return new JQuickLimitNode(limit.getLimit(), limit.getOffset(), newChildren.get(0));
+        }
+        return node;
+    }
+
+    /**
      * 重排序INNER JOIN
-     * 策略：只将有过滤条件的表提前
+     * 策略：将有过滤条件的表提前
      */
     private JQuickLogicalPlanNode reorderInnerJoins(JQuickJoinNode join) {
-        JoinGraph graph = buildJoinGraph(join); //收集所有参与Join的表和对应的Join条件
+        JoinGraph graph = buildJoinGraph(join);
         if (graph.tables.size() <= 1) {
             return join;
         }
-        //只做一种优化：将有过滤条件的表移到前面
         List<JQuickLogicalPlanNode> reordered = new ArrayList<>();
         List<JQuickLogicalPlanNode> noFilter = new ArrayList<>();
         for (JQuickLogicalPlanNode table : graph.tables) {
@@ -63,10 +106,10 @@ public class JQuickJoinReorderRule implements JQuickOptimizerRule {
             }
         }
         reordered.addAll(noFilter);
-        if (isSameOrder(graph.tables, reordered)) { //如果顺序没变，直接返回
+        if (isSameOrder(graph.tables, reordered)) {
             return join;
         }
-        return buildJoinTree(reordered, graph);//重建Join树
+        return buildJoinTree(reordered, graph);
     }
 
     /**
@@ -84,13 +127,13 @@ public class JQuickJoinReorderRule implements JQuickOptimizerRule {
     private void collectJoinInfo(JQuickLogicalPlanNode node, JoinGraph graph) {
         if (node instanceof JQuickJoinNode) {
             JQuickJoinNode join = (JQuickJoinNode) node;
-            if (join.getCondition() != null) {// 记录Join条件
+            if (join.getCondition() != null) {
                 graph.addCondition(join);
             }
-            collectJoinInfo(join.getLeft(), graph); // 递归处理子节点
+            collectJoinInfo(join.getLeft(), graph);
             collectJoinInfo(join.getRight(), graph);
         } else {
-            graph.addTable(node);// 叶子节点（表）
+            graph.addTable(node);
         }
     }
 
@@ -107,65 +150,44 @@ public class JQuickJoinReorderRule implements JQuickOptimizerRule {
         if (node instanceof JQuickProjectNode) {
             return hasFilterPredicate(((JQuickProjectNode) node).getChild());
         }
+        if (node instanceof JQuickWithNode) {
+            return hasFilterPredicateInCTE((JQuickWithNode) node);
+        }
         return false;
     }
 
     /**
-     * 提取表名（用于匹配Join条件）
+     * 检查 CTE 中是否有过滤条件
      */
-    private String extractTableName(JQuickLogicalPlanNode node) {
-        if (node instanceof JQuickTableScanNode) {
-            return ((JQuickTableScanNode) node).getTableName();
+    private boolean hasFilterPredicateInCTE(JQuickWithNode withNode) {
+        for (JQuickLogicalPlanNode cte : withNode.getCtes().values()) {
+            if (hasFilterPredicate(cte)) {
+                return true;
+            }
         }
-        if (node instanceof JQuickProjectNode) {
-            return extractTableName(((JQuickProjectNode) node).getChild());
-        }
-        if (node instanceof JQuickFilterNode) {
-            return extractTableName(((JQuickFilterNode) node).getChild());
-        }
-        // 对于子查询或复杂节点，使用节点ID
-        JAssert.throwNewException( "tableName  is null");
-        return null;
+        return hasFilterPredicate(withNode.getChild());
     }
 
     /**
-     * 获取表涉及的列（用于匹配Join条件）
-     * 通过分析子树中的所有表达式
+     * 提取节点标识（优先使用别名）
      */
-    private Set<String> getTableColumns(JQuickLogicalPlanNode node) {
-        Set<String> columns = new HashSet<>();
+    private String extractNodeId(JQuickLogicalPlanNode node) {
         if (node instanceof JQuickTableScanNode) {
             JQuickTableScanNode scan = (JQuickTableScanNode) node;
-            if (scan.getRequiredColumns() != null) {
-                columns.addAll(scan.getRequiredColumns());
+            String alias = scan.getAlias();
+            if (alias != null && !alias.isEmpty()) {
+                return alias;
             }
-        } else if (node instanceof JQuickProjectNode) {
-            JQuickProjectNode project = (JQuickProjectNode) node;
-            for (JQuickProjectNode.SelectItem item : project.getSelectItems()) {
-                columns.addAll(item.getExpression().getReferencedColumns());
-            }
-            columns.addAll(getTableColumns(project.getChild()));// 递归获取子节点列
-        } else if (node instanceof JQuickFilterNode) {
-            JQuickFilterNode filter = (JQuickFilterNode) node;
-            columns.addAll(filter.getPredicate().getReferencedColumns());
-            columns.addAll(getTableColumns(filter.getChild()));
-        } else if (node instanceof JQuickJoinNode) {
-            JQuickJoinNode join = (JQuickJoinNode) node;
-            if (join.getCondition() != null) {
-                columns.addAll(join.getCondition().getReferencedColumns());
-            }
-            columns.addAll(getTableColumns(join.getLeft()));
-            columns.addAll(getTableColumns(join.getRight()));
+            return scan.getTableName();
         }
-
-        return columns;
-    }
-
-    /**
-     * 判断两个表是否相同
-     */
-    private boolean isSameTable(JQuickLogicalPlanNode a, JQuickLogicalPlanNode b) {
-        return extractTableName(a).equals(extractTableName(b));
+        if (node instanceof JQuickProjectNode) {
+            return extractNodeId(((JQuickProjectNode) node).getChild());
+        }
+        if (node instanceof JQuickFilterNode) {
+            return extractNodeId(((JQuickFilterNode) node).getChild());
+        }
+        JAssert.throwNewException("Cannot extract node id from: " + node.getClass().getSimpleName());
+        return null;
     }
 
     /**
@@ -176,7 +198,7 @@ public class JQuickJoinReorderRule implements JQuickOptimizerRule {
             return false;
         }
         for (int i = 0; i < original.size(); i++) {
-            if (!isSameTable(original.get(i), reordered.get(i))) {
+            if (!extractNodeId(original.get(i)).equals(extractNodeId(reordered.get(i)))) {
                 return false;
             }
         }
@@ -192,9 +214,10 @@ public class JQuickJoinReorderRule implements JQuickOptimizerRule {
         JQuickLogicalPlanNode result = orderedTables.get(0);
         for (int i = 1; i < orderedTables.size(); i++) {
             JQuickLogicalPlanNode right = orderedTables.get(i);
-            // 查找两个表之间的Join条件
-            JQuickExpression condition = graph.findCondition(extractTableName(result), extractTableName(right));
-            result = new JQuickJoinNode(JQuickJoinType.INNER, result, right, condition  );// 可能为null（笛卡尔积）
+            String leftId = extractNodeId(result);
+            String rightId = extractNodeId(right);
+            JQuickExpression condition = graph.findCondition(leftId, rightId);
+            result = new JQuickJoinNode(JQuickJoinType.INNER, result, right, condition);
         }
         return result;
     }
@@ -203,19 +226,17 @@ public class JQuickJoinReorderRule implements JQuickOptimizerRule {
      * Join图：存储所有表和Join条件
      */
     private static class JoinGraph {
-
         List<JQuickLogicalPlanNode> tables = new ArrayList<>();
-
         Map<String, Map<String, JQuickExpression>> conditions = new HashMap<>();
-
         void addTable(JQuickLogicalPlanNode node) {
             tables.add(node);
         }
+
         void addCondition(JQuickJoinNode join) {
-            String leftName = extractTableNameFromNode(join.getLeft());
-            String rightName = extractTableNameFromNode(join.getRight());
-            conditions.computeIfAbsent(leftName, k -> new HashMap()).put(rightName, join.getCondition());
-            conditions.computeIfAbsent(rightName, k -> new HashMap()).put(leftName, join.getCondition());
+            String leftId = extractNodeIdFromNode(join.getLeft());
+            String rightId = extractNodeIdFromNode(join.getRight());
+            conditions.computeIfAbsent(leftId, k -> new HashMap()).put(rightId, join.getCondition());
+            conditions.computeIfAbsent(rightId, k -> new HashMap()).put(leftId, join.getCondition());
         }
 
         JQuickExpression findCondition(String left, String right) {
@@ -226,21 +247,26 @@ public class JQuickJoinReorderRule implements JQuickOptimizerRule {
             return null;
         }
 
-        private String extractTableNameFromNode(JQuickLogicalPlanNode node) {
+        /**
+         * 提取节点标识（用于 JoinGraph 内部）
+         */
+        private String extractNodeIdFromNode(JQuickLogicalPlanNode node) {
             if (node instanceof JQuickTableScanNode) {
-                return ((JQuickTableScanNode) node).getTableName();
+                JQuickTableScanNode scan = (JQuickTableScanNode) node;
+                String alias = scan.getAlias();
+                if (alias != null && !alias.isEmpty()) {
+                    return alias;
+                }
+                return scan.getTableName();
             }
             if (node instanceof JQuickProjectNode) {
-                return extractTableNameFromNode(((JQuickProjectNode) node).getChild());
+                return extractNodeIdFromNode(((JQuickProjectNode) node).getChild());
             }
             if (node instanceof JQuickFilterNode) {
-                return extractTableNameFromNode(((JQuickFilterNode) node).getChild());
+                return extractNodeIdFromNode(((JQuickFilterNode) node).getChild());
             }
-            JAssert.throwNewException( "tableName is null");
-            if (node instanceof JQuickJoinNode) {
-                return "subquery_" + System.identityHashCode(node);    // 如果是Join，返回组合名
-            }
-            return "unknown_" + System.identityHashCode(node);
+            JAssert.throwNewException("Cannot extract node id from node: " + node.getClass().getSimpleName());
+            return null;
         }
     }
 }

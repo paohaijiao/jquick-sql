@@ -44,6 +44,15 @@ public class JQuickLogicalPlanOptimizer {
          */
         rules.add(new JQuickConstantFoldingRule());
         /**
+         * 表达式简化
+         */
+        rules.add(new JQuickSimplifyExpressionRule());
+
+        /**
+         * 冗余过滤移除
+         */
+        rules.add(new JQuickRedundantFilterRemovalRule());
+        /**
          * 谓词下推
          */
         rules.add(new JQuickPredicatePushdownRule());
@@ -63,10 +72,7 @@ public class JQuickLogicalPlanOptimizer {
          * 投影合并
          */
         rules.add(new JQuickProjectionMergeRule());
-        /**
-         * 冗余过滤移除
-         */
-        rules.add(new JQuickRedundantFilterRemovalRule());
+
         /**
          * 列剪枝
          */
@@ -83,10 +89,7 @@ public class JQuickLogicalPlanOptimizer {
          * 聚合下推
          */
         rules.add(new JQuickPredicatePushdownRule());
-        /**
-         * 表达式简化
-         */
-        rules.add(new JQuickSimplifyExpressionRule());
+
         /**
          * 分布优化
          */
