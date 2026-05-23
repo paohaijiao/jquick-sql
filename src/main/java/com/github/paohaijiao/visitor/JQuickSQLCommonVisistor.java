@@ -17,10 +17,8 @@ package com.github.paohaijiao.visitor;
 
 import com.github.paohaijiao.ast.*;
 import com.github.paohaijiao.config.JQuickSqlConfig;
-import com.github.paohaijiao.enums.JQuickSQLOperationType;
 import com.github.paohaijiao.param.JContext;
 import com.github.paohaijiao.parser.JQuickSQLParser;
-import org.antlr.v4.runtime.tree.TerminalNode;
 
 import java.util.ArrayList;
 import java.util.List;

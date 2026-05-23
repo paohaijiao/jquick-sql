@@ -7,7 +7,6 @@ import com.github.paohaijiao.logic.JQuickLogicalPlanNode;
 import com.github.paohaijiao.logic.domain.JQuickProjectNode;
 import com.github.paohaijiao.logic.domain.JQuickTableScanNode;
 import com.github.paohaijiao.logic.domain.JQuickWithNode;
-import com.google.gson.Gson;
 import org.junit.Before;
 import org.junit.Test;
 

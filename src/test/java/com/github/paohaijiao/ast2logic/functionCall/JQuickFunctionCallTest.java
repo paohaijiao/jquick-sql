@@ -2,8 +2,6 @@ package com.github.paohaijiao.ast2logic.functionCall;
 
 import com.github.paohaijiao.ast.*;
 import com.github.paohaijiao.ast2logic.JQuickASTToLogicalPlanVisitor;
-import com.github.paohaijiao.expression.JQuickExpression;
-import com.github.paohaijiao.expression.domain.JQuickFunctionCallExpression;
 import com.github.paohaijiao.logic.JQuickLogicalPlanNode;
 import com.github.paohaijiao.logic.domain.JQuickProjectNode;
 import org.junit.Test;

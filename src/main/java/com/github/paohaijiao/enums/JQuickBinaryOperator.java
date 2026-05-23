@@ -59,42 +59,46 @@ public enum JQuickBinaryOperator {
         if (left == null || right == null) {
             return handleNulls(left, right);
         }
-
         switch (this) {
-            // 算术运算
             case PLUS:
                 if (left instanceof Number && right instanceof Number) {
-                    return ((Number) left).doubleValue() + ((Number) right).doubleValue();
+                    Number leftNum = toNumber(left);
+                    Number rightNum = toNumber(right);
+                    return leftNum.doubleValue() + rightNum.doubleValue();
                 }
                 return left.toString() + right.toString();
 
             case MINUS:
                 if (left instanceof Number && right instanceof Number) {
-                    return ((Number) left).doubleValue() - ((Number) right).doubleValue();
+                    Number leftNum = toNumber(left);
+                    Number rightNum = toNumber(right);
+                    return leftNum.doubleValue() - rightNum.doubleValue();
                 }
                 return null;
 
             case MULTIPLY:
                 if (left instanceof Number && right instanceof Number) {
-                    return ((Number) left).doubleValue() * ((Number) right).doubleValue();
+                    Number leftNum = toNumber(left);
+                    Number rightNum = toNumber(right);
+                    return leftNum.doubleValue() * rightNum.doubleValue();
                 }
                 return null;
 
             case DIVIDE:
                 if (left instanceof Number && right instanceof Number) {
+                    Number leftNum = toNumber(left);
+                    Number rightNum = toNumber(right);
                     double divisor = ((Number) right).doubleValue();
                     if (divisor == 0) return null;
-                    return ((Number) left).doubleValue() / divisor;
+                    return leftNum.doubleValue() / rightNum.doubleValue();
+
                 }
                 return null;
-
             case MODULO:
                 if (left instanceof Number && right instanceof Number) {
                     return ((Number) left).doubleValue() % ((Number) right).doubleValue();
                 }
                 return null;
-
-            // 比较运算
             case EQ:
                 return compare(left, right) == 0;
             case NE:
@@ -107,20 +111,14 @@ public enum JQuickBinaryOperator {
                 return compare(left, right) >= 0;
             case LE:
                 return compare(left, right) <= 0;
-
-            // 逻辑运算
             case AND:
                 return (Boolean) left && (Boolean) right;
             case OR:
                 return (Boolean) left || (Boolean) right;
-
-            // 字符串运算
             case LIKE:
                 return left.toString().toLowerCase().contains(right.toString().toLowerCase());
             case NOT_LIKE:
                 return !left.toString().toLowerCase().contains(right.toString().toLowerCase());
-
-            // 位运算
             case BIT_AND:
                 if (left instanceof Number && right instanceof Number) {
                     return ((Number) left).longValue() & ((Number) right).longValue();
@@ -139,14 +137,24 @@ public enum JQuickBinaryOperator {
 
             case CONCAT:
                 return left.toString() + right.toString();
-
             default:
                 return null;
         }
     }
-
+    private Number toNumber(Object value) {
+        if (value instanceof Number) {
+            return Double.valueOf(value.toString());
+        }
+        if (value instanceof String) {
+            try {
+                return Double.parseDouble((String) value);
+            } catch (NumberFormatException e) {
+                return 0;
+            }
+        }
+        return 0;
+    }
     private Object handleNulls(Object left, Object right) {
-        // SQL三值逻辑：NULL参与比较返回NULL
         if (this == AND) {
             if (Boolean.FALSE.equals(left) || Boolean.FALSE.equals(right)) return false;
             return null;
@@ -160,11 +168,83 @@ public enum JQuickBinaryOperator {
 
     @SuppressWarnings({"rawtypes", "unchecked"})
     private int compare(Object left, Object right) {
-        if (left instanceof Comparable && right instanceof Comparable) {
-            return ((Comparable) left).compareTo(right);
+        if (left == null && right == null) return 0;
+        if (left == null) return -1;
+        if (right == null) return 1;
+        if (left == right) return 0;
+        if (left instanceof Number && right instanceof Number) {
+            return compareNumbers((Number) left, (Number) right);
+        }
+        if (left instanceof String && right instanceof String) {
+            return ((String) left).compareTo((String) right);
+        }
+        if (left instanceof Boolean && right instanceof Boolean) {
+            return ((Boolean) left).compareTo((Boolean) right);
+        }
+        if (left instanceof Character && right instanceof Character) {
+            return ((Character) left).compareTo((Character) right);
+        }
+        if (left instanceof java.util.Date && right instanceof java.util.Date) {
+            return ((java.util.Date) left).compareTo((java.util.Date) right);
+        }
+        if (left instanceof Enum && right instanceof Enum) {
+            int ordinalCompare = Integer.compare(((Enum<?>) left).ordinal(), ((Enum<?>) right).ordinal());
+            if (ordinalCompare != 0) return ordinalCompare;
+            return ((Enum<?>) left).name().compareTo(((Enum<?>) right).name());
+        }
+        if (left.getClass() == right.getClass() && left instanceof Comparable) {
+            @SuppressWarnings("unchecked")
+            Comparable<Object> comparable = (Comparable<Object>) left;
+            return comparable.compareTo(right);
         }
         return left.toString().compareTo(right.toString());
     }
+    private int compareNumbers(Number left, Number right) {
+        java.math.BigDecimal leftDec = toBigDecimal(left);
+        java.math.BigDecimal rightDec = toBigDecimal(right);
+        return leftDec.compareTo(rightDec);
+    }
+    /**
+     * 安全地将 Number 转换为 BigDecimal
+     */
+    private java.math.BigDecimal toBigDecimal(Number num) {
+        if (num == null) {
+            return java.math.BigDecimal.ZERO;
+        }
+        if (num instanceof java.math.BigDecimal) {
+            return (java.math.BigDecimal) num;
+        }
+        if (num instanceof java.math.BigInteger) {
+            return new java.math.BigDecimal((java.math.BigInteger) num);
+        }
+        if (num instanceof Double) {
+            double d = num.doubleValue();
+            if (Double.isNaN(d)) {
+                return java.math.BigDecimal.ZERO;
+            }
+            if (Double.isInfinite(d)) {
+                return d > 0 ? java.math.BigDecimal.valueOf(Long.MAX_VALUE)
+                        : java.math.BigDecimal.valueOf(Long.MIN_VALUE);
+            }
+            return new java.math.BigDecimal(Double.toString(d));
+        }
+        if (num instanceof Float) {
+            float f = num.floatValue();
+            if (Float.isNaN(f)) {
+                return java.math.BigDecimal.ZERO;
+            }
+            if (Float.isInfinite(f)) {
+                return f > 0 ? java.math.BigDecimal.valueOf(Long.MAX_VALUE)
+                        : java.math.BigDecimal.valueOf(Long.MIN_VALUE);
+            }
+            return new java.math.BigDecimal(Float.toString(f));
+        }
+        if (num instanceof Long) {
+            return java.math.BigDecimal.valueOf(num.longValue());
+        }
+        return java.math.BigDecimal.valueOf(num.longValue());
+    }
+
 
     /**
      * 从字符串获取操作符

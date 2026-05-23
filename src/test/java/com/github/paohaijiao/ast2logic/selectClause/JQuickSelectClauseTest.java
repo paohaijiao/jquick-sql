@@ -1,16 +1,19 @@
 package com.github.paohaijiao.ast2logic.selectClause;
+
 import com.github.paohaijiao.ast.*;
 import com.github.paohaijiao.ast2logic.JQuickASTToLogicalPlanVisitor;
 import com.github.paohaijiao.enums.JQuickBinaryOperator;
 import com.github.paohaijiao.enums.JQuickJoinType;
-import com.github.paohaijiao.enums.JQuickSQLOperationType;
 import com.github.paohaijiao.expression.domain.JQuickBinaryExpression;
 import com.github.paohaijiao.logic.JQuickLogicalPlanNode;
 import com.github.paohaijiao.logic.domain.*;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 import static org.junit.Assert.*;
 

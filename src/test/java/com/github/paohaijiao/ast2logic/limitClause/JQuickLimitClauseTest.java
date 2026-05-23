@@ -5,8 +5,6 @@ import com.github.paohaijiao.ast2logic.JQuickASTToLogicalPlanVisitor;
 import com.github.paohaijiao.enums.JQuickSQLOperationType;
 import com.github.paohaijiao.logic.JQuickLogicalPlanNode;
 import com.github.paohaijiao.logic.domain.JQuickLimitNode;
-import com.github.paohaijiao.logic.domain.JQuickProjectNode;
-import com.github.paohaijiao.logic.domain.JQuickSortNode;
 import org.junit.Before;
 import org.junit.Test;
 
