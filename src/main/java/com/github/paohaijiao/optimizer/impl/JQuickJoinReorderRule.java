@@ -265,6 +265,12 @@ public class JQuickJoinReorderRule implements JQuickOptimizerRule {
             if (node instanceof JQuickFilterNode) {
                 return extractNodeIdFromNode(((JQuickFilterNode) node).getChild());
             }
+            if (node instanceof JQuickJoinNode) {
+                JQuickJoinNode join = (JQuickJoinNode) node;
+                String leftId = extractNodeIdFromNode(join.getLeft());
+                String rightId = extractNodeIdFromNode(join.getRight());
+                return "subquery_" + leftId + "_" + rightId;
+            }
             JAssert.throwNewException("Cannot extract node id from node: " + node.getClass().getSimpleName());
             return null;
         }
