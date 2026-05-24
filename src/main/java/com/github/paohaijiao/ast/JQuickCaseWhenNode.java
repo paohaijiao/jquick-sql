@@ -85,7 +85,9 @@ public class JQuickCaseWhenNode implements JQuickASTNode {
      * condition 使用 predicate 而不是 expression
      */
     public static class WhenClause {
+
         private final JQuickPredicateNode condition;
+
         private final JQuickExpressionNode result;
 
         public WhenClause(JQuickPredicateNode condition, JQuickExpressionNode result) {
