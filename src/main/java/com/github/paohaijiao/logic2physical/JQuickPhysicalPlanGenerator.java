@@ -86,10 +86,10 @@ public class JQuickPhysicalPlanGenerator implements JQuickLogicalPlanVisitor {
         if (isHashJoinApplicable(node)) {
             List<JQuickHashJoinPhysicalNode.JoinKeyPair> joinKeys = extractJoinKeys(node.getCondition());
             JQuickHashJoinPhysicalNode.BuildSide buildSide = determineBuildSide(leftPhysical, rightPhysical);
-            physicalNode = new JQuickHashJoinPhysicalNode(convertJoinType(node.getJoinType()), leftPhysical, rightPhysical, node.getCondition(), joinKeys, buildSide, JQuickHashJoinPhysicalNode.JoinDistribution.SHUFFLE_HASH
+            physicalNode = new JQuickHashJoinPhysicalNode(node.getJoinType(), leftPhysical, rightPhysical, node.getCondition(), joinKeys, buildSide, JQuickHashJoinPhysicalNode.JoinDistribution.SHUFFLE_HASH
             );
         } else {
-            physicalNode = new JQuickNestedLoopJoinPhysicalNode(convertJoinType(node.getJoinType()), leftPhysical, rightPhysical, node.getCondition());
+            physicalNode = new JQuickNestedLoopJoinPhysicalNode(node.getJoinType(), leftPhysical, rightPhysical, node.getCondition());
         }
         logicalToPhysical.put(node, physicalNode);
     }
@@ -146,7 +146,6 @@ public class JQuickPhysicalPlanGenerator implements JQuickLogicalPlanVisitor {
         }
         node.getChild().accept(this);
         JQuickPhysicalPlanNode childPhysical = logicalToPhysical.get(node.getChild());
-        // With节点可以内联，直接返回子节点
         logicalToPhysical.put(node, childPhysical);
     }
 
@@ -190,7 +189,26 @@ public class JQuickPhysicalPlanGenerator implements JQuickLogicalPlanVisitor {
 
     @Override
     public void visit(JQuickRecursiveUnionNode node) {
-
+        if (node.getInitialPlan() != null) {
+            node.getInitialPlan().accept(this);
+        }
+        if (node.getRecursivePlan() != null) {
+            node.getRecursivePlan().accept(this);
+        }
+        JQuickPhysicalPlanNode initialPhysical = node.getInitialPlan() != null
+                ? logicalToPhysical.get(node.getInitialPlan())
+                : null;
+        JQuickPhysicalPlanNode recursivePhysical = node.getRecursivePlan() != null
+                ? logicalToPhysical.get(node.getRecursivePlan())
+                : null;
+        JQuickRecursiveUnionPhysicalNode physicalNode = new JQuickRecursiveUnionPhysicalNode(
+                node.getCteName(),
+                node.getColumnNames(),
+                initialPhysical,
+                recursivePhysical,
+                node.isUnionAll()
+        );
+        logicalToPhysical.put(node, physicalNode);
     }
 
     private boolean isHashJoinApplicable(JQuickJoinNode join) {
@@ -233,21 +251,10 @@ public class JQuickPhysicalPlanGenerator implements JQuickLogicalPlanVisitor {
     private JQuickHashJoinPhysicalNode.BuildSide determineBuildSide(JQuickPhysicalPlanNode left, JQuickPhysicalPlanNode right) {
         long leftRows = left.getStats().getEstimatedRowCount();
         long rightRows = right.getStats().getEstimatedRowCount();
-        return leftRows <= rightRows ?
-                JQuickHashJoinPhysicalNode.BuildSide.LEFT :
-                JQuickHashJoinPhysicalNode.BuildSide.RIGHT;
+        return leftRows <= rightRows ? JQuickHashJoinPhysicalNode.BuildSide.LEFT : JQuickHashJoinPhysicalNode.BuildSide.RIGHT;
     }
 
-    private com.github.paohaijiao.enums.JQuickJoinType convertJoinType(JQuickJoinType type) {
-        switch (type) {
-            case INNER: return JQuickJoinType.INNER;
-            case LEFT: return JQuickJoinType.LEFT;
-            case RIGHT: return JQuickJoinType.RIGHT;
-            case FULL: return JQuickJoinType.FULL;
-            case CROSS: return JQuickJoinType.CROSS;
-            default: return JQuickJoinType.INNER;
-        }
-    }
+
 
     private JQuickWindowPhysicalNode.WindowSpec convertWindowSpec(JQuickWindowNode.WindowSpec spec) {
         List<JQuickSortPhysicalNode.OrderByItem> orderKeys = new ArrayList<>();

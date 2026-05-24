@@ -73,9 +73,7 @@ public class JQuickSortPhysicalNode extends JQuickAbstractPhysicalNode {
 
     @Override
     public JQuickPhysicalPlanNode clone() {
-        List<OrderByItem> clonedItems = orderByItems.stream()
-                .map(OrderByItem::clone)
-                .collect(Collectors.toList());
+        List<OrderByItem> clonedItems = orderByItems.stream().map(OrderByItem::clone).collect(Collectors.toList());
         return new JQuickSortPhysicalNode(clonedItems, children.get(0).clone());
     }
 

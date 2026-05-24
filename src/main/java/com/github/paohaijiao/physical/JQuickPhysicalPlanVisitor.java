@@ -31,4 +31,6 @@ public interface JQuickPhysicalPlanVisitor {
     void visit(JQuickSetOperationPhysicalNode node);
 
     void visit(JQuickTopNPhysicalNode node);
+
+    void visit(JQuickRecursiveUnionPhysicalNode node);
 }

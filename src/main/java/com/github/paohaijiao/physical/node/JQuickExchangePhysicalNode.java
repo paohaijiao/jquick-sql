@@ -37,8 +37,6 @@ public class JQuickExchangePhysicalNode extends JQuickAbstractPhysicalNode {
 
     private final int targetParallelism;
 
-
-
     public enum PartitionStrategy {
         HASH, RANGE, ROUND_ROBIN, BUCKET, REPLICATE
     }
@@ -68,11 +66,8 @@ public class JQuickExchangePhysicalNode extends JQuickAbstractPhysicalNode {
 
     @Override
     public JQuickPhysicalPlanNode clone() {
-        List<JQuickExpression> clonedKeys = partitionKeys.stream()
-                .map(JQuickExpression::clone)
-                .collect(Collectors.toList());
-        return new JQuickExchangePhysicalNode(exchangeType, partitionStrategy,
-                clonedKeys, targetParallelism, children.get(0).clone());
+        List<JQuickExpression> clonedKeys = partitionKeys.stream().map(JQuickExpression::clone).collect(Collectors.toList());
+        return new JQuickExchangePhysicalNode(exchangeType, partitionStrategy, clonedKeys, targetParallelism, children.get(0).clone());
     }
 
     @Override

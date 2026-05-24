@@ -43,8 +43,7 @@ public class JQuickSetOperationPhysicalNode extends JQuickAbstractPhysicalNode {
 
     @Override
     public JQuickPhysicalPlanNode clone() {
-        return new JQuickSetOperationPhysicalNode(operationType,
-                children.get(0).clone(), children.get(1).clone());
+        return new JQuickSetOperationPhysicalNode(operationType, children.get(0).clone(), children.get(1).clone());
     }
 
     @Override

@@ -75,12 +75,19 @@ public class JQuickWindowPhysicalNode extends JQuickAbstractPhysicalNode {
     }
 
     public static class WindowFrame {
+
         public enum FrameType { ROWS, RANGE }
+
         public enum BoundaryType { UNBOUNDED_PRECEDING, PRECEDING, CURRENT_ROW, FOLLOWING, UNBOUNDED_FOLLOWING }
+
         private final FrameType frameType;
+
         private final BoundaryType startType;
+
         private final JQuickExpression startOffset;
+
         private final BoundaryType endType;
+
         private final JQuickExpression endOffset;
 
         public WindowFrame(FrameType frameType, BoundaryType startType, JQuickExpression startOffset, BoundaryType endType, JQuickExpression endOffset) {

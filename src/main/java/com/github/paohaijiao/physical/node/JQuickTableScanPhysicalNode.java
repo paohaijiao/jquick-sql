@@ -77,8 +77,7 @@ public class JQuickTableScanPhysicalNode implements JQuickPhysicalPlanNode {
 
     @Override
     public JQuickPhysicalPlanNode clone() {
-        return new JQuickTableScanPhysicalNode(tableName, alias, requiredColumns,
-                filterPredicate != null ? filterPredicate.clone() : null, partitionInfo);
+        return new JQuickTableScanPhysicalNode(tableName, alias, requiredColumns, filterPredicate != null ? filterPredicate.clone() : null, partitionInfo);
     }
 
     @Override

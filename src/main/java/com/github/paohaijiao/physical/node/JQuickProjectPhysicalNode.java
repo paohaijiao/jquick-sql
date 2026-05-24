@@ -28,6 +28,7 @@ import java.util.stream.Collectors;
 public class JQuickProjectPhysicalNode extends JQuickAbstractPhysicalNode {
 
     private final List<SelectItem> selectItems;
+
     private final boolean distinct;
 
     public static class SelectItem {
@@ -70,8 +71,7 @@ public class JQuickProjectPhysicalNode extends JQuickAbstractPhysicalNode {
 
     @Override
     public JQuickPhysicalPlanNode clone() {
-        List<SelectItem> clonedItems = selectItems.stream()
-                .map(SelectItem::clone)
+        List<SelectItem> clonedItems = selectItems.stream().map(SelectItem::clone)
                 .collect(Collectors.toList());
         return new JQuickProjectPhysicalNode(clonedItems, children.get(0).clone(), distinct);
     }

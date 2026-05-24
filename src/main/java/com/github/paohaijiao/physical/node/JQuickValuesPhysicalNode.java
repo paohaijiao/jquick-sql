@@ -70,8 +70,7 @@ public class JQuickValuesPhysicalNode implements JQuickPhysicalPlanNode {
         for (List<Object> row : rows) {
             clonedRows.add(new ArrayList<>(row));
         }
-        return new JQuickValuesPhysicalNode(clonedRows,
-                new ArrayList<>(columnNames), new ArrayList<>(columnTypes));
+        return new JQuickValuesPhysicalNode(clonedRows, new ArrayList<>(columnNames), new ArrayList<>(columnTypes));
     }
 
     @Override

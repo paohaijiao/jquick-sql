@@ -95,13 +95,8 @@ public class JQuickHashJoinPhysicalNode extends JQuickAbstractPhysicalNode {
 
     @Override
     public JQuickPhysicalPlanNode clone() {
-        List<JoinKeyPair> clonedKeys = joinKeys.stream()
-                .map(JoinKeyPair::clone)
-                .collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
-        return new JQuickHashJoinPhysicalNode(joinType,
-                children.get(0).clone(), children.get(1).clone(),
-                condition != null ? condition.clone() : null,
-                clonedKeys, buildSide, distribution);
+        List<JoinKeyPair> clonedKeys = joinKeys.stream().map(JoinKeyPair::clone).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
+        return new JQuickHashJoinPhysicalNode(joinType, children.get(0).clone(), children.get(1).clone(), condition != null ? condition.clone() : null, clonedKeys, buildSide, distribution);
     }
 
     @Override
