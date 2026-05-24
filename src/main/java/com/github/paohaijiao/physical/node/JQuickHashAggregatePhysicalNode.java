@@ -39,7 +39,9 @@ public class JQuickHashAggregatePhysicalNode extends JQuickAbstractPhysicalNode 
     private final List<GroupingSet> groupingSets;
 
     public enum AggregateStage {
-        PARTIAL, FINAL, SINGLE
+        PARTIAL,//大数据量，需要分布式聚合 阶段1
+        FINAL,//大数据量，需要分布式聚合 阶段2
+        SINGLE //单阶段聚合（小数据量）
     }
 
     public static class AggregateFunction {

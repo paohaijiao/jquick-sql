@@ -41,7 +41,10 @@ public class JQuickHashJoinPhysicalNode extends JQuickAbstractPhysicalNode {
     public enum BuildSide { LEFT, RIGHT }
 
     public enum JoinDistribution {
-        LOCAL, SHUFFLE_HASH, BROADCAST_HASH, PARTITIONED
+        LOCAL,//连接表数据都和主表保持一致
+        SHUFFLE_HASH,//两表都大且未预分区
+        BROADCAST_HASH,// 小表广播到所有节点，大表原地不动
+        PARTITIONED // 两表分区键不同但有对应关系
     }
 
     public static class JoinKeyPair {
@@ -56,6 +59,7 @@ public class JQuickHashJoinPhysicalNode extends JQuickAbstractPhysicalNode {
         }
 
         public JQuickExpression getLeftKey() { return leftKey; }
+
         public JQuickExpression getRightKey() { return rightKey; }
 
         public JoinKeyPair clone() {

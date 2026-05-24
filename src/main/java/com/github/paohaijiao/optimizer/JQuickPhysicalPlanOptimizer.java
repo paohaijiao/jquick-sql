@@ -56,7 +56,6 @@ public class JQuickPhysicalPlanOptimizer {
         for (int i = 0; i < node.getChildren().size(); i++) {
             JQuickPhysicalPlanNode optimized = optimizeJoins(node.getChildren().get(i));
             if (optimized != node.getChildren().get(i)) {
-                // 需要替换子节点，由于不可变设计，这里返回新节点
                 return replaceChild(node, i, optimized);
             }
         }
@@ -72,7 +71,6 @@ public class JQuickPhysicalPlanOptimizer {
                 return createTwoPhaseAggregate(agg);
             }
         }
-
         for (int i = 0; i < node.getChildren().size(); i++) {
             JQuickPhysicalPlanNode optimized = optimizeAggregates(node.getChildren().get(i));
             if (optimized != node.getChildren().get(i)) {
