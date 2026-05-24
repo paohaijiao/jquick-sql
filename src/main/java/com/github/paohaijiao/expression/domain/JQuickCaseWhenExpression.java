@@ -52,7 +52,6 @@ public class JQuickCaseWhenExpression implements JQuickExpression {
 
     @Override
     public Class<?> getType() {
-        // 返回第一个结果的类型
         if (!results.isEmpty()) {
             return results.get(0).getType();
         }
@@ -117,6 +116,8 @@ public class JQuickCaseWhenExpression implements JQuickExpression {
     }
 
     public List<JQuickExpression> getConditions() { return conditions; }
+
     public List<JQuickExpression> getResults() { return results; }
+
     public JQuickExpression getElseResult() { return elseResult; }
 }
