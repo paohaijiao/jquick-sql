@@ -28,12 +28,12 @@ import java.util.List;
 public class JQuickPhysicalPlanOptimizer {
 
     public JQuickPhysicalPlanNode optimize(JQuickPhysicalPlanNode plan) {
-        JQuickPhysicalPlanNode current = plan;
-        current = optimizeJoins(current);
-        current = optimizeAggregates(current);
-        current = pushdownLimit(current);
-        current = addRequiredExchanges(current);
-        return current;
+//        JQuickPhysicalPlanNode current = plan;
+//        current = optimizeJoins(current);
+//        current = optimizeAggregates(current);
+//        current = pushdownLimit(current);
+//        current = addRequiredExchanges(current);
+        return plan;
     }
 
     private JQuickPhysicalPlanNode optimizeJoins(JQuickPhysicalPlanNode node) {
@@ -41,7 +41,6 @@ public class JQuickPhysicalPlanOptimizer {
             JQuickHashJoinPhysicalNode join = (JQuickHashJoinPhysicalNode) node;
             long leftSize = join.getLeft().getStats().getEstimatedRowCount();
             long rightSize = join.getRight().getStats().getEstimatedRowCount();
-
             if (leftSize < 100 || rightSize < 100) {
                 return new JQuickHashJoinPhysicalNode(
                         join.getJoinType(),
