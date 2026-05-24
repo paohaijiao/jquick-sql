@@ -61,7 +61,7 @@ public abstract class JQuickAbstractPhysicalNode implements JQuickPhysicalPlanNo
      * 获取左子节点（用于Join等二元操作）
      */
     public JQuickPhysicalPlanNode getLeft() {
-        return children.size() > 0 ? children.get(0) : null;
+        return !children.isEmpty() ? children.get(0) : null;
     }
 
     /**

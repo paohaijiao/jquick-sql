@@ -95,8 +95,7 @@ public class JQuickFragment {
 
     @Override
     public String toString() {
-        return String.format("Fragment{id=%d, type=%s, parallelism=%d}",
-                fragmentId, type, parallelism);
+        return String.format("Fragment{id=%d, type=%s, parallelism=%d}", fragmentId, type, parallelism);
     }
 }
 

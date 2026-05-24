@@ -195,19 +195,9 @@ public class JQuickPhysicalPlanGenerator implements JQuickLogicalPlanVisitor {
         if (node.getRecursivePlan() != null) {
             node.getRecursivePlan().accept(this);
         }
-        JQuickPhysicalPlanNode initialPhysical = node.getInitialPlan() != null
-                ? logicalToPhysical.get(node.getInitialPlan())
-                : null;
-        JQuickPhysicalPlanNode recursivePhysical = node.getRecursivePlan() != null
-                ? logicalToPhysical.get(node.getRecursivePlan())
-                : null;
-        JQuickRecursiveUnionPhysicalNode physicalNode = new JQuickRecursiveUnionPhysicalNode(
-                node.getCteName(),
-                node.getColumnNames(),
-                initialPhysical,
-                recursivePhysical,
-                node.isUnionAll()
-        );
+        JQuickPhysicalPlanNode initialPhysical = node.getInitialPlan() != null ? logicalToPhysical.get(node.getInitialPlan()) : null;
+        JQuickPhysicalPlanNode recursivePhysical = node.getRecursivePlan() != null ? logicalToPhysical.get(node.getRecursivePlan()) : null;
+        JQuickRecursiveUnionPhysicalNode physicalNode = new JQuickRecursiveUnionPhysicalNode(node.getCteName(), node.getColumnNames(), initialPhysical, recursivePhysical, node.isUnionAll());
         logicalToPhysical.put(node, physicalNode);
     }
 
