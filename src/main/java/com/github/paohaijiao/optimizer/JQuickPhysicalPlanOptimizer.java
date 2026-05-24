@@ -16,6 +16,7 @@
 package com.github.paohaijiao.optimizer;
 
 import com.github.paohaijiao.enums.JQuickExchangeType;
+import com.github.paohaijiao.enums.JQuickPartitionStrategy;
 import com.github.paohaijiao.expression.JQuickExpression;
 import com.github.paohaijiao.physical.JQuickPhysicalPlanNode;
 import com.github.paohaijiao.physical.node.*;
@@ -101,7 +102,7 @@ public class JQuickPhysicalPlanOptimizer {
             }
         }
         JQuickHashAggregatePhysicalNode partialAgg = new JQuickHashAggregatePhysicalNode(agg.getGroupKeys(), partialAggs, agg.getChild(), null, JQuickHashAggregatePhysicalNode.AggregateStage.PARTIAL);
-        JQuickExchangePhysicalNode exchange = new JQuickExchangePhysicalNode(JQuickExchangeType.SHUFFLE, JQuickExchangePhysicalNode.PartitionStrategy.HASH, agg.getGroupKeys(), 4, partialAgg);
+        JQuickExchangePhysicalNode exchange = new JQuickExchangePhysicalNode(JQuickExchangeType.SHUFFLE, JQuickPartitionStrategy.HASH, agg.getGroupKeys(), 4, partialAgg);
         List<JQuickHashAggregatePhysicalNode.AggregateFunction> finalAggs = new ArrayList<>();
         for (JQuickHashAggregatePhysicalNode.AggregateFunction func : agg.getAggregates()) {
             if (func.getFunctionName().equalsIgnoreCase("avg")) {
@@ -136,7 +137,7 @@ public class JQuickPhysicalPlanOptimizer {
     private JQuickPhysicalPlanNode addRequiredExchanges(JQuickPhysicalPlanNode node) {
         if (needsExchange(node)) {
             int parallelism = 4;
-            JQuickExchangePhysicalNode exchange = new JQuickExchangePhysicalNode(JQuickExchangeType.SHUFFLE, JQuickExchangePhysicalNode.PartitionStrategy.HASH, extractPartitionKeys(node), parallelism, node);
+            JQuickExchangePhysicalNode exchange = new JQuickExchangePhysicalNode(JQuickExchangeType.SHUFFLE, JQuickPartitionStrategy.HASH, extractPartitionKeys(node), parallelism, node);
             return exchange;
         }
 

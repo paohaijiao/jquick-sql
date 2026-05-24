@@ -16,7 +16,6 @@
 package com.github.paohaijiao.logic2physical;
 
 import com.github.paohaijiao.enums.JQuickBinaryOperator;
-import com.github.paohaijiao.enums.JQuickJoinType;
 import com.github.paohaijiao.expression.JQuickExpression;
 import com.github.paohaijiao.expression.domain.JQuickBinaryExpression;
 import com.github.paohaijiao.logic.JQuickLogicalPlanNode;
@@ -26,16 +25,33 @@ import com.github.paohaijiao.optimizer.JQuickPhysicalPlanOptimizer;
 import com.github.paohaijiao.physical.JQuickPhysicalPlanNode;
 import com.github.paohaijiao.physical.node.*;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
+/**
+ * 逻辑计划到物理计划转换器
+ *
+ */
 public class JQuickPhysicalPlanGenerator implements JQuickLogicalPlanVisitor {
 
     private final Map<JQuickLogicalPlanNode, JQuickPhysicalPlanNode> logicalToPhysical = new HashMap<>();
 
+    /**
+     * CTE定义映射：CTE名称 -> 逻辑计划节点
+     * 用于在转换主查询时解析CTE引用
+     */
+    private Map<String, JQuickLogicalPlanNode> cteDefinitions;
+
+    /**
+     * 是否是递归CTE（递归CTE不能内联）
+     */
+    private Set<String> recursiveCteNames;
+
     private final JQuickPhysicalPlanOptimizer optimizer;
+    /**
+     * 存储CTE物理计划（用于内联）
+     */
+    private Map<String, JQuickPhysicalPlanNode> ctePhysicalPlans = new HashMap<>();
+
 
     public JQuickPhysicalPlanGenerator() {
         this.optimizer = new JQuickPhysicalPlanOptimizer();
@@ -52,8 +68,32 @@ public class JQuickPhysicalPlanGenerator implements JQuickLogicalPlanVisitor {
 
     @Override
     public void visit(JQuickTableScanNode node) {
-        JQuickTableScanPhysicalNode physicalNode = new JQuickTableScanPhysicalNode(node.getTableName(), node.getAlias(), node.getRequiredColumns(), node.getFilterPredicate());
-        logicalToPhysical.put(node, physicalNode);
+        String tableName = node.getTableName();
+        if (cteDefinitions != null && cteDefinitions.containsKey(tableName)) {
+            JQuickLogicalPlanNode cteLogicalPlan = cteDefinitions.get(tableName);
+            if (recursiveCteNames != null && recursiveCteNames.contains(tableName)) {
+                if (!logicalToPhysical.containsKey(cteLogicalPlan)) {
+                    cteLogicalPlan.accept(this);
+                }
+                JQuickPhysicalPlanNode ctePhysical = logicalToPhysical.get(cteLogicalPlan);
+                logicalToPhysical.put(node, ctePhysical);
+            } else {
+                if (!logicalToPhysical.containsKey(cteLogicalPlan)) {
+                    cteLogicalPlan.accept(this);
+                }
+                JQuickPhysicalPlanNode ctePhysical = logicalToPhysical.get(cteLogicalPlan);
+                if (node.getRequiredColumns() != null && !node.getRequiredColumns().isEmpty()) {
+                    ctePhysical = applyColumnPruning(ctePhysical, node.getRequiredColumns());
+                }
+                if (node.getFilterPredicate() != null) {
+                    ctePhysical = new JQuickFilterPhysicalNode(node.getFilterPredicate(), ctePhysical);
+                }
+                logicalToPhysical.put(node, ctePhysical);
+            }
+        } else {
+            JQuickTableScanPhysicalNode physicalNode = new JQuickTableScanPhysicalNode(node.getTableName(), node.getAlias(), node.getRequiredColumns(), node.getFilterPredicate());
+            logicalToPhysical.put(node, physicalNode);
+        }
     }
 
     @Override
@@ -86,8 +126,7 @@ public class JQuickPhysicalPlanGenerator implements JQuickLogicalPlanVisitor {
         if (isHashJoinApplicable(node)) {
             List<JQuickHashJoinPhysicalNode.JoinKeyPair> joinKeys = extractJoinKeys(node.getCondition());
             JQuickHashJoinPhysicalNode.BuildSide buildSide = determineBuildSide(leftPhysical, rightPhysical);
-            physicalNode = new JQuickHashJoinPhysicalNode(node.getJoinType(), leftPhysical, rightPhysical, node.getCondition(), joinKeys, buildSide, JQuickHashJoinPhysicalNode.JoinDistribution.SHUFFLE_HASH
-            );
+            physicalNode = new JQuickHashJoinPhysicalNode(node.getJoinType(), leftPhysical, rightPhysical, node.getCondition(), joinKeys, buildSide, JQuickHashJoinPhysicalNode.JoinDistribution.SHUFFLE_HASH);
         } else {
             physicalNode = new JQuickNestedLoopJoinPhysicalNode(node.getJoinType(), leftPhysical, rightPhysical, node.getCondition());
         }
@@ -139,14 +178,125 @@ public class JQuickPhysicalPlanGenerator implements JQuickLogicalPlanVisitor {
         logicalToPhysical.put(node, physicalNode);
     }
 
+    /**     *
+     * CTE内联策略：
+     * 1. 收集所有CTE定义（不包含递归CTE）
+     * 2. 将主查询中的CTE引用替换为CTE定义的实际计划
+     * 3. 递归CTE需要特殊处理，保留RecursiveUnion结构
+     */
     @Override
     public void visit(JQuickWithNode node) {
-        for (JQuickLogicalPlanNode cte : node.getCtes().values()) {
-            cte.accept(this);
+        Map<String, JQuickLogicalPlanNode> allCtes = node.getCtes();
+        Set<String> recursiveNames = new HashSet<>();
+        Map<String, JQuickLogicalPlanNode> nonRecursiveCtes = new LinkedHashMap<>();
+        for (Map.Entry<String, JQuickLogicalPlanNode> entry : allCtes.entrySet()) {
+            String cteName = entry.getKey();
+            JQuickLogicalPlanNode ctePlan = entry.getValue();
+            if (ctePlan instanceof JQuickRecursiveUnionNode) {
+                recursiveNames.add(cteName);
+                if (!logicalToPhysical.containsKey(ctePlan)) {
+                    ctePlan.accept(this);
+                }
+            } else {
+                nonRecursiveCtes.put(cteName, ctePlan);
+            }
         }
-        node.getChild().accept(this);
-        JQuickPhysicalPlanNode childPhysical = logicalToPhysical.get(node.getChild());
-        logicalToPhysical.put(node, childPhysical);
+        Map<String, JQuickLogicalPlanNode> savedCteDefinitions = this.cteDefinitions;
+        Set<String> savedRecursiveCteNames = this.recursiveCteNames;
+        try {
+            this.cteDefinitions = new LinkedHashMap<>();
+            if (savedCteDefinitions != null) {
+                this.cteDefinitions.putAll(savedCteDefinitions);
+            }
+            this.cteDefinitions.putAll(nonRecursiveCtes);
+            this.recursiveCteNames = new HashSet<>();
+            if (savedRecursiveCteNames != null) {
+                this.recursiveCteNames.addAll(savedRecursiveCteNames);
+            }
+            this.recursiveCteNames.addAll(recursiveNames);
+            for (Map.Entry<String, JQuickLogicalPlanNode> entry : nonRecursiveCtes.entrySet()) {
+                String cteName = entry.getKey();
+                JQuickLogicalPlanNode ctePlan = entry.getValue();
+                if (!logicalToPhysical.containsKey(ctePlan)) {
+                    ctePlan.accept(this);
+                }
+                JQuickPhysicalPlanNode ctePhysical = logicalToPhysical.get(ctePlan);
+                storeCtePhysicalPlan(cteName, ctePhysical);
+            }
+            node.getChild().accept(this);
+            JQuickPhysicalPlanNode childPhysical = logicalToPhysical.get(node.getChild());
+            for (String recursiveName : recursiveNames) {
+                JQuickLogicalPlanNode recursiveCtePlan = allCtes.get(recursiveName);
+                if (recursiveCtePlan instanceof JQuickRecursiveUnionNode) {
+                    JQuickRecursiveUnionNode recursiveNode = (JQuickRecursiveUnionNode) recursiveCtePlan;
+                    if (!logicalToPhysical.containsKey(recursiveNode)) {
+                        recursiveNode.accept(this);
+                    }
+                    JQuickPhysicalPlanNode recursivePhysical = logicalToPhysical.get(recursiveNode);
+                    if (isCteReferencedInPlan(childPhysical, recursiveName)) {
+                        childPhysical = replaceCteReference(childPhysical, recursiveName, recursivePhysical);
+                    }
+                }
+            }
+            logicalToPhysical.put(node, childPhysical);
+        } finally {
+            this.cteDefinitions = savedCteDefinitions;
+            this.recursiveCteNames = savedRecursiveCteNames;
+        }
+    }
+
+
+    private void storeCtePhysicalPlan(String cteName, JQuickPhysicalPlanNode plan) {
+        ctePhysicalPlans.put(cteName, plan);
+    }
+
+    /**
+     * 检查计划中是否引用了指定的CTE
+     */
+    private boolean isCteReferencedInPlan(JQuickPhysicalPlanNode plan, String cteName) {
+        if (plan == null) return false;
+        if (plan instanceof JQuickTableScanPhysicalNode) {
+            JQuickTableScanPhysicalNode scan = (JQuickTableScanPhysicalNode) plan;
+            return cteName.equals(scan.getTableName());
+        }
+        for (JQuickPhysicalPlanNode child : plan.getChildren()) {
+            if (isCteReferencedInPlan(child, cteName)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * 替换计划中的CTE引用
+     */
+    private JQuickPhysicalPlanNode replaceCteReference(JQuickPhysicalPlanNode plan, String cteName, JQuickPhysicalPlanNode replacement) {
+        if (plan == null) return null;
+        if (plan instanceof JQuickTableScanPhysicalNode) {
+            JQuickTableScanPhysicalNode scan = (JQuickTableScanPhysicalNode) plan;
+            if (cteName.equals(scan.getTableName())) {
+                return replacement;
+            }
+        }
+        if (plan instanceof JQuickProjectPhysicalNode) {
+            JQuickProjectPhysicalNode project = (JQuickProjectPhysicalNode) plan;
+            JQuickPhysicalPlanNode newChild = replaceCteReference(project.getChildren().get(0), cteName, replacement);
+            return new JQuickProjectPhysicalNode(project.getSelectItems(), newChild, project.isDistinct());
+        }
+        if (plan instanceof JQuickFilterPhysicalNode) {
+            JQuickFilterPhysicalNode filter = (JQuickFilterPhysicalNode) plan;
+            JQuickPhysicalPlanNode newChild = replaceCteReference(filter.getChildren().get(0), cteName, replacement);
+            return new JQuickFilterPhysicalNode(filter.getPredicate(), newChild);
+        }
+
+        if (plan instanceof JQuickHashJoinPhysicalNode) {
+            JQuickHashJoinPhysicalNode join = (JQuickHashJoinPhysicalNode) plan;
+            JQuickPhysicalPlanNode newLeft = replaceCteReference(join.getLeft(), cteName, replacement);
+            JQuickPhysicalPlanNode newRight = replaceCteReference(join.getRight(), cteName, replacement);
+            return new JQuickHashJoinPhysicalNode(join.getJoinType(), newLeft, newRight, join.getCondition(), join.getJoinKeys(), join.getBuildSide(), join.getDistribution());
+        }
+
+        return plan;
     }
 
     @Override
@@ -165,13 +315,24 @@ public class JQuickPhysicalPlanGenerator implements JQuickLogicalPlanVisitor {
         JQuickPhysicalPlanNode childPhysical = logicalToPhysical.get(node.getChild());
         List<JQuickHashAggregatePhysicalNode.AggregateFunction> aggregates = new ArrayList<>();
         for (JQuickAggregateNode.AggregateFunction agg : node.getAggregates()) {
-            aggregates.add(new JQuickHashAggregatePhysicalNode.AggregateFunction(agg.getFunctionName(), agg.getArgument(), agg.isDistinct(), agg.getAlias(), agg.isCountStar(), agg.getSeparator(), JQuickHashAggregatePhysicalNode.AggregateStage.SINGLE));
+            aggregates.add(new JQuickHashAggregatePhysicalNode.AggregateFunction(
+                    agg.getFunctionName(), agg.getArgument(), agg.isDistinct(),
+                    agg.getAlias(), agg.isCountStar(), agg.getSeparator(),
+                    JQuickHashAggregatePhysicalNode.AggregateStage.SINGLE
+            ));
         }
         JQuickHashAggregatePhysicalNode physicalNode;
         if (node.getGroupKeys() != null) {
-            physicalNode = new JQuickHashAggregatePhysicalNode(node.getGroupKeys(), aggregates, childPhysical, node.getHavingCondition(), JQuickHashAggregatePhysicalNode.AggregateStage.SINGLE);
+            physicalNode = new JQuickHashAggregatePhysicalNode(
+                    node.getGroupKeys(), aggregates, childPhysical,
+                    node.getHavingCondition(),
+                    JQuickHashAggregatePhysicalNode.AggregateStage.SINGLE
+            );
         } else {
-            physicalNode = new JQuickHashAggregatePhysicalNode(new ArrayList<>(), aggregates, childPhysical, node.getHavingCondition(), JQuickHashAggregatePhysicalNode.AggregateStage.SINGLE);
+            physicalNode = new JQuickHashAggregatePhysicalNode(
+                    new ArrayList<>(), aggregates, childPhysical,
+                    node.getHavingCondition(), JQuickHashAggregatePhysicalNode.AggregateStage.SINGLE
+            );
         }
         logicalToPhysical.put(node, physicalNode);
     }
@@ -197,7 +358,10 @@ public class JQuickPhysicalPlanGenerator implements JQuickLogicalPlanVisitor {
         }
         JQuickPhysicalPlanNode initialPhysical = node.getInitialPlan() != null ? logicalToPhysical.get(node.getInitialPlan()) : null;
         JQuickPhysicalPlanNode recursivePhysical = node.getRecursivePlan() != null ? logicalToPhysical.get(node.getRecursivePlan()) : null;
-        JQuickRecursiveUnionPhysicalNode physicalNode = new JQuickRecursiveUnionPhysicalNode(node.getCteName(), node.getColumnNames(), initialPhysical, recursivePhysical, node.isUnionAll());
+        JQuickRecursiveUnionPhysicalNode physicalNode = new JQuickRecursiveUnionPhysicalNode(
+                node.getCteName(), node.getColumnNames(),
+                initialPhysical, recursivePhysical, node.isUnionAll()
+        );
         logicalToPhysical.put(node, physicalNode);
     }
 
@@ -244,15 +408,41 @@ public class JQuickPhysicalPlanGenerator implements JQuickLogicalPlanVisitor {
         return leftRows <= rightRows ? JQuickHashJoinPhysicalNode.BuildSide.LEFT : JQuickHashJoinPhysicalNode.BuildSide.RIGHT;
     }
 
-
-
     private JQuickWindowPhysicalNode.WindowSpec convertWindowSpec(JQuickWindowNode.WindowSpec spec) {
         List<JQuickSortPhysicalNode.OrderByItem> orderKeys = new ArrayList<>();
         if (spec.getOrderKeys() != null) {
             for (JQuickSortNode.OrderByItem item : spec.getOrderKeys()) {
-                orderKeys.add(new JQuickSortPhysicalNode.OrderByItem(item.getColumnName(), item.isAscending(), item.isNullsFirst()));
+                orderKeys.add(new JQuickSortPhysicalNode.OrderByItem(
+                        item.getColumnName(), item.isAscending(), item.isNullsFirst()
+                ));
             }
         }
         return new JQuickWindowPhysicalNode.WindowSpec(spec.getPartitionKeys(), orderKeys, null);
+    }
+
+    /**
+     * 应用列裁剪优化
+     */
+    private JQuickPhysicalPlanNode applyColumnPruning(JQuickPhysicalPlanNode plan, Set<String> requiredColumns) {
+        if (plan instanceof JQuickTableScanPhysicalNode) {
+            JQuickTableScanPhysicalNode scan = (JQuickTableScanPhysicalNode) plan;
+            return new JQuickTableScanPhysicalNode(
+                    scan.getTableName(), scan.getAlias(), requiredColumns, scan.getFilterPredicate()
+            );
+        }
+        if (plan instanceof JQuickProjectPhysicalNode) {
+            JQuickProjectPhysicalNode project = (JQuickProjectPhysicalNode) plan;
+            List<JQuickProjectPhysicalNode.SelectItem> filteredItems = new ArrayList<>();
+            for (JQuickProjectPhysicalNode.SelectItem item : project.getSelectItems()) {
+                if (requiredColumns.contains(item.getAlias())) {
+                    filteredItems.add(item);
+                }
+            }
+            if (filteredItems.size() < project.getSelectItems().size()) {
+                return new JQuickProjectPhysicalNode(filteredItems, project.getChildren().get(0), project.isDistinct());
+            }
+        }
+
+        return plan;
     }
 }
