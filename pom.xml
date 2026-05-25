@@ -17,10 +17,33 @@
         <javelin.version>1.8.1</javelin.version>
         <lombok.version>1.18.30</lombok.version>
         <rest.assured.version>2.3.3</rest.assured.version>
-        <grpc.version>1.4.0</grpc.version>
+        <jquick.grpc.version>1.4.0</jquick.grpc.version>
         <function.version>1.1.0</function.version>
+        <protobuf.version>3.21.12</protobuf.version>
+        <grpc.version>1.80.0</grpc.version>
+        <protobuf.maven.plugin.version>0.6.1</protobuf.maven.plugin.version>
     </properties>
         <dependencies>
+            <dependency>
+                <groupId>io.grpc</groupId>
+                <artifactId>grpc-netty-shaded</artifactId>
+                <version>${grpc.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.grpc</groupId>
+                <artifactId>grpc-protobuf</artifactId>
+                <version>${grpc.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.grpc</groupId>
+                <artifactId>grpc-stub</artifactId>
+                <version>${grpc.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.google.protobuf</groupId>
+                <artifactId>protobuf-java</artifactId>
+                <version>${protobuf.version}</version>
+            </dependency>
             <dependency>
                 <groupId>io.github.paohaijiao</groupId>
                 <artifactId>jquick-transform-function</artifactId>
@@ -38,7 +61,7 @@
             <dependency>
                 <groupId>io.github.paohaijiao</groupId>
                 <artifactId>jquick-grpc</artifactId>
-                <version>${grpc.version}</version>
+                <version>${jquick.grpc.version}</version>
             </dependency>
             <dependency>
                 <groupId>io.github.paohaijiao</groupId>
@@ -89,7 +112,61 @@
         <url>https://github.com/paohaijiao/jquick-pdf</url>
     </scm>
     <build>
+        <extensions>
+            <extension>
+                <groupId>kr.motd.maven</groupId>
+                <artifactId>os-maven-plugin</artifactId>
+                <version>1.7.1</version>
+            </extension>
+        </extensions>
         <plugins>
+            <plugin>
+                <groupId>org.xolstice.maven.plugins</groupId>
+                <artifactId>protobuf-maven-plugin</artifactId>
+                <version>${protobuf.maven.plugin.version}</version>
+                <configuration>
+                    <!-- protoc 可执行文件 -->
+                    <protocArtifact>com.google.protobuf:protoc:${protobuf.version}:exe:${os.detected.classifier}</protocArtifact>
+                    <!-- gRPC 插件 -->
+                    <pluginId>grpc-java</pluginId>
+                    <pluginArtifact>io.grpc:protoc-gen-grpc-java:${grpc.version}:exe:${os.detected.classifier}</pluginArtifact>
+                    <!-- proto 文件目录 -->
+                    <protoSourceRoot>${project.basedir}/src/main/proto</protoSourceRoot>
+                    <!-- 输出目录 -->
+                    <outputDirectory>${project.build.directory}/generated-sources/protobuf/java</outputDirectory>
+                    <!-- 清理输出目录 -->
+                    <clearOutputDirectory>false</clearOutputDirectory>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>compile</goal>
+                            <!-- 生成 gRPC 服务类 -->
+                            <goal>compile-custom</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
+                <version>3.4.0</version>
+                <executions>
+                    <execution>
+                        <id>add-source</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>add-source</goal>
+                        </goals>
+                        <configuration>
+                            <sources>
+                                <source>${project.build.directory}/generated-sources/protobuf/java</source>
+                                <source>${project.build.directory}/generated-sources/protobuf/grpc-java</source>
+                            </sources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-gpg-plugin</artifactId>

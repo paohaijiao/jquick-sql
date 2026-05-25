@@ -21,12 +21,19 @@ import com.github.paohaijiao.enums.JQuickPartitionStrategy;
 import com.github.paohaijiao.expression.JQuickExpression;
 import com.github.paohaijiao.physical.JQuickPhysicalPlanNode;
 import com.github.paohaijiao.physical.node.*;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 public class JQuickPhysicalPlanOptimizer {
+    //倾斜检测阈值：某个值占比超过此比例视为倾斜
+    private static final double SKEW_THRESHOLD = 0.3;
+
+    // 倾斜处理时打散的桶数
+    private static final int SALT_BUCKETS = 10;
+
+    // 默认并行度
+    private static final int DEFAULT_PARALLELISM = 4;
 
     public JQuickPhysicalPlanNode optimize(JQuickPhysicalPlanNode plan) {
         JQuickPhysicalPlanNode current = plan;
@@ -36,7 +43,6 @@ public class JQuickPhysicalPlanOptimizer {
         current = addRequiredExchanges(current);
         return current;
     }
-
     private JQuickPhysicalPlanNode optimizeJoins(JQuickPhysicalPlanNode node) {
         if (node instanceof JQuickHashJoinPhysicalNode) {
             JQuickHashJoinPhysicalNode join = (JQuickHashJoinPhysicalNode) node;
