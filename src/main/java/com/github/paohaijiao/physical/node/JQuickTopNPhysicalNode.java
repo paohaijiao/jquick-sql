@@ -18,8 +18,10 @@ package com.github.paohaijiao.physical.node;
 
 import com.github.paohaijiao.physical.JQuickPhysicalPlanNode;
 import com.github.paohaijiao.physical.JQuickPhysicalPlanVisitor;
+import com.github.paohaijiao.physical.domain.JQuickPhysicalStats;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 public class JQuickTopNPhysicalNode extends JQuickSortPhysicalNode {
@@ -56,4 +58,15 @@ public class JQuickTopNPhysicalNode extends JQuickSortPhysicalNode {
     public int getLimit() { return limit; }
 
     public int getOffset() { return offset; }
+
+    @Override
+    public JQuickPhysicalStats getStats() {
+        JQuickPhysicalPlanNode child = getChild();
+        if (child == null) {
+            return JQuickPhysicalStats.empty();
+        }
+        long childRows = child.getStats().getEstimatedRowCount();
+        long estimatedRows = Math.min(limit, Math.max(0, childRows - offset));
+        return new JQuickPhysicalStats(estimatedRows, estimatedRows * 200, new HashMap<>());
+    }
 }

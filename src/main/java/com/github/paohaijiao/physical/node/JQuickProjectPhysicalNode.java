@@ -20,8 +20,10 @@ import com.github.paohaijiao.expression.JQuickExpression;
 import com.github.paohaijiao.physical.JQuickPhysicalPlanNode;
 import com.github.paohaijiao.physical.JQuickPhysicalPlanVisitor;
 import com.github.paohaijiao.physical.domain.JQuickPhysicalColumn;
+import com.github.paohaijiao.physical.domain.JQuickPhysicalStats;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -71,8 +73,7 @@ public class JQuickProjectPhysicalNode extends JQuickAbstractPhysicalNode {
 
     @Override
     public JQuickPhysicalPlanNode clone() {
-        List<SelectItem> clonedItems = selectItems.stream().map(SelectItem::clone)
-                .collect(Collectors.toList());
+        List<SelectItem> clonedItems = selectItems.stream().map(SelectItem::clone).collect(Collectors.toList());
         return new JQuickProjectPhysicalNode(clonedItems, children.get(0).clone(), distinct);
     }
 
@@ -82,5 +83,19 @@ public class JQuickProjectPhysicalNode extends JQuickAbstractPhysicalNode {
     }
 
     public List<SelectItem> getSelectItems() { return selectItems; }
+
     public boolean isDistinct() { return distinct; }
+    @Override
+    public JQuickPhysicalStats getStats() {
+        JQuickPhysicalPlanNode child = getChild();
+        if (child == null) {
+            return JQuickPhysicalStats.empty();
+        }
+        JQuickPhysicalStats childStats = child.getStats();
+        long estimatedRows = childStats.getEstimatedRowCount();
+        int columnCount = selectItems != null ? selectItems.size() : 0;
+        long estimatedDataSize = estimatedRows * columnCount * 200L;
+        return new JQuickPhysicalStats(estimatedRows, estimatedDataSize, new HashMap<>());
+    }
+
 }

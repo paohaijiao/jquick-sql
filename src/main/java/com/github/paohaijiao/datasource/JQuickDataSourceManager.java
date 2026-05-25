@@ -35,6 +35,9 @@ public class JQuickDataSourceManager {
 
     private static final Map<String, Long> tableSizes = new ConcurrentHashMap<>();
 
+    private static final Map<String, Long> tableDataSizes = new ConcurrentHashMap<>();
+
+
     private static JConsole console = JConsole.initConsoleEnvironment();
 
     /**
@@ -47,6 +50,7 @@ public class JQuickDataSourceManager {
         String key = name.toLowerCase();
         dataSources.put(key, data);
         tableSizes.put(key, (long) data.size());
+        tableDataSizes.put(key, calculateDataSize(data));
         lastUpdateTime.put(key, System.currentTimeMillis());
     }
 
@@ -61,6 +65,7 @@ public class JQuickDataSourceManager {
         String key = name.toLowerCase();
         JQuickDataSet previous = dataSources.put(key, data);
         tableSizes.put(key, (long) data.size());
+        tableDataSizes.put(key, calculateDataSize(data));
         lastUpdateTime.put(key, System.currentTimeMillis());
         return previous;
     }
@@ -79,6 +84,7 @@ public class JQuickDataSourceManager {
         }
         dataSources.put(key, data);
         tableSizes.put(key, (long) data.size());
+        tableDataSizes.put(key, calculateDataSize(data));
         lastUpdateTime.put(key, System.currentTimeMillis());
         return true;
     }
@@ -128,6 +134,7 @@ public class JQuickDataSourceManager {
     public static JQuickDataSet removeTable(String name) {
         String key = name.toLowerCase();
         tableSizes.remove(key);
+        tableDataSizes.remove(key);
         lastUpdateTime.remove(key);
         return dataSources.remove(key);
     }
@@ -193,6 +200,7 @@ public class JQuickDataSourceManager {
         }
         dataSources.put(key, data);
         tableSizes.put(key, (long) data.size());
+        tableDataSizes.put(key, calculateDataSize(data));
         lastUpdateTime.put(key, System.currentTimeMillis());
         return true;
     }
@@ -203,6 +211,7 @@ public class JQuickDataSourceManager {
     public static void clearAll() {
         dataSources.clear();
         tableSizes.clear();
+        tableDataSizes.clear();
         lastUpdateTime.clear();
     }
 
@@ -316,9 +325,11 @@ public class JQuickDataSourceManager {
         JQuickDataSet data = dataSources.remove(oldKey);
         Long size = tableSizes.remove(oldKey);
         Long time = lastUpdateTime.remove(oldKey);
+        Long dataSize = tableDataSizes.remove(oldKey);
         dataSources.put(newKey, data);
         if (size != null) tableSizes.put(newKey, size);
         if (time != null) lastUpdateTime.put(newKey, time);
+        if (dataSize != null) tableDataSizes.put(newKey, dataSize);
         return true;
     }
 
@@ -991,5 +1002,123 @@ public class JQuickDataSourceManager {
         } else {
             console.warn("Validation '{}' FAILED for table '{}'{}", validationName, tableName, details != null ? ": " + details : "");
         }
+    }
+    /**
+     * 获取指定表的行数
+     * @param tableName 表名
+     * @return 行数，如果表不存在返回 0
+     */
+    public static long getRowCount(String tableName) {
+        return tableSizes.getOrDefault(tableName.toLowerCase(), 0L);
+    }
+
+    /**
+     * 获取指定表的预估数据大小（字节）
+     * @param tableName 表名
+     * @return 数据大小（字节），如果表不存在返回 0
+     */
+    public static long getEstimatedDataSize(String tableName) {
+        return tableDataSizes.getOrDefault(tableName.toLowerCase(), 0L);
+    }
+
+    /**
+     * 计算并更新表的数据大小缓存
+     * @param tableName 表名
+     * @return 计算后的大小
+     */
+    private static long computeAndCacheDataSize(String tableName) {
+        String key = tableName.toLowerCase();
+        JQuickDataSet table = dataSources.get(key);
+        if (table == null || table.isEmpty()) {
+            tableDataSizes.put(key, 0L);
+            return 0L;
+        }
+        long size = calculateDataSize(table);
+        tableDataSizes.put(key, size);
+        return size;
+    }
+
+    /**
+     * 计算表的数据大小
+     */
+    private static long calculateDataSize(JQuickDataSet table) {
+        if (table == null || table.isEmpty()) {
+            return 0L;
+        }
+        long totalSize = 0L;
+        List<String> columnNames = table.getColumnNames();
+        for (JQuickRow row : table.getRows()) {
+            long rowSize = 0L;
+            for (String colName : columnNames) {
+                Object value = row.get(colName);
+                rowSize += estimateValueSize(value);
+            }
+            totalSize += rowSize;
+        }
+        return totalSize;
+    }
+
+    /**
+     * 估算单个值的字节大小
+     */
+    private static long estimateValueSize(Object value) {
+        if (value == null) return 8L;
+        Class<?> type = value.getClass();
+        if (type == String.class) {
+            return ((String) value).length() * 2L + 24L;
+        } else if (type == Integer.class || type == Float.class) {
+            return 16L;
+        } else if (type == Long.class || type == Double.class) {
+            return 24L;
+        } else if (type == Boolean.class || type == Short.class ||
+                type == Byte.class || type == Character.class) {
+            return 16L;
+        } else if (type == java.math.BigDecimal.class) {
+            return 48L;
+        } else if (type == java.util.Date.class || type == java.sql.Timestamp.class) {
+            return 32L;
+        } else if (value instanceof List) {
+            return ((List<?>) value).size() * 16L + 32L;
+        } else if (value instanceof Map) {
+            return ((Map<?, ?>) value).size() * 32L + 48L;
+        } else {
+            return 64L;
+        }
+    }
+    /**
+     * 手动刷新指定表的数据大小缓存（当数据变化时）
+     */
+    public static void refreshDataSize(String tableName) {
+        String key = tableName.toLowerCase();
+        JQuickDataSet table = dataSources.get(key);
+        if (table != null) {
+            tableDataSizes.put(key, calculateDataSize(table));
+        }
+    }
+
+    /**
+     * 获取所有表的数据大小汇总
+     */
+    public static Map<String, Long> getTableDataSizeSummary() {
+        return new HashMap<>(tableDataSizes);
+    }
+
+    /**
+     * 获取总数据大小（所有表）
+     */
+    public static long getTotalDataSize() {
+        return tableDataSizes.values().stream().mapToLong(Long::longValue).sum();
+    }
+
+    /**
+     * 获取表的大小信息（行数 + 数据大小）
+     */
+    public static Map<String, Object> getTableSizeInfo(String tableName) {
+        String key = tableName.toLowerCase();
+        Map<String, Object> info = new LinkedHashMap<>();
+        info.put("rowCount", tableSizes.getOrDefault(key, 0L));
+        info.put("dataSize", tableDataSizes.getOrDefault(key, 0L));
+        info.put("tableName", tableName);
+        return info;
     }
 }

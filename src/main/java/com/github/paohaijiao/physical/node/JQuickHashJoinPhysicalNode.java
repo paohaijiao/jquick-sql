@@ -89,13 +89,7 @@ public class JQuickHashJoinPhysicalNode extends JQuickAbstractPhysicalNode {
         return schema;
     }
 
-    @Override
-    public JQuickPhysicalStats getStats() {
-        long leftRows = children.get(0).getStats().getEstimatedRowCount();
-        long rightRows = children.get(1).getStats().getEstimatedRowCount();
-        long estimatedRows = Math.min(leftRows, rightRows);
-        return new JQuickPhysicalStats(estimatedRows, estimatedRows * 200, new HashMap<>());
-    }
+
 
     @Override
     public JQuickPhysicalPlanNode clone() {
@@ -121,4 +115,61 @@ public class JQuickHashJoinPhysicalNode extends JQuickAbstractPhysicalNode {
     public JQuickPhysicalPlanNode getLeft() { return children.get(0); }
 
     public JQuickPhysicalPlanNode getRight() { return children.get(1); }
+
+    @Override
+    public JQuickPhysicalStats getStats() {
+        JQuickPhysicalPlanNode left = getLeft();
+        JQuickPhysicalPlanNode right = getRight();
+        if (left == null || right == null) {
+            return JQuickPhysicalStats.empty();
+        }
+        JQuickPhysicalStats leftStats = left.getStats();
+        JQuickPhysicalStats rightStats = right.getStats();
+        long leftRows = leftStats.getEstimatedRowCount();
+        long rightRows = rightStats.getEstimatedRowCount();
+        double selectivity = estimateJoinSelectivity();
+        long estimatedRows;
+        switch (joinType) {
+            case INNER:
+                estimatedRows = (long) (Math.min(leftRows, rightRows) * selectivity);
+                break;
+            case LEFT:
+                estimatedRows = (long) (leftRows + (rightRows * selectivity));
+                break;
+            case RIGHT:
+                estimatedRows = (long) (rightRows + (leftRows * selectivity));
+                break;
+            case FULL:
+                estimatedRows = (long) (leftRows + rightRows - (Math.min(leftRows, rightRows) * selectivity));
+                break;
+            case CROSS:
+                estimatedRows = leftRows * rightRows;
+                break;
+            default:
+                estimatedRows = (long) (Math.min(leftRows, rightRows) * selectivity);
+        }
+        if (joinType == JQuickJoinType.CROSS && estimatedRows > 10000000) {
+            estimatedRows = 10000000;
+        }
+        long estimatedDataSize = estimatedRows * 200;
+        return new JQuickPhysicalStats(estimatedRows, estimatedDataSize, new HashMap<>());
+    }
+    /**
+     * 估算 Join 选择性（匹配比例）
+     */
+    private double estimateJoinSelectivity() {
+        if (condition != null) {
+            String cond = condition.toString().toLowerCase();
+            if (cond.contains("=")) {
+                return 0.1;
+            }
+            if (cond.contains(">") || cond.contains("<")) {
+                return 0.3;
+            }
+        }
+        if (joinKeys != null && !joinKeys.isEmpty()) {
+            return 0.1;
+        }
+        return 1.0;
+    }
 }

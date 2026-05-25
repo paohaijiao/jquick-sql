@@ -20,7 +20,10 @@ import com.github.paohaijiao.physical.JQuickPhysicalPlanVisitor;
 import com.github.paohaijiao.physical.domain.JQuickPhysicalColumn;
 import com.github.paohaijiao.physical.domain.JQuickPhysicalStats;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
 
 /**
  * 递归CTE物理执行节点
@@ -86,13 +89,6 @@ public class JQuickRecursiveUnionPhysicalNode implements JQuickPhysicalPlanNode 
     }
 
     @Override
-    public JQuickPhysicalStats getStats() {
-        long initialRows = initialPlan != null ? initialPlan.getStats().getEstimatedRowCount() : 0;
-        long totalRows = initialRows * 10;
-        return new JQuickPhysicalStats(totalRows, totalRows * 200, new HashMap<>());
-    }
-
-    @Override
     public JQuickPhysicalPlanNode clone() {
         JQuickPhysicalPlanNode clonedInitial = initialPlan != null ? initialPlan.clone() : null;
         JQuickPhysicalPlanNode clonedRecursive = recursivePlan != null ? recursivePlan.clone() : null;
@@ -130,5 +126,30 @@ public class JQuickRecursiveUnionPhysicalNode implements JQuickPhysicalPlanNode 
 
     public int getMaxRecursionDepth() {
         return maxRecursionDepth;
+    }
+
+    @Override
+    public JQuickPhysicalStats getStats() {
+        JQuickPhysicalStats initialStats = initialPlan != null ? initialPlan.getStats() : null;
+        if (initialStats == null) {
+            return JQuickPhysicalStats.empty();
+        }
+        long initialRows = initialStats.getEstimatedRowCount();
+        int depth = Math.min(maxRecursionDepth, 100); // 最多估算100层
+        long totalRows = initialRows;
+        for (int i = 0; i < depth; i++) {
+            long newRows = totalRows / 2; // 每次增加 50%
+            if (newRows == 0) break;
+            totalRows += newRows;
+            if (totalRows > 10000000) {
+                totalRows = 10000000;
+                break;
+            }
+        }
+        if (!unionAll) {
+            totalRows = Math.min(totalRows, initialRows * 10);
+        }
+        long estimatedDataSize = totalRows * 200;
+        return new JQuickPhysicalStats(totalRows, estimatedDataSize, new HashMap<>());
     }
 }

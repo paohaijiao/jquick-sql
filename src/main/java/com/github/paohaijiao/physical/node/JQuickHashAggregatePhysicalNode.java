@@ -143,8 +143,20 @@ public class JQuickHashAggregatePhysicalNode extends JQuickAbstractPhysicalNode 
 
     @Override
     public JQuickPhysicalStats getStats() {
-        long estimatedGroups = Math.min(1000, getChild().getStats().getEstimatedRowCount());
-        return new JQuickPhysicalStats(estimatedGroups, estimatedGroups * 200, new HashMap<>());
+        JQuickPhysicalPlanNode child = getChild();
+        if (child == null) {
+            return JQuickPhysicalStats.empty();
+        }
+        JQuickPhysicalStats childStats = child.getStats();
+        long childRows = childStats.getEstimatedRowCount();
+        long estimatedGroups;
+        if (groupKeys == null || groupKeys.isEmpty()) {
+            estimatedGroups = 1;
+        } else {
+            estimatedGroups = Math.min(1000, Math.max(1, childRows / 10));
+        }
+        long estimatedDataSize = estimatedGroups * 200;
+        return new JQuickPhysicalStats(estimatedGroups, estimatedDataSize, new HashMap<>());
     }
 
     @Override

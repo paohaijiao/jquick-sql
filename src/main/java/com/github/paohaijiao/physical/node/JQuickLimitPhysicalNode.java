@@ -19,7 +19,9 @@ package com.github.paohaijiao.physical.node;
 import com.github.paohaijiao.physical.JQuickPhysicalPlanNode;
 import com.github.paohaijiao.physical.JQuickPhysicalPlanVisitor;
 import com.github.paohaijiao.physical.domain.JQuickPhysicalColumn;
+import com.github.paohaijiao.physical.domain.JQuickPhysicalStats;
 
+import java.util.HashMap;
 import java.util.List;
 
 public class JQuickLimitPhysicalNode extends JQuickAbstractPhysicalNode {
@@ -61,4 +63,19 @@ public class JQuickLimitPhysicalNode extends JQuickAbstractPhysicalNode {
     public int getLimit() { return limit; }
 
     public int getOffset() { return offset; }
+    @Override
+    public JQuickPhysicalStats getStats() {
+        JQuickPhysicalPlanNode child = getChild();
+        if (child == null) {
+            return JQuickPhysicalStats.empty();
+        }
+        JQuickPhysicalStats childStats = child.getStats();
+        long childRows = childStats.getEstimatedRowCount();
+        long estimatedRows = Math.min(limit, Math.max(0, childRows - offset));
+        if (offset >= childRows) {// 如果 offset 大于子节点行数，结果为 0
+            estimatedRows = 0;
+        }
+        long estimatedDataSize = estimatedRows * 200;
+        return new JQuickPhysicalStats(estimatedRows, estimatedDataSize, new HashMap<>());
+    }
 }

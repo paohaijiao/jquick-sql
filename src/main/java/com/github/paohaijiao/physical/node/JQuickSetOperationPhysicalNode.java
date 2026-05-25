@@ -19,7 +19,9 @@ import com.github.paohaijiao.enums.JQuickSQLOperationType;
 import com.github.paohaijiao.physical.JQuickPhysicalPlanNode;
 import com.github.paohaijiao.physical.JQuickPhysicalPlanVisitor;
 import com.github.paohaijiao.physical.domain.JQuickPhysicalColumn;
+import com.github.paohaijiao.physical.domain.JQuickPhysicalStats;
 
+import java.util.HashMap;
 import java.util.List;
 
 public class JQuickSetOperationPhysicalNode extends JQuickAbstractPhysicalNode {
@@ -52,4 +54,37 @@ public class JQuickSetOperationPhysicalNode extends JQuickAbstractPhysicalNode {
     }
 
     public JQuickSQLOperationType getOperationType() { return operationType; }
+
+    @Override
+    public JQuickPhysicalStats getStats() {
+        JQuickPhysicalPlanNode left = getLeft();
+        JQuickPhysicalPlanNode right = getRight();
+        if (left == null || right == null) {
+            return JQuickPhysicalStats.empty();
+        }
+        JQuickPhysicalStats leftStats = left.getStats();
+        JQuickPhysicalStats rightStats = right.getStats();
+        long leftRows = leftStats.getEstimatedRowCount();
+        long rightRows = rightStats.getEstimatedRowCount();
+        long estimatedRows;
+        switch (operationType) {
+            case UNION:
+            case UNION_ALL:
+                estimatedRows = leftRows + rightRows;
+                break;
+            case INTERSECT:
+                estimatedRows = (long) (Math.min(leftRows, rightRows) * 0.3);
+                break;
+            case EXCEPT:
+                estimatedRows = (long) (leftRows * 0.7);
+                break;
+            default:
+                estimatedRows = leftRows;
+        }
+        if (estimatedRows < 0) {
+            estimatedRows = Long.MAX_VALUE;
+        }
+        long estimatedDataSize = estimatedRows * 200;
+        return new JQuickPhysicalStats(estimatedRows, estimatedDataSize, new HashMap<>());
+    }
 }

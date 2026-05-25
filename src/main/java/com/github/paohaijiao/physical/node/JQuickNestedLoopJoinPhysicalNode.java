@@ -51,12 +51,6 @@ public class JQuickNestedLoopJoinPhysicalNode extends JQuickAbstractPhysicalNode
         return schema;
     }
 
-    @Override
-    public JQuickPhysicalStats getStats() {
-        long leftRows = children.get(0).getStats().getEstimatedRowCount();
-        long rightRows = children.get(1).getStats().getEstimatedRowCount();
-        return new JQuickPhysicalStats(leftRows * rightRows, leftRows * rightRows * 200, new HashMap<>());
-    }
 
     @Override
     public JQuickPhysicalPlanNode clone() {
@@ -69,4 +63,46 @@ public class JQuickNestedLoopJoinPhysicalNode extends JQuickAbstractPhysicalNode
     }
 
     public JQuickJoinType getJoinType() { return joinType; }public JQuickExpression getCondition() { return condition; }
+
+    @Override
+    public JQuickPhysicalStats getStats() {
+        JQuickPhysicalPlanNode left = getLeft();
+        JQuickPhysicalPlanNode right = getRight();
+        if (left == null || right == null) {
+            return JQuickPhysicalStats.empty();
+        }
+        long leftRows = left.getStats().getEstimatedRowCount();
+        long rightRows = right.getStats().getEstimatedRowCount();
+        long estimatedRows = leftRows * rightRows;
+        if (leftRows > 0 && rightRows > 0 && estimatedRows / rightRows != leftRows) {
+            estimatedRows = Long.MAX_VALUE;
+        }
+        if (condition != null) {
+            double selectivity = estimateSelectivity();
+            estimatedRows = (long) (estimatedRows * selectivity);
+        }
+        long estimatedDataSize = estimatedRows * 200;
+        return new JQuickPhysicalStats(estimatedRows, estimatedDataSize, new HashMap<>());
+    }
+
+    /**
+     * 估算条件选择性
+     */
+    private double estimateSelectivity() {
+        if (condition == null) {
+            return 1.0;
+        }
+        String cond = condition.toString().toLowerCase();
+        if (cond.contains("=")) {
+            return 0.01;
+        }
+        if (cond.contains(">") || cond.contains("<")) {
+            return 0.3;
+        }
+        if (cond.contains("like")) {
+            return 0.1;
+        }
+
+        return 0.5;
+    }
 }

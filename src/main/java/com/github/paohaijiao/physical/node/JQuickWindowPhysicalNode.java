@@ -18,10 +18,14 @@ package com.github.paohaijiao.physical.node;
 import com.github.paohaijiao.expression.JQuickExpression;
 import com.github.paohaijiao.physical.JQuickPhysicalPlanNode;
 import com.github.paohaijiao.physical.JQuickPhysicalPlanVisitor;
+import com.github.paohaijiao.physical.domain.JQuickColumnStats;
 import com.github.paohaijiao.physical.domain.JQuickPhysicalColumn;
+import com.github.paohaijiao.physical.domain.JQuickPhysicalStats;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class JQuickWindowPhysicalNode extends JQuickAbstractPhysicalNode {
 
@@ -139,4 +143,18 @@ public class JQuickWindowPhysicalNode extends JQuickAbstractPhysicalNode {
     }
 
     public List<WindowFunction> getWindowFunctions() { return windowFunctions; }
+
+    @Override
+    public JQuickPhysicalStats getStats() {
+        JQuickPhysicalPlanNode child = getChild();
+        if (child == null) {
+            return JQuickPhysicalStats.empty();
+        }
+        JQuickPhysicalStats childStats = child.getStats();
+        long estimatedRows = childStats.getEstimatedRowCount();
+        int windowFunctionCount = windowFunctions != null ? windowFunctions.size() : 0;
+        long estimatedDataSize = childStats.getEstimatedDataSize() + (estimatedRows * windowFunctionCount * 100);
+        Map<String, JQuickColumnStats> columnStats = new HashMap<>(childStats.getColumnStats());
+        return new JQuickPhysicalStats(estimatedRows, estimatedDataSize, columnStats);
+    }
 }

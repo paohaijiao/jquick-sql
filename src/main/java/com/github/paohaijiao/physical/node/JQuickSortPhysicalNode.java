@@ -18,6 +18,7 @@ package com.github.paohaijiao.physical.node;
 import com.github.paohaijiao.physical.JQuickPhysicalPlanNode;
 import com.github.paohaijiao.physical.JQuickPhysicalPlanVisitor;
 import com.github.paohaijiao.physical.domain.JQuickPhysicalColumn;
+import com.github.paohaijiao.physical.domain.JQuickPhysicalStats;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -83,4 +84,9 @@ public class JQuickSortPhysicalNode extends JQuickAbstractPhysicalNode {
     }
 
     public List<OrderByItem> getOrderByItems() { return orderByItems; }
+
+    @Override
+    public JQuickPhysicalStats getStats() {
+        return getChild() != null ? getChild().getStats() : JQuickPhysicalStats.empty();
+    }
 }

@@ -14,8 +14,6 @@
  * Copyright (c) [2025-2099] Martin (goudingcheng@gmail.com)
  */
 package com.github.paohaijiao.physical.node;
-
-
 import com.github.paohaijiao.enums.JQuickExchangeType;
 import com.github.paohaijiao.enums.JQuickPartitionStrategy;
 import com.github.paohaijiao.expression.JQuickExpression;
@@ -28,6 +26,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * Exchange 节点不改变数据，直接返回子节点的统计信息
+ */
 public class JQuickExchangePhysicalNode extends JQuickAbstractPhysicalNode {
 
     private final JQuickExchangeType exchangeType;
@@ -59,7 +60,11 @@ public class JQuickExchangePhysicalNode extends JQuickAbstractPhysicalNode {
 
     @Override
     public JQuickPhysicalStats getStats() {
-        return children.get(0).getStats();
+        JQuickPhysicalPlanNode child = getChild();
+        if (child == null) {
+            return JQuickPhysicalStats.empty();
+        }
+        return child.getStats();
     }
 
     @Override

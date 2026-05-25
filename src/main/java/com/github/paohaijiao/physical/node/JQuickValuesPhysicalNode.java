@@ -59,10 +59,6 @@ public class JQuickValuesPhysicalNode implements JQuickPhysicalPlanNode {
         return columns;
     }
 
-    @Override
-    public JQuickPhysicalStats getStats() {
-        return new JQuickPhysicalStats(rows.size(), rows.size() * 100, new HashMap<>());
-    }
 
     @Override
     public JQuickPhysicalPlanNode clone() {
@@ -83,4 +79,11 @@ public class JQuickValuesPhysicalNode implements JQuickPhysicalPlanNode {
     public List<String> getColumnNames() { return columnNames; }
 
     public List<Class<?>> getColumnTypes() { return columnTypes; }
+
+    @Override
+    public JQuickPhysicalStats getStats() {
+        long rowCount = rows != null ? rows.size() : 0;
+        long dataSize = rowCount * 100;
+        return new JQuickPhysicalStats(rowCount, dataSize, new HashMap<>());
+    }
 }

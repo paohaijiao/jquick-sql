@@ -15,6 +15,7 @@
  */
 package com.github.paohaijiao.optimizer;
 
+import com.github.paohaijiao.enums.JQuickAggregateFunction;
 import com.github.paohaijiao.enums.JQuickExchangeType;
 import com.github.paohaijiao.enums.JQuickPartitionStrategy;
 import com.github.paohaijiao.expression.JQuickExpression;
@@ -28,12 +29,12 @@ import java.util.List;
 public class JQuickPhysicalPlanOptimizer {
 
     public JQuickPhysicalPlanNode optimize(JQuickPhysicalPlanNode plan) {
-//        JQuickPhysicalPlanNode current = plan;
-//        current = optimizeJoins(current);
-//        current = optimizeAggregates(current);
-//        current = pushdownLimit(current);
-//        current = addRequiredExchanges(current);
-        return plan;
+        JQuickPhysicalPlanNode current = plan;
+        current = optimizeJoins(current);
+        current = optimizeAggregates(current);
+        current = pushdownLimit(current);
+        current = addRequiredExchanges(current);
+        return current;
     }
 
     private JQuickPhysicalPlanNode optimizeJoins(JQuickPhysicalPlanNode node) {
@@ -41,18 +42,19 @@ public class JQuickPhysicalPlanOptimizer {
             JQuickHashJoinPhysicalNode join = (JQuickHashJoinPhysicalNode) node;
             long leftSize = join.getLeft().getStats().getEstimatedRowCount();
             long rightSize = join.getRight().getStats().getEstimatedRowCount();
-            if (leftSize < 100 || rightSize < 100) {
-                return new JQuickHashJoinPhysicalNode(
-                        join.getJoinType(),
-                        join.getLeft(), join.getRight(),
-                        join.getCondition(),
-                        join.getJoinKeys(),
-                        join.getBuildSide(),
-                        JQuickHashJoinPhysicalNode.JoinDistribution.BROADCAST_HASH
-                );
+            JQuickHashJoinPhysicalNode.JoinDistribution distribution;
+            if (leftSize < 1000 || rightSize < 1000) {
+                distribution = JQuickHashJoinPhysicalNode.JoinDistribution.BROADCAST_HASH;
+            } else if (leftSize < 10000 && rightSize < 10000) {
+                distribution = JQuickHashJoinPhysicalNode.JoinDistribution.LOCAL;
+            } else if (leftSize > 100000 || rightSize > 100000) {
+                distribution = JQuickHashJoinPhysicalNode.JoinDistribution.PARTITIONED;
+            } else {
+                distribution = JQuickHashJoinPhysicalNode.JoinDistribution.SHUFFLE_HASH;
             }
+            JQuickHashJoinPhysicalNode.BuildSide buildSide = leftSize < rightSize ? JQuickHashJoinPhysicalNode.BuildSide.LEFT : JQuickHashJoinPhysicalNode.BuildSide.RIGHT;
+            return new JQuickHashJoinPhysicalNode(join.getJoinType(), join.getLeft(), join.getRight(), join.getCondition(), join.getJoinKeys(), buildSide, distribution);
         }
-
         for (int i = 0; i < node.getChildren().size(); i++) {
             JQuickPhysicalPlanNode optimized = optimizeJoins(node.getChildren().get(i));
             if (optimized != node.getChildren().get(i)) {
@@ -66,9 +68,10 @@ public class JQuickPhysicalPlanOptimizer {
         if (node instanceof JQuickHashAggregatePhysicalNode) {
             JQuickHashAggregatePhysicalNode agg = (JQuickHashAggregatePhysicalNode) node;
             long dataSize = agg.getChild().getStats().getEstimatedRowCount();
-
-            if (dataSize > 10000 && !agg.getGroupKeys().isEmpty()) {
+            if (dataSize > 10000 && !agg.getGroupKeys().isEmpty()) {// 大数据量且有分组键，使用两阶段聚合
                 return createTwoPhaseAggregate(agg);
+            } else {// 小数据量，使用单阶段聚合
+                return new JQuickHashAggregatePhysicalNode(agg.getGroupKeys(), agg.getAggregates(), agg.getChild(), agg.getHavingCondition(), JQuickHashAggregatePhysicalNode.AggregateStage.SINGLE);
             }
         }
         for (int i = 0; i < node.getChildren().size(); i++) {
@@ -81,34 +84,69 @@ public class JQuickPhysicalPlanOptimizer {
     }
 
     private JQuickPhysicalPlanNode createTwoPhaseAggregate(JQuickHashAggregatePhysicalNode agg) {
+        // 阶段1：局部聚合
         List<JQuickHashAggregatePhysicalNode.AggregateFunction> partialAggs = new ArrayList<>();
         for (JQuickHashAggregatePhysicalNode.AggregateFunction func : agg.getAggregates()) {
-            switch (func.getFunctionName().toLowerCase()) {
-                case "count":
-                    partialAggs.add(new JQuickHashAggregatePhysicalNode.AggregateFunction("sum", func.getArgument(), false, func.getAlias() + "_partial", false, null, JQuickHashAggregatePhysicalNode.AggregateStage.PARTIAL));
+            String funcName = func.getFunctionName().toUpperCase();
+            if (!JQuickAggregateFunction.isAggregateFunction(funcName)) {// 检查是否为支持的聚合函数
+                partialAggs.add(func);
+                continue;
+            }
+            JQuickAggregateFunction aggFunc = JQuickAggregateFunction.valueOf(funcName);
+            switch (aggFunc) {
+                case COUNT:
+                    partialAggs.add(new JQuickHashAggregatePhysicalNode.AggregateFunction("SUM", func.getArgument(), false, func.getAlias() + "_partial", func.isCountStar(), null, JQuickHashAggregatePhysicalNode.AggregateStage.PARTIAL));
                     break;
-                case "sum":
-                    partialAggs.add(new JQuickHashAggregatePhysicalNode.AggregateFunction("sum", func.getArgument(), false, func.getAlias(), false, null, JQuickHashAggregatePhysicalNode.AggregateStage.PARTIAL));
+                case SUM:
+                    partialAggs.add(new JQuickHashAggregatePhysicalNode.AggregateFunction("SUM", func.getArgument(), false, func.getAlias(), false, null, JQuickHashAggregatePhysicalNode.AggregateStage.PARTIAL));
                     break;
-                case "avg":
-                    partialAggs.add(new JQuickHashAggregatePhysicalNode.AggregateFunction("sum", func.getArgument(), false, func.getAlias() + "_sum", false, null, JQuickHashAggregatePhysicalNode.AggregateStage.PARTIAL));
-                    partialAggs.add(new JQuickHashAggregatePhysicalNode.AggregateFunction("count", func.getArgument(), false, func.getAlias() + "_count", false, null, JQuickHashAggregatePhysicalNode.AggregateStage.PARTIAL));
+                case AVG:
+                    partialAggs.add(new JQuickHashAggregatePhysicalNode.AggregateFunction("SUM", func.getArgument(), false, func.getAlias() + "_sum", false, null, JQuickHashAggregatePhysicalNode.AggregateStage.PARTIAL));
+                    partialAggs.add(new JQuickHashAggregatePhysicalNode.AggregateFunction("COUNT", func.getArgument(), false, func.getAlias() + "_count", false, null, JQuickHashAggregatePhysicalNode.AggregateStage.PARTIAL));
                     break;
+
+                case MAX:
+                    partialAggs.add(new JQuickHashAggregatePhysicalNode.AggregateFunction("MAX", func.getArgument(), false, func.getAlias(), false, null, JQuickHashAggregatePhysicalNode.AggregateStage.PARTIAL));
+                    break;
+                case MIN:
+                    partialAggs.add(new JQuickHashAggregatePhysicalNode.AggregateFunction("MIN", func.getArgument(), false, func.getAlias(), false, null, JQuickHashAggregatePhysicalNode.AggregateStage.PARTIAL));
+                    break;
+
+                case FIRST:
+                    partialAggs.add(new JQuickHashAggregatePhysicalNode.AggregateFunction("FIRST", func.getArgument(), false, func.getAlias(), false, null, JQuickHashAggregatePhysicalNode.AggregateStage.PARTIAL));
+                    break;
+
+                case LAST:
+                    partialAggs.add(new JQuickHashAggregatePhysicalNode.AggregateFunction("LAST", func.getArgument(), false, func.getAlias(), false, null, JQuickHashAggregatePhysicalNode.AggregateStage.PARTIAL));
+                    break;
+                case MEDIAN:
+                case STDDEV:
+                case VARIANCE:
                 default:
                     partialAggs.add(func);
+                    break;
             }
         }
+
+        // 局部聚合节点
         JQuickHashAggregatePhysicalNode partialAgg = new JQuickHashAggregatePhysicalNode(agg.getGroupKeys(), partialAggs, agg.getChild(), null, JQuickHashAggregatePhysicalNode.AggregateStage.PARTIAL);
+        // Shuffle 交换
         JQuickExchangePhysicalNode exchange = new JQuickExchangePhysicalNode(JQuickExchangeType.SHUFFLE, JQuickPartitionStrategy.HASH, agg.getGroupKeys(), 4, partialAgg);
+        // 阶段2：全局聚合
         List<JQuickHashAggregatePhysicalNode.AggregateFunction> finalAggs = new ArrayList<>();
         for (JQuickHashAggregatePhysicalNode.AggregateFunction func : agg.getAggregates()) {
-            if (func.getFunctionName().equalsIgnoreCase("avg")) {
-                finalAggs.add(new JQuickHashAggregatePhysicalNode.AggregateFunction("divide", null, false, func.getAlias(), false, null, JQuickHashAggregatePhysicalNode.AggregateStage.FINAL));
+            String funcName = func.getFunctionName().toUpperCase();
+            if (!JQuickAggregateFunction.isAggregateFunction(funcName)) {
+                finalAggs.add(func);
+                continue;
+            }
+            JQuickAggregateFunction aggFunc = JQuickAggregateFunction.valueOf(funcName);
+            if (aggFunc == JQuickAggregateFunction.AVG) {
+                finalAggs.add(new JQuickHashAggregatePhysicalNode.AggregateFunction("DIVIDE", null, false, func.getAlias(), false, null, JQuickHashAggregatePhysicalNode.AggregateStage.FINAL));
             } else {
                 finalAggs.add(func);
             }
         }
-
         return new JQuickHashAggregatePhysicalNode(agg.getGroupKeys(), finalAggs, exchange, agg.getHavingCondition(), JQuickHashAggregatePhysicalNode.AggregateStage.FINAL);
     }
 
@@ -121,7 +159,6 @@ public class JQuickPhysicalPlanOptimizer {
                 return new JQuickTopNPhysicalNode(sort.getOrderByItems(), limit.getLimit(), limit.getOffset(), sort.getChildren().get(0));
             }
         }
-
         for (int i = 0; i < node.getChildren().size(); i++) {
             JQuickPhysicalPlanNode optimized = pushdownLimit(node.getChildren().get(i));
             if (optimized != node.getChildren().get(i)) {
@@ -137,7 +174,6 @@ public class JQuickPhysicalPlanOptimizer {
             JQuickExchangePhysicalNode exchange = new JQuickExchangePhysicalNode(JQuickExchangeType.SHUFFLE, JQuickPartitionStrategy.HASH, extractPartitionKeys(node), parallelism, node);
             return exchange;
         }
-
         for (int i = 0; i < node.getChildren().size(); i++) {
             JQuickPhysicalPlanNode optimized = addRequiredExchanges(node.getChildren().get(i));
             if (optimized != node.getChildren().get(i)) {

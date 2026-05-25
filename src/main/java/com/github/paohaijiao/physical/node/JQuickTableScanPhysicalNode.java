@@ -15,6 +15,7 @@
  */
 package com.github.paohaijiao.physical.node;
 
+import com.github.paohaijiao.datasource.JQuickDataSourceManager;
 import com.github.paohaijiao.expression.JQuickExpression;
 import com.github.paohaijiao.physical.JQuickPhysicalPlanNode;
 import com.github.paohaijiao.physical.JQuickPhysicalPlanVisitor;
@@ -71,11 +72,6 @@ public class JQuickTableScanPhysicalNode implements JQuickPhysicalPlanNode {
     }
 
     @Override
-    public JQuickPhysicalStats getStats() {
-        return new JQuickPhysicalStats(1000000, 100 * 1024 * 1024, new HashMap<>());
-    }
-
-    @Override
     public JQuickPhysicalPlanNode clone() {
         return new JQuickTableScanPhysicalNode(tableName, alias, requiredColumns, filterPredicate != null ? filterPredicate.clone() : null, partitionInfo);
     }
@@ -94,4 +90,20 @@ public class JQuickTableScanPhysicalNode implements JQuickPhysicalPlanNode {
     public JQuickExpression getFilterPredicate() { return filterPredicate; }
 
     public JQuickTablePartitionInfo getPartitionInfo() { return partitionInfo; }
+
+    @Override
+    public JQuickPhysicalStats getStats() {
+        long rowCount = JQuickDataSourceManager.getRowCount(tableName);
+        long dataSize = JQuickDataSourceManager.getEstimatedDataSize(tableName);
+        if (requiredColumns != null && !requiredColumns.isEmpty()) {
+            int totalCols = JQuickDataSourceManager.getColumnNames(tableName).size();
+            dataSize = dataSize * requiredColumns.size() / totalCols;
+        }
+        if (filterPredicate != null) {
+            rowCount = rowCount / 2;
+            dataSize = dataSize / 2;
+        }
+        return new JQuickPhysicalStats(rowCount, dataSize, new HashMap<>());
+    }
+
 }
