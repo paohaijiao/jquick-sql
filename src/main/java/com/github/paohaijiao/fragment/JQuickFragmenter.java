@@ -191,11 +191,9 @@ public class JQuickFragmenter {
             }
             return new JQuickExchangeNode(exchangeId, JQuickExchangeType.GATHER, JQuickPartitionStrategy.REPLICATE, (List<JQuickExpression>) null, 1);
         }
-
         if (node instanceof JQuickTableScanPhysicalNode) {
             return new JQuickExchangeNode(exchangeId, JQuickExchangeType.REPARTITION,JQuickPartitionStrategy.ROUND_ROBIN, (List<JQuickExpression>) null, defaultParallelism);
         }
-
         if (node instanceof JQuickExchangePhysicalNode) {
             JQuickExchangePhysicalNode exchange = (JQuickExchangePhysicalNode) node;
             return new JQuickExchangeNode(exchangeId, exchange.getExchangeType(), exchange.getPartitionStrategy(), exchange.getPartitionKeys(), exchange.getTargetParallelism());
