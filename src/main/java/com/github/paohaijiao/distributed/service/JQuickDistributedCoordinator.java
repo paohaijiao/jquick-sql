@@ -34,23 +34,17 @@ public class JQuickDistributedCoordinator {
     /**
      * 构建 Fragment 请求 - 直接使用 Proto 的 ExchangeInput
      */
-    private FragmentServiceProto.FragmentRequest buildFragmentRequest(
-            JQuickFragment fragment,
-            String targetHost,
-            int targetPort) {
-
+    private FragmentServiceProto.FragmentRequest buildFragmentRequest(JQuickFragment fragment, String targetHost, int targetPort) {
         try {
             byte[] serializedPlan = serializePlan(fragment.getPlan());
-            FragmentServiceProto.FragmentRequest.Builder builder =
-                    FragmentServiceProto.FragmentRequest.newBuilder()
-                            .setTaskId(UUID.randomUUID().toString())
-                            .setFragmentId(String.valueOf(fragment.getFragmentId()))
-                            .setFragmentType(fragment.getType().name())
-                            .setSerializedPlan(com.google.protobuf.ByteString.copyFrom(serializedPlan))
-                            .setParallelism(fragment.getParallelism());
+            FragmentServiceProto.FragmentRequest.Builder builder = FragmentServiceProto.FragmentRequest.newBuilder()
+                    .setTaskId(UUID.randomUUID().toString())
+                    .setFragmentId(String.valueOf(fragment.getFragmentId()))
+                    .setFragmentType(fragment.getType().name())
+                    .setSerializedPlan(com.google.protobuf.ByteString.copyFrom(serializedPlan))
+                    .setParallelism(fragment.getParallelism());
             for (JQuickExchangeNode input : fragment.getInputs()) {
-                FragmentServiceProto.ExchangeInput exchangeInput =
-                        FragmentServiceProto.ExchangeInput.newBuilder()
+                FragmentServiceProto.ExchangeInput exchangeInput = FragmentServiceProto.ExchangeInput.newBuilder()
                                 .setExchangeId(input.getExchangeId())
                                 .setSourceHost(targetHost)
                                 .setSourcePort(targetPort)
@@ -60,8 +54,7 @@ public class JQuickDistributedCoordinator {
                 builder.addInputs(exchangeInput);
             }
             if (fragment.getOutput() != null) {
-                FragmentServiceProto.ExchangeOutput exchangeOutput =
-                        FragmentServiceProto.ExchangeOutput.newBuilder()
+                FragmentServiceProto.ExchangeOutput exchangeOutput = FragmentServiceProto.ExchangeOutput.newBuilder()
                                 .setExchangeId(fragment.getOutput().getExchangeId())
                                 .setPartitionStrategy(fragment.getOutput().getPartitionStrategy().name())
                                 .addAllPartitionKeys(extractPartitionKeyNames(fragment.getOutput().getPartitionKeys()))

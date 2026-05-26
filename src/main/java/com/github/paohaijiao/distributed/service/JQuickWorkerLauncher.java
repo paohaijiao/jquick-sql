@@ -62,7 +62,6 @@ public class JQuickWorkerLauncher {
         builder.addColumn("id", Integer.class, "test");
         builder.addColumn("name", String.class, "test");
         builder.addColumn("age", Integer.class, "test");
-
         for (int i = 1; i <= 1000; i++) {
             JQuickRow row = new JQuickRow();
             row.put("id", i);
@@ -70,10 +69,8 @@ public class JQuickWorkerLauncher {
             row.put("age", 20 + (i % 30));
             builder.addRow(row);
         }
-
         JQuickDataSourceManager.registerTable("users", builder.build());
         JQuickDataSourceManager.registerTable("orders", builder.build());
-
         System.out.println("Test data prepared: 1000 rows in 'users' and 'orders' tables");
     }
 }

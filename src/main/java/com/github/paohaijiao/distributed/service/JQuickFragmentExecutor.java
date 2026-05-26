@@ -46,10 +46,7 @@ public class JQuickFragmentExecutor {
 
     private final Map<String, JQuickDataSet> receivedData;
 
-    public JQuickFragmentExecutor(JQuickFragment fragment,
-                            List<FragmentServiceProto.ExchangeInput> inputs,
-                            FragmentServiceProto.ExchangeOutput output,
-                            Map<String, JQuickDataSet> receivedData) {
+    public JQuickFragmentExecutor(JQuickFragment fragment, List<FragmentServiceProto.ExchangeInput> inputs, FragmentServiceProto.ExchangeOutput output, Map<String, JQuickDataSet> receivedData) {
         this.fragment = fragment;
         this.inputs = inputs;
         this.output = output;
@@ -57,17 +54,14 @@ public class JQuickFragmentExecutor {
     }
 
     public JQuickDataSet execute() {
-        // 1. 收集输入数据
+        //收集输入数据
         JQuickDataSet inputData = collectInputData();
-
-        // 2. 执行物理计划
+        //执行物理计划
         JQuickDataSet result = executePlan(fragment.getPlan(), inputData);
-
-        // 3. 如果有输出，发送数据
+        //如果有输出，发送数据
         if (output != null) {
             sendOutputData(result);
         }
-
         return result;
     }
 
@@ -76,15 +70,9 @@ public class JQuickFragmentExecutor {
             // SOURCE Fragment：从数据源读取
             return readFromDataSource();
         }
-
-        // INTERMEDIATE Fragment：从远程拉取数据
-        JQuickDataSet merged = null;
+        JQuickDataSet merged = null; // INTERMEDIATE Fragment：从远程拉取数据
         for (FragmentServiceProto.ExchangeInput input : inputs) {
-            JQuickDataSet data = fetchDataFromRemote(
-                    input.getSourceHost(),
-                    input.getSourcePort(),
-                    input.getExchangeId()
-            );
+            JQuickDataSet data = fetchDataFromRemote(input.getSourceHost(), input.getSourcePort(), input.getExchangeId());
             if (merged == null) {
                 merged = data;
             } else {
@@ -110,27 +98,18 @@ public class JQuickFragmentExecutor {
 
     private JQuickDataSet fetchDataFromRemote(String host, int port, String exchangeId) {
         try {
-            ManagedChannel channel = ManagedChannelBuilder.forAddress(host, port)
-                    .usePlaintext()
-                    .build();
-
-            FragmentServiceGrpc.FragmentServiceBlockingStub stub =
-                    FragmentServiceGrpc.newBlockingStub(channel);
-
-            FragmentServiceProto.FetchRequest request =
-                    FragmentServiceProto.FetchRequest.newBuilder()
+            ManagedChannel channel = ManagedChannelBuilder.forAddress(host, port).usePlaintext().build();
+            FragmentServiceGrpc.FragmentServiceBlockingStub stub = FragmentServiceGrpc.newBlockingStub(channel);
+            FragmentServiceProto.FetchRequest request = FragmentServiceProto.FetchRequest.newBuilder()
                             .setExchangeId(exchangeId)
                             .setPartitionId(0)
                             .build();
-
             Iterator<FragmentServiceProto.DataChunk> chunks = stub.fetchData(request);
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
-
             while (chunks.hasNext()) {
                 FragmentServiceProto.DataChunk chunk = chunks.next();
                 baos.write(chunk.getData().toByteArray());
             }
-
             try (ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream(baos.toByteArray()))) {
                 return (JQuickDataSet) ois.readObject();
             }

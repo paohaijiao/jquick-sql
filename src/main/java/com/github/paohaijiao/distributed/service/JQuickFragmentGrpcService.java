@@ -43,30 +43,24 @@ public class JQuickFragmentGrpcService extends FragmentServiceGrpc.FragmentServi
     public void executeFragment(FragmentServiceProto.FragmentRequest request, StreamObserver<FragmentServiceProto.FragmentResponse> responseObserver) {
         try {
             JQuickPhysicalPlanNode plan = deserializePlan(request.getSerializedPlan().toByteArray());
-
             //创建 Fragment
             JQuickFragmentType fragmentType = JQuickFragmentType.valueOf(request.getFragmentType());
             JQuickFragment fragment = new JQuickFragment(fragmentType, plan);
             fragment.setParallelism(request.getParallelism());
-
             //直接使用 Proto 的 ExchangeInput 构建输入信息
             List<FragmentServiceProto.ExchangeInput> inputs = request.getInputsList();
-
             // 直接使用 Proto 的 ExchangeOutput
             FragmentServiceProto.ExchangeOutput output = request.hasOutput() ? request.getOutput() : null;
-
             // 异步执行 - 直接传入 Proto 对象
             JQuickFragmentExecutor executor = new JQuickFragmentExecutor(fragment, inputs, output, receivedData);
-
             CompletableFuture.supplyAsync(executor::execute)
                     .thenAccept(result -> {
-                        FragmentServiceProto.FragmentResponse response =
-                                FragmentServiceProto.FragmentResponse.newBuilder()
-                                        .setTaskId(request.getTaskId())
-                                        .setFragmentId(request.getFragmentId())
-                                        .setSuccess(true)
-                                        .setRowsProcessed(result != null ? result.size() : 0)
-                                        .build();
+                        FragmentServiceProto.FragmentResponse response = FragmentServiceProto.FragmentResponse.newBuilder()
+                                .setTaskId(request.getTaskId())
+                                .setFragmentId(request.getFragmentId())
+                                .setSuccess(true)
+                                .setRowsProcessed(result != null ? result.size() : 0)
+                                .build();
                         responseObserver.onNext(response);
                         responseObserver.onCompleted();
                     })
@@ -95,29 +89,21 @@ public class JQuickFragmentGrpcService extends FragmentServiceGrpc.FragmentServi
     }
 
     @Override
-    public StreamObserver<FragmentServiceProto.DataChunk> sendData(
-            StreamObserver<FragmentServiceProto.DataAck> responseObserver) {
+    public StreamObserver<FragmentServiceProto.DataChunk> sendData(StreamObserver<FragmentServiceProto.DataAck> responseObserver) {
         return new StreamObserver<FragmentServiceProto.DataChunk>() {
             private final Map<String, ByteArrayOutputStream> buffers = new HashMap<>();
-
             @Override
             public void onNext(FragmentServiceProto.DataChunk chunk) {
                 try {
                     String key = chunk.getExchangeId() + "_" + chunk.getPartitionId();
-                    ByteArrayOutputStream buffer = buffers.computeIfAbsent(key,
-                            k -> new ByteArrayOutputStream());
-                    buffer.write(chunk.getData().toByteArray());
-
+                    ByteArrayOutputStream buffer = buffers.computeIfAbsent(key, k -> new ByteArrayOutputStream());buffer.write(chunk.getData().toByteArray());
                     if (chunk.getIsLast()) {
-                        try (ObjectInputStream ois = new ObjectInputStream(
-                                new ByteArrayInputStream(buffer.toByteArray()))) {
+                        try (ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream(buffer.toByteArray()))) {
                             JQuickDataSet dataset = (JQuickDataSet) ois.readObject();
                             receivedData.put(key, dataset);
                         }
                         buffers.remove(key);
-
-                        FragmentServiceProto.DataAck ack =
-                                FragmentServiceProto.DataAck.newBuilder()
+                        FragmentServiceProto.DataAck ack = FragmentServiceProto.DataAck.newBuilder()
                                         .setExchangeId(chunk.getExchangeId())
                                         .setPartitionId(chunk.getPartitionId())
                                         .setReceivedSeq(chunk.getSequenceNumber())
@@ -143,27 +129,23 @@ public class JQuickFragmentGrpcService extends FragmentServiceGrpc.FragmentServi
     }
 
     @Override
-    public void fetchData(FragmentServiceProto.FetchRequest request,
-                          StreamObserver<FragmentServiceProto.DataChunk> responseObserver) {
+    public void fetchData(FragmentServiceProto.FetchRequest request, StreamObserver<FragmentServiceProto.DataChunk> responseObserver) {
         try {
             String key = request.getExchangeId() + "_" + request.getPartitionId();
             JQuickDataSet dataset = receivedData.remove(key);
-
             if (dataset != null) {
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
                 try (ObjectOutputStream oos = new ObjectOutputStream(baos)) {
                     oos.writeObject(dataset);
                     oos.flush();
                 }
-
-                FragmentServiceProto.DataChunk chunk =
-                        FragmentServiceProto.DataChunk.newBuilder()
-                                .setExchangeId(request.getExchangeId())
-                                .setPartitionId(request.getPartitionId())
-                                .setSequenceNumber(0)
-                                .setData(com.google.protobuf.ByteString.copyFrom(baos.toByteArray()))
-                                .setIsLast(true)
-                                .build();
+                FragmentServiceProto.DataChunk chunk = FragmentServiceProto.DataChunk.newBuilder()
+                   .setExchangeId(request.getExchangeId())
+                   .setPartitionId(request.getPartitionId())
+                   .setSequenceNumber(0)
+                   .setData(com.google.protobuf.ByteString.copyFrom(baos.toByteArray()))
+                   .setIsLast(true)
+                 .build();
                 responseObserver.onNext(chunk);
             }
             responseObserver.onCompleted();
@@ -173,12 +155,10 @@ public class JQuickFragmentGrpcService extends FragmentServiceGrpc.FragmentServi
     }
 
     @Override
-    public void healthCheck(FragmentServiceProto.HealthCheckRequest request,
-                            StreamObserver<FragmentServiceProto.HealthCheckResponse> responseObserver) {
-        FragmentServiceProto.HealthCheckResponse response =
-                FragmentServiceProto.HealthCheckResponse.newBuilder()
-                        .setStatus(FragmentServiceProto.HealthCheckResponse.ServingStatus.SERVING)
-                        .build();
+    public void healthCheck(FragmentServiceProto.HealthCheckRequest request, StreamObserver<FragmentServiceProto.HealthCheckResponse> responseObserver) {
+        FragmentServiceProto.HealthCheckResponse response = FragmentServiceProto.HealthCheckResponse.newBuilder()
+        .setStatus(FragmentServiceProto.HealthCheckResponse.ServingStatus.SERVING)
+        .build();
         responseObserver.onNext(response);
         responseObserver.onCompleted();
     }
