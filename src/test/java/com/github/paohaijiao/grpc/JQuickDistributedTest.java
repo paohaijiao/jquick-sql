@@ -67,7 +67,6 @@ public class JQuickDistributedTest {
      */
     @Test
     public void testTableScan() throws Exception {
-        System.out.println("\n========== Test 1: Table Scan ==========");
         startWorker(); //启动Worker
         prepareTestData();//准备测试数据
         Set<String> requiredColumns = new HashSet<>(Arrays.asList("id", "name", "age")); // 构建物理计划
@@ -83,7 +82,6 @@ public class JQuickDistributedTest {
         System.out.println("Result rows: " + result.size());
         result.printTable(10);
         stopWorker();//关闭Worker
-        System.out.println("✓ Table scan test passed!");
     }
 
     /**
@@ -104,7 +102,6 @@ public class JQuickDistributedTest {
         assertTrue(response.getSuccess(), "Fragment execution should succeed");
         System.out.println("Fragment executed successfully: " + response.getRowsProcessed() + " rows");
         stopWorker();
-        System.out.println("✓ Fragment execution test passed!");
     }
 
     /**
@@ -124,7 +121,6 @@ public class JQuickDistributedTest {
         assertEquals(testData.size(), receivedData.size(), "Data size should match");
         System.out.println("Data transfer test passed: " + testData.size() + " rows transferred");
         stopWorker();
-        System.out.println("✓ Data transfer test passed!");
     }
 
     /**
@@ -315,21 +311,18 @@ public class JQuickDistributedTest {
         if (!condition) {
             throw new AssertionError(message);
         }
-        System.out.println("  ✓ " + message);
     }
 
     private void assertNotNull(Object obj, String message) {
         if (obj == null) {
             throw new AssertionError(message);
         }
-        System.out.println("  ✓ " + message);
     }
 
     private void assertEquals(long expected, long actual, String message) {
         if (expected != actual) {
             throw new AssertionError(message + " expected: " + expected + ", actual: " + actual);
         }
-        System.out.println("  ✓ " + message);
     }
 
     /**
