@@ -190,7 +190,14 @@ public class JQuickPhysicalPlanOptimizer {
     }
 
     private boolean needsExchange(JQuickPhysicalPlanNode node) {
-        return node instanceof JQuickHashJoinPhysicalNode || node instanceof JQuickHashAggregatePhysicalNode;
+        if (node instanceof JQuickHashAggregatePhysicalNode) {
+            JQuickHashAggregatePhysicalNode agg = (JQuickHashAggregatePhysicalNode) node;
+            if (agg.getStage() == JQuickHashAggregatePhysicalNode.AggregateStage.FINAL) {
+                return false;
+            }
+        }
+        return node instanceof JQuickHashJoinPhysicalNode ||
+                node instanceof JQuickHashAggregatePhysicalNode;
     }
 
     private List<JQuickExpression> extractPartitionKeys(JQuickPhysicalPlanNode node) {
