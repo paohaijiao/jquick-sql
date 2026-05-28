@@ -83,7 +83,6 @@ JQuickSQL 是一个轻量级 SQL 查询引擎，支持异构数据库,文件,res
 | 11 | `AggregatePushdownRule` | 聚合下推 | 高级优化 |
 | 12 | `SimplifyExpressionRule` | 表达式简化 | 高级优化 |
 | 13 | `DistributionOptimizationRule` | 分布优化 | 分布优化 |
-
 ## 基本语法结构
 ### SELECT 语句
 ```sql
