@@ -1,0 +1,520 @@
+syntax = "proto3";
+
+package com.github.paohaijiao.proto;
+option java_package = "com.github.paohaijiao.proto";
+option java_multiple_files = true;
+option java_outer_classname = "JQuickPhysicalPlanProto";
+
+import "google/protobuf/any.proto";
+import "google/protobuf/timestamp.proto";
+
+
+// 列元数据
+message JQuickColumnMetaProto {
+  string name = 1;
+  string type_name = 2;  // Class simple name
+  string source = 3;
+}
+
+message JQuickRowProto {
+  map<string, google.protobuf.Any> data = 1;
+}
+
+message JQuickDataSetProto {
+  repeated JQuickColumnMetaProto columns = 1;
+  repeated JQuickRowProto rows = 2;
+}
+
+message JQuickColumnStatsProto {
+  int64 distinct_count = 1;
+  bytes min_value = 2;
+  bytes max_value = 3;
+  double null_fraction = 4;
+}
+
+message JQuickPhysicalStatsProto {
+  int64 estimated_row_count = 1;
+  int64 estimated_data_size = 2;
+  map<string, JQuickColumnStatsProto> column_stats = 3;
+}
+
+message JQuickPhysicalColumnProto {
+  string name = 1;
+  string type_name = 2;
+  string source_table = 3;
+  bool nullable = 4;
+}
+
+message JQuickTablePartitionInfoProto {
+  string table_name = 1;
+  string partition_column = 2;
+  repeated PartitionProto partitions = 3;
+
+  message PartitionProto {
+    string location = 1;
+    int64 size = 2;
+    int64 row_count = 3;
+    map<string, google.protobuf.Any> partition_values = 4;
+  }
+}
+
+
+message JQuickExpressionProto {
+  ExpressionType type = 1;
+  string value = 2;
+  repeated JQuickExpressionProto children = 3;
+  map<string, string> attributes = 4;
+
+  enum ExpressionType {
+    COLUMN_REF = 0;
+    LITERAL = 1;
+    FUNCTION = 2;
+    BINARY_OPERATOR = 3;
+    UNARY_OPERATOR = 4;
+    CASE_WHEN = 5;
+    SUBQUERY = 6;
+  }
+}
+
+
+enum JQuickExchangeTypeProto {
+  EX_SHUFFLE = 0;
+  EX_BROADCAST = 1;
+  EX_GATHER = 2;
+  EX_REPARTITION = 3;
+  EX_RECEIVE = 4;
+}
+
+enum JQuickPartitionStrategyProto {
+  PS_HASH = 0;
+  PS_ROUND_ROBIN = 1;
+  PS_RANGE = 2;
+  PS_REPLICATE = 3;
+  PS_UNKNOWN = 4;
+}
+
+message JQuickExchangeNodeProto {
+  string exchange_id = 1;
+  JQuickExchangeTypeProto exchange_type = 2;
+  JQuickPartitionStrategyProto partition_strategy = 3;
+  repeated JQuickExpressionProto partition_keys = 4;
+  int32 parallelism = 5;
+}
+
+
+// Join类型枚举
+enum JQuickJoinTypeProto {
+  JOIN_INNER = 0;
+  JOIN_LEFT = 1;
+  JOIN_RIGHT = 2;
+  JOIN_FULL = 3;
+  JOIN_CROSS = 4;
+  JOIN_SEMI = 5;
+  JOIN_ANTI = 6;
+}
+
+// BuildSide枚举（使用JOIN_前缀避免冲突）
+enum JQuickBuildSideProto {
+  BUILD_SIDE_LEFT = 0;
+  BUILD_SIDE_RIGHT = 1;
+}
+
+// JoinDistribution枚举
+enum JQuickJoinDistributionProto {
+  JOIN_DIST_LOCAL = 0;
+  JOIN_DIST_SHUFFLE_HASH = 1;
+  JOIN_DIST_BROADCAST_HASH = 2;
+  JOIN_DIST_PARTITIONED = 3;
+}
+
+
+
+// 基础节点
+message JQuickPhysicalPlanNodeProto {
+  string node_type = 1;
+  JQuickPhysicalStatsProto stats = 2;
+  repeated JQuickPhysicalColumnProto output_schema = 3;
+
+  oneof node {
+    JQuickTableScanNodeProto table_scan = 10;
+    JQuickFilterNodeProto filter = 11;
+    JQuickProjectNodeProto project = 12;
+    JQuickHashJoinNodeProto hash_join = 13;
+    JQuickNestedLoopJoinNodeProto nested_loop_join = 14;
+    JQuickHashAggregateNodeProto hash_aggregate = 15;
+    JQuickSortNodeProto sort = 16;
+    JQuickLimitNodeProto limit = 17;
+    JQuickExchangeNodeProto exchange = 18;
+    JQuickValuesNodeProto values = 19;
+    JQuickEmptyNodeProto empty = 20;
+    JQuickWindowNodeProto window = 21;
+    JQuickSetOperationNodeProto set_operation = 22;
+    JQuickTopNNodeProto top_n = 23;
+    JQuickRecursiveUnionNodeProto recursive_union = 24;
+  }
+}
+
+// TableScan节点
+message JQuickTableScanNodeProto {
+  string table_name = 1;
+  string alias = 2;
+  repeated string required_columns = 3;
+  JQuickExpressionProto filter_predicate = 4;
+  JQuickTablePartitionInfoProto partition_info = 5;
+}
+
+// Filter节点
+message JQuickFilterNodeProto {
+  JQuickExpressionProto predicate = 1;
+}
+
+// Project节点
+message JQuickProjectNodeProto {
+  repeated SelectItemProto select_items = 1;
+  bool distinct = 2;
+
+  message SelectItemProto {
+    JQuickExpressionProto expression = 1;
+    string alias = 2;
+  }
+}
+
+// HashJoin节点
+message JQuickHashJoinNodeProto {
+  JQuickJoinTypeProto join_type = 1;
+  JQuickExpressionProto condition = 2;
+  repeated JoinKeyPairProto join_keys = 3;
+  JQuickBuildSideProto build_side = 4;
+  JQuickJoinDistributionProto distribution = 5;
+
+  message JoinKeyPairProto {
+    JQuickExpressionProto left_key = 1;
+    JQuickExpressionProto right_key = 2;
+  }
+}
+
+// NestedLoopJoin节点
+message JQuickNestedLoopJoinNodeProto {
+  JQuickJoinTypeProto join_type = 1;
+  JQuickExpressionProto condition = 2;
+}
+
+// HashAggregate节点
+message JQuickHashAggregateNodeProto {
+  repeated JQuickExpressionProto group_keys = 1;
+  repeated AggregateFunctionProto aggregates = 2;
+  JQuickExpressionProto having_condition = 3;
+  AggregateStage stage = 4;
+  repeated GroupingSetProto grouping_sets = 5;
+
+  enum AggregateStage {
+    AGG_PARTIAL = 0;
+    AGG_FINAL = 1;
+    AGG_SINGLE = 2;
+  }
+
+  message AggregateFunctionProto {
+    string function_name = 1;
+    JQuickExpressionProto argument = 2;
+    bool distinct = 3;
+    string alias = 4;
+    bool is_count_star = 5;
+    string separator = 6;
+    AggregateStage internal_stage = 7;
+  }
+
+  message GroupingSetProto {
+    repeated JQuickExpressionProto keys = 1;
+    GroupingSetType type = 2;
+
+    enum GroupingSetType {
+      GS_SIMPLE = 0;
+      GS_ROLLUP = 1;
+      GS_CUBE = 2;
+    }
+  }
+}
+
+// Sort节点
+message JQuickSortNodeProto {
+  repeated OrderByItemProto order_by_items = 1;
+
+  message OrderByItemProto {
+    string column_name = 1;
+    bool ascending = 2;
+    bool nulls_first = 3;
+  }
+}
+
+// Limit节点
+message JQuickLimitNodeProto {
+  int32 limit = 1;
+  int32 offset = 2;
+}
+
+// Values节点
+message JQuickValuesNodeProto {
+  repeated JQuickRowProto rows = 1;
+  repeated string column_names = 2;
+  repeated string column_types = 3;
+}
+
+// Empty节点
+message JQuickEmptyNodeProto {
+  // 空节点，无字段
+}
+
+// Window节点
+message JQuickWindowNodeProto {
+  repeated WindowFunctionProto window_functions = 1;
+
+  message WindowFunctionProto {
+    string function_name = 1;
+    JQuickExpressionProto argument = 2;
+    WindowSpecProto window_spec = 3;
+    string alias = 4;
+  }
+
+  message WindowSpecProto {
+    repeated JQuickExpressionProto partition_keys = 1;
+    repeated JQuickSortNodeProto.OrderByItemProto order_keys = 2;
+    WindowFrameProto frame = 3;
+  }
+
+  message WindowFrameProto {
+    FrameType frame_type = 1;
+    BoundaryType start_type = 2;
+    JQuickExpressionProto start_offset = 3;
+    BoundaryType end_type = 4;
+    JQuickExpressionProto end_offset = 5;
+
+    enum FrameType {
+      FRAME_ROWS = 0;
+      FRAME_RANGE = 1;
+    }
+
+    enum BoundaryType {
+      BOUND_UNBOUNDED_PRECEDING = 0;
+      BOUND_PRECEDING = 1;
+      BOUND_CURRENT_ROW = 2;
+      BOUND_FOLLOWING = 3;
+      BOUND_UNBOUNDED_FOLLOWING = 4;
+    }
+  }
+}
+
+// SetOperation节点
+message JQuickSetOperationNodeProto {
+  JQuickSQLOperationTypeProto operation_type = 1;
+
+  enum JQuickSQLOperationTypeProto {
+    SET_UNION = 0;
+    SET_UNION_ALL = 1;
+    SET_INTERSECT = 2;
+    SET_EXCEPT = 3;
+  }
+}
+
+// TopN节点
+message JQuickTopNNodeProto {
+  repeated JQuickSortNodeProto.OrderByItemProto order_by_items = 1;
+  int32 limit = 2;
+  int32 offset = 3;
+}
+
+// RecursiveUnion节点
+message JQuickRecursiveUnionNodeProto {
+  string cte_name = 1;
+  repeated string column_names = 2;
+  bool union_all = 3;
+  int32 max_recursion_depth = 4;
+}
+
+// ========== Fragment相关定义 ==========
+
+// Fragment类型
+enum JQuickFragmentTypeProto {
+  FRAGMENT_SOURCE = 0;
+  FRAGMENT_INTERMEDIATE = 1;
+  FRAGMENT_SINK = 2;
+}
+
+// Fragment定义
+message JQuickFragmentProto {
+  int64 fragment_id = 1;
+  JQuickFragmentTypeProto type = 2;
+  JQuickPhysicalPlanNodeProto plan = 3;
+  repeated int64 child_fragment_ids = 4;
+  JQuickExchangeNodeProto output_exchange = 5;
+  repeated JQuickExchangeNodeProto input_exchanges = 6;
+  int32 parallelism = 7;
+  string assigned_host = 8;
+}
+
+// 分布式计划
+message JQuickDistributedPlanProto {
+  JQuickFragmentProto root_fragment = 1;
+  int32 default_parallelism = 2;
+  map<int64, JQuickFragmentProto> fragments = 3;
+}
+
+// ========== gRPC服务定义 ==========
+
+// 执行任务请求
+message ExecuteTaskRequest {
+  string task_id = 1;
+  JQuickFragmentProto fragment = 2;
+  int32 task_index = 3;
+  int32 total_tasks = 4;
+  map<string, string> session_parameters = 5;
+}
+
+// 执行任务响应
+message ExecuteTaskResponse {
+  string task_id = 1;
+  TaskStatus status = 2;
+  string error_message = 3;
+  JQuickDataSetProto result_data = 4;
+  JQuickPhysicalStatsProto execution_stats = 5;
+  int64 processed_rows = 6;
+  int64 execution_time_ms = 7;
+
+  enum TaskStatus {
+    TASK_SUCCESS = 0;
+    TASK_FAILED = 1;
+    TASK_RUNNING = 2;
+    TASK_CANCELLED = 3;
+  }
+}
+
+// 数据块（流式传输）
+message DataChunk {
+  string task_id = 1;
+  int64 chunk_index = 2;
+  bool is_last = 3;
+  JQuickDataSetProto data = 4;
+}
+
+// 心跳请求
+message HeartbeatRequest {
+  string worker_id = 1;
+  int64 timestamp = 2;
+  map<string, string> worker_status = 3;
+}
+
+// 心跳响应
+message HeartbeatResponse {
+  bool healthy = 1;
+  string message = 2;
+}
+
+// 取消任务请求
+message CancelTaskRequest {
+  string task_id = 1;
+  string reason = 2;
+}
+
+// 取消任务响应
+message CancelTaskResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+// 获取计划请求
+message GetPlanRequest {
+  string query_id = 1;
+  string sql = 2;
+  map<string, string> parameters = 3;
+}
+
+// 获取计划响应
+message GetPlanResponse {
+  string query_id = 1;
+  JQuickDistributedPlanProto distributed_plan = 2;
+  string error_message = 3;
+}
+
+// ========== gRPC服务 ==========
+
+service JQuickPhysicalPlanService {
+  // 获取分布式执行计划
+  rpc GetDistributedPlan(GetPlanRequest) returns (GetPlanResponse);
+
+  // 执行单个任务
+  rpc ExecuteTask(ExecuteTaskRequest) returns (ExecuteTaskResponse);
+
+  // 流式执行任务（返回数据流）
+  rpc ExecuteTaskStream(ExecuteTaskRequest) returns (stream DataChunk);
+
+  // 取消任务
+  rpc CancelTask(CancelTaskRequest) returns (CancelTaskResponse);
+
+  // 心跳检测
+  rpc Heartbeat(HeartbeatRequest) returns (HeartbeatResponse);
+}
+
+// ========== 协调器服务 ==========
+
+service JQuickCoordinatorService {
+  // 提交查询
+  rpc SubmitQuery(SubmitQueryRequest) returns (SubmitQueryResponse);
+
+  // 获取查询状态
+  rpc GetQueryStatus(GetQueryStatusRequest) returns (GetQueryStatusResponse);
+
+  // 取消查询
+  rpc CancelQuery(CancelQueryRequest) returns (CancelQueryResponse);
+
+  // 获取查询结果
+  rpc GetQueryResult(GetQueryResultRequest) returns (stream DataChunk);
+}
+
+message SubmitQueryRequest {
+  string query_id = 1;
+  string sql = 2;
+  map<string, string> parameters = 3;
+  int32 default_parallelism = 4;
+}
+
+message SubmitQueryResponse {
+  string query_id = 1;
+  bool accepted = 2;
+  string message = 3;
+  JQuickDistributedPlanProto plan = 4;
+}
+
+message GetQueryStatusRequest {
+  string query_id = 1;
+}
+
+message GetQueryStatusResponse {
+  string query_id = 1;
+  QueryState state = 2;
+  string error_message = 3;
+  int64 rows_processed = 4;
+  int64 execution_time_ms = 5;
+
+  enum QueryState {
+    QUERY_PENDING = 0;
+    QUERY_RUNNING = 1;
+    QUERY_SUCCEEDED = 2;
+    QUERY_FAILED = 3;
+    QUERY_CANCELLED = 4;
+  }
+}
+
+message CancelQueryRequest {
+  string query_id = 1;
+}
+
+message CancelQueryResponse {
+  string query_id = 1;
+  bool success = 2;
+  string message = 3;
+}
+
+message GetQueryResultRequest {
+  string query_id = 1;
+  int32 max_rows = 2;
+  int32 offset = 3;
+}
