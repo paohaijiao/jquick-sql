@@ -678,7 +678,7 @@ public final class JQuickPhysicalPlanProto {
       "uery_id\030\002 \001(\t\022\023\n\013chunk_index\030\003 \001(\003\022\017\n\007is" +
       "_last\030\004 \001(\010\022=\n\004data\030\005 \001(\0132/.com.github.p" +
       "aohaijiao.proto.JQuickDataSetProto\022\024\n\014pa" +
-      "rtition_id\030\006 \001(\005\022\027\n\017compressed_size\030\007 \001(" +
+      "rtition_id\030\006 \001(\t\022\027\n\017compressed_size\030\007 \001(" +
       "\003\022\025\n\roriginal_size\030\010 \001(\003\022\025\n\ris_compresse" +
       "d\030\t \001(\010\022\023\n\013sequence_id\030\n \001(\003\"\240\002\n\025JQuickW" +
       "orkerInfoProto\022\021\n\tworker_id\030\001 \001(\t\022\014\n\004hos" +

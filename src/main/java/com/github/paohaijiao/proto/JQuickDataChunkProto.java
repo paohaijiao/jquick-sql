@@ -22,6 +22,7 @@ private static final long serialVersionUID = 0L;
   private JQuickDataChunkProto() {
     taskId_ = "";
     queryId_ = "";
+    partitionId_ = "";
   }
 
   @Override
@@ -176,18 +177,50 @@ private static final long serialVersionUID = 0L;
   }
 
   public static final int PARTITION_ID_FIELD_NUMBER = 6;
-  private int partitionId_ = 0;
+  @SuppressWarnings("serial")
+  private volatile Object partitionId_ = "";
   /**
    * <pre>
    * 所属分区
    * </pre>
    *
-   * <code>int32 partition_id = 6;</code>
+   * <code>string partition_id = 6;</code>
    * @return The partitionId.
    */
   @Override
-  public int getPartitionId() {
-    return partitionId_;
+  public String getPartitionId() {
+    Object ref = partitionId_;
+    if (ref instanceof String) {
+      return (String) ref;
+    } else {
+      com.google.protobuf.ByteString bs = 
+          (com.google.protobuf.ByteString) ref;
+      String s = bs.toStringUtf8();
+      partitionId_ = s;
+      return s;
+    }
+  }
+  /**
+   * <pre>
+   * 所属分区
+   * </pre>
+   *
+   * <code>string partition_id = 6;</code>
+   * @return The bytes for partitionId.
+   */
+  @Override
+  public com.google.protobuf.ByteString
+      getPartitionIdBytes() {
+    Object ref = partitionId_;
+    if (ref instanceof String) {
+      com.google.protobuf.ByteString b = 
+          com.google.protobuf.ByteString.copyFromUtf8(
+              (String) ref);
+      partitionId_ = b;
+      return b;
+    } else {
+      return (com.google.protobuf.ByteString) ref;
+    }
   }
 
   public static final int COMPRESSED_SIZE_FIELD_NUMBER = 7;
@@ -267,8 +300,8 @@ private static final long serialVersionUID = 0L;
     if (data_ != null) {
       output.writeMessage(5, getData());
     }
-    if (partitionId_ != 0) {
-      output.writeInt32(6, partitionId_);
+    if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(partitionId_)) {
+      com.google.protobuf.GeneratedMessageV3.writeString(output, 6, partitionId_);
     }
     if (compressedSize_ != 0L) {
       output.writeInt64(7, compressedSize_);
@@ -309,9 +342,8 @@ private static final long serialVersionUID = 0L;
       size += com.google.protobuf.CodedOutputStream
         .computeMessageSize(5, getData());
     }
-    if (partitionId_ != 0) {
-      size += com.google.protobuf.CodedOutputStream
-        .computeInt32Size(6, partitionId_);
+    if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(partitionId_)) {
+      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(6, partitionId_);
     }
     if (compressedSize_ != 0L) {
       size += com.google.protobuf.CodedOutputStream
@@ -357,8 +389,8 @@ private static final long serialVersionUID = 0L;
       if (!getData()
           .equals(other.getData())) return false;
     }
-    if (getPartitionId()
-        != other.getPartitionId()) return false;
+    if (!getPartitionId()
+        .equals(other.getPartitionId())) return false;
     if (getCompressedSize()
         != other.getCompressedSize()) return false;
     if (getOriginalSize()
@@ -393,7 +425,7 @@ private static final long serialVersionUID = 0L;
       hash = (53 * hash) + getData().hashCode();
     }
     hash = (37 * hash) + PARTITION_ID_FIELD_NUMBER;
-    hash = (53 * hash) + getPartitionId();
+    hash = (53 * hash) + getPartitionId().hashCode();
     hash = (37 * hash) + COMPRESSED_SIZE_FIELD_NUMBER;
     hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
         getCompressedSize());
@@ -548,7 +580,7 @@ private static final long serialVersionUID = 0L;
         dataBuilder_.dispose();
         dataBuilder_ = null;
       }
-      partitionId_ = 0;
+      partitionId_ = "";
       compressedSize_ = 0L;
       originalSize_ = 0L;
       isCompressed_ = false;
@@ -683,8 +715,10 @@ private static final long serialVersionUID = 0L;
       if (other.hasData()) {
         mergeData(other.getData());
       }
-      if (other.getPartitionId() != 0) {
-        setPartitionId(other.getPartitionId());
+      if (!other.getPartitionId().isEmpty()) {
+        partitionId_ = other.partitionId_;
+        bitField0_ |= 0x00000020;
+        onChanged();
       }
       if (other.getCompressedSize() != 0L) {
         setCompressedSize(other.getCompressedSize());
@@ -751,11 +785,11 @@ private static final long serialVersionUID = 0L;
               bitField0_ |= 0x00000010;
               break;
             } // case 42
-            case 48: {
-              partitionId_ = input.readInt32();
+            case 50: {
+              partitionId_ = input.readStringRequireUtf8();
               bitField0_ |= 0x00000020;
               break;
-            } // case 48
+            } // case 50
             case 56: {
               compressedSize_ = input.readInt64();
               bitField0_ |= 0x00000040;
@@ -1120,30 +1154,60 @@ private static final long serialVersionUID = 0L;
       return dataBuilder_;
     }
 
-    private int partitionId_ ;
+    private Object partitionId_ = "";
     /**
      * <pre>
      * 所属分区
      * </pre>
      *
-     * <code>int32 partition_id = 6;</code>
+     * <code>string partition_id = 6;</code>
      * @return The partitionId.
      */
-    @Override
-    public int getPartitionId() {
-      return partitionId_;
+    public String getPartitionId() {
+      Object ref = partitionId_;
+      if (!(ref instanceof String)) {
+        com.google.protobuf.ByteString bs =
+            (com.google.protobuf.ByteString) ref;
+        String s = bs.toStringUtf8();
+        partitionId_ = s;
+        return s;
+      } else {
+        return (String) ref;
+      }
     }
     /**
      * <pre>
      * 所属分区
      * </pre>
      *
-     * <code>int32 partition_id = 6;</code>
+     * <code>string partition_id = 6;</code>
+     * @return The bytes for partitionId.
+     */
+    public com.google.protobuf.ByteString
+        getPartitionIdBytes() {
+      Object ref = partitionId_;
+      if (ref instanceof String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (String) ref);
+        partitionId_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+    /**
+     * <pre>
+     * 所属分区
+     * </pre>
+     *
+     * <code>string partition_id = 6;</code>
      * @param value The partitionId to set.
      * @return This builder for chaining.
      */
-    public Builder setPartitionId(int value) {
-      
+    public Builder setPartitionId(
+        String value) {
+      if (value == null) { throw new NullPointerException(); }
       partitionId_ = value;
       bitField0_ |= 0x00000020;
       onChanged();
@@ -1154,12 +1218,30 @@ private static final long serialVersionUID = 0L;
      * 所属分区
      * </pre>
      *
-     * <code>int32 partition_id = 6;</code>
+     * <code>string partition_id = 6;</code>
      * @return This builder for chaining.
      */
     public Builder clearPartitionId() {
+      partitionId_ = getDefaultInstance().getPartitionId();
       bitField0_ = (bitField0_ & ~0x00000020);
-      partitionId_ = 0;
+      onChanged();
+      return this;
+    }
+    /**
+     * <pre>
+     * 所属分区
+     * </pre>
+     *
+     * <code>string partition_id = 6;</code>
+     * @param value The bytes for partitionId to set.
+     * @return This builder for chaining.
+     */
+    public Builder setPartitionIdBytes(
+        com.google.protobuf.ByteString value) {
+      if (value == null) { throw new NullPointerException(); }
+      checkByteStringIsUtf8(value);
+      partitionId_ = value;
+      bitField0_ |= 0x00000020;
       onChanged();
       return this;
     }

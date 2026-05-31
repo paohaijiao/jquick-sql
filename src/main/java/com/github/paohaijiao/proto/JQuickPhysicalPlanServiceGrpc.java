@@ -12,7 +12,7 @@ public final class JQuickPhysicalPlanServiceGrpc {
 
   private JQuickPhysicalPlanServiceGrpc() {}
 
-  public static final java.lang.String SERVICE_NAME = "com.github.paohaijiao.proto.JQuickPhysicalPlanService";
+  public static final String SERVICE_NAME = "com.github.paohaijiao.proto.JQuickPhysicalPlanService";
 
   // Static method descriptors that strictly reflect the proto.
   private static volatile io.grpc.MethodDescriptor<JQuickExecuteTaskRequest,
@@ -114,7 +114,7 @@ public final class JQuickPhysicalPlanServiceGrpc {
   public static JQuickPhysicalPlanServiceStub newStub(io.grpc.Channel channel) {
     io.grpc.stub.AbstractStub.StubFactory<JQuickPhysicalPlanServiceStub> factory =
       new io.grpc.stub.AbstractStub.StubFactory<JQuickPhysicalPlanServiceStub>() {
-        @java.lang.Override
+        @Override
         public JQuickPhysicalPlanServiceStub newStub(io.grpc.Channel channel, io.grpc.CallOptions callOptions) {
           return new JQuickPhysicalPlanServiceStub(channel, callOptions);
         }
@@ -129,7 +129,7 @@ public final class JQuickPhysicalPlanServiceGrpc {
       io.grpc.Channel channel) {
     io.grpc.stub.AbstractStub.StubFactory<JQuickPhysicalPlanServiceBlockingV2Stub> factory =
       new io.grpc.stub.AbstractStub.StubFactory<JQuickPhysicalPlanServiceBlockingV2Stub>() {
-        @java.lang.Override
+        @Override
         public JQuickPhysicalPlanServiceBlockingV2Stub newStub(io.grpc.Channel channel, io.grpc.CallOptions callOptions) {
           return new JQuickPhysicalPlanServiceBlockingV2Stub(channel, callOptions);
         }
@@ -144,7 +144,7 @@ public final class JQuickPhysicalPlanServiceGrpc {
       io.grpc.Channel channel) {
     io.grpc.stub.AbstractStub.StubFactory<JQuickPhysicalPlanServiceBlockingStub> factory =
       new io.grpc.stub.AbstractStub.StubFactory<JQuickPhysicalPlanServiceBlockingStub>() {
-        @java.lang.Override
+        @Override
         public JQuickPhysicalPlanServiceBlockingStub newStub(io.grpc.Channel channel, io.grpc.CallOptions callOptions) {
           return new JQuickPhysicalPlanServiceBlockingStub(channel, callOptions);
         }
@@ -159,7 +159,7 @@ public final class JQuickPhysicalPlanServiceGrpc {
       io.grpc.Channel channel) {
     io.grpc.stub.AbstractStub.StubFactory<JQuickPhysicalPlanServiceFutureStub> factory =
       new io.grpc.stub.AbstractStub.StubFactory<JQuickPhysicalPlanServiceFutureStub>() {
-        @java.lang.Override
+        @Override
         public JQuickPhysicalPlanServiceFutureStub newStub(io.grpc.Channel channel, io.grpc.CallOptions callOptions) {
           return new JQuickPhysicalPlanServiceFutureStub(channel, callOptions);
         }
@@ -205,7 +205,7 @@ public final class JQuickPhysicalPlanServiceGrpc {
   public static abstract class JQuickPhysicalPlanServiceImplBase
       implements io.grpc.BindableService, AsyncService {
 
-    @java.lang.Override public final io.grpc.ServerServiceDefinition bindService() {
+    @Override public final io.grpc.ServerServiceDefinition bindService() {
       return JQuickPhysicalPlanServiceGrpc.bindService(this);
     }
   }
@@ -223,7 +223,7 @@ public final class JQuickPhysicalPlanServiceGrpc {
       super(channel, callOptions);
     }
 
-    @java.lang.Override
+    @Override
     protected JQuickPhysicalPlanServiceStub build(
         io.grpc.Channel channel, io.grpc.CallOptions callOptions) {
       return new JQuickPhysicalPlanServiceStub(channel, callOptions);
@@ -267,7 +267,7 @@ public final class JQuickPhysicalPlanServiceGrpc {
       super(channel, callOptions);
     }
 
-    @java.lang.Override
+    @Override
     protected JQuickPhysicalPlanServiceBlockingV2Stub build(
         io.grpc.Channel channel, io.grpc.CallOptions callOptions) {
       return new JQuickPhysicalPlanServiceBlockingV2Stub(channel, callOptions);
@@ -310,7 +310,7 @@ public final class JQuickPhysicalPlanServiceGrpc {
       super(channel, callOptions);
     }
 
-    @java.lang.Override
+    @Override
     protected JQuickPhysicalPlanServiceBlockingStub build(
         io.grpc.Channel channel, io.grpc.CallOptions callOptions) {
       return new JQuickPhysicalPlanServiceBlockingStub(channel, callOptions);
@@ -352,7 +352,7 @@ public final class JQuickPhysicalPlanServiceGrpc {
       super(channel, callOptions);
     }
 
-    @java.lang.Override
+    @Override
     protected JQuickPhysicalPlanServiceFutureStub build(
         io.grpc.Channel channel, io.grpc.CallOptions callOptions) {
       return new JQuickPhysicalPlanServiceFutureStub(channel, callOptions);
@@ -392,8 +392,8 @@ public final class JQuickPhysicalPlanServiceGrpc {
       this.methodId = methodId;
     }
 
-    @java.lang.Override
-    @java.lang.SuppressWarnings("unchecked")
+    @Override
+    @SuppressWarnings("unchecked")
     public void invoke(Req request, io.grpc.stub.StreamObserver<Resp> responseObserver) {
       switch (methodId) {
         case METHODID_EXECUTE_TASK:
@@ -413,8 +413,8 @@ public final class JQuickPhysicalPlanServiceGrpc {
       }
     }
 
-    @java.lang.Override
-    @java.lang.SuppressWarnings("unchecked")
+    @Override
+    @SuppressWarnings("unchecked")
     public io.grpc.stub.StreamObserver<Req> invoke(
         io.grpc.stub.StreamObserver<Resp> responseObserver) {
       switch (methodId) {
@@ -454,12 +454,12 @@ public final class JQuickPhysicalPlanServiceGrpc {
       implements io.grpc.protobuf.ProtoFileDescriptorSupplier, io.grpc.protobuf.ProtoServiceDescriptorSupplier {
     JQuickPhysicalPlanServiceBaseDescriptorSupplier() {}
 
-    @java.lang.Override
+    @Override
     public com.google.protobuf.Descriptors.FileDescriptor getFileDescriptor() {
       return JQuickPhysicalPlanProto.getDescriptor();
     }
 
-    @java.lang.Override
+    @Override
     public com.google.protobuf.Descriptors.ServiceDescriptor getServiceDescriptor() {
       return getFileDescriptor().findServiceByName("JQuickPhysicalPlanService");
     }
@@ -473,13 +473,13 @@ public final class JQuickPhysicalPlanServiceGrpc {
   private static final class JQuickPhysicalPlanServiceMethodDescriptorSupplier
       extends JQuickPhysicalPlanServiceBaseDescriptorSupplier
       implements io.grpc.protobuf.ProtoMethodDescriptorSupplier {
-    private final java.lang.String methodName;
+    private final String methodName;
 
-    JQuickPhysicalPlanServiceMethodDescriptorSupplier(java.lang.String methodName) {
+    JQuickPhysicalPlanServiceMethodDescriptorSupplier(String methodName) {
       this.methodName = methodName;
     }
 
-    @java.lang.Override
+    @Override
     public com.google.protobuf.Descriptors.MethodDescriptor getMethodDescriptor() {
       return getServiceDescriptor().findMethodByName(methodName);
     }

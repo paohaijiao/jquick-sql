@@ -11,7 +11,7 @@ public interface JQuickTaskAssignmentProtoOrBuilder extends
    * <code>string task_id = 1;</code>
    * @return The taskId.
    */
-  java.lang.String getTaskId();
+  String getTaskId();
   /**
    * <code>string task_id = 1;</code>
    * @return The bytes for taskId.

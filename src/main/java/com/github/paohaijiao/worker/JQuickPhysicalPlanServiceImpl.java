@@ -31,8 +31,7 @@ import java.util.logging.Logger;
  * - executeTaskStream: 流式执行任务
  * - cancelTask: 取消任务
  */
-public class JQuickPhysicalPlanServiceImpl
-        extends JQuickPhysicalPlanServiceGrpc.JQuickPhysicalPlanServiceImplBase {
+public class JQuickPhysicalPlanServiceImpl extends JQuickPhysicalPlanServiceGrpc.JQuickPhysicalPlanServiceImplBase {
 
     private static final Logger LOGGER = Logger.getLogger(JQuickPhysicalPlanServiceImpl.class.getName());
 
@@ -51,33 +50,23 @@ public class JQuickPhysicalPlanServiceImpl
      * @param responseObserver 响应观察者
      */
     @Override
-    public void executeTask(JQuickExecuteTaskRequest request,
-                            StreamObserver<JQuickExecuteTaskResponse> responseObserver) {
+    public void executeTask(JQuickExecuteTaskRequest request, StreamObserver<JQuickExecuteTaskResponse> responseObserver) {
         String taskId = request.getTaskId();
         String queryId = request.getQueryId();
-
-        LOGGER.info(String.format("Received executeTask request - taskId: %s, queryId: %s, taskIndex: %d/%d",
-                taskId, queryId, request.getTaskIndex(), request.getTotalTasks()));
-
+        LOGGER.info(String.format("Received executeTask request - taskId: %s, queryId: %s, taskIndex: %d/%d", taskId, queryId, request.getTaskIndex(), request.getTotalTasks()));
         try {
             // 委托给 Worker 执行
             JQuickExecuteTaskResponse response = worker.executeTask(request);
-
-            LOGGER.info(String.format("Task completed - taskId: %s, status: %s, processedRows: %d, executionTime: %dms",
-                    taskId, response.getStatus(), response.getProcessedRows(), response.getExecutionTimeMs()));
-
+            LOGGER.info(String.format("Task completed - taskId: %s, status: %s, processedRows: %d, executionTime: %dms", taskId, response.getStatus(), response.getProcessedRows(), response.getExecutionTimeMs()));
             responseObserver.onNext(response);
             responseObserver.onCompleted();
-
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, String.format("Task execution failed - taskId: %s", taskId), e);
-
             JQuickExecuteTaskResponse errorResponse = JQuickExecuteTaskResponse.newBuilder()
                     .setTaskId(taskId)
                     .setStatus(JQuickTaskStatusProto.TASK_FAILED)
                     .setErrorMessage(e.getMessage())
                     .build();
-
             responseObserver.onNext(errorResponse);
             responseObserver.onCompleted();
         }
@@ -92,20 +81,14 @@ public class JQuickPhysicalPlanServiceImpl
      * @param responseObserver 流式响应观察者
      */
     @Override
-    public void executeTaskStream(JQuickExecuteTaskRequest request,
-                                  StreamObserver<JQuickDataChunkProto> responseObserver) {
+    public void executeTaskStream(JQuickExecuteTaskRequest request, StreamObserver<JQuickDataChunkProto> responseObserver) {
         String taskId = request.getTaskId();
         String queryId = request.getQueryId();
-
-        LOGGER.info(String.format("Received executeTaskStream request - taskId: %s, queryId: %s",
-                taskId, queryId));
-
+        LOGGER.info(String.format("Received executeTaskStream request - taskId: %s, queryId: %s", taskId, queryId));
         try {
             // 委托给 Worker 流式执行
             worker.executeTaskStream(request, responseObserver);
-
             LOGGER.info(String.format("Streaming task completed - taskId: %s", taskId));
-
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, String.format("Streaming task failed - taskId: %s", taskId), e);
             responseObserver.onError(e);

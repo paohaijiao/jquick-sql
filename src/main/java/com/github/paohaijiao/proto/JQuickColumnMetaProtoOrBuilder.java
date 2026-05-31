@@ -11,7 +11,7 @@ public interface JQuickColumnMetaProtoOrBuilder extends
    * <code>string name = 1;</code>
    * @return The name.
    */
-  java.lang.String getName();
+  String getName();
   /**
    * <code>string name = 1;</code>
    * @return The bytes for name.
@@ -23,7 +23,7 @@ public interface JQuickColumnMetaProtoOrBuilder extends
    * <code>string type_name = 2;</code>
    * @return The typeName.
    */
-  java.lang.String getTypeName();
+  String getTypeName();
   /**
    * <code>string type_name = 2;</code>
    * @return The bytes for typeName.
@@ -35,7 +35,7 @@ public interface JQuickColumnMetaProtoOrBuilder extends
    * <code>string source = 3;</code>
    * @return The source.
    */
-  java.lang.String getSource();
+  String getSource();
   /**
    * <code>string source = 3;</code>
    * @return The bytes for source.

@@ -11,7 +11,7 @@ public interface JQuickQueryStatusResponseOrBuilder extends
    * <code>string query_id = 1;</code>
    * @return The queryId.
    */
-  java.lang.String getQueryId();
+  String getQueryId();
   /**
    * <code>string query_id = 1;</code>
    * @return The bytes for queryId.
@@ -34,7 +34,7 @@ public interface JQuickQueryStatusResponseOrBuilder extends
    * <code>string error_message = 3;</code>
    * @return The errorMessage.
    */
-  java.lang.String getErrorMessage();
+  String getErrorMessage();
   /**
    * <code>string error_message = 3;</code>
    * @return The bytes for errorMessage.
@@ -84,31 +84,31 @@ public interface JQuickQueryStatusResponseOrBuilder extends
    * <code>map&lt;string, string&gt; task_status = 9;</code>
    */
   boolean containsTaskStatus(
-      java.lang.String key);
+      String key);
   /**
    * Use {@link #getTaskStatusMap()} instead.
    */
-  @java.lang.Deprecated
-  java.util.Map<java.lang.String, java.lang.String>
+  @Deprecated
+  java.util.Map<String, String>
   getTaskStatus();
   /**
    * <code>map&lt;string, string&gt; task_status = 9;</code>
    */
-  java.util.Map<java.lang.String, java.lang.String>
+  java.util.Map<String, String>
   getTaskStatusMap();
   /**
    * <code>map&lt;string, string&gt; task_status = 9;</code>
    */
   /* nullable */
-java.lang.String getTaskStatusOrDefault(
-      java.lang.String key,
+String getTaskStatusOrDefault(
+      String key,
       /* nullable */
-java.lang.String defaultValue);
+String defaultValue);
   /**
    * <code>map&lt;string, string&gt; task_status = 9;</code>
    */
-  java.lang.String getTaskStatusOrThrow(
-      java.lang.String key);
+  String getTaskStatusOrThrow(
+      String key);
 
   /**
    * <code>.com.github.paohaijiao.proto.JQuickExecutionMetricsProto metrics = 10;</code>

@@ -11,7 +11,7 @@ public interface JQuickHeartbeatRequestOrBuilder extends
    * <code>string worker_id = 1;</code>
    * @return The workerId.
    */
-  java.lang.String getWorkerId();
+  String getWorkerId();
   /**
    * <code>string worker_id = 1;</code>
    * @return The bytes for workerId.
@@ -53,7 +53,7 @@ public interface JQuickHeartbeatRequestOrBuilder extends
    * <code>repeated string completed_task_ids = 7;</code>
    * @return A list containing the completedTaskIds.
    */
-  java.util.List<java.lang.String>
+  java.util.List<String>
       getCompletedTaskIdsList();
   /**
    * <code>repeated string completed_task_ids = 7;</code>
@@ -65,7 +65,7 @@ public interface JQuickHeartbeatRequestOrBuilder extends
    * @param index The index of the element to return.
    * @return The completedTaskIds at the given index.
    */
-  java.lang.String getCompletedTaskIds(int index);
+  String getCompletedTaskIds(int index);
   /**
    * <code>repeated string completed_task_ids = 7;</code>
    * @param index The index of the value to return.
@@ -90,12 +90,12 @@ public interface JQuickHeartbeatRequestOrBuilder extends
    * <code>map&lt;string, int64&gt; partition_memory_usage = 8;</code>
    */
   boolean containsPartitionMemoryUsage(
-      java.lang.String key);
+      String key);
   /**
    * Use {@link #getPartitionMemoryUsageMap()} instead.
    */
-  @java.lang.Deprecated
-  java.util.Map<java.lang.String, java.lang.Long>
+  @Deprecated
+  java.util.Map<String, Long>
   getPartitionMemoryUsage();
   /**
    * <pre>
@@ -104,7 +104,7 @@ public interface JQuickHeartbeatRequestOrBuilder extends
    *
    * <code>map&lt;string, int64&gt; partition_memory_usage = 8;</code>
    */
-  java.util.Map<java.lang.String, java.lang.Long>
+  java.util.Map<String, Long>
   getPartitionMemoryUsageMap();
   /**
    * <pre>
@@ -114,7 +114,7 @@ public interface JQuickHeartbeatRequestOrBuilder extends
    * <code>map&lt;string, int64&gt; partition_memory_usage = 8;</code>
    */
   long getPartitionMemoryUsageOrDefault(
-      java.lang.String key,
+      String key,
       long defaultValue);
   /**
    * <pre>
@@ -124,5 +124,5 @@ public interface JQuickHeartbeatRequestOrBuilder extends
    * <code>map&lt;string, int64&gt; partition_memory_usage = 8;</code>
    */
   long getPartitionMemoryUsageOrThrow(
-      java.lang.String key);
+      String key);
 }

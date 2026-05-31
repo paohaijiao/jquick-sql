@@ -1,4 +1,4 @@
-package com.github.paohaijiao.coordinator;/*
+/*
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,1763 +13,1011 @@ package com.github.paohaijiao.coordinator;/*
  *
  * Copyright (c) [2025-2099] Martin (goudingcheng@gmail.com)
  */
+package com.github.paohaijiao.coordinator;
 
-import com.github.paohaijiao.datasource.JQuickDataSourceManager;
-import com.github.paohaijiao.enums.JQuickBinaryOperator;
-import com.github.paohaijiao.enums.JQuickExchangeType;
-import com.github.paohaijiao.enums.JQuickPartitionStrategy;
-import com.github.paohaijiao.exchange.JQuickExchangeNode;
-import com.github.paohaijiao.expression.JQuickExpression;
-import com.github.paohaijiao.expression.domain.*;
+import com.github.paohaijiao.distributed.JQuickDistributedPlan;
+import com.github.paohaijiao.enums.JQuickFragmentType;
 import com.github.paohaijiao.fragment.JQuickFragment;
+import com.github.paohaijiao.fragment.JQuickFragmenter;
 import com.github.paohaijiao.physical.JQuickPhysicalPlanNode;
-import com.github.paohaijiao.physical.domain.JQuickPhysicalColumn;
-import com.github.paohaijiao.physical.domain.JQuickPhysicalStats;
-import com.github.paohaijiao.physical.domain.JQuickTablePartitionInfo;
-import com.github.paohaijiao.physical.node.*;
 import com.github.paohaijiao.proto.*;
-import com.github.paohaijiao.statement.JQuickColumnMeta;
 import com.github.paohaijiao.statement.JQuickDataSet;
 import com.github.paohaijiao.statement.JQuickRow;
-import com.google.protobuf.Any;
-import com.google.protobuf.Value;
+import com.github.paohaijiao.worker.JQuickDataConverter;
+import com.github.paohaijiao.worker.JQuickWorker;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
-import io.grpc.Server;
-import io.grpc.ServerBuilder;
 import io.grpc.stub.StreamObserver;
 
-import java.io.IOException;
-import java.math.BigDecimal;
-import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 /**
- * Worker 节点 - 执行物理计划片段
+ * 协调器节点 - 负责分布式计划的调度和执行
+ * <p>
+ * 核心职责：
+ * 1. 接收物理计划，通过 Fragmenter 切分为分布式片段
+ * 2. 调度各片段到 Worker 节点执行
+ * 3. 收集执行结果并合并
+ * 4. 处理任务失败和重试
+ * 5. 管理查询生命周期
  */
-public class JQuickWorker {
+public class JQuickCoordinator {
 
-    private final String workerId;
-    private final int port;
+    private static final Logger LOGGER = Logger.getLogger(JQuickCoordinator.class.getName());
+
+    // 默认配置
+    private static final int DEFAULT_WORKER_PORT = 9000;
+
+    private static final long DEFAULT_TASK_TIMEOUT_MS = 30000;
+
+    private static final int DEFAULT_MAX_RETRIES = 3;
+
+    private static final int DEFAULT_BATCH_SIZE = 1000;
+
+    private final String coordinatorId;
+
+    private final JQuickFragmenter fragmenter;
+
+    private final JQuickDataConverter dataConverter;
+
+    private final List<WorkerEndpoint> workers;
+
+    private final Map<String, WorkerEndpoint> workerIdMap;
+
+    private final Map<Integer, WorkerEndpoint> workerIndexMap;
+
+    // gRPC 连接管理
+    private final Map<String, ManagedChannel> workerChannels;
+
+    private final Map<String, JQuickPhysicalPlanServiceGrpc.JQuickPhysicalPlanServiceStub> workerStubs;
+
+    // 任务管理
+    private final Map<String, QueryExecution> activeQueries;
+
     private final ExecutorService executor;
-    private final Map<String, JQuickTaskContext> activeTasks;
-    private final Map<String, JQuickMemoryPartition> memoryPartitions;
-    private final Map<Integer, ManagedChannel> workerChannels;
-    private final Map<Integer, JQuickDataDistributionServiceGrpc.JQuickDataDistributionServiceStub> distributionStubs;
-    private Server server;
 
-    public JQuickWorker(String workerId, int port) {
-        this.workerId = workerId;
-        this.port = port;
-        this.executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
-        this.activeTasks = new ConcurrentHashMap<>();
-        this.memoryPartitions = new ConcurrentHashMap<>();
+    private final ScheduledExecutorService scheduler;
+
+    // 配置
+    private final long taskTimeoutMs;
+
+    private final int maxRetries;
+
+    private final int batchSize;
+
+    private volatile boolean running = true;
+
+    /**
+     * 构造函数 - 使用 Worker 列表
+     */
+    public JQuickCoordinator(String coordinatorId, List<WorkerEndpoint> workers) {
+        this(coordinatorId, workers, DEFAULT_TASK_TIMEOUT_MS, DEFAULT_MAX_RETRIES, DEFAULT_BATCH_SIZE);
+    }
+
+    /**
+     * 构造函数 - 完整参数
+     */
+    public JQuickCoordinator(String coordinatorId, List<WorkerEndpoint> workers, long taskTimeoutMs, int maxRetries, int batchSize) {
+        this.coordinatorId = coordinatorId;
+        this.fragmenter = new JQuickFragmenter();
+        this.dataConverter = new JQuickDataConverter();
+        this.workers = new ArrayList<>(workers);
+        this.workerIdMap = new ConcurrentHashMap<>();
+        this.workerIndexMap = new ConcurrentHashMap<>();
         this.workerChannels = new ConcurrentHashMap<>();
-        this.distributionStubs = new ConcurrentHashMap<>();
+        this.workerStubs = new ConcurrentHashMap<>();
+        this.activeQueries = new ConcurrentHashMap<>();
+        this.executor = Executors.newCachedThreadPool();
+        this.scheduler = Executors.newScheduledThreadPool(2);
+        this.taskTimeoutMs = taskTimeoutMs;
+        this.maxRetries = maxRetries;
+        this.batchSize = batchSize;
+        for (int i = 0; i < workers.size(); i++) {
+            WorkerEndpoint worker = workers.get(i);
+            workerIdMap.put(worker.getWorkerId(), worker);
+            workerIndexMap.put(i, worker);
+        }
+        startHealthCheck();
     }
 
     /**
-     * 执行任务（实现 gRPC 服务方法）
+     * 从运行中的 JQuickWorker 实例构建 Coordinator
+     * 注意：这适用于 Worker 和 Coordinator 在同一个 JVM 中的情况
      */
-    public JQuickExecuteTaskResponse executeTask(JQuickExecuteTaskRequest request) {
-        String taskId = request.getTaskId();
-        JQuickTaskContext context = new JQuickTaskContext(taskId, request);
-        activeTasks.put(taskId, context);
-
-        try {
-            // 1. 接收输入分区数据
-            for (JQuickMemoryPartitionProto inputPartition : request.getInputPartitionsList()) {
-                receivePartition(inputPartition);
-            }
-
-            // 2. 执行物理计划片段
-            JQuickDataSet result = executeFragment(request.getFragment(), context);
-
-            // 3. 输出结果分区
-            if (request.hasOutputPartition()) {
-                sendOutputPartition(result, request.getOutputPartition());
-            }
-
-            // 4. 构建响应
-            return JQuickExecuteTaskResponse.newBuilder()
-                    .setTaskId(taskId)
-                    .setStatus(JQuickTaskStatusProto.TASK_SUCCESS)
-                    .setResultData(convertToProto(result))
-                    .setProcessedRows(context.getProcessedRows())
-                    .setExecutionTimeMs(context.getExecutionTimeMs())
-                    .setMemoryUsedBytes(context.getMemoryUsedBytes())
-                    .build();
-
-        } catch (Exception e) {
-            return JQuickExecuteTaskResponse.newBuilder()
-                    .setTaskId(taskId)
-                    .setStatus(JQuickTaskStatusProto.TASK_FAILED)
-                    .setErrorMessage(e.getMessage())
-                    .build();
-        } finally {
-            activeTasks.remove(taskId);
+    public static JQuickCoordinator fromWorkers(String coordinatorId, List<JQuickWorker> workers) {
+        List<WorkerEndpoint> endpoints = new ArrayList<>();
+        for (int i = 0; i < workers.size(); i++) {
+            JQuickWorker worker = workers.get(i);
+            endpoints.add(new WorkerEndpoint(
+                    worker.getWorkerId(), "localhost", DEFAULT_WORKER_PORT + i, i
+            ));
         }
+        return new JQuickCoordinator(coordinatorId, endpoints);
     }
 
     /**
-     * 流式执行任务
+     * 启动健康检查
      */
-    public void executeTaskStream(JQuickExecuteTaskRequest request, StreamObserver<JQuickDataChunkProto> responseObserver) {
-        String taskId = request.getTaskId();
-        JQuickTaskContext context = new JQuickTaskContext(taskId, request);
-        activeTasks.put(taskId, context);
-
-        try {
-            for (JQuickMemoryPartitionProto inputPartition : request.getInputPartitionsList()) {
-                receivePartition(inputPartition);
-            }
-
-            JQuickDataSet result = executeFragment(request.getFragment(), context);
-            sendInChunks(result, responseObserver);
-
-            if (request.hasOutputPartition()) {
-                sendOutputPartition(result, request.getOutputPartition());
-            }
-
-            responseObserver.onCompleted();
-
-        } catch (Exception e) {
-            responseObserver.onError(e);
-        } finally {
-            activeTasks.remove(taskId);
-        }
-    }
-
-    /**
-     * 发送数据块
-     */
-    private void sendInChunks(JQuickDataSet data, StreamObserver<JQuickDataChunkProto> observer) {
-        List<JQuickRow> rows = data.getRows();
-        int batchSize = 1000;
-        int totalChunks = (rows.size() + batchSize - 1) / batchSize;
-
-        for (int i = 0; i < totalChunks; i++) {
-            int start = i * batchSize;
-            int end = Math.min(start + batchSize, rows.size());
-            List<JQuickRow> batch = rows.subList(start, end);
-
-            JQuickDataSet batchDataSet = new JQuickDataSet(data.getColumns(), new ArrayList<>(batch));
-
-            JQuickDataChunkProto chunk = JQuickDataChunkProto.newBuilder()
-                    .setChunkIndex(i)
-                    .setIsLast(i == totalChunks - 1)
-                    .setData(convertToProto(batchDataSet))
-                    .setSequenceId(System.currentTimeMillis())
-                    .build();
-
-            observer.onNext(chunk);
-        }
-    }
-
-    /**
-     * 执行片段的核心方法
-     */
-    private JQuickDataSet executeFragment(JQuickFragmentProto fragment, JQuickTaskContext context) {
-        JQuickPhysicalPlanNode rootNode = buildPhysicalNode(fragment.getPlan());
-        return executeNode(rootNode, context);
-    }
-
-    /**
-     * 递归执行物理计划节点
-     */
-    private JQuickDataSet executeNode(JQuickPhysicalPlanNode node, JQuickTaskContext context) {
-        if (node == null) {
-            return JQuickDataSet.builder().build();
-        }
-
-        if (node instanceof JQuickTableScanPhysicalNode) {
-            return executeTableScan((JQuickTableScanPhysicalNode) node, context);
-        } else if (node instanceof JQuickFilterPhysicalNode) {
-            return executeFilter((JQuickFilterPhysicalNode) node, context);
-        } else if (node instanceof JQuickProjectPhysicalNode) {
-            return executeProject((JQuickProjectPhysicalNode) node, context);
-        } else if (node instanceof JQuickHashJoinPhysicalNode) {
-            return executeHashJoin((JQuickHashJoinPhysicalNode) node, context);
-        } else if (node instanceof JQuickNestedLoopJoinPhysicalNode) {
-            return executeNestedLoopJoin((JQuickNestedLoopJoinPhysicalNode) node, context);
-        } else if (node instanceof JQuickHashAggregatePhysicalNode) {
-            return executeHashAggregate((JQuickHashAggregatePhysicalNode) node, context);
-        } else if (node instanceof JQuickSortPhysicalNode) {
-            return executeSort((JQuickSortPhysicalNode) node, context);
-        } else if (node instanceof JQuickExchangePhysicalNode) {
-            return executeExchange((JQuickExchangePhysicalNode) node, context);
-        } else if (node instanceof JQuickLimitPhysicalNode) {
-            return executeLimit((JQuickLimitPhysicalNode) node, context);
-        } else if (node instanceof JQuickTopNPhysicalNode) {
-            return executeTopN((JQuickTopNPhysicalNode) node, context);
-        } else if (node instanceof JQuickWindowPhysicalNode) {
-            return executeWindow((JQuickWindowPhysicalNode) node, context);
-        } else if (node instanceof JQuickSetOperationPhysicalNode) {
-            return executeSetOperation((JQuickSetOperationPhysicalNode) node, context);
-        } else if (node instanceof JQuickValuesPhysicalNode) {
-            return executeValues((JQuickValuesPhysicalNode) node, context);
-        } else if (node instanceof JQuickEmptyPhysicalNode) {
-            return JQuickDataSet.builder().build();
-        }
-
-        throw new UnsupportedOperationException("Unknown node type: " + node.getNodeType());
-    }
-
-    /**
-     * 执行 TableScan - 从数据源读取数据
-     */
-    private JQuickDataSet executeTableScan(JQuickTableScanPhysicalNode node, JQuickTaskContext context) {
-        String tableName = node.getTableName();
-        Set<String> requiredColumns = node.getRequiredColumns();
-
-        JQuickDataSet data;
-
-        if (node.getPartitionInfo() != null && node.isUseMemoryDistribution()) {
-            data = readFromMemoryPartition(tableName, requiredColumns);
-        } else {
-            data = readFromDataSource(tableName, requiredColumns);
-        }
-
-        if (node.getFilterPredicate() != null) {
-            data = applyFilter(data, node.getFilterPredicate());
-        }
-
-        context.addProcessedRows(data.size());
-        return data;
-    }
-
-    /**
-     * 执行 Filter - 过滤数据
-     */
-    private JQuickDataSet executeFilter(JQuickFilterPhysicalNode node, JQuickTaskContext context) {
-        JQuickDataSet input = executeNode(node.getChild(), context);
-        JQuickDataSet result = input.filter(row -> evaluatePredicate(row, node.getPredicate()));
-        context.addProcessedRows(input.size());
-        return result;
-    }
-
-    /**
-     * 执行 Project - 投影
-     */
-    private JQuickDataSet executeProject(JQuickProjectPhysicalNode node, JQuickTaskContext context) {
-        JQuickDataSet input = executeNode(node.getChild(), context);
-
-        List<JQuickRow> projectedRows = new ArrayList<>();
-        for (JQuickRow row : input.getRows()) {
-            JQuickRow newRow = new JQuickRow();
-            for (JQuickProjectPhysicalNode.SelectItem item : node.getSelectItems()) {
-                Object value = evaluateExpression(row, item.getExpression());
-                String alias = item.getAlias() != null ? item.getAlias() : "col_" + projectedRows.size();
-                newRow.put(alias, value);
-            }
-            projectedRows.add(newRow);
-        }
-
-        if (node.isDistinct()) {
-            projectedRows = projectedRows.stream()
-                    .distinct()
-                    .collect(Collectors.toList());
-        }
-
-        return new JQuickDataSet(buildOutputSchemaForProject(node), projectedRows);
-    }
-
-    /**
-     * 执行 Hash Join
-     */
-    private JQuickDataSet executeHashJoin(JQuickHashJoinPhysicalNode node, JQuickTaskContext context) {
-        JQuickPhysicalPlanNode buildSide = node.getBuildSide() == JQuickHashJoinPhysicalNode.BuildSide.LEFT
-                ? node.getLeft() : node.getRight();
-        JQuickPhysicalPlanNode probeSide = node.getBuildSide() == JQuickHashJoinPhysicalNode.BuildSide.LEFT
-                ? node.getRight() : node.getLeft();
-
-        JQuickDataSet buildData = executeNode(buildSide, context);
-        Map<Object, List<JQuickRow>> hashTable = buildHashTable(buildData, node);
-
-        JQuickDataSet probeData = executeNode(probeSide, context);
-        List<JQuickRow> resultRows = new ArrayList<>();
-
-        for (JQuickRow probeRow : probeData.getRows()) {
-            Object joinKey = extractJoinKey(probeRow, node, false);
-            List<JQuickRow> matchingRows = hashTable.get(joinKey);
-
-            if (matchingRows != null) {
-                for (JQuickRow buildRow : matchingRows) {
-                    JQuickRow joined = joinRows(probeRow, buildRow, node.getJoinType(),
-                            node.getBuildSide() == JQuickHashJoinPhysicalNode.BuildSide.LEFT);
-                    if (joined != null) {
-                        resultRows.add(joined);
-                    }
-                }
-            } else if (node.getJoinType() == com.github.paohaijiao.enums.JQuickJoinType.LEFT ||
-                    node.getJoinType() == com.github.paohaijiao.enums.JQuickJoinType.FULL) {
-                JQuickRow joined = joinRows(probeRow, null, node.getJoinType(), true);
-                if (joined != null) {
-                    resultRows.add(joined);
-                }
-            }
-        }
-
-        return new JQuickDataSet(buildOutputSchema(node), resultRows);
-    }
-
-    /**
-     * 执行 Nested Loop Join
-     */
-    private JQuickDataSet executeNestedLoopJoin(JQuickNestedLoopJoinPhysicalNode node, JQuickTaskContext context) {
-        JQuickDataSet leftData = executeNode(node.getLeft(), context);
-        JQuickDataSet rightData = executeNode(node.getRight(), context);
-        List<JQuickRow> resultRows = new ArrayList<>();
-
-        for (JQuickRow leftRow : leftData.getRows()) {
-            for (JQuickRow rightRow : rightData.getRows()) {
-                JQuickRow joined = joinRows(leftRow, rightRow, node.getJoinType(), true);
-                if (joined != null) {
-                    if (node.getCondition() == null || evaluatePredicate(joined, node.getCondition())) {
-                        resultRows.add(joined);
+    private void startHealthCheck() {
+        scheduler.scheduleAtFixedRate(() -> {
+            if (!running) return;
+            for (WorkerEndpoint worker : workers) {
+                if (System.currentTimeMillis() - worker.getLastHeartbeat() > 60000) {
+                    if (worker.isHealthy()) {
+                        worker.setHealthy(false);
+                        LOGGER.warning(String.format("Worker %s marked as unhealthy", worker.getWorkerId()));
                     }
                 }
             }
-        }
-
-        return new JQuickDataSet(buildOutputSchema(node), resultRows);
+        }, 30, 30, TimeUnit.SECONDS);
     }
 
     /**
-     * 构建哈希表
+     * 设置带超时的查询执行
      */
-    private Map<Object, List<JQuickRow>> buildHashTable(JQuickDataSet data, JQuickHashJoinPhysicalNode node) {
-        Map<Object, List<JQuickRow>> hashTable = new HashMap<>();
-        for (JQuickRow row : data.getRows()) {
-            Object key = extractJoinKey(row, node, true);
-            if (key != null) {
-                hashTable.computeIfAbsent(key, k -> new ArrayList<>()).add(row);
+    public CompletableFuture<JQuickDataSet> executeQuery(String queryId, JQuickPhysicalPlanNode physicalPlan) {
+        LOGGER.info(String.format("Executing query - queryId: %s", queryId));
+        //切分物理计划为分布式片段
+        JQuickDistributedPlan distributedPlan = fragmenter.fragment(physicalPlan);
+        //创建查询执行上下文
+        QueryExecution execution = new QueryExecution(queryId, distributedPlan);
+        activeQueries.put(queryId, execution);
+        execution.setStatus(QueryExecution.QueryStatus.PLANNING);
+        //异步执行
+        CompletableFuture<JQuickDataSet> future = CompletableFuture.supplyAsync(() -> {
+            try {
+                return doExecuteQuery(execution);
+            } catch (Exception e) {
+                execution.setStatus(QueryExecution.QueryStatus.FAILED);
+                execution.setErrorMessage(e.getMessage());
+                LOGGER.log(Level.SEVERE, String.format("Query execution failed - queryId: %s", queryId), e);
+                throw new CompletionException(e);
+            } finally {
+                cleanupQuery(queryId);
             }
-        }
-        return hashTable;
+        }, executor);
+        return withTimeout(future, taskTimeoutMs * 10, TimeUnit.MILLISECONDS);
     }
 
     /**
-     * 执行 Hash Aggregate
+     * 实际执行查询
      */
-    private JQuickDataSet executeHashAggregate(JQuickHashAggregatePhysicalNode node, JQuickTaskContext context) {
-        JQuickDataSet input = executeNode(node.getChild(), context);
-
-        if (node.getGroupKeys() == null || node.getGroupKeys().isEmpty()) {
-            return executeGlobalAggregate(input, node);
-        } else {
-            return executeGroupedAggregate(input, node);
+    private JQuickDataSet doExecuteQuery(QueryExecution execution) {
+        JQuickDistributedPlan plan = execution.getDistributedPlan();
+        JQuickFragment rootFragment = plan.getRootFragment();
+        execution.setStatus(QueryExecution.QueryStatus.SCHEDULING);
+        //遍历所有 Fragment，调度执行
+        List<JQuickFragment> allFragments = collectAllFragments(rootFragment);
+        //按依赖关系排序（叶子节点先执行）
+        List<JQuickFragment> sortedFragments = topologicalSort(allFragments);
+        execution.setStatus(QueryExecution.QueryStatus.RUNNING);
+        // 执行每个 Fragment
+        Map<Long, CompletableFuture<List<JQuickDataSet>>> fragmentResults = new ConcurrentHashMap<>();
+        for (JQuickFragment fragment : sortedFragments) {
+            CompletableFuture<List<JQuickDataSet>> fragmentFuture = executeFragment(fragment, execution);
+            fragmentResults.put(fragment.getFragmentId(), fragmentFuture);
         }
+        //等待根 Fragment 完成并返回结果
+        CompletableFuture<List<JQuickDataSet>> rootFuture = fragmentResults.get(rootFragment.getFragmentId());
+        List<JQuickDataSet> rootResults = rootFuture.join();
+        //合并结果
+        JQuickDataSet finalResult = mergeResults(rootResults);
+        execution.setStatus(QueryExecution.QueryStatus.COMPLETED);
+        execution.getResultFuture().complete(finalResult);
+        LOGGER.info(String.format("Query completed - queryId: %s, duration: %dms, resultRows: %d", execution.getQueryId(), execution.getExecutionTimeMs(), finalResult.size()));
+        return finalResult;
     }
 
     /**
-     * 分组聚合
+     * 执行单个 Fragment
      */
-    private JQuickDataSet executeGroupedAggregate(JQuickDataSet input, JQuickHashAggregatePhysicalNode node) {
-        Map<JQuickRow, List<JQuickRow>> groups = new HashMap<>();
-
-        for (JQuickRow row : input.getRows()) {
-            JQuickRow groupKey = extractGroupKey(row, node.getGroupKeys());
-            groups.computeIfAbsent(groupKey, k -> new ArrayList<>()).add(row);
+    private CompletableFuture<List<JQuickDataSet>> executeFragment(JQuickFragment fragment, QueryExecution execution) {
+        JQuickFragmentType fragmentType = fragment.getType();
+        int parallelism = fragment.getParallelism();
+        LOGGER.fine(String.format("Executing fragment - fragmentId: %d, type: %s, parallelism: %d", fragment.getFragmentId(), fragmentType, parallelism));
+        List<CompletableFuture<JQuickExecuteTaskResponse>> taskFutures = new ArrayList<>();
+        // 为每个并行度创建任务
+        for (int taskIndex = 0; taskIndex < parallelism; taskIndex++) {
+            final int idx = taskIndex;
+            CompletableFuture<JQuickExecuteTaskResponse> taskFuture = scheduleTask(fragment, idx, parallelism, execution);
+            taskFutures.add(taskFuture);
         }
 
-        List<JQuickRow> resultRows = new ArrayList<>();
-        for (Map.Entry<JQuickRow, List<JQuickRow>> entry : groups.entrySet()) {
-            JQuickRow aggregated = new JQuickRow();
+        // 等待所有任务完成并收集结果
+        return CompletableFuture.allOf(taskFutures.toArray(new CompletableFuture[0]))
+                .thenApply(v -> {
+                    List<JQuickDataSet> results = new ArrayList<>();
+                    for (CompletableFuture<JQuickExecuteTaskResponse> future : taskFutures) {
+                        try {
+                            JQuickExecuteTaskResponse response = future.join();
+                            if (response.getStatus() == JQuickTaskStatusProto.TASK_SUCCESS) {
+                                JQuickDataSet data = dataConverter.convertFromProto(response.getResultData());
+                                if (!data.isEmpty()) {
+                                    results.add(data);
+                                }
+                            } else {
+                                LOGGER.warning(String.format("Task failed - fragmentId: %d, error: %s", fragment.getFragmentId(), response.getErrorMessage()));
+                            }
+                        } catch (Exception e) {
+                            LOGGER.log(Level.WARNING, String.format("Task execution error - fragmentId: %d", fragment.getFragmentId()), e);
+                        }
+                    }
+                    return results;
+                });
+    }
 
-            for (Map.Entry<String, Object> keyEntry : entry.getKey().entrySet()) {
-                aggregated.put(keyEntry.getKey(), keyEntry.getValue());
+    /**
+     * 调度单个任务到 Worker（修复超时问题）
+     */
+    private CompletableFuture<JQuickExecuteTaskResponse> scheduleTask(JQuickFragment fragment, int taskIndex, int totalTasks, QueryExecution execution) {
+        String taskId = String.format("%s_%d_%d", execution.getQueryId(), fragment.getFragmentId(), taskIndex);
+        // 选择 Worker（简单的轮询策略）
+        WorkerEndpoint worker = selectWorker(taskIndex, totalTasks);
+        TaskExecution taskExec = new TaskExecution(fragment.getFragmentId(), taskIndex, totalTasks, worker);
+        execution.getTasks().put(taskId, taskExec);
+        taskExec.setStatus(TaskExecution.TaskStatus.SCHEDULED);
+        taskExec.setStartTime(System.currentTimeMillis());
+        CompletableFuture<JQuickExecuteTaskResponse> future = new CompletableFuture<>();
+        executor.submit(() -> {
+            try {
+                taskExec.setStatus(TaskExecution.TaskStatus.RUNNING);
+                JQuickExecuteTaskResponse response = executeTaskWithRetry(buildTaskRequest(execution.getQueryId(), taskId, fragment, taskIndex, totalTasks), taskExec, execution);
+                taskExec.setStatus(TaskExecution.TaskStatus.SUCCESS);
+                taskExec.setEndTime(System.currentTimeMillis());
+                future.complete(response);
+                LOGGER.fine(String.format("Task completed - taskId: %s, worker: %s, duration: %dms", taskId, worker.getWorkerId(), taskExec.getExecutionTimeMs()));
+            } catch (Exception e) {
+                taskExec.setStatus(TaskExecution.TaskStatus.FAILED);
+                taskExec.setErrorMessage(e.getMessage());
+                taskExec.setEndTime(System.currentTimeMillis());
+                future.completeExceptionally(e);
+                LOGGER.log(Level.WARNING, String.format("Task failed - taskId: %s, worker: %s", taskId, worker.getWorkerId()), e);
             }
-
-            for (JQuickHashAggregatePhysicalNode.AggregateFunction agg : node.getAggregates()) {
-                Object value = computeAggregate(entry.getValue(), agg);
-                String alias = agg.getAlias() != null ? agg.getAlias() : agg.getFunctionName();
-                aggregated.put(alias, value);
-            }
-
-            resultRows.add(aggregated);
-        }
-
-        if (node.getHavingCondition() != null) {
-            resultRows = resultRows.stream()
-                    .filter(row -> evaluatePredicate(row, node.getHavingCondition()))
-                    .collect(Collectors.toList());
-        }
-
-        return new JQuickDataSet(buildOutputSchema(node), resultRows);
-    }
-
-    /**
-     * 全局聚合
-     */
-    private JQuickDataSet executeGlobalAggregate(JQuickDataSet input, JQuickHashAggregatePhysicalNode node) {
-        JQuickRow result = new JQuickRow();
-        for (JQuickHashAggregatePhysicalNode.AggregateFunction agg : node.getAggregates()) {
-            Object value = computeAggregate(input.getRows(), agg);
-            String alias = agg.getAlias() != null ? agg.getAlias() : agg.getFunctionName();
-            result.put(alias, value);
-        }
-        return new JQuickDataSet(buildOutputSchema(node), Collections.singletonList(result));
-    }
-
-    /**
-     * 执行 Sort
-     */
-    private JQuickDataSet executeSort(JQuickSortPhysicalNode node, JQuickTaskContext context) {
-        JQuickDataSet input = executeNode(node.getChild(), context);
-
-        List<JQuickRow> sortedRows = new ArrayList<>(input.getRows());
-        sortedRows.sort((row1, row2) -> {
-            for (JQuickSortPhysicalNode.OrderByItem item : node.getOrderByItems()) {
-                Object v1 = row1.get(item.getColumnName());
-                Object v2 = row2.get(item.getColumnName());
-                int cmp = compareValues(v1, v2, item.isNullsFirst());
-                if (cmp != 0) {
-                    return item.isAscending() ? cmp : -cmp;
-                }
-            }
-            return 0;
         });
-
-        return new JQuickDataSet(input.getColumns(), sortedRows);
+        return withTimeout(future, taskTimeoutMs, TimeUnit.MILLISECONDS);
     }
 
     /**
-     * 执行 TopN
+     * 带重试的任务执行
      */
-    private JQuickDataSet executeTopN(JQuickTopNPhysicalNode node, JQuickTaskContext context) {
-        JQuickDataSet sorted = executeSort(node, context);
-        List<JQuickRow> rows = sorted.getRows();
-        int limit = node.getLimit();
-        int offset = node.getOffset();
-
-        if (offset >= rows.size()) {
-            return JQuickDataSet.builder().build();
-        }
-
-        int endIndex = Math.min(offset + limit, rows.size());
-        List<JQuickRow> limitedRows = rows.subList(offset, endIndex);
-        return new JQuickDataSet(sorted.getColumns(), new ArrayList<>(limitedRows));
-    }
-
-    /**
-     * 执行 Limit
-     */
-    private JQuickDataSet executeLimit(JQuickLimitPhysicalNode node, JQuickTaskContext context) {
-        JQuickDataSet input = executeNode(node.getChild(), context);
-        List<JQuickRow> rows = input.getRows();
-        int limit = node.getLimit();
-        int offset = node.getOffset();
-
-        if (offset >= rows.size()) {
-            return JQuickDataSet.builder().build();
-        }
-
-        int endIndex = Math.min(offset + limit, rows.size());
-        List<JQuickRow> limitedRows = rows.subList(offset, endIndex);
-        return new JQuickDataSet(input.getColumns(), new ArrayList<>(limitedRows));
-    }
-
-    /**
-     * 执行 Window Function
-     */
-    private JQuickDataSet executeWindow(JQuickWindowPhysicalNode node, JQuickTaskContext context) {
-        JQuickDataSet input = executeNode(node.getChild(), context);
-        List<JQuickRow> resultRows = new ArrayList<>();
-
-        for (JQuickRow row : input.getRows()) {
-            JQuickRow newRow = new JQuickRow(row);
-            for (JQuickWindowPhysicalNode.WindowFunction wf : node.getWindowFunctions()) {
-                Object value = evaluateWindowFunction(input, row, wf);
-                newRow.put(wf.getAlias(), value);
+    private JQuickExecuteTaskResponse executeTaskWithRetry(JQuickExecuteTaskRequest request, TaskExecution taskExec, QueryExecution execution) throws Exception {
+        int attempt = 0;
+        Exception lastException = null;
+        while (attempt <= maxRetries && !execution.isCancelled()) {
+            try {
+                WorkerEndpoint worker = taskExec.getAssignedWorker();
+                if (!worker.isHealthy()) {
+                    // 重新选择健康的 Worker
+                    worker = selectHealthyWorker();
+                    taskExec.getAssignedWorker().setHealthy(false);
+                    LOGGER.info(String.format("Reassigning task due to unhealthy worker - taskId: %s, newWorker: %s", request.getTaskId(), worker.getWorkerId()));
+                }
+                return doExecuteTask(request, worker);
+            } catch (Exception e) {
+                lastException = e;
+                attempt++;
+                taskExec.incrementRetryCount();
+                if (attempt <= maxRetries) {
+                    long backoffMs = Math.min(1000 * (long) Math.pow(2, attempt), 10000);
+                    LOGGER.info(String.format("Retrying task - taskId: %s, attempt: %d/%d, backoff: %dms", request.getTaskId(), attempt, maxRetries, backoffMs));
+                    Thread.sleep(backoffMs);
+                }
             }
-            resultRows.add(newRow);
         }
 
-        return new JQuickDataSet(buildOutputSchema(node), resultRows);
+        throw new RuntimeException("Task failed after " + maxRetries + " retries", lastException);
     }
 
     /**
-     * 执行 Set Operation
+     * 实际执行单个任务
      */
-    private JQuickDataSet executeSetOperation(JQuickSetOperationPhysicalNode node, JQuickTaskContext context) {
-        JQuickDataSet leftData = executeNode(node.getLeft(), context);
-        JQuickDataSet rightData = executeNode(node.getRight(), context);
-
-        List<JQuickRow> resultRows;
-        switch (node.getOperationType()) {
-            case UNION:
-                Set<JQuickRow> unionSet = new HashSet<>(leftData.getRows());
-                unionSet.addAll(rightData.getRows());
-                resultRows = new ArrayList<>(unionSet);
-                break;
-            case UNION_ALL:
-                resultRows = new ArrayList<>(leftData.getRows());
-                resultRows.addAll(rightData.getRows());
-                break;
-            case INTERSECT:
-                Set<JQuickRow> intersectSet = new HashSet<>(leftData.getRows());
-                intersectSet.retainAll(new HashSet<>(rightData.getRows()));
-                resultRows = new ArrayList<>(intersectSet);
-                break;
-            case EXCEPT:
-                Set<JQuickRow> exceptSet = new HashSet<>(leftData.getRows());
-                exceptSet.removeAll(new HashSet<>(rightData.getRows()));
-                resultRows = new ArrayList<>(exceptSet);
-                break;
-            default:
-                resultRows = new ArrayList<>(leftData.getRows());
-        }
-
-        return new JQuickDataSet(leftData.getColumns(), resultRows);
+    private JQuickExecuteTaskResponse doExecuteTask(JQuickExecuteTaskRequest request, WorkerEndpoint worker) throws Exception {
+        JQuickPhysicalPlanServiceGrpc.JQuickPhysicalPlanServiceBlockingStub stub = getBlockingStub(worker);
+        return stub.executeTask(request);
     }
 
     /**
-     * 执行 Values
+     * 流式执行查询（适用于大数据量结果）
      */
-    private JQuickDataSet executeValues(JQuickValuesPhysicalNode node, JQuickTaskContext context) {
-        List<JQuickRow> rows = new ArrayList<>();
-        for (List<Object> rowValues : node.getRows()) {
-            JQuickRow row = new JQuickRow();
-            for (int i = 0; i < node.getColumnNames().size() && i < rowValues.size(); i++) {
-                row.put(node.getColumnNames().get(i), rowValues.get(i));
+    public CompletableFuture<Void> executeQueryStream(String queryId, JQuickPhysicalPlanNode physicalPlan, StreamObserver<JQuickDataChunkProto> responseObserver) {
+        LOGGER.info(String.format("Executing streaming query - queryId: %s", queryId));
+        CompletableFuture<Void> future = new CompletableFuture<>();
+        executor.submit(() -> {
+            try {
+                // 切分计划
+                JQuickDistributedPlan distributedPlan = fragmenter.fragment(physicalPlan);
+                QueryExecution execution = new QueryExecution(queryId, distributedPlan);
+                activeQueries.put(queryId, execution);
+                // 执行根 Fragment 并流式返回
+                executeFragmentStream(distributedPlan.getRootFragment(), execution, responseObserver);
+                future.complete(null);
+                cleanupQuery(queryId);
+            } catch (Exception e) {
+                LOGGER.log(Level.SEVERE, String.format("Streaming query failed - queryId: %s", queryId), e);
+                responseObserver.onError(e);
+                future.completeExceptionally(e);
+                cleanupQuery(queryId);
             }
-            rows.add(row);
-        }
-        return new JQuickDataSet(buildOutputSchema(node), rows);
+        });
+        return future;
     }
 
     /**
-     * 执行 Exchange - 数据分发
+     * 流式执行 Fragment
      */
-    private JQuickDataSet executeExchange(JQuickExchangePhysicalNode node, JQuickTaskContext context) {
-        JQuickDataSet input = executeNode(node.getChild(), context);
-
-        List<JQuickMemoryPartition> partitions = partitionData(input, node);
-
-        for (JQuickMemoryPartition partition : partitions) {
-            sendToWorker(partition, node.getTargetParallelism(), node.getExchangeType());
-        }
-
-        return JQuickDataSet.builder().build();
-    }
-
-    /**
-     * 数据分区逻辑
-     */
-    private List<JQuickMemoryPartition> partitionData(JQuickDataSet data, JQuickExchangePhysicalNode node) {
-        int numPartitions = node.getTargetParallelism();
-        List<JQuickMemoryPartition> partitions = new ArrayList<>();
-        JQuickPartitionStrategy strategy = node.getPartitionStrategy();
-
-        for (int i = 0; i < numPartitions; i++) {
-            partitions.add(new JQuickMemoryPartition(i, numPartitions));
-        }
-
-        if (data.isEmpty()) {
-            return partitions;
-        }
-
-        switch (strategy) {
-            case HASH:
-                for (JQuickRow row : data.getRows()) {
-                    int partition = computeHashPartition(row, node.getPartitionKeys(), numPartitions);
-                    partitions.get(partition).addRow(row);
+    private void executeFragmentStream(JQuickFragment fragment, QueryExecution execution, StreamObserver<JQuickDataChunkProto> responseObserver) {
+        int parallelism = fragment.getParallelism();
+        List<CompletableFuture<Void>> streamFutures = new ArrayList<>();
+        for (int taskIndex = 0; taskIndex < parallelism; taskIndex++) {
+            final int idx = taskIndex;
+            CompletableFuture<Void> streamFuture = new CompletableFuture<>();
+            streamFutures.add(streamFuture);
+            WorkerEndpoint worker = selectWorker(idx, parallelism);
+            String taskId = String.format("%s_%d_%d", execution.getQueryId(), fragment.getFragmentId(), idx);
+            JQuickExecuteTaskRequest request = buildTaskRequest(execution.getQueryId(), taskId, fragment, idx, parallelism);
+            // 使用流式调用
+            JQuickPhysicalPlanServiceGrpc.JQuickPhysicalPlanServiceStub stub = getAsyncStub(worker);
+            stub.executeTaskStream(request, new StreamObserver<JQuickDataChunkProto>() {
+                @Override
+                public void onNext(JQuickDataChunkProto chunk) {
+                    responseObserver.onNext(chunk);
                 }
-                break;
 
-            case RANGE:
-                for (JQuickRow row : data.getRows()) {
-                    int partition = computeRangePartition(row, node.getPartitionKeys(), numPartitions);
-                    partitions.get(partition).addRow(row);
+                @Override
+                public void onError(Throwable t) {
+                    LOGGER.log(Level.WARNING, String.format("Stream task error - taskId: %s", taskId), t);
+                    streamFuture.completeExceptionally(t);
                 }
-                break;
 
-            case ROUND_ROBIN:
-                int idx = 0;
-                for (JQuickRow row : data.getRows()) {
-                    partitions.get(idx++ % numPartitions).addRow(row);
+                @Override
+                public void onCompleted() {
+                    LOGGER.fine(String.format("Stream task completed - taskId: %s", taskId));
+                    streamFuture.complete(null);
                 }
-                break;
-
-            case BROADCAST:
-                for (JQuickRow row : data.getRows()) {
-                    for (JQuickMemoryPartition partition : partitions) {
-                        partition.addRow(row);
-                    }
-                }
-                break;
-
-            case FORWARD:
-            default:
-                if (!partitions.isEmpty()) {
-                    for (JQuickRow row : data.getRows()) {
-                        partitions.get(0).addRow(row);
-                    }
-                }
-                break;
+            });
         }
-
-        return partitions;
+        // 等待所有流完成
+        CompletableFuture.allOf(streamFutures.toArray(new CompletableFuture[0])).join();
     }
 
     /**
-     * 计算哈希分区
+     * 构建任务请求
      */
-    private int computeHashPartition(JQuickRow row, List<JQuickExpression> partitionKeys, int numPartitions) {
-        int hash = 0;
-        for (JQuickExpression key : partitionKeys) {
-            Object value = evaluateExpression(row, key);
-            hash = 31 * hash + (value != null ? value.hashCode() : 0);
-        }
-        return Math.abs(hash) % numPartitions;
-    }
-
-    /**
-     * 计算范围分区
-     */
-    private int computeRangePartition(JQuickRow row, List<JQuickExpression> partitionKeys, int numPartitions) {
-        if (partitionKeys.isEmpty()) {
-            return 0;
-        }
-        Object value = evaluateExpression(row, partitionKeys.get(0));
-        if (value == null) {
-            return 0;
-        }
-        // 简化的范围分区：基于 hashCode
-        return Math.abs(value.hashCode()) % numPartitions;
-    }
-
-    /**
-     * 发送数据到目标 Worker
-     */
-    private void sendToWorker(JQuickMemoryPartition partition, int targetParallelism, JQuickExchangeType exchangeType) {
-        if (exchangeType == JQuickExchangeType.GATHER) {
-            sendToSingleWorker(partition, 0);
-        } else if (exchangeType == JQuickExchangeType.BROADCAST) {
-            sendToAllWorkers(partition);
-        } else {
-            int targetWorkerId = partition.getIndex() % targetParallelism;
-            sendToSingleWorker(partition, targetWorkerId);
-        }
-    }
-
-    /**
-     * 发送到单个 Worker
-     */
-    private void sendToSingleWorker(JQuickMemoryPartition partition, int targetWorkerId) {
-        JQuickDataChunkProto chunk = buildDataChunk(partition);
-        sendChunkAsync(chunk, targetWorkerId);
-    }
-
-    /**
-     * 发送到所有 Worker
-     */
-    private void sendToAllWorkers(JQuickMemoryPartition partition) {
-        JQuickDataChunkProto chunk = buildDataChunk(partition);
-        for (int i = 0; i < 4; i++) {
-            sendChunkAsync(chunk, i);
-        }
-    }
-
-    /**
-     * 构建数据块
-     */
-    private JQuickDataChunkProto buildDataChunk(JQuickMemoryPartition partition) {
-        return JQuickDataChunkProto.newBuilder()
-                .setPartitionId(partition.getPartitionId())
-                .setData(convertToProto(partition.getData()))
-                .setChunkIndex(partition.getChunkIndex())
-                .setIsLast(partition.isLast())
-                .setSequenceId(System.currentTimeMillis())
-                .setOriginalSize(partition.getDataSize())
+    private JQuickExecuteTaskRequest buildTaskRequest(String queryId, String taskId, JQuickFragment fragment, int taskIndex, int totalTasks) {
+        JQuickFragmentProto fragmentProto = convertFragmentToProto(fragment);
+        return JQuickExecuteTaskRequest.newBuilder()
+                .setQueryId(queryId)
+                .setTaskId(taskId)
+                .setTaskIndex(taskIndex)
+                .setTotalTasks(totalTasks)
+                .setFragment(fragmentProto)
+                .setMemoryLimitBytes(1024 * 1024 * 1024)  // 1GB 默认
                 .build();
     }
 
     /**
-     * 异步发送数据块
+     * 将 Fragment 转换为 Proto
      */
-    private void sendChunkAsync(JQuickDataChunkProto chunk, int targetWorkerId) {
-        executor.submit(() -> {
-            try {
-                JQuickDataDistributionServiceGrpc.JQuickDataDistributionServiceStub stub = getDistributionStub(targetWorkerId);
-                CompletableFuture<Void> future = new CompletableFuture<>();
+    private JQuickFragmentProto convertFragmentToProto(JQuickFragment fragment) {
+        JQuickFragmentProto.Builder builder = JQuickFragmentProto.newBuilder()
+                .setFragmentId(fragment.getFragmentId())
+                .setType(convertFragmentType(fragment.getType()))
+                .setParallelism(fragment.getParallelism());
+        // 转换物理计划节点
+        builder.setPlan(convertPhysicalPlanToProto(fragment.getPlan()));
+        return builder.build();
+    }
 
-                stub.sendData(new StreamObserver<JQuickEmptyNodeProto>() {
+    /**
+     * 转换物理计划节点为 Proto（简化实现）
+     */
+    private JQuickPhysicalPlanNodeProto convertPhysicalPlanToProto(JQuickPhysicalPlanNode node) {
+        JQuickPhysicalPlanNodeProto.Builder builder = JQuickPhysicalPlanNodeProto.newBuilder();
+        String nodeType = node.getNodeType();
+        switch (nodeType) {
+            case "TableScan":
+                break;
+            case "Filter":
+                // builder.setFilter(...);
+                break;
+            case "Project":
+                // builder.setProject(...);
+                break;
+            case "HashJoin":
+                // builder.setHashJoin(...);
+                break;
+            case "Exchange":
+                // builder.setExchange(...);
+                break;
+            case "Limit":
+                // builder.setLimit(...);
+                break;
+            case "Empty":
+                // builder.setEmpty(...);
+                break;
+            default:
+                builder.setEmpty(JQuickEmptyNodeProto.newBuilder().build());
+        }
+
+        return builder.build();
+    }
+
+    /**
+     * 转换 Fragment 类型
+     */
+    private JQuickFragmentTypeProto convertFragmentType(JQuickFragmentType type) {
+        switch (type) {
+            case SOURCE:
+                return JQuickFragmentTypeProto.FRAGMENT_SOURCE;
+            case INTERMEDIATE:
+                return JQuickFragmentTypeProto.FRAGMENT_INTERMEDIATE;
+            case SINK:
+                return JQuickFragmentTypeProto.FRAGMENT_SINK;
+            default:
+                return JQuickFragmentTypeProto.FRAGMENT_INTERMEDIATE;
+        }
+    }
+
+    /**
+     * 选择 Worker（轮询策略）
+     */
+    private WorkerEndpoint selectWorker(int taskIndex, int totalTasks) {
+        List<WorkerEndpoint> healthyWorkers = workers.stream()
+                .filter(WorkerEndpoint::isHealthy)
+                .collect(Collectors.toList());
+
+        if (healthyWorkers.isEmpty()) {
+            healthyWorkers = workers;
+        }
+
+        int index = taskIndex % healthyWorkers.size();
+        return healthyWorkers.get(index);
+    }
+
+    /**
+     * 选择健康的 Worker
+     */
+    private WorkerEndpoint selectHealthyWorker() {
+        return workers.stream()
+                .filter(WorkerEndpoint::isHealthy)
+                .findFirst()
+                .orElse(workers.get(0));
+    }
+
+    /**
+     * 获取阻塞式 gRPC Stub
+     */
+    private JQuickPhysicalPlanServiceGrpc.JQuickPhysicalPlanServiceBlockingStub getBlockingStub(WorkerEndpoint worker) {
+        ManagedChannel channel = workerChannels.computeIfAbsent(worker.getWorkerId(), k ->
+                ManagedChannelBuilder.forAddress(worker.getHost(), worker.getPort())
+                        .usePlaintext()
+                        .build()
+        );
+        return JQuickPhysicalPlanServiceGrpc.newBlockingStub(channel);
+    }
+
+    /**
+     * 获取异步 gRPC Stub
+     */
+    private JQuickPhysicalPlanServiceGrpc.JQuickPhysicalPlanServiceStub getAsyncStub(WorkerEndpoint worker) {
+        ManagedChannel channel = workerChannels.computeIfAbsent(worker.getWorkerId(), k ->
+                ManagedChannelBuilder.forAddress(worker.getHost(), worker.getPort())
+                        .usePlaintext()
+                        .build()
+        );
+        return JQuickPhysicalPlanServiceGrpc.newStub(channel);
+    }
+
+    /**
+     * 收集所有 Fragment
+     */
+    private List<JQuickFragment> collectAllFragments(JQuickFragment root) {
+        List<JQuickFragment> fragments = new ArrayList<>();
+        collectFragmentsRecursive(root, fragments);
+        return fragments;
+    }
+
+    private void collectFragmentsRecursive(JQuickFragment fragment, List<JQuickFragment> fragments) {
+        fragments.add(fragment);
+        for (JQuickFragment child : fragment.getChildren()) {
+            collectFragmentsRecursive(child, fragments);
+        }
+    }
+
+    /**
+     * 拓扑排序 Fragment（确保依赖顺序）
+     */
+    private List<JQuickFragment> topologicalSort(List<JQuickFragment> fragments) {
+        // 简单实现：按深度排序（叶子节点先执行）
+        Map<JQuickFragment, Integer> depthMap = new HashMap<>();
+        for (JQuickFragment fragment : fragments) {
+            depthMap.put(fragment, calculateDepth(fragment));
+        }
+        return fragments.stream()
+                .sorted(Comparator.comparingInt(depthMap::get))
+                .collect(Collectors.toList());
+    }
+
+    private int calculateDepth(JQuickFragment fragment) {
+        int maxChildDepth = 0;
+        for (JQuickFragment child : fragment.getChildren()) {
+            maxChildDepth = Math.max(maxChildDepth, calculateDepth(child));
+        }
+        return maxChildDepth + 1;
+    }
+
+    /**
+     * 合并多个 DataSet 的结果
+     */
+    private JQuickDataSet mergeResults(List<JQuickDataSet> results) {
+        if (results.isEmpty()) {
+            return JQuickDataSet.builder().build();
+        }
+        if (results.size() == 1) {
+            return results.get(0);
+        }
+
+        List<JQuickRow> allRows = new ArrayList<>();
+        for (JQuickDataSet dataSet : results) {
+            allRows.addAll(dataSet.getRows());
+        }
+
+        return new JQuickDataSet(results.get(0).getColumns(), allRows);
+    }
+
+    /**
+     * 取消查询
+     */
+    public CompletableFuture<Boolean> cancelQuery(String queryId, String reason) {
+        LOGGER.info(String.format("Cancelling query - queryId: %s, reason: %s", queryId, reason));
+        QueryExecution execution = activeQueries.get(queryId);
+        if (execution == null) {
+            return CompletableFuture.completedFuture(false);
+        }
+        execution.cancel();
+        execution.setStatus(QueryExecution.QueryStatus.CANCELLED);
+        List<CompletableFuture<Void>> cancelFutures = new ArrayList<>();
+        // 向所有正在执行任务的 Worker 发送取消请求
+        for (TaskExecution task : execution.getTasks().values()) {
+            if (task.getStatus() == TaskExecution.TaskStatus.RUNNING || task.getStatus() == TaskExecution.TaskStatus.SCHEDULED) {
+                CompletableFuture<Void> cancelFuture = new CompletableFuture<>();
+                cancelFutures.add(cancelFuture);
+                JQuickCancelQueryRequest request = JQuickCancelQueryRequest.newBuilder()
+                        .setQueryId(queryId)
+                        .setReason(reason)
+                        .build();
+                WorkerEndpoint worker = task.getAssignedWorker();
+                JQuickPhysicalPlanServiceGrpc.JQuickPhysicalPlanServiceStub stub = getAsyncStub(worker);
+                stub.cancelTask(request, new StreamObserver<JQuickCancelQueryResponse>() {
                     @Override
-                    public void onNext(JQuickEmptyNodeProto value) {}
-
+                    public void onNext(JQuickCancelQueryResponse response) {
+                        LOGGER.fine(String.format("Task cancelled - queryId: %s, worker: %s, success: %s", queryId, worker.getWorkerId(), response.getSuccess()));
+                    }
                     @Override
                     public void onError(Throwable t) {
-                        future.completeExceptionally(t);
+                        LOGGER.log(Level.FINE, String.format("Cancel task error - queryId: %s", queryId), t);
+                        cancelFuture.complete(null);
                     }
 
                     @Override
                     public void onCompleted() {
-                        future.complete(null);
+                        cancelFuture.complete(null);
                     }
-                }).onNext(chunk);
-
-                future.get(30, TimeUnit.SECONDS);
-            } catch (Exception e) {
-                // 记录错误，不抛出
+                });
             }
-        });
+        }
+
+        return CompletableFuture.allOf(cancelFutures.toArray(new CompletableFuture[0]))
+                .thenApply(v -> true)
+                .exceptionally(e -> false);
     }
 
     /**
-     * 获取分发服务 Stub
+     * 清理查询资源
      */
-    private JQuickDataDistributionServiceGrpc.JQuickDataDistributionServiceStub getDistributionStub(int workerId) {
-        return distributionStubs.computeIfAbsent(workerId, id -> {
-            ManagedChannel channel = ManagedChannelBuilder
-                    .forAddress("localhost", 9000 + id)
-                    .usePlaintext()
-                    .build();
-            workerChannels.put(id, channel);
-            return JQuickDataDistributionServiceGrpc.newStub(channel);
-        });
-    }
-
-    // ========== 表达式求值方法 ==========
-
-    private boolean evaluatePredicate(JQuickRow row, JQuickExpression predicate) {
-        if (predicate == null) return true;
-        Object result = evaluateExpression(row, predicate);
-        if (result instanceof Boolean) {
-            return (Boolean) result;
-        }
-        return result != null;
-    }
-
-    private Object evaluateExpression(JQuickRow row, JQuickExpression expr) {
-        if (expr == null) return null;
-
-        if (expr instanceof JQuickColumnRefExpression) {
-            return row.get(((JQuickColumnRefExpression) expr).getColumnName());
-
-        } else if (expr instanceof JQuickLiteralExpression) {
-            return ((JQuickLiteralExpression) expr).getValue();
-
-        } else if (expr instanceof JQuickBinaryExpression) {
-            JQuickBinaryExpression binary = (JQuickBinaryExpression) expr;
-            Object left = evaluateExpression(row, binary.getLeft());
-            Object right = evaluateExpression(row, binary.getRight());
-            return applyBinaryOperator(left, right, binary.getOperator());
-
-        } else if (expr instanceof JQuickUnaryExpression) {
-            JQuickUnaryExpression unary = (JQuickUnaryExpression) expr;
-            Object value = evaluateExpression(row, unary.getExpression());
-            return applyUnaryOperator(value, unary.getOperator());
-
-        } else if (expr instanceof JQuickFunctionCallExpression) {
-            JQuickFunctionCallExpression func = (JQuickFunctionCallExpression) expr;
-            List<Object> args = new ArrayList<>();
-            for (JQuickExpression arg : func.getArguments()) {
-                args.add(evaluateExpression(row, arg));
-            }
-            return evaluateFunction(func.getFunctionName(), args);
-
-        } else if (expr instanceof JQuickBetweenExpression) {
-            JQuickBetweenExpression between = (JQuickBetweenExpression) expr;
-            Object value = evaluateExpression(row, between.getExpression());
-            Object low = evaluateExpression(row, between.getLow());
-            Object high = evaluateExpression(row, between.getHigh());
-            return evaluateBetween(value, low, high, between.isNot());
-
-        } else if (expr instanceof JQuickInExpression) {
-            JQuickInExpression in = (JQuickInExpression) expr;
-            Object left = evaluateExpression(row, in.getLeft());
-            boolean found = false;
-            for (JQuickExpression rightExpr : in.getRightList()) {
-                Object right = evaluateExpression(row, rightExpr);
-                if (Objects.equals(left, right)) {
-                    found = true;
-                    break;
-                }
-            }
-            return in.isNot() ? !found : found;
-
-        } else if (expr instanceof JQuickCaseWhenExpression) {
-            JQuickCaseWhenExpression caseWhen = (JQuickCaseWhenExpression) expr;
-            for (int i = 0; i < caseWhen.getConditions().size(); i++) {
-                Object condition = evaluateExpression(row, caseWhen.getConditions().get(i));
-                if (condition instanceof Boolean && (Boolean) condition) {
-                    return evaluateExpression(row, caseWhen.getResults().get(i));
-                }
-            }
-            if (caseWhen.getElseResult() != null) {
-                return evaluateExpression(row, caseWhen.getElseResult());
-            }
-            return null;
-        }
-
-        return null;
-    }
-
-    private Object applyBinaryOperator(Object left, Object right, JQuickBinaryOperator operator) {
-        if (left == null || right == null) {
-            return false;
-        }
-
-        switch (operator) {
-            case EQ:
-                return Objects.equals(left, right);
-            case NE:
-                return !Objects.equals(left, right);
-            case GT:
-                return compareValues(left, right, false) > 0;
-            case LT:
-                return compareValues(left, right, false) < 0;
-            case GE:
-                return compareValues(left, right, false) >= 0;
-            case LE:
-                return compareValues(left, right, false) <= 0;
-            case AND:
-                return (left instanceof Boolean && (Boolean) left) && (right instanceof Boolean && (Boolean) right);
-            case OR:
-                return (left instanceof Boolean && (Boolean) left) || (right instanceof Boolean && (Boolean) right);
-            case PLUS:
-                return asNumber(left).doubleValue() + asNumber(right).doubleValue();
-            case MINUS:
-                return asNumber(left).doubleValue() - asNumber(right).doubleValue();
-            case MULTIPLY:
-                return asNumber(left).doubleValue() * asNumber(right).doubleValue();
-            case DIVIDE:
-                double divisor = asNumber(right).doubleValue();
-                if (divisor == 0) return null;
-                return asNumber(left).doubleValue() / divisor;
-            case MODULO:
-                return asNumber(left).doubleValue() % asNumber(right).doubleValue();
-            case LIKE:
-                return likeMatch(left.toString(), right.toString());
-            default:
-                return false;
-        }
-    }
-
-    private Object applyUnaryOperator(Object value, com.github.paohaijiao.enums.JQuickUnaryOperator operator) {
-        switch (operator) {
-            case NOT:
-                if (value instanceof Boolean) return !(Boolean) value;
-                return null;
-            case PLUS:
-                if (value instanceof Number) return asNumber(value).doubleValue();
-                return null;
-            case MINUS:
-                if (value instanceof Number) return -asNumber(value).doubleValue();
-                return null;
-            case IS_NULL:
-                return value == null;
-            case IS_NOT_NULL:
-                return value != null;
-            default:
-                return null;
-        }
-    }
-
-    private Object evaluateFunction(String functionName, List<Object> args) {
-        functionName = functionName.toLowerCase();
-
-        switch (functionName) {
-            case "upper":
-                return args.isEmpty() || args.get(0) == null ? null : args.get(0).toString().toUpperCase();
-            case "lower":
-                return args.isEmpty() || args.get(0) == null ? null : args.get(0).toString().toLowerCase();
-            case "length":
-                return args.isEmpty() || args.get(0) == null ? 0L : (long) args.get(0).toString().length();
-            case "concat":
-                StringBuilder sb = new StringBuilder();
-                for (Object arg : args) {
-                    if (arg != null) sb.append(arg);
-                }
-                return sb.toString();
-            case "substring":
-                if (args.size() < 2) return null;
-                String str = args.get(0) == null ? "" : args.get(0).toString();
-                int start = ((Number) args.get(1)).intValue() - 1;
-                if (start < 0) start = 0;
-                if (start >= str.length()) return "";
-                if (args.size() >= 3) {
-                    int length = ((Number) args.get(2)).intValue();
-                    int end = Math.min(start + length, str.length());
-                    return str.substring(start, end);
-                }
-                return str.substring(start);
-            case "trim":
-                return args.isEmpty() || args.get(0) == null ? null : args.get(0).toString().trim();
-            case "abs":
-                return args.isEmpty() || args.get(0) == null ? null : Math.abs(asNumber(args.get(0)).doubleValue());
-            case "round":
-                if (args.isEmpty() || args.get(0) == null) return null;
-                double value = asNumber(args.get(0)).doubleValue();
-                if (args.size() >= 2) {
-                    int scale = ((Number) args.get(1)).intValue();
-                    double factor = Math.pow(10, scale);
-                    return Math.round(value * factor) / factor;
-                }
-                return (double) Math.round(value);
-            case "year":
-                return extractYear(args.isEmpty() ? null : args.get(0));
-            case "month":
-                return extractMonth(args.isEmpty() ? null : args.get(0));
-            case "day":
-                return extractDay(args.isEmpty() ? null : args.get(0));
-            case "now":
-                return new Date();
-            case "current_date":
-                return java.time.LocalDate.now();
-            default:
-                return null;
-        }
-    }
-
-    private Integer extractYear(Object date) {
-        if (date instanceof Date) {
-            Calendar cal = Calendar.getInstance();
-            cal.setTime((Date) date);
-            return cal.get(Calendar.YEAR);
-        }
-        if (date instanceof java.time.LocalDate) {
-            return ((java.time.LocalDate) date).getYear();
-        }
-        return null;
-    }
-
-    private Integer extractMonth(Object date) {
-        if (date instanceof Date) {
-            Calendar cal = Calendar.getInstance();
-            cal.setTime((Date) date);
-            return cal.get(Calendar.MONTH) + 1;
-        }
-        if (date instanceof java.time.LocalDate) {
-            return ((java.time.LocalDate) date).getMonthValue();
-        }
-        return null;
-    }
-
-    private Integer extractDay(Object date) {
-        if (date instanceof Date) {
-            Calendar cal = Calendar.getInstance();
-            cal.setTime((Date) date);
-            return cal.get(Calendar.DAY_OF_MONTH);
-        }
-        if (date instanceof java.time.LocalDate) {
-            return ((java.time.LocalDate) date).getDayOfMonth();
-        }
-        return null;
-    }
-
-    private Object evaluateBetween(Object value, Object low, Object high, boolean isNot) {
-        if (value == null || low == null || high == null) return null;
-        boolean result = compareValues(value, low, false) >= 0 && compareValues(value, high, false) <= 0;
-        return isNot ? !result : result;
-    }
-
-    private boolean likeMatch(String value, String pattern) {
-        if (value == null || pattern == null) return false;
-        String regex = pattern.replace("%", ".*").replace("_", ".");
-        return value.matches(regex);
-    }
-
-    private Number asNumber(Object value) {
-        if (value instanceof Number) return (Number) value;
-        if (value instanceof String) {
-            try {
-                return Double.parseDouble((String) value);
-            } catch (NumberFormatException e) {
-                return 0.0;
-            }
-        }
-        return 0.0;
-    }
-
-    private int compareValues(Object v1, Object v2, boolean nullsFirst) {
-        if (v1 == null && v2 == null) return 0;
-        if (v1 == null) return nullsFirst ? -1 : 1;
-        if (v2 == null) return nullsFirst ? 1 : -1;
-        if (v1 instanceof Comparable && v2 instanceof Comparable) {
-            @SuppressWarnings("unchecked")
-            int cmp = ((Comparable<Object>) v1).compareTo(v2);
-            return cmp;
-        }
-        return v1.toString().compareTo(v2.toString());
-    }
-
-    private Object extractJoinKey(JQuickRow row, JQuickHashJoinPhysicalNode node, boolean isBuildSide) {
-        List<JQuickHashJoinPhysicalNode.JoinKeyPair> joinKeys = node.getJoinKeys();
-        if (joinKeys.isEmpty()) return null;
-
-        JQuickHashJoinPhysicalNode.JoinKeyPair keyPair = joinKeys.get(0);
-        JQuickExpression keyExpr = isBuildSide ? keyPair.getLeftKey() : keyPair.getRightKey();
-        return evaluateExpression(row, keyExpr);
-    }
-
-    private JQuickRow extractGroupKey(JQuickRow row, List<JQuickExpression> groupKeys) {
-        JQuickRow key = new JQuickRow();
-        for (JQuickExpression expr : groupKeys) {
-            if (expr instanceof JQuickColumnRefExpression) {
-                String colName = ((JQuickColumnRefExpression) expr).getColumnName();
-                key.put(colName, row.get(colName));
-            }
-        }
-        return key;
-    }
-
-    private Object computeAggregate(List<JQuickRow> rows, JQuickHashAggregatePhysicalNode.AggregateFunction agg) {
-        String funcName = agg.getFunctionName().toLowerCase();
-
-        switch (funcName) {
-            case "count":
-                if (agg.isDistinct()) {
-                    return rows.stream()
-                            .map(r -> evaluateExpression(r, agg.getArgument()))
-                            .distinct()
-                            .count();
-                }
-                return (long) rows.size();
-
-            case "sum":
-                return rows.stream()
-                        .mapToDouble(r -> {
-                            Object val = evaluateExpression(r, agg.getArgument());
-                            return val instanceof Number ? ((Number) val).doubleValue() : 0.0;
-                        })
-                        .sum();
-
-            case "avg":
-                return rows.stream()
-                        .mapToDouble(r -> {
-                            Object val = evaluateExpression(r, agg.getArgument());
-                            return val instanceof Number ? ((Number) val).doubleValue() : 0.0;
-                        })
-                        .average()
-                        .orElse(0.0);
-
-            case "max":
-                return rows.stream()
-                        .map(r -> evaluateExpression(r, agg.getArgument()))
-                        .max((a, b) -> compareValues(a, b, false))
-                        .orElse(null);
-
-            case "min":
-                return rows.stream()
-                        .map(r -> evaluateExpression(r, agg.getArgument()))
-                        .min((a, b) -> compareValues(a, b, false))
-                        .orElse(null);
-
-            default:
-                return null;
-        }
-    }
-
-    private Object evaluateWindowFunction(JQuickDataSet data, JQuickRow currentRow, JQuickWindowPhysicalNode.WindowFunction wf) {
-        String funcName = wf.getFunctionName().toLowerCase();
-        List<JQuickRow> windowRows = data.getRows();
-
-        switch (funcName) {
-            case "row_number":
-                return (long) (windowRows.indexOf(currentRow) + 1);
-            case "rank":
-                // 简化实现
-                return (long) (windowRows.indexOf(currentRow) + 1);
-            case "dense_rank":
-                return (long) (windowRows.indexOf(currentRow) + 1);
-            case "lead":
-                int idx = windowRows.indexOf(currentRow);
-                if (idx + 1 < windowRows.size()) {
-                    return evaluateExpression(windowRows.get(idx + 1), wf.getArgument());
-                }
-                return null;
-            case "lag":
-                idx = windowRows.indexOf(currentRow);
-                if (idx - 1 >= 0) {
-                    return evaluateExpression(windowRows.get(idx - 1), wf.getArgument());
-                }
-                return null;
-            default:
-                return null;
-        }
-    }
-
-    private JQuickRow joinRows(JQuickRow leftRow, JQuickRow rightRow,
-                               com.github.paohaijiao.enums.JQuickJoinType joinType,
-                               boolean leftIsBuild) {
-        JQuickRow result = new JQuickRow();
-
-        if (leftIsBuild) {
-            if (leftRow != null) result.putAll(leftRow);
-            if (rightRow != null) result.putAll(rightRow);
-        } else {
-            if (rightRow != null) result.putAll(rightRow);
-            if (leftRow != null) result.putAll(leftRow);
-        }
-
-        return result;
-    }
-
-    private JQuickDataSet applyFilter(JQuickDataSet data, JQuickExpression predicate) {
-        return data.filter(row -> evaluatePredicate(row, predicate));
-    }
-
-    // ========== 数据转换方法 ==========
-
-    private JQuickDataSetProto convertToProto(JQuickDataSet data) {
-        JQuickDataSetProto.Builder builder = JQuickDataSetProto.newBuilder();
-
-        for (JQuickColumnMeta col : data.getColumns()) {
-            builder.addColumns(JQuickColumnMetaProto.newBuilder()
-                    .setName(col.getName())
-                    .setTypeName(col.getType().getName())
-                    .setSource(col.getSource())
-                    .build());
-        }
-
-        for (JQuickRow row : data.getRows()) {
-            JQuickRowProto.Builder rowBuilder = JQuickRowProto.newBuilder();
-            for (Map.Entry<String, Object> entry : row.entrySet()) {
-                Any anyValue = Any.pack(Value.newBuilder()
-                        .setStringValue(entry.getValue() != null ? entry.getValue().toString() : "")
-                        .build());
-                rowBuilder.putData(entry.getKey(), anyValue);
-            }
-            builder.addRows(rowBuilder.build());
-        }
-
-        builder.setTotalRows(data.size());
-        return builder.build();
-    }
-
-    private JQuickDataSet convertFromProto(JQuickDataSetProto proto) {
-        List<JQuickColumnMeta> columns = new ArrayList<>();
-        for (JQuickColumnMetaProto colProto : proto.getColumnsList()) {
-            columns.add(new JQuickColumnMeta(colProto.getName(), Object.class, colProto.getSource()));
-        }
-
-        List<JQuickRow> rows = new ArrayList<>();
-        for (JQuickRowProto rowProto : proto.getRowsList()) {
-            JQuickRow row = new JQuickRow();
-            for (Map.Entry<String, Any> entry : rowProto.getDataMap().entrySet()) {
-                try {
-                    Value value = entry.getValue().unpack(Value.class);
-                    row.put(entry.getKey(), value.getStringValue());
-                } catch (Exception e) {
-                    row.put(entry.getKey(), entry.getValue().toString());
-                }
-            }
-            rows.add(row);
-        }
-
-        return new JQuickDataSet(columns, rows);
-    }
-
-    private JQuickPhysicalPlanNode buildPhysicalNode(JQuickPhysicalPlanNodeProto proto) {
-        if (proto == null) return null;
-
-        switch (proto.getNodeCase()) {
-            case TABLE_SCAN:
-                JQuickTableScanNodeProto scanProto = proto.getTableScan();
-                Set<String> requiredColumns = new HashSet<>(scanProto.getRequiredColumnsList());
-                JQuickTablePartitionInfo partitionInfo = null;
-                if (scanProto.hasPartitionInfo()) {
-                    partitionInfo = buildPartitionInfo(scanProto.getPartitionInfo());
-                }
-                return new JQuickTableScanPhysicalNode(
-                        scanProto.getTableName(),
-                        scanProto.getAlias(),
-                        requiredColumns,
-                        null,
-                        partitionInfo
-                );
-
-            case FILTER:
-                JQuickFilterNodeProto filterProto = proto.getFilter();
-                return new JQuickFilterPhysicalNode(
-                        buildExpression(filterProto.getPredicate()),
-                        null
-                );
-
-            case PROJECT:
-                JQuickProjectNodeProto projectProto = proto.getProject();
-                List<JQuickProjectPhysicalNode.SelectItem> selectItems = new ArrayList<>();
-                for (JQuickProjectNodeProto.SelectItemProto itemProto : projectProto.getSelectItemsList()) {
-                    selectItems.add(new JQuickProjectPhysicalNode.SelectItem(
-                            buildExpression(itemProto.getExpression()),
-                            itemProto.getAlias()
-                    ));
-                }
-                return new JQuickProjectPhysicalNode(selectItems, null, projectProto.getDistinct());
-
-            case HASH_JOIN:
-                JQuickHashJoinNodeProto joinProto = proto.getHashJoin();
-                JQuickHashJoinPhysicalNode.BuildSide buildSide = joinProto.getBuildSide() == JQuickBuildSideProto.BUILD_SIDE_LEFT
-                        ? JQuickHashJoinPhysicalNode.BuildSide.LEFT
-                        : JQuickHashJoinPhysicalNode.BuildSide.RIGHT;
-                List<JQuickHashJoinPhysicalNode.JoinKeyPair> joinKeys = new ArrayList<>();
-                for (JQuickHashJoinNodeProto.JoinKeyPairProto keyProto : joinProto.getJoinKeysList()) {
-                    joinKeys.add(new JQuickHashJoinPhysicalNode.JoinKeyPair(
-                            buildExpression(keyProto.getLeftKey()),
-                            buildExpression(keyProto.getRightKey())
-                    ));
-                }
-                return new JQuickHashJoinPhysicalNode(
-                        convertJoinType(joinProto.getJoinType()),
-                        null, null,
-                        buildExpression(joinProto.getCondition()),
-                        joinKeys,
-                        buildSide,
-                        convertJoinDistribution(joinProto.getDistribution())
-                );
-
-            case HASH_AGGREGATE:
-                JQuickHashAggregateNodeProto aggProto = proto.getHashAggregate();
-                List<JQuickExpression> groupKeys = new ArrayList<>();
-                for (JQuickExpressionProto keyProto : aggProto.getGroupKeysList()) {
-                    groupKeys.add(buildExpression(keyProto));
-                }
-                List<JQuickHashAggregatePhysicalNode.AggregateFunction> aggregates = new ArrayList<>();
-                for (JQuickHashAggregateNodeProto.AggregateFunctionProto aggFuncProto : aggProto.getAggregatesList()) {
-                    aggregates.add(new JQuickHashAggregatePhysicalNode.AggregateFunction(
-                            aggFuncProto.getFunctionName(),
-                            buildExpression(aggFuncProto.getArgument()),
-                            aggFuncProto.getDistinct(),
-                            aggFuncProto.getAlias()
-                    ));
-                }
-                return new JQuickHashAggregatePhysicalNode(
-                        groupKeys,
-                        aggregates,
-                        null,
-                        buildExpression(aggProto.getHavingCondition()),
-                        convertAggregateStage(aggProto.getStage())
-                );
-
-            case SORT:
-                JQuickSortNodeProto sortProto = proto.getSort();
-                List<JQuickSortPhysicalNode.OrderByItem> orderByItems = new ArrayList<>();
-                for (JQuickSortNodeProto.OrderByItemProto itemProto : sortProto.getOrderByItemsList()) {
-                    orderByItems.add(new JQuickSortPhysicalNode.OrderByItem(
-                            itemProto.getColumnName(),
-                            itemProto.getAscending(),
-                            itemProto.getNullsFirst()
-                    ));
-                }
-                return new JQuickSortPhysicalNode(orderByItems, null);
-
-            case LIMIT:
-                JQuickLimitNodeProto limitProto = proto.getLimit();
-                return new JQuickLimitPhysicalNode(limitProto.getLimit(), limitProto.getOffset(), null);
-
-            case EXCHANGE:
-                JQuickExchangeNodeProto exchangeProto = proto.getExchange();
-                return new JQuickExchangePhysicalNode(
-                        convertExchangeType(exchangeProto.getExchangeType()),
-                        convertPartitionStrategy(exchangeProto.getPartitionStrategy()),
-                        new ArrayList<>(),
-                        exchangeProto.getParallelism(),
-                        null
-                );
-
-            case VALUES:
-                JQuickValuesNodeProto valuesProto = proto.getValues();
-                List<List<Object>> rows = new ArrayList<>();
-                for (JQuickRowProto rowProto : valuesProto.getRowsList()) {
-                    List<Object> row = new ArrayList<>();
-                    for (Map.Entry<String, Any> entry : rowProto.getDataMap().entrySet()) {
-                        row.add(entry.getValue().toString());
-                    }
-                    rows.add(row);
-                }
-                return new JQuickValuesPhysicalNode(
-                        rows,
-                        valuesProto.getColumnNamesList(),
-                        new ArrayList<>()
-                );
-
-            case EMPTY:
-                return JQuickEmptyPhysicalNode.INSTANCE;
-
-            default:
-                return null;
-        }
-    }
-
-    private JQuickExpression buildExpression(JQuickExpressionProto proto) {
-        if (proto == null) return null;
-
-        switch (proto.getType()) {
-            case EXPR_COLUMN_REF:
-                return new JQuickColumnRefExpression(proto.getValue());
-
-            case EXPR_LITERAL:
-                return new JQuickLiteralExpression(proto.getValue());
-
-            case EXPR_BINARY_OPERATOR:
-                List<JQuickExpression> children = new ArrayList<>();
-                for (JQuickExpressionProto child : proto.getChildrenList()) {
-                    children.add(buildExpression(child));
-                }
-                if (children.size() >= 2) {
-                    return new JQuickBinaryExpression(
-                            children.get(0),
-                            children.get(1),
-                            convertBinaryOperator(proto.getBinaryOperator())
-                    );
-                }
-                return null;
-
-            case EXPR_UNARY_OPERATOR:
-                List<JQuickExpression> unaryChildren = new ArrayList<>();
-                for (JQuickExpressionProto child : proto.getChildrenList()) {
-                    unaryChildren.add(buildExpression(child));
-                }
-                if (!unaryChildren.isEmpty()) {
-                    return new JQuickUnaryExpression(
-                            convertUnaryOperator(proto.getValue()),
-                            unaryChildren.get(0)
-                    );
-                }
-                return null;
-
-            case EXPR_FUNCTION:
-                List<JQuickExpression> args = new ArrayList<>();
-                for (JQuickExpressionProto arg : proto.getArgumentsList()) {
-                    args.add(buildExpression(arg));
-                }
-                return new JQuickFunctionCallExpression(proto.getFunctionName(), args);
-
-            case EXPR_CASE_WHEN:
-                List<JQuickExpression> conditions = new ArrayList<>();
-                List<JQuickExpression> results = new ArrayList<>();
-                for (int i = 0; i < proto.getChildrenList().size(); i += 2) {
-                    if (i + 1 < proto.getChildrenList().size()) {
-                        conditions.add(buildExpression(proto.getChildrenList().get(i)));
-                        results.add(buildExpression(proto.getChildrenList().get(i + 1)));
-                    }
-                }
-                JQuickExpression elseResult = null;
-                if (proto.getChildrenList().size() % 2 == 1) {
-                    elseResult = buildExpression(proto.getChildrenList().get(proto.getChildrenList().size() - 1));
-                }
-                return new JQuickCaseWhenExpression(conditions, results, elseResult);
-
-            default:
-                return null;
-        }
-    }
-
-
-    private JQuickTablePartitionInfo buildPartitionInfo(JQuickTablePartitionInfoProto proto) {
-        List<JQuickTablePartitionInfo.Partition> partitions = new ArrayList<>();
-        for (JQuickMemoryPartitionProto partitionProto : proto.getPartitionsList()) {
-            partitions.add(new JQuickTablePartitionInfo.Partition(
-                    partitionProto.getTargetHost(),
-                    partitionProto.getEstimatedSize(),
-                    0,
-                    new HashMap<>()
-            ));
-        }
-        return new JQuickTablePartitionInfo(
-                proto.getTableName(),
-                partitions,
-                proto.getPartitionColumn()
-        );
-    }
-
-    private com.github.paohaijiao.enums.JQuickJoinType convertJoinType(JQuickJoinTypeProto proto) {
-        switch (proto) {
-            case JOIN_INNER: return com.github.paohaijiao.enums.JQuickJoinType.INNER;
-            case JOIN_LEFT: return com.github.paohaijiao.enums.JQuickJoinType.LEFT;
-            case JOIN_RIGHT: return com.github.paohaijiao.enums.JQuickJoinType.RIGHT;
-            case JOIN_FULL: return com.github.paohaijiao.enums.JQuickJoinType.FULL;
-            case JOIN_CROSS: return com.github.paohaijiao.enums.JQuickJoinType.CROSS;
-            case JOIN_SEMI: return com.github.paohaijiao.enums.JQuickJoinType.SEMI;
-            case JOIN_ANTI: return com.github.paohaijiao.enums.JQuickJoinType.ANTI;
-            default: return com.github.paohaijiao.enums.JQuickJoinType.INNER;
-        }
-    }
-
-    private JQuickHashJoinPhysicalNode.JoinDistribution convertJoinDistribution(JQuickJoinDistributionProto proto) {
-        switch (proto) {
-            case JOIN_DIST_LOCAL: return JQuickHashJoinPhysicalNode.JoinDistribution.LOCAL;
-            case JOIN_DIST_SHUFFLE: return JQuickHashJoinPhysicalNode.JoinDistribution.SHUFFLE_HASH;
-            case JOIN_DIST_BROADCAST: return JQuickHashJoinPhysicalNode.JoinDistribution.BROADCAST_HASH;
-            case JOIN_DIST_PARTITIONED: return JQuickHashJoinPhysicalNode.JoinDistribution.PARTITIONED;
-            default: return JQuickHashJoinPhysicalNode.JoinDistribution.LOCAL;
-        }
-    }
-
-    private JQuickHashAggregatePhysicalNode.AggregateStage convertAggregateStage(JQuickAggregateStageProto proto) {
-        switch (proto) {
-            case AGG_PARTIAL: return JQuickHashAggregatePhysicalNode.AggregateStage.PARTIAL;
-            case AGG_FINAL: return JQuickHashAggregatePhysicalNode.AggregateStage.FINAL;
-            default: return JQuickHashAggregatePhysicalNode.AggregateStage.SINGLE;
-        }
-    }
-
-    private JQuickExchangeType convertExchangeType(JQuickExchangeTypeProto proto) {
-        switch (proto) {
-            case EX_SHUFFLE: return JQuickExchangeType.SHUFFLE;
-            case EX_BROADCAST: return JQuickExchangeType.BROADCAST;
-            case EX_GATHER: return JQuickExchangeType.GATHER;
-            case EX_REPARTITION: return JQuickExchangeType.REPARTITION;
-            case EX_PIPELINE: return JQuickExchangeType.PIPELINE;
-            default: return JQuickExchangeType.SHUFFLE;
-        }
-    }
-
-    private JQuickPartitionStrategy convertPartitionStrategy(JQuickPartitionStrategyProto proto) {
-        switch (proto) {
-            case PARTITION_HASH: return JQuickPartitionStrategy.HASH;
-            case PARTITION_RANGE: return JQuickPartitionStrategy.RANGE;
-            case PARTITION_ROUND_ROBIN: return JQuickPartitionStrategy.ROUND_ROBIN;
-            case PARTITION_BROADCAST: return JQuickPartitionStrategy.BROADCAST;
-            case PARTITION_FORWARD: return JQuickPartitionStrategy.FORWARD;
-            default: return JQuickPartitionStrategy.HASH;
-        }
-    }
-
-    private JQuickBinaryOperator convertBinaryOperator(JQuickBinaryOperatorProto proto) {
-        switch (proto) {
-            case OP_EQ: return JQuickBinaryOperator.EQ;
-            case OP_NE: return JQuickBinaryOperator.NE;
-            case OP_LT: return JQuickBinaryOperator.LT;
-            case OP_LTE: return JQuickBinaryOperator.LE;
-            case OP_GT: return JQuickBinaryOperator.GT;
-            case OP_GTE: return JQuickBinaryOperator.GE;
-            case OP_AND: return JQuickBinaryOperator.AND;
-            case OP_OR: return JQuickBinaryOperator.OR;
-            case OP_LIKE: return JQuickBinaryOperator.LIKE;
-            case OP_PLUS: return JQuickBinaryOperator.PLUS;
-            case OP_MINUS: return JQuickBinaryOperator.MINUS;
-            case OP_MULTIPLY: return JQuickBinaryOperator.MULTIPLY;
-            case OP_DIVIDE: return JQuickBinaryOperator.DIVIDE;
-            case OP_MOD: return JQuickBinaryOperator.MOD;
-            default: return JQuickBinaryOperator.EQ;
-        }
-    }
-
-    private com.github.paohaijiao.enums.JQuickUnaryOperator convertUnaryOperator(String value) {
-        if ("NOT".equalsIgnoreCase(value)) return com.github.paohaijiao.enums.JQuickUnaryOperator.NOT;
-        if ("IS_NULL".equalsIgnoreCase(value)) return com.github.paohaijiao.enums.JQuickUnaryOperator.IS_NULL;
-        if ("IS_NOT_NULL".equalsIgnoreCase(value)) return com.github.paohaijiao.enums.JQuickUnaryOperator.IS_NOT_NULL;
-        return com.github.paohaijiao.enums.JQuickUnaryOperator.NOT;
-    }
-
-    private List<JQuickPhysicalColumn> buildOutputSchema(JQuickPhysicalPlanNode node) {
-        if (node == null) return new ArrayList<>();
-        return node.getOutputSchema();
-    }
-
-    private List<JQuickPhysicalColumn> buildOutputSchemaForProject(JQuickProjectPhysicalNode node) {
-        List<JQuickPhysicalColumn> schema = new ArrayList<>();
-        for (JQuickProjectPhysicalNode.SelectItem item : node.getSelectItems()) {
-            String name = item.getAlias() != null ? item.getAlias() : "expr";
-            schema.add(new JQuickPhysicalColumn(name, Object.class, null, true));
-        }
-        return schema;
-    }
-
-    private JQuickDataSet readFromDataSource(String tableName, Set<String> columns) {
-        if (tableName == null) {
-            return JQuickDataSet.builder().build();
-        }
-
-        long rowCount = JQuickDataSourceManager.getRowCount(tableName);
-        if (rowCount == 0) {
-            return JQuickDataSet.builder().build();
-        }
-
-        JQuickDataSet.Builder builder = JQuickDataSet.builder();
-        List<String> columnNames = JQuickDataSourceManager.getColumnNames(tableName);
-
-        if (columns != null && !columns.isEmpty()) {
-            columnNames = columnNames.stream()
-                    .filter(columns::contains)
-                    .collect(Collectors.toList());
-        }
-
-        for (String colName : columnNames) {
-            builder.addColumn(colName, Object.class, tableName);
-        }
-
-        // 模拟数据读取（实际应从数据源读取）
-        for (int i = 0; i < Math.min(rowCount, 10000); i++) {
-            JQuickRow row = new JQuickRow();
-            for (String colName : columnNames) {
-                row.put(colName, "sample_" + i);
-            }
-            builder.addRow(row);
-        }
-
-        return builder.build();
-    }
-
-    private JQuickDataSet readFromMemoryPartition(String partitionId, Set<String> columns) {
-        JQuickMemoryPartition partition = memoryPartitions.get(partitionId);
-        if (partition == null) {
-            return JQuickDataSet.builder().build();
-        }
-        JQuickDataSet data = partition.getData();
-        if (columns == null || columns.isEmpty()) {
-            return data;
-        }
-        return data.select(columns.toArray(new String[0]));
-    }
-
-    private void receivePartition(JQuickMemoryPartitionProto partition) {
-        JQuickMemoryPartition memPartition = new JQuickMemoryPartition(
-                partition.getPartitionIndex(),
-                partition.getTotalPartitions()
-        );
-        memPartition.setData(convertFromProto(partition.getData()));
-        memPartition.setChunkIndex(partition.getPartitionIndex());
-        memoryPartitions.put(partition.getPartitionId(), memPartition);
-    }
-
-    private void sendOutputPartition(JQuickDataSet result, JQuickMemoryPartitionProto outputPartition) {
-        JQuickMemoryPartition partition = new JQuickMemoryPartition(
-                outputPartition.getPartitionIndex(),
-                outputPartition.getTotalPartitions()
-        );
-        partition.setData(result);
-        sendToWorker(partition, 1, JQuickExchangeType.GATHER);
+    private void cleanupQuery(String queryId) {
+        activeQueries.remove(queryId);
+        LOGGER.fine(String.format("Cleaned up query - queryId: %s", queryId));
     }
 
     /**
-     * 启动 Worker 服务
+     * 获取查询状态
      */
-    public void start() throws IOException {
-        JQuickPhysicalPlanServiceImpl planService = new JQuickPhysicalPlanServiceImpl(this);
-        JQuickDataDistributionServiceImpl distributionService = new JQuickDataDistributionServiceImpl(this);
-
-        server = ServerBuilder.forPort(port)
-                .addService(planService)
-                .addService(distributionService)
-                .build()
-                .start();
-
-        System.out.println("Worker " + workerId + " started on port " + port);
+    public QueryExecution getQueryStatus(String queryId) {
+        return activeQueries.get(queryId);
     }
 
     /**
-     * 停止 Worker 服务
+     * 获取所有活跃查询
      */
-    public void stop() {
-        if (server != null) {
-            server.shutdown();
+    public Map<String, QueryExecution> getActiveQueries() {
+        return Collections.unmodifiableMap(activeQueries);
+    }
+
+    /**
+     * 获取 Worker 状态
+     */
+    public List<WorkerEndpoint> getWorkerStatus() {
+        return Collections.unmodifiableList(workers);
+    }
+
+    /**
+     * 添加 Worker
+     */
+    public void addWorker(WorkerEndpoint worker) {
+        workers.add(worker);
+        workerIdMap.put(worker.getWorkerId(), worker);
+        workerIndexMap.put(workers.size() - 1, worker);
+        LOGGER.info(String.format("Worker added - %s", worker));
+    }
+
+    /**
+     * 移除 Worker
+     */
+    public void removeWorker(String workerId) {
+        WorkerEndpoint worker = workerIdMap.remove(workerId);
+        if (worker != null) {
+            workers.remove(worker);
+            workerIndexMap.values().remove(worker);
+            ManagedChannel channel = workerChannels.remove(workerId);
+            if (channel != null) {
+                channel.shutdown();
+            }
+            LOGGER.info(String.format("Worker removed - %s", worker));
         }
+    }
+
+    /**
+     * 关闭 Coordinator
+     */
+    public void shutdown() {
+        LOGGER.info("Shutting down JQuickCoordinator...");
+        running = false;
+        // 取消所有活跃查询
+        for (String queryId : new ArrayList<>(activeQueries.keySet())) {
+            cancelQuery(queryId, "Coordinator shutting down");
+        }
+        // 关闭线程池
         executor.shutdown();
+        scheduler.shutdown();
+        try {
+            if (!executor.awaitTermination(30, TimeUnit.SECONDS)) {
+                executor.shutdownNow();
+            }
+            if (!scheduler.awaitTermination(10, TimeUnit.SECONDS)) {
+                scheduler.shutdownNow();
+            }
+        } catch (InterruptedException e) {
+            executor.shutdownNow();
+            scheduler.shutdownNow();
+            Thread.currentThread().interrupt();
+        }
+        // 关闭所有 gRPC 连接
         for (ManagedChannel channel : workerChannels.values()) {
             channel.shutdown();
         }
-        System.out.println("Worker " + workerId + " stopped");
+        LOGGER.info("JQuickCoordinator shutdown complete");
     }
 
     /**
-     * 等待服务终止
+     * 打印执行统计信息
      */
-    public void awaitTermination() throws InterruptedException {
-        if (server != null) {
-            server.awaitTermination();
+    public void printStatistics() {
+        System.out.println("=== JQuickCoordinator Statistics ===");
+        System.out.println("Coordinator ID: " + coordinatorId);
+        System.out.println("Active Queries: " + activeQueries.size());
+        System.out.println("Workers: " + workers.size());
+        System.out.println("Healthy Workers: " + workers.stream().filter(WorkerEndpoint::isHealthy).count());
+        System.out.println();
+        for (QueryExecution execution : activeQueries.values()) {
+            System.out.println("Query: " + execution.getQueryId());
+            System.out.println("  Status: " + execution.getStatus());
+            System.out.println("  Duration: " + execution.getExecutionTimeMs() + "ms");
+            System.out.println("  Tasks: " + execution.getTasks().size());
+
+            long successTasks = execution.getTasks().values().stream()
+                    .filter(t -> t.getStatus() == TaskExecution.TaskStatus.SUCCESS)
+                    .count();
+            long failedTasks = execution.getTasks().values().stream()
+                    .filter(t -> t.getStatus() == TaskExecution.TaskStatus.FAILED)
+                    .count();
+
+            System.out.println("  Successful Tasks: " + successTasks);
+            System.out.println("  Failed Tasks: " + failedTasks);
         }
     }
 
-    // ========== 内部类 ==========
+    /**
+     * 带超时的 CompletableFuture 包装（Java 8 兼容）
+     */
+    private <T> CompletableFuture<T> withTimeout(CompletableFuture<T> future, long timeout, TimeUnit unit) {
+        CompletableFuture<T> timeoutFuture = new CompletableFuture<>();
+        ScheduledFuture<?> timeoutTask = scheduler.schedule(() -> {
+            if (!future.isDone()) {
+                TimeoutException timeoutEx = new TimeoutException(String.format("Task timeout after %d %s", timeout, unit.toString().toLowerCase()));
+                timeoutFuture.completeExceptionally(timeoutEx);
+                future.cancel(true);
+            }
+        }, timeout, unit);
+        future.whenComplete((result, error) -> {
+            timeoutTask.cancel(true);
+            if (error != null) {
+                timeoutFuture.completeExceptionally(error);
+            } else {
+                timeoutFuture.complete(result);
+            }
+        });
 
-    class JQuickTaskContext {
-        private final String taskId;
-        private final JQuickExecuteTaskRequest request;
-        private long processedRows;
-        private long startTime;
-        private long memoryUsed;
-
-        JQuickTaskContext(String taskId, JQuickExecuteTaskRequest request) {
-            this.taskId = taskId;
-            this.request = request;
-            this.startTime = System.currentTimeMillis();
-            this.memoryUsed = request.getMemoryLimitBytes();
-        }
-
-        void addProcessedRows(long rows) {
-            this.processedRows += rows;
-        }
-
-        long getProcessedRows() {
-            return processedRows;
-        }
-
-        long getExecutionTimeMs() {
-            return System.currentTimeMillis() - startTime;
-        }
-
-        long getMemoryUsedBytes() {
-            return memoryUsed;
-        }
+        return timeoutFuture;
     }
 
-    class JQuickMemoryPartition {
+    /**
+     * Worker 节点端点信息（轻量级，仅包含连接信息）
+     * 注意：这不是 Worker 实现，而是对远程 Worker 的引用
+     */
+    public static class WorkerEndpoint {
+
+        private final String workerId;
+
+        private final String host;
+
+        private final int port;
+
         private final int index;
-        private final int total;
-        private JQuickDataSet data;
-        private int chunkIndex;
 
-        JQuickMemoryPartition(int index, int total) {
+        private volatile boolean healthy;
+
+        private volatile long lastHeartbeat;
+
+        public WorkerEndpoint(String workerId, String host, int port, int index) {
+            this.workerId = workerId;
+            this.host = host;
+            this.port = port;
             this.index = index;
-            this.total = total;
-            this.data = JQuickDataSet.builder().build();
-            this.chunkIndex = 0;
+            this.healthy = true;
+            this.lastHeartbeat = System.currentTimeMillis();
         }
 
-        void addRow(JQuickRow row) {
-            JQuickDataSet.Builder builder = JQuickDataSet.builder();
-            for (JQuickColumnMeta col : data.getColumns()) {
-                builder.addColumn(col.getName(), col.getType(), col.getSource());
-            }
-            builder.addRow(row);
-            for (JQuickRow existingRow : data.getRows()) {
-                builder.addRow(existingRow);
-            }
-            this.data = builder.build();
+        public String getWorkerId() {
+            return workerId;
         }
 
-        void setData(JQuickDataSet data) {
-            this.data = data;
+        public String getHost() {
+            return host;
         }
 
-        JQuickDataSet getData() {
-            return data;
+        public int getPort() {
+            return port;
         }
 
-        String getPartitionId() {
-            return index + "_" + total;
-        }
-
-        int getIndex() {
+        public int getIndex() {
             return index;
         }
 
-        int getChunkIndex() {
-            return chunkIndex;
+        public boolean isHealthy() {
+            return healthy;
         }
 
-        void setChunkIndex(int chunkIndex) {
-            this.chunkIndex = chunkIndex;
+        public void setHealthy(boolean healthy) {
+            this.healthy = healthy;
         }
 
-        boolean isLast() {
-            return chunkIndex == total - 1;
+        public void updateHeartbeat() {
+            this.lastHeartbeat = System.currentTimeMillis();
         }
 
-        long getDataSize() {
-            long size = 0;
-            for (JQuickRow row : data.getRows()) {
-                for (Object value : row.values()) {
-                    if (value != null) {
-                        size += value.toString().length();
-                    }
-                }
-            }
-            return size;
+        public long getLastHeartbeat() {
+            return lastHeartbeat;
+        }
+
+        @Override
+        public String toString() {
+            return String.format("WorkerEndpoint{id=%s, host=%s:%d, healthy=%s}", workerId, host, port, healthy);
         }
     }
-}
 
-/**
- * gRPC 服务实现类
- */
-class JQuickPhysicalPlanServiceImpl extends JQuickPhysicalPlanServiceGrpc.JQuickPhysicalPlanServiceImplBase {
-    private final JQuickWorker worker;
+    /**
+     * 任务执行状态
+     */
+    public static class TaskExecution {
 
-    JQuickPhysicalPlanServiceImpl(JQuickWorker worker) {
-        this.worker = worker;
+        private final long fragmentId;
+
+        private final int taskIndex;
+
+        private final int totalTasks;
+
+        private final WorkerEndpoint assignedWorker;
+
+        private final CompletableFuture<JQuickExecuteTaskResponse> future;
+
+        private volatile TaskStatus status;
+
+        private volatile int retryCount;
+
+        private volatile String errorMessage;
+
+        private volatile long startTime;
+
+        private volatile long endTime;
+
+        public TaskExecution(long fragmentId, int taskIndex, int totalTasks, WorkerEndpoint worker) {
+            this.fragmentId = fragmentId;
+            this.taskIndex = taskIndex;
+            this.totalTasks = totalTasks;
+            this.assignedWorker = worker;
+            this.future = new CompletableFuture<>();
+            this.status = TaskStatus.PENDING;
+            this.retryCount = 0;
+            this.startTime = 0;
+            this.endTime = 0;
+        }
+
+        public long getFragmentId() {
+            return fragmentId;
+        }
+
+        public int getTaskIndex() {
+            return taskIndex;
+        }
+
+        public int getTotalTasks() {
+            return totalTasks;
+        }
+
+        public WorkerEndpoint getAssignedWorker() {
+            return assignedWorker;
+        }
+
+        public CompletableFuture<JQuickExecuteTaskResponse> getFuture() {
+            return future;
+        }
+
+        public TaskStatus getStatus() {
+            return status;
+        }
+
+        public void setStatus(TaskStatus status) {
+            this.status = status;
+        }
+
+        public int getRetryCount() {
+            return retryCount;
+        }
+
+        public void incrementRetryCount() {
+            retryCount++;
+        }
+
+        public String getErrorMessage() {
+            return errorMessage;
+        }
+
+        public void setErrorMessage(String errorMessage) {
+            this.errorMessage = errorMessage;
+        }
+
+        public long getStartTime() {
+            return startTime;
+        }
+
+        public void setStartTime(long startTime) {
+            this.startTime = startTime;
+        }
+
+        public long getEndTime() {
+            return endTime;
+        }
+
+        public void setEndTime(long endTime) {
+            this.endTime = endTime;
+        }
+
+        public long getExecutionTimeMs() {
+            return endTime > 0 ? endTime - startTime : System.currentTimeMillis() - startTime;
+        }
+
+        public enum TaskStatus {
+            PENDING, SCHEDULED, RUNNING, SUCCESS, FAILED, CANCELLED
+        }
     }
 
-    @Override
-    public void executeTask(JQuickExecuteTaskRequest request,
-                            StreamObserver<JQuickExecuteTaskResponse> responseObserver) {
-        JQuickExecuteTaskResponse response = worker.executeTask(request);
-        responseObserver.onNext(response);
-        responseObserver.onCompleted();
-    }
+    /**
+     * 查询执行上下文
+     */
+    public static class QueryExecution {
 
-    @Override
-    public void executeTaskStream(JQuickExecuteTaskRequest request,
-                                  StreamObserver<JQuickDataChunkProto> responseObserver) {
-        worker.executeTaskStream(request, responseObserver);
-    }
+        private final String queryId;
 
-    @Override
-    public void cancelTask(JQuickCancelQueryRequest request,
-                           StreamObserver<JQuickCancelQueryResponse> responseObserver) {
-        JQuickCancelQueryResponse response = JQuickCancelQueryResponse.newBuilder()
-                .setQueryId(request.getQueryId())
-                .setSuccess(true)
-                .setMessage("Task cancelled")
-                .build();
-        responseObserver.onNext(response);
-        responseObserver.onCompleted();
-    }
-}
+        private final JQuickDistributedPlan distributedPlan;
 
-/**
- * 数据分发服务实现类
- */
-class JQuickDataDistributionServiceImpl extends JQuickDataDistributionServiceGrpc.JQuickDataDistributionServiceImplBase {
-    private final JQuickWorker worker;
+        private final Map<String, TaskExecution> tasks;  // taskId -> TaskExecution
 
-    JQuickDataDistributionServiceImpl(JQuickWorker worker) {
-        this.worker = worker;
-    }
+        private final Map<Long, List<JQuickDataChunkProto>> resultChunks;
 
-    @Override
-    public StreamObserver<JQuickDataChunkProto> sendData(StreamObserver<JQuickEmptyNodeProto> responseObserver) {
-        return new StreamObserver<JQuickDataChunkProto>() {
-            private final List<JQuickDataChunkProto> receivedChunks = new ArrayList<>();
+        private final CompletableFuture<JQuickDataSet> resultFuture;
 
-            @Override
-            public void onNext(JQuickDataChunkProto chunk) {
-                receivedChunks.add(chunk);
-            }
+        private final long startTime;
 
-            @Override
-            public void onError(Throwable t) {
-                responseObserver.onError(t);
-            }
+        private volatile boolean cancelled;
 
-            @Override
-            public void onCompleted() {
-                responseObserver.onNext(JQuickEmptyNodeProto.newBuilder().build());
-                responseObserver.onCompleted();
-            }
-        };
-    }
+        private volatile QueryStatus status;
 
-    @Override
-    public void receiveData(JQuickFetchDataRequest request,
-                            StreamObserver<JQuickFetchDataResponse> responseObserver) {
-        JQuickFetchDataResponse response = JQuickFetchDataResponse.newBuilder()
-                .setPartitionId(request.getPartitionId())
-                .setChunkIndex(request.getChunkIndex())
-                .setIsLast(true)
-                .setData(JQuickDataSetProto.newBuilder().build())
-                .setDataSizeBytes(0)
-                .setFromMemory(true)
-                .build();
-        responseObserver.onNext(response);
-        responseObserver.onCompleted();
-    }
+        private String errorMessage;
 
-    @Override
-    public void broadcastData(StreamObserver<JQuickDataChunkProto> responseObserver,
-                              StreamObserver<JQuickBroadcastResponse> responseObserver1) {
-        // 广播实现
-        responseObserver1.onNext(JQuickBroadcastResponse.newBuilder()
-                .setSuccess(true)
-                .setSuccessCount(1)
-                .build());
-        responseObserver1.onCompleted();
+        public QueryExecution(String queryId, JQuickDistributedPlan distributedPlan) {
+            this.queryId = queryId;
+            this.distributedPlan = distributedPlan;
+            this.tasks = new ConcurrentHashMap<>();
+            this.resultChunks = new ConcurrentHashMap<>();
+            this.resultFuture = new CompletableFuture<>();
+            this.startTime = System.currentTimeMillis();
+            this.status = QueryStatus.PENDING;
+            this.cancelled = false;
+        }
+
+        public String getQueryId() {
+            return queryId;
+        }
+
+        public JQuickDistributedPlan getDistributedPlan() {
+            return distributedPlan;
+        }
+
+        public Map<String, TaskExecution> getTasks() {
+            return tasks;
+        }
+
+        public CompletableFuture<JQuickDataSet> getResultFuture() {
+            return resultFuture;
+        }
+
+        public long getStartTime() {
+            return startTime;
+        }
+
+        public QueryStatus getStatus() {
+            return status;
+        }
+
+        public void setStatus(QueryStatus status) {
+            this.status = status;
+        }
+
+        public boolean isCancelled() {
+            return cancelled;
+        }
+
+        public void cancel() {
+            this.cancelled = true;
+        }
+
+        public String getErrorMessage() {
+            return errorMessage;
+        }
+
+        public void setErrorMessage(String errorMessage) {
+            this.errorMessage = errorMessage;
+        }
+
+        public long getExecutionTimeMs() {
+            return System.currentTimeMillis() - startTime;
+        }
+
+        public void addResultChunk(long fragmentId, JQuickDataChunkProto chunk) {
+            resultChunks.computeIfAbsent(fragmentId, k -> new CopyOnWriteArrayList<>()).add(chunk);
+        }
+
+        public List<JQuickDataChunkProto> getResultChunks(long fragmentId) {
+            return resultChunks.getOrDefault(fragmentId, Collections.emptyList());
+        }
+
+        public enum QueryStatus {
+            PENDING, PLANNING, SCHEDULING, RUNNING, COMPLETED, FAILED, CANCELLED
+        }
     }
 }

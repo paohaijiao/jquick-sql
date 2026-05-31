@@ -12,7 +12,7 @@ public final class JQuickCoordinatorServiceGrpc {
 
   private JQuickCoordinatorServiceGrpc() {}
 
-  public static final java.lang.String SERVICE_NAME = "com.github.paohaijiao.proto.JQuickCoordinatorService";
+  public static final String SERVICE_NAME = "com.github.paohaijiao.proto.JQuickCoordinatorService";
 
   // Static method descriptors that strictly reflect the proto.
   private static volatile io.grpc.MethodDescriptor<JQuickSubmitQueryRequest,
@@ -176,7 +176,7 @@ public final class JQuickCoordinatorServiceGrpc {
   public static JQuickCoordinatorServiceStub newStub(io.grpc.Channel channel) {
     io.grpc.stub.AbstractStub.StubFactory<JQuickCoordinatorServiceStub> factory =
       new io.grpc.stub.AbstractStub.StubFactory<JQuickCoordinatorServiceStub>() {
-        @java.lang.Override
+        @Override
         public JQuickCoordinatorServiceStub newStub(io.grpc.Channel channel, io.grpc.CallOptions callOptions) {
           return new JQuickCoordinatorServiceStub(channel, callOptions);
         }
@@ -191,7 +191,7 @@ public final class JQuickCoordinatorServiceGrpc {
       io.grpc.Channel channel) {
     io.grpc.stub.AbstractStub.StubFactory<JQuickCoordinatorServiceBlockingV2Stub> factory =
       new io.grpc.stub.AbstractStub.StubFactory<JQuickCoordinatorServiceBlockingV2Stub>() {
-        @java.lang.Override
+        @Override
         public JQuickCoordinatorServiceBlockingV2Stub newStub(io.grpc.Channel channel, io.grpc.CallOptions callOptions) {
           return new JQuickCoordinatorServiceBlockingV2Stub(channel, callOptions);
         }
@@ -206,7 +206,7 @@ public final class JQuickCoordinatorServiceGrpc {
       io.grpc.Channel channel) {
     io.grpc.stub.AbstractStub.StubFactory<JQuickCoordinatorServiceBlockingStub> factory =
       new io.grpc.stub.AbstractStub.StubFactory<JQuickCoordinatorServiceBlockingStub>() {
-        @java.lang.Override
+        @Override
         public JQuickCoordinatorServiceBlockingStub newStub(io.grpc.Channel channel, io.grpc.CallOptions callOptions) {
           return new JQuickCoordinatorServiceBlockingStub(channel, callOptions);
         }
@@ -221,7 +221,7 @@ public final class JQuickCoordinatorServiceGrpc {
       io.grpc.Channel channel) {
     io.grpc.stub.AbstractStub.StubFactory<JQuickCoordinatorServiceFutureStub> factory =
       new io.grpc.stub.AbstractStub.StubFactory<JQuickCoordinatorServiceFutureStub>() {
-        @java.lang.Override
+        @Override
         public JQuickCoordinatorServiceFutureStub newStub(io.grpc.Channel channel, io.grpc.CallOptions callOptions) {
           return new JQuickCoordinatorServiceFutureStub(channel, callOptions);
         }
@@ -281,7 +281,7 @@ public final class JQuickCoordinatorServiceGrpc {
   public static abstract class JQuickCoordinatorServiceImplBase
       implements io.grpc.BindableService, AsyncService {
 
-    @java.lang.Override public final io.grpc.ServerServiceDefinition bindService() {
+    @Override public final io.grpc.ServerServiceDefinition bindService() {
       return JQuickCoordinatorServiceGrpc.bindService(this);
     }
   }
@@ -299,7 +299,7 @@ public final class JQuickCoordinatorServiceGrpc {
       super(channel, callOptions);
     }
 
-    @java.lang.Override
+    @Override
     protected JQuickCoordinatorServiceStub build(
         io.grpc.Channel channel, io.grpc.CallOptions callOptions) {
       return new JQuickCoordinatorServiceStub(channel, callOptions);
@@ -359,7 +359,7 @@ public final class JQuickCoordinatorServiceGrpc {
       super(channel, callOptions);
     }
 
-    @java.lang.Override
+    @Override
     protected JQuickCoordinatorServiceBlockingV2Stub build(
         io.grpc.Channel channel, io.grpc.CallOptions callOptions) {
       return new JQuickCoordinatorServiceBlockingV2Stub(channel, callOptions);
@@ -416,7 +416,7 @@ public final class JQuickCoordinatorServiceGrpc {
       super(channel, callOptions);
     }
 
-    @java.lang.Override
+    @Override
     protected JQuickCoordinatorServiceBlockingStub build(
         io.grpc.Channel channel, io.grpc.CallOptions callOptions) {
       return new JQuickCoordinatorServiceBlockingStub(channel, callOptions);
@@ -472,7 +472,7 @@ public final class JQuickCoordinatorServiceGrpc {
       super(channel, callOptions);
     }
 
-    @java.lang.Override
+    @Override
     protected JQuickCoordinatorServiceFutureStub build(
         io.grpc.Channel channel, io.grpc.CallOptions callOptions) {
       return new JQuickCoordinatorServiceFutureStub(channel, callOptions);
@@ -530,8 +530,8 @@ public final class JQuickCoordinatorServiceGrpc {
       this.methodId = methodId;
     }
 
-    @java.lang.Override
-    @java.lang.SuppressWarnings("unchecked")
+    @Override
+    @SuppressWarnings("unchecked")
     public void invoke(Req request, io.grpc.stub.StreamObserver<Resp> responseObserver) {
       switch (methodId) {
         case METHODID_SUBMIT_QUERY:
@@ -559,8 +559,8 @@ public final class JQuickCoordinatorServiceGrpc {
       }
     }
 
-    @java.lang.Override
-    @java.lang.SuppressWarnings("unchecked")
+    @Override
+    @SuppressWarnings("unchecked")
     public io.grpc.stub.StreamObserver<Req> invoke(
         io.grpc.stub.StreamObserver<Resp> responseObserver) {
       switch (methodId) {
@@ -614,12 +614,12 @@ public final class JQuickCoordinatorServiceGrpc {
       implements io.grpc.protobuf.ProtoFileDescriptorSupplier, io.grpc.protobuf.ProtoServiceDescriptorSupplier {
     JQuickCoordinatorServiceBaseDescriptorSupplier() {}
 
-    @java.lang.Override
+    @Override
     public com.google.protobuf.Descriptors.FileDescriptor getFileDescriptor() {
       return JQuickPhysicalPlanProto.getDescriptor();
     }
 
-    @java.lang.Override
+    @Override
     public com.google.protobuf.Descriptors.ServiceDescriptor getServiceDescriptor() {
       return getFileDescriptor().findServiceByName("JQuickCoordinatorService");
     }
@@ -633,13 +633,13 @@ public final class JQuickCoordinatorServiceGrpc {
   private static final class JQuickCoordinatorServiceMethodDescriptorSupplier
       extends JQuickCoordinatorServiceBaseDescriptorSupplier
       implements io.grpc.protobuf.ProtoMethodDescriptorSupplier {
-    private final java.lang.String methodName;
+    private final String methodName;
 
-    JQuickCoordinatorServiceMethodDescriptorSupplier(java.lang.String methodName) {
+    JQuickCoordinatorServiceMethodDescriptorSupplier(String methodName) {
       this.methodName = methodName;
     }
 
-    @java.lang.Override
+    @Override
     public com.google.protobuf.Descriptors.MethodDescriptor getMethodDescriptor() {
       return getServiceDescriptor().findMethodByName(methodName);
     }

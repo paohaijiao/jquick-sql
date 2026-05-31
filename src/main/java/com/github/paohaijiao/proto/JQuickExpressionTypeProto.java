@@ -95,7 +95,7 @@ public enum JQuickExpressionTypeProto
 
   public final int getNumber() {
     if (this == UNRECOGNIZED) {
-      throw new java.lang.IllegalArgumentException(
+      throw new IllegalArgumentException(
           "Can't get the number of an unknown enum value.");
     }
     return value;
@@ -106,7 +106,7 @@ public enum JQuickExpressionTypeProto
    * @return The enum associated with the given numeric wire value.
    * @deprecated Use {@link #forNumber(int)} instead.
    */
-  @java.lang.Deprecated
+  @Deprecated
   public static JQuickExpressionTypeProto valueOf(int value) {
     return forNumber(value);
   }
@@ -146,7 +146,7 @@ public enum JQuickExpressionTypeProto
   public final com.google.protobuf.Descriptors.EnumValueDescriptor
       getValueDescriptor() {
     if (this == UNRECOGNIZED) {
-      throw new java.lang.IllegalStateException(
+      throw new IllegalStateException(
           "Can't get the descriptor of an unrecognized enum value.");
     }
     return getDescriptor().getValues().get(ordinal());
@@ -165,7 +165,7 @@ public enum JQuickExpressionTypeProto
   public static JQuickExpressionTypeProto valueOf(
       com.google.protobuf.Descriptors.EnumValueDescriptor desc) {
     if (desc.getType() != getDescriptor()) {
-      throw new java.lang.IllegalArgumentException(
+      throw new IllegalArgumentException(
         "EnumValueDescriptor is not for this type.");
     }
     if (desc.getIndex() == -1) {

@@ -63,10 +63,20 @@ public interface JQuickDataChunkProtoOrBuilder extends
    * 所属分区
    * </pre>
    *
-   * <code>int32 partition_id = 6;</code>
+   * <code>string partition_id = 6;</code>
    * @return The partitionId.
    */
-  int getPartitionId();
+  String getPartitionId();
+  /**
+   * <pre>
+   * 所属分区
+   * </pre>
+   *
+   * <code>string partition_id = 6;</code>
+   * @return The bytes for partitionId.
+   */
+  com.google.protobuf.ByteString
+      getPartitionIdBytes();
 
   /**
    * <code>int64 compressed_size = 7;</code>

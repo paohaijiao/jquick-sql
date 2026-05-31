@@ -11,7 +11,7 @@ public interface JQuickGetResultRequestOrBuilder extends
    * <code>string query_id = 1;</code>
    * @return The queryId.
    */
-  java.lang.String getQueryId();
+  String getQueryId();
   /**
    * <code>string query_id = 1;</code>
    * @return The bytes for queryId.

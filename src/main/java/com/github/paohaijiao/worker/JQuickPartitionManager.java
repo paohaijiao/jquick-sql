@@ -41,23 +41,16 @@ public class JQuickPartitionManager {
     /**
      * 数据分区逻辑
      */
-    public List<JQuickWorker.JQuickMemoryPartition> partitionData(
-            JQuickDataSet data,
-            JQuickExchangePhysicalNode node,
-            JQuickExpressionEvaluator expressionEvaluator,
-            int targetParallelism) {
-
+    public List<JQuickWorker.JQuickMemoryPartition> partitionData(JQuickDataSet data, JQuickExchangePhysicalNode node, JQuickExpressionEvaluator expressionEvaluator, int targetParallelism) {
         int numPartitions = targetParallelism;
         List<JQuickWorker.JQuickMemoryPartition> partitions = new ArrayList<>();
         JQuickPartitionStrategy strategy = node.getPartitionStrategy();
         for (int i = 0; i < numPartitions; i++) {
             partitions.add(new JQuickWorker.JQuickMemoryPartition(i, numPartitions));
         }
-
         if (data.isEmpty()) {
             return partitions;
         }
-
         switch (strategy) {
             case HASH:
                 for (JQuickRow row : data.getRows()) {
@@ -72,7 +65,6 @@ public class JQuickPartitionManager {
                     partitions.get(partition).addRow(row);
                 }
                 break;
-
             case ROUND_ROBIN:
                 int idx = 0;
                 for (JQuickRow row : data.getRows()) {
@@ -110,8 +102,7 @@ public class JQuickPartitionManager {
     /**
      * 计算哈希分区
      */
-    private int computeHashPartition(JQuickRow row, List<JQuickExpression> partitionKeys,
-                                     int numPartitions, JQuickExpressionEvaluator evaluator) {
+    private int computeHashPartition(JQuickRow row, List<JQuickExpression> partitionKeys, int numPartitions, JQuickExpressionEvaluator evaluator) {
         int hash = 0;
         if (partitionKeys == null || partitionKeys.isEmpty()) {
             return Math.abs(row.hashCode()) % numPartitions;
@@ -126,8 +117,7 @@ public class JQuickPartitionManager {
     /**
      * 计算范围分区
      */
-    private int computeRangePartition(JQuickRow row, List<JQuickExpression> partitionKeys,
-                                      int numPartitions, JQuickExpressionEvaluator evaluator) {
+    private int computeRangePartition(JQuickRow row, List<JQuickExpression> partitionKeys, int numPartitions, JQuickExpressionEvaluator evaluator) {
         if (partitionKeys == null || partitionKeys.isEmpty()) {
             return 0;
         }
@@ -141,8 +131,7 @@ public class JQuickPartitionManager {
     /**
      * 计算桶分区
      */
-    private int computeBucketPartition(JQuickRow row, List<JQuickExpression> partitionKeys,
-                                       int numPartitions, JQuickExpressionEvaluator evaluator) {
+    private int computeBucketPartition(JQuickRow row, List<JQuickExpression> partitionKeys, int numPartitions, JQuickExpressionEvaluator evaluator) {
         if (partitionKeys == null || partitionKeys.isEmpty()) {
             return Math.abs(row.hashCode()) % numPartitions;
         }
@@ -159,10 +148,7 @@ public class JQuickPartitionManager {
     /**
      * 发送数据到目标 Worker
      */
-    public void sendToWorker(JQuickWorker.JQuickMemoryPartition partition,
-                             int targetParallelism,
-                             JQuickExchangeType exchangeType,
-                             JQuickWorker worker) {
+    public void sendToWorker(JQuickWorker.JQuickMemoryPartition partition, int targetParallelism, JQuickExchangeType exchangeType, JQuickWorker worker) {
         if (exchangeType == JQuickExchangeType.GATHER) {
             sendToSingleWorker(partition, 0, worker);
         } else if (exchangeType == JQuickExchangeType.BROADCAST) {
@@ -176,9 +162,7 @@ public class JQuickPartitionManager {
     /**
      * 发送到单个 Worker
      */
-    private void sendToSingleWorker(JQuickWorker.JQuickMemoryPartition partition,
-                                    int targetWorkerId,
-                                    JQuickWorker worker) {
+    private void sendToSingleWorker(JQuickWorker.JQuickMemoryPartition partition, int targetWorkerId, JQuickWorker worker) {
         JQuickDataChunkProto chunk = buildDataChunk(partition, worker);
         sendChunkAsync(chunk, targetWorkerId, worker);
     }
@@ -213,15 +197,12 @@ public class JQuickPartitionManager {
     private void sendChunkAsync(JQuickDataChunkProto chunk, int targetWorkerId, JQuickWorker worker) {
         worker.getExecutor().submit(() -> {
             try {
-                JQuickDataDistributionServiceGrpc.JQuickDataDistributionServiceStub stub =
-                        getDistributionStub(targetWorkerId, worker);
+                JQuickDataDistributionServiceGrpc.JQuickDataDistributionServiceStub stub = getDistributionStub(targetWorkerId, worker);
                 CompletableFuture<Void> future = new CompletableFuture<>();
-
                 stub.sendData(new StreamObserver<JQuickEmptyNodeProto>() {
                     @Override
                     public void onNext(JQuickEmptyNodeProto value) {
                     }
-
                     @Override
                     public void onError(Throwable t) {
                         future.completeExceptionally(t);
@@ -232,10 +213,9 @@ public class JQuickPartitionManager {
                         future.complete(null);
                     }
                 }).onNext(chunk);
-
                 future.get(30, TimeUnit.SECONDS);
             } catch (Exception e) {
-                // 记录错误，不抛出
+               e.printStackTrace();
             }
         });
     }
@@ -245,10 +225,7 @@ public class JQuickPartitionManager {
      */
     private JQuickDataDistributionServiceGrpc.JQuickDataDistributionServiceStub getDistributionStub(int workerId, JQuickWorker worker) {
         return worker.getDistributionStubs().computeIfAbsent(workerId, id -> {
-            ManagedChannel channel = ManagedChannelBuilder
-                    .forAddress("localhost", 9000 + id)
-                    .usePlaintext()
-                    .build();
+            ManagedChannel channel = ManagedChannelBuilder.forAddress("localhost", 9000 + id).usePlaintext().build();
             worker.getWorkerChannels().put(id, channel);
             return JQuickDataDistributionServiceGrpc.newStub(channel);
         });

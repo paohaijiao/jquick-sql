@@ -21,14 +21,14 @@ private static final long serialVersionUID = 0L;
     localPartitionIds_ = com.google.protobuf.LazyStringArrayList.EMPTY;
   }
 
-  @java.lang.Override
+  @Override
   @SuppressWarnings({"unused"})
-  protected java.lang.Object newInstance(
+  protected Object newInstance(
       UnusedPrivateParameter unused) {
     return new JQuickWorkerInfoProto();
   }
 
-  @java.lang.Override
+  @Override
   public final com.google.protobuf.UnknownFieldSet
   getUnknownFields() {
     return this.unknownFields;
@@ -38,30 +38,30 @@ private static final long serialVersionUID = 0L;
     return JQuickPhysicalPlanProto.internal_static_com_github_paohaijiao_proto_JQuickWorkerInfoProto_descriptor;
   }
 
-  @java.lang.Override
-  protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+  @Override
+  protected FieldAccessorTable
       internalGetFieldAccessorTable() {
     return JQuickPhysicalPlanProto.internal_static_com_github_paohaijiao_proto_JQuickWorkerInfoProto_fieldAccessorTable
         .ensureFieldAccessorsInitialized(
-            JQuickWorkerInfoProto.class, JQuickWorkerInfoProto.Builder.class);
+            JQuickWorkerInfoProto.class, Builder.class);
   }
 
   public static final int WORKER_ID_FIELD_NUMBER = 1;
   @SuppressWarnings("serial")
-  private volatile java.lang.Object workerId_ = "";
+  private volatile Object workerId_ = "";
   /**
    * <code>string worker_id = 1;</code>
    * @return The workerId.
    */
-  @java.lang.Override
-  public java.lang.String getWorkerId() {
-    java.lang.Object ref = workerId_;
-    if (ref instanceof java.lang.String) {
-      return (java.lang.String) ref;
+  @Override
+  public String getWorkerId() {
+    Object ref = workerId_;
+    if (ref instanceof String) {
+      return (String) ref;
     } else {
       com.google.protobuf.ByteString bs = 
           (com.google.protobuf.ByteString) ref;
-      java.lang.String s = bs.toStringUtf8();
+      String s = bs.toStringUtf8();
       workerId_ = s;
       return s;
     }
@@ -70,14 +70,14 @@ private static final long serialVersionUID = 0L;
    * <code>string worker_id = 1;</code>
    * @return The bytes for workerId.
    */
-  @java.lang.Override
+  @Override
   public com.google.protobuf.ByteString
       getWorkerIdBytes() {
-    java.lang.Object ref = workerId_;
-    if (ref instanceof java.lang.String) {
+    Object ref = workerId_;
+    if (ref instanceof String) {
       com.google.protobuf.ByteString b = 
           com.google.protobuf.ByteString.copyFromUtf8(
-              (java.lang.String) ref);
+              (String) ref);
       workerId_ = b;
       return b;
     } else {
@@ -87,20 +87,20 @@ private static final long serialVersionUID = 0L;
 
   public static final int HOST_FIELD_NUMBER = 2;
   @SuppressWarnings("serial")
-  private volatile java.lang.Object host_ = "";
+  private volatile Object host_ = "";
   /**
    * <code>string host = 2;</code>
    * @return The host.
    */
-  @java.lang.Override
-  public java.lang.String getHost() {
-    java.lang.Object ref = host_;
-    if (ref instanceof java.lang.String) {
-      return (java.lang.String) ref;
+  @Override
+  public String getHost() {
+    Object ref = host_;
+    if (ref instanceof String) {
+      return (String) ref;
     } else {
       com.google.protobuf.ByteString bs = 
           (com.google.protobuf.ByteString) ref;
-      java.lang.String s = bs.toStringUtf8();
+      String s = bs.toStringUtf8();
       host_ = s;
       return s;
     }
@@ -109,14 +109,14 @@ private static final long serialVersionUID = 0L;
    * <code>string host = 2;</code>
    * @return The bytes for host.
    */
-  @java.lang.Override
+  @Override
   public com.google.protobuf.ByteString
       getHostBytes() {
-    java.lang.Object ref = host_;
-    if (ref instanceof java.lang.String) {
+    Object ref = host_;
+    if (ref instanceof String) {
       com.google.protobuf.ByteString b = 
           com.google.protobuf.ByteString.copyFromUtf8(
-              (java.lang.String) ref);
+              (String) ref);
       host_ = b;
       return b;
     } else {
@@ -130,7 +130,7 @@ private static final long serialVersionUID = 0L;
    * <code>int32 port = 3;</code>
    * @return The port.
    */
-  @java.lang.Override
+  @Override
   public int getPort() {
     return port_;
   }
@@ -141,7 +141,7 @@ private static final long serialVersionUID = 0L;
    * <code>int32 max_parallelism = 4;</code>
    * @return The maxParallelism.
    */
-  @java.lang.Override
+  @Override
   public int getMaxParallelism() {
     return maxParallelism_;
   }
@@ -152,7 +152,7 @@ private static final long serialVersionUID = 0L;
    * <code>int32 current_tasks = 5;</code>
    * @return The currentTasks.
    */
-  @java.lang.Override
+  @Override
   public int getCurrentTasks() {
     return currentTasks_;
   }
@@ -163,7 +163,7 @@ private static final long serialVersionUID = 0L;
    * <code>double cpu_usage = 6;</code>
    * @return The cpuUsage.
    */
-  @java.lang.Override
+  @Override
   public double getCpuUsage() {
     return cpuUsage_;
   }
@@ -174,7 +174,7 @@ private static final long serialVersionUID = 0L;
    * <code>double memory_usage = 7;</code>
    * @return The memoryUsage.
    */
-  @java.lang.Override
+  @Override
   public double getMemoryUsage() {
     return memoryUsage_;
   }
@@ -189,7 +189,7 @@ private static final long serialVersionUID = 0L;
    * <code>int64 available_memory_bytes = 8;</code>
    * @return The availableMemoryBytes.
    */
-  @java.lang.Override
+  @Override
   public long getAvailableMemoryBytes() {
     return availableMemoryBytes_;
   }
@@ -204,7 +204,7 @@ private static final long serialVersionUID = 0L;
    * <code>int64 used_memory_bytes = 9;</code>
    * @return The usedMemoryBytes.
    */
-  @java.lang.Override
+  @Override
   public long getUsedMemoryBytes() {
     return usedMemoryBytes_;
   }
@@ -215,7 +215,7 @@ private static final long serialVersionUID = 0L;
    * <code>bool healthy = 10;</code>
    * @return The healthy.
    */
-  @java.lang.Override
+  @Override
   public boolean getHealthy() {
     return healthy_;
   }
@@ -226,7 +226,7 @@ private static final long serialVersionUID = 0L;
    * <code>int64 last_heartbeat = 11;</code>
    * @return The lastHeartbeat.
    */
-  @java.lang.Override
+  @Override
   public long getLastHeartbeat() {
     return lastHeartbeat_;
   }
@@ -266,7 +266,7 @@ private static final long serialVersionUID = 0L;
    * @param index The index of the element to return.
    * @return The localPartitionIds at the given index.
    */
-  public java.lang.String getLocalPartitionIds(int index) {
+  public String getLocalPartitionIds(int index) {
     return localPartitionIds_.get(index);
   }
   /**
@@ -284,7 +284,7 @@ private static final long serialVersionUID = 0L;
   }
 
   private byte memoizedIsInitialized = -1;
-  @java.lang.Override
+  @Override
   public final boolean isInitialized() {
     byte isInitialized = memoizedIsInitialized;
     if (isInitialized == 1) return true;
@@ -294,7 +294,7 @@ private static final long serialVersionUID = 0L;
     return true;
   }
 
-  @java.lang.Override
+  @Override
   public void writeTo(com.google.protobuf.CodedOutputStream output)
                       throws java.io.IOException {
     if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(workerId_)) {
@@ -312,10 +312,10 @@ private static final long serialVersionUID = 0L;
     if (currentTasks_ != 0) {
       output.writeInt32(5, currentTasks_);
     }
-    if (java.lang.Double.doubleToRawLongBits(cpuUsage_) != 0) {
+    if (Double.doubleToRawLongBits(cpuUsage_) != 0) {
       output.writeDouble(6, cpuUsage_);
     }
-    if (java.lang.Double.doubleToRawLongBits(memoryUsage_) != 0) {
+    if (Double.doubleToRawLongBits(memoryUsage_) != 0) {
       output.writeDouble(7, memoryUsage_);
     }
     if (availableMemoryBytes_ != 0L) {
@@ -336,7 +336,7 @@ private static final long serialVersionUID = 0L;
     getUnknownFields().writeTo(output);
   }
 
-  @java.lang.Override
+  @Override
   public int getSerializedSize() {
     int size = memoizedSize;
     if (size != -1) return size;
@@ -360,11 +360,11 @@ private static final long serialVersionUID = 0L;
       size += com.google.protobuf.CodedOutputStream
         .computeInt32Size(5, currentTasks_);
     }
-    if (java.lang.Double.doubleToRawLongBits(cpuUsage_) != 0) {
+    if (Double.doubleToRawLongBits(cpuUsage_) != 0) {
       size += com.google.protobuf.CodedOutputStream
         .computeDoubleSize(6, cpuUsage_);
     }
-    if (java.lang.Double.doubleToRawLongBits(memoryUsage_) != 0) {
+    if (Double.doubleToRawLongBits(memoryUsage_) != 0) {
       size += com.google.protobuf.CodedOutputStream
         .computeDoubleSize(7, memoryUsage_);
     }
@@ -397,8 +397,8 @@ private static final long serialVersionUID = 0L;
     return size;
   }
 
-  @java.lang.Override
-  public boolean equals(final java.lang.Object obj) {
+  @Override
+  public boolean equals(final Object obj) {
     if (obj == this) {
      return true;
     }
@@ -417,11 +417,11 @@ private static final long serialVersionUID = 0L;
         != other.getMaxParallelism()) return false;
     if (getCurrentTasks()
         != other.getCurrentTasks()) return false;
-    if (java.lang.Double.doubleToLongBits(getCpuUsage())
-        != java.lang.Double.doubleToLongBits(
+    if (Double.doubleToLongBits(getCpuUsage())
+        != Double.doubleToLongBits(
             other.getCpuUsage())) return false;
-    if (java.lang.Double.doubleToLongBits(getMemoryUsage())
-        != java.lang.Double.doubleToLongBits(
+    if (Double.doubleToLongBits(getMemoryUsage())
+        != Double.doubleToLongBits(
             other.getMemoryUsage())) return false;
     if (getAvailableMemoryBytes()
         != other.getAvailableMemoryBytes()) return false;
@@ -437,7 +437,7 @@ private static final long serialVersionUID = 0L;
     return true;
   }
 
-  @java.lang.Override
+  @Override
   public int hashCode() {
     if (memoizedHashCode != 0) {
       return memoizedHashCode;
@@ -456,10 +456,10 @@ private static final long serialVersionUID = 0L;
     hash = (53 * hash) + getCurrentTasks();
     hash = (37 * hash) + CPU_USAGE_FIELD_NUMBER;
     hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
-        java.lang.Double.doubleToLongBits(getCpuUsage()));
+        Double.doubleToLongBits(getCpuUsage()));
     hash = (37 * hash) + MEMORY_USAGE_FIELD_NUMBER;
     hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
-        java.lang.Double.doubleToLongBits(getMemoryUsage()));
+        Double.doubleToLongBits(getMemoryUsage()));
     hash = (37 * hash) + AVAILABLE_MEMORY_BYTES_FIELD_NUMBER;
     hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
         getAvailableMemoryBytes());
@@ -551,7 +551,7 @@ private static final long serialVersionUID = 0L;
         .parseWithIOException(PARSER, input, extensionRegistry);
   }
 
-  @java.lang.Override
+  @Override
   public Builder newBuilderForType() { return newBuilder(); }
   public static Builder newBuilder() {
     return DEFAULT_INSTANCE.toBuilder();
@@ -559,15 +559,15 @@ private static final long serialVersionUID = 0L;
   public static Builder newBuilder(JQuickWorkerInfoProto prototype) {
     return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
   }
-  @java.lang.Override
+  @Override
   public Builder toBuilder() {
     return this == DEFAULT_INSTANCE
         ? new Builder() : new Builder().mergeFrom(this);
   }
 
-  @java.lang.Override
+  @Override
   protected Builder newBuilderForType(
-      com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+      BuilderParent parent) {
     Builder builder = new Builder(parent);
     return builder;
   }
@@ -583,12 +583,12 @@ private static final long serialVersionUID = 0L;
       return JQuickPhysicalPlanProto.internal_static_com_github_paohaijiao_proto_JQuickWorkerInfoProto_descriptor;
     }
 
-    @java.lang.Override
-    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+    @Override
+    protected FieldAccessorTable
         internalGetFieldAccessorTable() {
       return JQuickPhysicalPlanProto.internal_static_com_github_paohaijiao_proto_JQuickWorkerInfoProto_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
-              JQuickWorkerInfoProto.class, JQuickWorkerInfoProto.Builder.class);
+              JQuickWorkerInfoProto.class, Builder.class);
     }
 
     // Construct using com.github.paohaijiao.proto.JQuickWorkerInfoProto.newBuilder()
@@ -597,11 +597,11 @@ private static final long serialVersionUID = 0L;
     }
 
     private Builder(
-        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+        BuilderParent parent) {
       super(parent);
 
     }
-    @java.lang.Override
+    @Override
     public Builder clear() {
       super.clear();
       bitField0_ = 0;
@@ -621,18 +621,18 @@ private static final long serialVersionUID = 0L;
       return this;
     }
 
-    @java.lang.Override
+    @Override
     public com.google.protobuf.Descriptors.Descriptor
         getDescriptorForType() {
       return JQuickPhysicalPlanProto.internal_static_com_github_paohaijiao_proto_JQuickWorkerInfoProto_descriptor;
     }
 
-    @java.lang.Override
+    @Override
     public JQuickWorkerInfoProto getDefaultInstanceForType() {
       return JQuickWorkerInfoProto.getDefaultInstance();
     }
 
-    @java.lang.Override
+    @Override
     public JQuickWorkerInfoProto build() {
       JQuickWorkerInfoProto result = buildPartial();
       if (!result.isInitialized()) {
@@ -641,7 +641,7 @@ private static final long serialVersionUID = 0L;
       return result;
     }
 
-    @java.lang.Override
+    @Override
     public JQuickWorkerInfoProto buildPartial() {
       JQuickWorkerInfoProto result = new JQuickWorkerInfoProto(this);
       buildPartialRepeatedFields(result);
@@ -695,39 +695,39 @@ private static final long serialVersionUID = 0L;
       }
     }
 
-    @java.lang.Override
+    @Override
     public Builder clone() {
       return super.clone();
     }
-    @java.lang.Override
+    @Override
     public Builder setField(
         com.google.protobuf.Descriptors.FieldDescriptor field,
-        java.lang.Object value) {
+        Object value) {
       return super.setField(field, value);
     }
-    @java.lang.Override
+    @Override
     public Builder clearField(
         com.google.protobuf.Descriptors.FieldDescriptor field) {
       return super.clearField(field);
     }
-    @java.lang.Override
+    @Override
     public Builder clearOneof(
         com.google.protobuf.Descriptors.OneofDescriptor oneof) {
       return super.clearOneof(oneof);
     }
-    @java.lang.Override
+    @Override
     public Builder setRepeatedField(
         com.google.protobuf.Descriptors.FieldDescriptor field,
-        int index, java.lang.Object value) {
+        int index, Object value) {
       return super.setRepeatedField(field, index, value);
     }
-    @java.lang.Override
+    @Override
     public Builder addRepeatedField(
         com.google.protobuf.Descriptors.FieldDescriptor field,
-        java.lang.Object value) {
+        Object value) {
       return super.addRepeatedField(field, value);
     }
-    @java.lang.Override
+    @Override
     public Builder mergeFrom(com.google.protobuf.Message other) {
       if (other instanceof JQuickWorkerInfoProto) {
         return mergeFrom((JQuickWorkerInfoProto)other);
@@ -791,18 +791,18 @@ private static final long serialVersionUID = 0L;
       return this;
     }
 
-    @java.lang.Override
+    @Override
     public final boolean isInitialized() {
       return true;
     }
 
-    @java.lang.Override
+    @Override
     public Builder mergeFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
       if (extensionRegistry == null) {
-        throw new java.lang.NullPointerException();
+        throw new NullPointerException();
       }
       try {
         boolean done = false;
@@ -868,7 +868,7 @@ private static final long serialVersionUID = 0L;
               break;
             } // case 88
             case 98: {
-              java.lang.String s = input.readStringRequireUtf8();
+              String s = input.readStringRequireUtf8();
               ensureLocalPartitionIdsIsMutable();
               localPartitionIds_.add(s);
               break;
@@ -890,21 +890,21 @@ private static final long serialVersionUID = 0L;
     }
     private int bitField0_;
 
-    private java.lang.Object workerId_ = "";
+    private Object workerId_ = "";
     /**
      * <code>string worker_id = 1;</code>
      * @return The workerId.
      */
-    public java.lang.String getWorkerId() {
-      java.lang.Object ref = workerId_;
-      if (!(ref instanceof java.lang.String)) {
+    public String getWorkerId() {
+      Object ref = workerId_;
+      if (!(ref instanceof String)) {
         com.google.protobuf.ByteString bs =
             (com.google.protobuf.ByteString) ref;
-        java.lang.String s = bs.toStringUtf8();
+        String s = bs.toStringUtf8();
         workerId_ = s;
         return s;
       } else {
-        return (java.lang.String) ref;
+        return (String) ref;
       }
     }
     /**
@@ -913,11 +913,11 @@ private static final long serialVersionUID = 0L;
      */
     public com.google.protobuf.ByteString
         getWorkerIdBytes() {
-      java.lang.Object ref = workerId_;
+      Object ref = workerId_;
       if (ref instanceof String) {
         com.google.protobuf.ByteString b = 
             com.google.protobuf.ByteString.copyFromUtf8(
-                (java.lang.String) ref);
+                (String) ref);
         workerId_ = b;
         return b;
       } else {
@@ -930,7 +930,7 @@ private static final long serialVersionUID = 0L;
      * @return This builder for chaining.
      */
     public Builder setWorkerId(
-        java.lang.String value) {
+        String value) {
       if (value == null) { throw new NullPointerException(); }
       workerId_ = value;
       bitField0_ |= 0x00000001;
@@ -962,21 +962,21 @@ private static final long serialVersionUID = 0L;
       return this;
     }
 
-    private java.lang.Object host_ = "";
+    private Object host_ = "";
     /**
      * <code>string host = 2;</code>
      * @return The host.
      */
-    public java.lang.String getHost() {
-      java.lang.Object ref = host_;
-      if (!(ref instanceof java.lang.String)) {
+    public String getHost() {
+      Object ref = host_;
+      if (!(ref instanceof String)) {
         com.google.protobuf.ByteString bs =
             (com.google.protobuf.ByteString) ref;
-        java.lang.String s = bs.toStringUtf8();
+        String s = bs.toStringUtf8();
         host_ = s;
         return s;
       } else {
-        return (java.lang.String) ref;
+        return (String) ref;
       }
     }
     /**
@@ -985,11 +985,11 @@ private static final long serialVersionUID = 0L;
      */
     public com.google.protobuf.ByteString
         getHostBytes() {
-      java.lang.Object ref = host_;
+      Object ref = host_;
       if (ref instanceof String) {
         com.google.protobuf.ByteString b = 
             com.google.protobuf.ByteString.copyFromUtf8(
-                (java.lang.String) ref);
+                (String) ref);
         host_ = b;
         return b;
       } else {
@@ -1002,7 +1002,7 @@ private static final long serialVersionUID = 0L;
      * @return This builder for chaining.
      */
     public Builder setHost(
-        java.lang.String value) {
+        String value) {
       if (value == null) { throw new NullPointerException(); }
       host_ = value;
       bitField0_ |= 0x00000002;
@@ -1039,7 +1039,7 @@ private static final long serialVersionUID = 0L;
      * <code>int32 port = 3;</code>
      * @return The port.
      */
-    @java.lang.Override
+    @Override
     public int getPort() {
       return port_;
     }
@@ -1071,7 +1071,7 @@ private static final long serialVersionUID = 0L;
      * <code>int32 max_parallelism = 4;</code>
      * @return The maxParallelism.
      */
-    @java.lang.Override
+    @Override
     public int getMaxParallelism() {
       return maxParallelism_;
     }
@@ -1103,7 +1103,7 @@ private static final long serialVersionUID = 0L;
      * <code>int32 current_tasks = 5;</code>
      * @return The currentTasks.
      */
-    @java.lang.Override
+    @Override
     public int getCurrentTasks() {
       return currentTasks_;
     }
@@ -1135,7 +1135,7 @@ private static final long serialVersionUID = 0L;
      * <code>double cpu_usage = 6;</code>
      * @return The cpuUsage.
      */
-    @java.lang.Override
+    @Override
     public double getCpuUsage() {
       return cpuUsage_;
     }
@@ -1167,7 +1167,7 @@ private static final long serialVersionUID = 0L;
      * <code>double memory_usage = 7;</code>
      * @return The memoryUsage.
      */
-    @java.lang.Override
+    @Override
     public double getMemoryUsage() {
       return memoryUsage_;
     }
@@ -1203,7 +1203,7 @@ private static final long serialVersionUID = 0L;
      * <code>int64 available_memory_bytes = 8;</code>
      * @return The availableMemoryBytes.
      */
-    @java.lang.Override
+    @Override
     public long getAvailableMemoryBytes() {
       return availableMemoryBytes_;
     }
@@ -1247,7 +1247,7 @@ private static final long serialVersionUID = 0L;
      * <code>int64 used_memory_bytes = 9;</code>
      * @return The usedMemoryBytes.
      */
-    @java.lang.Override
+    @Override
     public long getUsedMemoryBytes() {
       return usedMemoryBytes_;
     }
@@ -1287,7 +1287,7 @@ private static final long serialVersionUID = 0L;
      * <code>bool healthy = 10;</code>
      * @return The healthy.
      */
-    @java.lang.Override
+    @Override
     public boolean getHealthy() {
       return healthy_;
     }
@@ -1319,7 +1319,7 @@ private static final long serialVersionUID = 0L;
      * <code>int64 last_heartbeat = 11;</code>
      * @return The lastHeartbeat.
      */
-    @java.lang.Override
+    @Override
     public long getLastHeartbeat() {
       return lastHeartbeat_;
     }
@@ -1385,7 +1385,7 @@ private static final long serialVersionUID = 0L;
      * @param index The index of the element to return.
      * @return The localPartitionIds at the given index.
      */
-    public java.lang.String getLocalPartitionIds(int index) {
+    public String getLocalPartitionIds(int index) {
       return localPartitionIds_.get(index);
     }
     /**
@@ -1412,7 +1412,7 @@ private static final long serialVersionUID = 0L;
      * @return This builder for chaining.
      */
     public Builder setLocalPartitionIds(
-        int index, java.lang.String value) {
+        int index, String value) {
       if (value == null) { throw new NullPointerException(); }
       ensureLocalPartitionIdsIsMutable();
       localPartitionIds_.set(index, value);
@@ -1429,7 +1429,7 @@ private static final long serialVersionUID = 0L;
      * @return This builder for chaining.
      */
     public Builder addLocalPartitionIds(
-        java.lang.String value) {
+        String value) {
       if (value == null) { throw new NullPointerException(); }
       ensureLocalPartitionIdsIsMutable();
       localPartitionIds_.add(value);
@@ -1446,7 +1446,7 @@ private static final long serialVersionUID = 0L;
      * @return This builder for chaining.
      */
     public Builder addAllLocalPartitionIds(
-        java.lang.Iterable<java.lang.String> values) {
+        Iterable<String> values) {
       ensureLocalPartitionIdsIsMutable();
       com.google.protobuf.AbstractMessageLite.Builder.addAll(
           values, localPartitionIds_);
@@ -1485,13 +1485,13 @@ private static final long serialVersionUID = 0L;
       onChanged();
       return this;
     }
-    @java.lang.Override
+    @Override
     public final Builder setUnknownFields(
         final com.google.protobuf.UnknownFieldSet unknownFields) {
       return super.setUnknownFields(unknownFields);
     }
 
-    @java.lang.Override
+    @Override
     public final Builder mergeUnknownFields(
         final com.google.protobuf.UnknownFieldSet unknownFields) {
       return super.mergeUnknownFields(unknownFields);
@@ -1513,7 +1513,7 @@ private static final long serialVersionUID = 0L;
 
   private static final com.google.protobuf.Parser<JQuickWorkerInfoProto>
       PARSER = new com.google.protobuf.AbstractParser<JQuickWorkerInfoProto>() {
-    @java.lang.Override
+    @Override
     public JQuickWorkerInfoProto parsePartialFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
@@ -1537,12 +1537,12 @@ private static final long serialVersionUID = 0L;
     return PARSER;
   }
 
-  @java.lang.Override
+  @Override
   public com.google.protobuf.Parser<JQuickWorkerInfoProto> getParserForType() {
     return PARSER;
   }
 
-  @java.lang.Override
+  @Override
   public JQuickWorkerInfoProto getDefaultInstanceForType() {
     return DEFAULT_INSTANCE;
   }

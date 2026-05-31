@@ -294,27 +294,27 @@ private static final long serialVersionUID = 0L;
      * <code>bool is_count_star = 5;</code>
      * @return The isCountStar.
      */
-    @java.lang.Override
+    @Override
     public boolean getIsCountStar() {
       return isCountStar_;
     }
 
     public static final int SEPARATOR_FIELD_NUMBER = 6;
     @SuppressWarnings("serial")
-    private volatile java.lang.Object separator_ = "";
+    private volatile Object separator_ = "";
     /**
      * <code>string separator = 6;</code>
      * @return The separator.
      */
-    @java.lang.Override
-    public java.lang.String getSeparator() {
-      java.lang.Object ref = separator_;
-      if (ref instanceof java.lang.String) {
-        return (java.lang.String) ref;
+    @Override
+    public String getSeparator() {
+      Object ref = separator_;
+      if (ref instanceof String) {
+        return (String) ref;
       } else {
         com.google.protobuf.ByteString bs = 
             (com.google.protobuf.ByteString) ref;
-        java.lang.String s = bs.toStringUtf8();
+        String s = bs.toStringUtf8();
         separator_ = s;
         return s;
       }
@@ -323,14 +323,14 @@ private static final long serialVersionUID = 0L;
      * <code>string separator = 6;</code>
      * @return The bytes for separator.
      */
-    @java.lang.Override
+    @Override
     public com.google.protobuf.ByteString
         getSeparatorBytes() {
-      java.lang.Object ref = separator_;
-      if (ref instanceof java.lang.String) {
+      Object ref = separator_;
+      if (ref instanceof String) {
         com.google.protobuf.ByteString b = 
             com.google.protobuf.ByteString.copyFromUtf8(
-                (java.lang.String) ref);
+                (String) ref);
         separator_ = b;
         return b;
       } else {
@@ -344,20 +344,20 @@ private static final long serialVersionUID = 0L;
      * <code>.com.github.paohaijiao.proto.JQuickAggregateStageProto internal_stage = 7;</code>
      * @return The enum numeric value on the wire for internalStage.
      */
-    @java.lang.Override public int getInternalStageValue() {
+    @Override public int getInternalStageValue() {
       return internalStage_;
     }
     /**
      * <code>.com.github.paohaijiao.proto.JQuickAggregateStageProto internal_stage = 7;</code>
      * @return The internalStage.
      */
-    @java.lang.Override public JQuickAggregateStageProto getInternalStage() {
+    @Override public JQuickAggregateStageProto getInternalStage() {
       JQuickAggregateStageProto result = JQuickAggregateStageProto.forNumber(internalStage_);
       return result == null ? JQuickAggregateStageProto.UNRECOGNIZED : result;
     }
 
     private byte memoizedIsInitialized = -1;
-    @java.lang.Override
+    @Override
     public final boolean isInitialized() {
       byte isInitialized = memoizedIsInitialized;
       if (isInitialized == 1) return true;
@@ -367,7 +367,7 @@ private static final long serialVersionUID = 0L;
       return true;
     }
 
-    @java.lang.Override
+    @Override
     public void writeTo(com.google.protobuf.CodedOutputStream output)
                         throws java.io.IOException {
       if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(functionName_)) {
@@ -394,7 +394,7 @@ private static final long serialVersionUID = 0L;
       getUnknownFields().writeTo(output);
     }
 
-    @java.lang.Override
+    @Override
     public int getSerializedSize() {
       int size = memoizedSize;
       if (size != -1) return size;
@@ -430,15 +430,15 @@ private static final long serialVersionUID = 0L;
       return size;
     }
 
-    @java.lang.Override
-    public boolean equals(final java.lang.Object obj) {
+    @Override
+    public boolean equals(final Object obj) {
       if (obj == this) {
        return true;
       }
-      if (!(obj instanceof JQuickHashAggregateNodeProto.AggregateFunctionProto)) {
+      if (!(obj instanceof AggregateFunctionProto)) {
         return super.equals(obj);
       }
-      JQuickHashAggregateNodeProto.AggregateFunctionProto other = (JQuickHashAggregateNodeProto.AggregateFunctionProto) obj;
+      AggregateFunctionProto other = (AggregateFunctionProto) obj;
 
       if (!getFunctionName()
           .equals(other.getFunctionName())) return false;
@@ -460,7 +460,7 @@ private static final long serialVersionUID = 0L;
       return true;
     }
 
-    @java.lang.Override
+    @Override
     public int hashCode() {
       if (memoizedHashCode != 0) {
         return memoizedHashCode;
@@ -490,69 +490,69 @@ private static final long serialVersionUID = 0L;
       return hash;
     }
 
-    public static JQuickHashAggregateNodeProto.AggregateFunctionProto parseFrom(
+    public static AggregateFunctionProto parseFrom(
         java.nio.ByteBuffer data)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data);
     }
-    public static JQuickHashAggregateNodeProto.AggregateFunctionProto parseFrom(
+    public static AggregateFunctionProto parseFrom(
         java.nio.ByteBuffer data,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data, extensionRegistry);
     }
-    public static JQuickHashAggregateNodeProto.AggregateFunctionProto parseFrom(
+    public static AggregateFunctionProto parseFrom(
         com.google.protobuf.ByteString data)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data);
     }
-    public static JQuickHashAggregateNodeProto.AggregateFunctionProto parseFrom(
+    public static AggregateFunctionProto parseFrom(
         com.google.protobuf.ByteString data,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data, extensionRegistry);
     }
-    public static JQuickHashAggregateNodeProto.AggregateFunctionProto parseFrom(byte[] data)
+    public static AggregateFunctionProto parseFrom(byte[] data)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data);
     }
-    public static JQuickHashAggregateNodeProto.AggregateFunctionProto parseFrom(
+    public static AggregateFunctionProto parseFrom(
         byte[] data,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data, extensionRegistry);
     }
-    public static JQuickHashAggregateNodeProto.AggregateFunctionProto parseFrom(java.io.InputStream input)
+    public static AggregateFunctionProto parseFrom(java.io.InputStream input)
         throws java.io.IOException {
       return com.google.protobuf.GeneratedMessageV3
           .parseWithIOException(PARSER, input);
     }
-    public static JQuickHashAggregateNodeProto.AggregateFunctionProto parseFrom(
+    public static AggregateFunctionProto parseFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
       return com.google.protobuf.GeneratedMessageV3
           .parseWithIOException(PARSER, input, extensionRegistry);
     }
-    public static JQuickHashAggregateNodeProto.AggregateFunctionProto parseDelimitedFrom(java.io.InputStream input)
+    public static AggregateFunctionProto parseDelimitedFrom(java.io.InputStream input)
         throws java.io.IOException {
       return com.google.protobuf.GeneratedMessageV3
           .parseDelimitedWithIOException(PARSER, input);
     }
-    public static JQuickHashAggregateNodeProto.AggregateFunctionProto parseDelimitedFrom(
+    public static AggregateFunctionProto parseDelimitedFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
       return com.google.protobuf.GeneratedMessageV3
           .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
     }
-    public static JQuickHashAggregateNodeProto.AggregateFunctionProto parseFrom(
+    public static AggregateFunctionProto parseFrom(
         com.google.protobuf.CodedInputStream input)
         throws java.io.IOException {
       return com.google.protobuf.GeneratedMessageV3
           .parseWithIOException(PARSER, input);
     }
-    public static JQuickHashAggregateNodeProto.AggregateFunctionProto parseFrom(
+    public static AggregateFunctionProto parseFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
@@ -560,23 +560,23 @@ private static final long serialVersionUID = 0L;
           .parseWithIOException(PARSER, input, extensionRegistry);
     }
 
-    @java.lang.Override
+    @Override
     public Builder newBuilderForType() { return newBuilder(); }
     public static Builder newBuilder() {
       return DEFAULT_INSTANCE.toBuilder();
     }
-    public static Builder newBuilder(JQuickHashAggregateNodeProto.AggregateFunctionProto prototype) {
+    public static Builder newBuilder(AggregateFunctionProto prototype) {
       return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
     }
-    @java.lang.Override
+    @Override
     public Builder toBuilder() {
       return this == DEFAULT_INSTANCE
           ? new Builder() : new Builder().mergeFrom(this);
     }
 
-    @java.lang.Override
+    @Override
     protected Builder newBuilderForType(
-        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+        BuilderParent parent) {
       Builder builder = new Builder(parent);
       return builder;
     }
@@ -586,18 +586,18 @@ private static final long serialVersionUID = 0L;
     public static final class Builder extends
         com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
         // @@protoc_insertion_point(builder_implements:com.github.paohaijiao.proto.JQuickHashAggregateNodeProto.AggregateFunctionProto)
-        JQuickHashAggregateNodeProto.AggregateFunctionProtoOrBuilder {
+        AggregateFunctionProtoOrBuilder {
       public static final com.google.protobuf.Descriptors.Descriptor
           getDescriptor() {
         return JQuickPhysicalPlanProto.internal_static_com_github_paohaijiao_proto_JQuickHashAggregateNodeProto_AggregateFunctionProto_descriptor;
       }
 
-      @java.lang.Override
-      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      @Override
+      protected FieldAccessorTable
           internalGetFieldAccessorTable() {
         return JQuickPhysicalPlanProto.internal_static_com_github_paohaijiao_proto_JQuickHashAggregateNodeProto_AggregateFunctionProto_fieldAccessorTable
             .ensureFieldAccessorsInitialized(
-                JQuickHashAggregateNodeProto.AggregateFunctionProto.class, JQuickHashAggregateNodeProto.AggregateFunctionProto.Builder.class);
+                AggregateFunctionProto.class, Builder.class);
       }
 
       // Construct using com.github.paohaijiao.proto.JQuickHashAggregateNodeProto.AggregateFunctionProto.newBuilder()
@@ -606,11 +606,11 @@ private static final long serialVersionUID = 0L;
       }
 
       private Builder(
-          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+          BuilderParent parent) {
         super(parent);
 
       }
-      @java.lang.Override
+      @Override
       public Builder clear() {
         super.clear();
         bitField0_ = 0;
@@ -628,35 +628,35 @@ private static final long serialVersionUID = 0L;
         return this;
       }
 
-      @java.lang.Override
+      @Override
       public com.google.protobuf.Descriptors.Descriptor
           getDescriptorForType() {
         return JQuickPhysicalPlanProto.internal_static_com_github_paohaijiao_proto_JQuickHashAggregateNodeProto_AggregateFunctionProto_descriptor;
       }
 
-      @java.lang.Override
-      public JQuickHashAggregateNodeProto.AggregateFunctionProto getDefaultInstanceForType() {
-        return JQuickHashAggregateNodeProto.AggregateFunctionProto.getDefaultInstance();
+      @Override
+      public AggregateFunctionProto getDefaultInstanceForType() {
+        return AggregateFunctionProto.getDefaultInstance();
       }
 
-      @java.lang.Override
-      public JQuickHashAggregateNodeProto.AggregateFunctionProto build() {
-        JQuickHashAggregateNodeProto.AggregateFunctionProto result = buildPartial();
+      @Override
+      public AggregateFunctionProto build() {
+        AggregateFunctionProto result = buildPartial();
         if (!result.isInitialized()) {
           throw newUninitializedMessageException(result);
         }
         return result;
       }
 
-      @java.lang.Override
-      public JQuickHashAggregateNodeProto.AggregateFunctionProto buildPartial() {
-        JQuickHashAggregateNodeProto.AggregateFunctionProto result = new JQuickHashAggregateNodeProto.AggregateFunctionProto(this);
+      @Override
+      public AggregateFunctionProto buildPartial() {
+        AggregateFunctionProto result = new AggregateFunctionProto(this);
         if (bitField0_ != 0) { buildPartial0(result); }
         onBuilt();
         return result;
       }
 
-      private void buildPartial0(JQuickHashAggregateNodeProto.AggregateFunctionProto result) {
+      private void buildPartial0(AggregateFunctionProto result) {
         int from_bitField0_ = bitField0_;
         if (((from_bitField0_ & 0x00000001) != 0)) {
           result.functionName_ = functionName_;
@@ -683,50 +683,50 @@ private static final long serialVersionUID = 0L;
         }
       }
 
-      @java.lang.Override
+      @Override
       public Builder clone() {
         return super.clone();
       }
-      @java.lang.Override
+      @Override
       public Builder setField(
           com.google.protobuf.Descriptors.FieldDescriptor field,
-          java.lang.Object value) {
+          Object value) {
         return super.setField(field, value);
       }
-      @java.lang.Override
+      @Override
       public Builder clearField(
           com.google.protobuf.Descriptors.FieldDescriptor field) {
         return super.clearField(field);
       }
-      @java.lang.Override
+      @Override
       public Builder clearOneof(
           com.google.protobuf.Descriptors.OneofDescriptor oneof) {
         return super.clearOneof(oneof);
       }
-      @java.lang.Override
+      @Override
       public Builder setRepeatedField(
           com.google.protobuf.Descriptors.FieldDescriptor field,
-          int index, java.lang.Object value) {
+          int index, Object value) {
         return super.setRepeatedField(field, index, value);
       }
-      @java.lang.Override
+      @Override
       public Builder addRepeatedField(
           com.google.protobuf.Descriptors.FieldDescriptor field,
-          java.lang.Object value) {
+          Object value) {
         return super.addRepeatedField(field, value);
       }
-      @java.lang.Override
+      @Override
       public Builder mergeFrom(com.google.protobuf.Message other) {
-        if (other instanceof JQuickHashAggregateNodeProto.AggregateFunctionProto) {
-          return mergeFrom((JQuickHashAggregateNodeProto.AggregateFunctionProto)other);
+        if (other instanceof AggregateFunctionProto) {
+          return mergeFrom((AggregateFunctionProto)other);
         } else {
           super.mergeFrom(other);
           return this;
         }
       }
 
-      public Builder mergeFrom(JQuickHashAggregateNodeProto.AggregateFunctionProto other) {
-        if (other == JQuickHashAggregateNodeProto.AggregateFunctionProto.getDefaultInstance()) return this;
+      public Builder mergeFrom(AggregateFunctionProto other) {
+        if (other == AggregateFunctionProto.getDefaultInstance()) return this;
         if (!other.getFunctionName().isEmpty()) {
           functionName_ = other.functionName_;
           bitField0_ |= 0x00000001;
@@ -759,18 +759,18 @@ private static final long serialVersionUID = 0L;
         return this;
       }
 
-      @java.lang.Override
+      @Override
       public final boolean isInitialized() {
         return true;
       }
 
-      @java.lang.Override
+      @Override
       public Builder mergeFrom(
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
           throws java.io.IOException {
         if (extensionRegistry == null) {
-          throw new java.lang.NullPointerException();
+          throw new NullPointerException();
         }
         try {
           boolean done = false;
@@ -834,21 +834,21 @@ private static final long serialVersionUID = 0L;
       }
       private int bitField0_;
 
-      private java.lang.Object functionName_ = "";
+      private Object functionName_ = "";
       /**
        * <code>string function_name = 1;</code>
        * @return The functionName.
        */
-      public java.lang.String getFunctionName() {
-        java.lang.Object ref = functionName_;
-        if (!(ref instanceof java.lang.String)) {
+      public String getFunctionName() {
+        Object ref = functionName_;
+        if (!(ref instanceof String)) {
           com.google.protobuf.ByteString bs =
               (com.google.protobuf.ByteString) ref;
-          java.lang.String s = bs.toStringUtf8();
+          String s = bs.toStringUtf8();
           functionName_ = s;
           return s;
         } else {
-          return (java.lang.String) ref;
+          return (String) ref;
         }
       }
       /**
@@ -857,11 +857,11 @@ private static final long serialVersionUID = 0L;
        */
       public com.google.protobuf.ByteString
           getFunctionNameBytes() {
-        java.lang.Object ref = functionName_;
+        Object ref = functionName_;
         if (ref instanceof String) {
           com.google.protobuf.ByteString b = 
               com.google.protobuf.ByteString.copyFromUtf8(
-                  (java.lang.String) ref);
+                  (String) ref);
           functionName_ = b;
           return b;
         } else {
@@ -874,7 +874,7 @@ private static final long serialVersionUID = 0L;
        * @return This builder for chaining.
        */
       public Builder setFunctionName(
-          java.lang.String value) {
+          String value) {
         if (value == null) { throw new NullPointerException(); }
         functionName_ = value;
         bitField0_ |= 0x00000001;
@@ -1030,7 +1030,7 @@ private static final long serialVersionUID = 0L;
        * <code>bool distinct = 3;</code>
        * @return The distinct.
        */
-      @java.lang.Override
+      @Override
       public boolean getDistinct() {
         return distinct_;
       }
@@ -1057,21 +1057,21 @@ private static final long serialVersionUID = 0L;
         return this;
       }
 
-      private java.lang.Object alias_ = "";
+      private Object alias_ = "";
       /**
        * <code>string alias = 4;</code>
        * @return The alias.
        */
-      public java.lang.String getAlias() {
-        java.lang.Object ref = alias_;
-        if (!(ref instanceof java.lang.String)) {
+      public String getAlias() {
+        Object ref = alias_;
+        if (!(ref instanceof String)) {
           com.google.protobuf.ByteString bs =
               (com.google.protobuf.ByteString) ref;
-          java.lang.String s = bs.toStringUtf8();
+          String s = bs.toStringUtf8();
           alias_ = s;
           return s;
         } else {
-          return (java.lang.String) ref;
+          return (String) ref;
         }
       }
       /**
@@ -1080,11 +1080,11 @@ private static final long serialVersionUID = 0L;
        */
       public com.google.protobuf.ByteString
           getAliasBytes() {
-        java.lang.Object ref = alias_;
+        Object ref = alias_;
         if (ref instanceof String) {
           com.google.protobuf.ByteString b = 
               com.google.protobuf.ByteString.copyFromUtf8(
-                  (java.lang.String) ref);
+                  (String) ref);
           alias_ = b;
           return b;
         } else {
@@ -1097,7 +1097,7 @@ private static final long serialVersionUID = 0L;
        * @return This builder for chaining.
        */
       public Builder setAlias(
-          java.lang.String value) {
+          String value) {
         if (value == null) { throw new NullPointerException(); }
         alias_ = value;
         bitField0_ |= 0x00000008;
@@ -1134,7 +1134,7 @@ private static final long serialVersionUID = 0L;
        * <code>bool is_count_star = 5;</code>
        * @return The isCountStar.
        */
-      @java.lang.Override
+      @Override
       public boolean getIsCountStar() {
         return isCountStar_;
       }
@@ -1161,21 +1161,21 @@ private static final long serialVersionUID = 0L;
         return this;
       }
 
-      private java.lang.Object separator_ = "";
+      private Object separator_ = "";
       /**
        * <code>string separator = 6;</code>
        * @return The separator.
        */
-      public java.lang.String getSeparator() {
-        java.lang.Object ref = separator_;
-        if (!(ref instanceof java.lang.String)) {
+      public String getSeparator() {
+        Object ref = separator_;
+        if (!(ref instanceof String)) {
           com.google.protobuf.ByteString bs =
               (com.google.protobuf.ByteString) ref;
-          java.lang.String s = bs.toStringUtf8();
+          String s = bs.toStringUtf8();
           separator_ = s;
           return s;
         } else {
-          return (java.lang.String) ref;
+          return (String) ref;
         }
       }
       /**
@@ -1184,11 +1184,11 @@ private static final long serialVersionUID = 0L;
        */
       public com.google.protobuf.ByteString
           getSeparatorBytes() {
-        java.lang.Object ref = separator_;
+        Object ref = separator_;
         if (ref instanceof String) {
           com.google.protobuf.ByteString b = 
               com.google.protobuf.ByteString.copyFromUtf8(
-                  (java.lang.String) ref);
+                  (String) ref);
           separator_ = b;
           return b;
         } else {
@@ -1201,7 +1201,7 @@ private static final long serialVersionUID = 0L;
        * @return This builder for chaining.
        */
       public Builder setSeparator(
-          java.lang.String value) {
+          String value) {
         if (value == null) { throw new NullPointerException(); }
         separator_ = value;
         bitField0_ |= 0x00000020;
@@ -1238,7 +1238,7 @@ private static final long serialVersionUID = 0L;
        * <code>.com.github.paohaijiao.proto.JQuickAggregateStageProto internal_stage = 7;</code>
        * @return The enum numeric value on the wire for internalStage.
        */
-      @java.lang.Override public int getInternalStageValue() {
+      @Override public int getInternalStageValue() {
         return internalStage_;
       }
       /**
@@ -1256,7 +1256,7 @@ private static final long serialVersionUID = 0L;
        * <code>.com.github.paohaijiao.proto.JQuickAggregateStageProto internal_stage = 7;</code>
        * @return The internalStage.
        */
-      @java.lang.Override
+      @Override
       public JQuickAggregateStageProto getInternalStage() {
         JQuickAggregateStageProto result = JQuickAggregateStageProto.forNumber(internalStage_);
         return result == null ? JQuickAggregateStageProto.UNRECOGNIZED : result;
@@ -1285,13 +1285,13 @@ private static final long serialVersionUID = 0L;
         onChanged();
         return this;
       }
-      @java.lang.Override
+      @Override
       public final Builder setUnknownFields(
           final com.google.protobuf.UnknownFieldSet unknownFields) {
         return super.setUnknownFields(unknownFields);
       }
 
-      @java.lang.Override
+      @Override
       public final Builder mergeUnknownFields(
           final com.google.protobuf.UnknownFieldSet unknownFields) {
         return super.mergeUnknownFields(unknownFields);
@@ -1302,18 +1302,18 @@ private static final long serialVersionUID = 0L;
     }
 
     // @@protoc_insertion_point(class_scope:com.github.paohaijiao.proto.JQuickHashAggregateNodeProto.AggregateFunctionProto)
-    private static final JQuickHashAggregateNodeProto.AggregateFunctionProto DEFAULT_INSTANCE;
+    private static final AggregateFunctionProto DEFAULT_INSTANCE;
     static {
-      DEFAULT_INSTANCE = new JQuickHashAggregateNodeProto.AggregateFunctionProto();
+      DEFAULT_INSTANCE = new AggregateFunctionProto();
     }
 
-    public static JQuickHashAggregateNodeProto.AggregateFunctionProto getDefaultInstance() {
+    public static AggregateFunctionProto getDefaultInstance() {
       return DEFAULT_INSTANCE;
     }
 
     private static final com.google.protobuf.Parser<AggregateFunctionProto>
         PARSER = new com.google.protobuf.AbstractParser<AggregateFunctionProto>() {
-      @java.lang.Override
+      @Override
       public AggregateFunctionProto parsePartialFrom(
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
@@ -1337,13 +1337,13 @@ private static final long serialVersionUID = 0L;
       return PARSER;
     }
 
-    @java.lang.Override
+    @Override
     public com.google.protobuf.Parser<AggregateFunctionProto> getParserForType() {
       return PARSER;
     }
 
-    @java.lang.Override
-    public JQuickHashAggregateNodeProto.AggregateFunctionProto getDefaultInstanceForType() {
+    @Override
+    public AggregateFunctionProto getDefaultInstanceForType() {
       return DEFAULT_INSTANCE;
     }
 
@@ -1386,7 +1386,7 @@ private static final long serialVersionUID = 0L;
      * <code>.com.github.paohaijiao.proto.JQuickHashAggregateNodeProto.GroupingSetProto.GroupingSetType type = 2;</code>
      * @return The type.
      */
-    JQuickHashAggregateNodeProto.GroupingSetProto.GroupingSetType getType();
+    GroupingSetProto.GroupingSetType getType();
   }
   /**
    * Protobuf type {@code com.github.paohaijiao.proto.JQuickHashAggregateNodeProto.GroupingSetProto}
@@ -1405,14 +1405,14 @@ private static final long serialVersionUID = 0L;
       type_ = 0;
     }
 
-    @java.lang.Override
+    @Override
     @SuppressWarnings({"unused"})
-    protected java.lang.Object newInstance(
+    protected Object newInstance(
         UnusedPrivateParameter unused) {
       return new GroupingSetProto();
     }
 
-    @java.lang.Override
+    @Override
     public final com.google.protobuf.UnknownFieldSet
     getUnknownFields() {
       return this.unknownFields;
@@ -1422,12 +1422,12 @@ private static final long serialVersionUID = 0L;
       return JQuickPhysicalPlanProto.internal_static_com_github_paohaijiao_proto_JQuickHashAggregateNodeProto_GroupingSetProto_descriptor;
     }
 
-    @java.lang.Override
-    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+    @Override
+    protected FieldAccessorTable
         internalGetFieldAccessorTable() {
       return JQuickPhysicalPlanProto.internal_static_com_github_paohaijiao_proto_JQuickHashAggregateNodeProto_GroupingSetProto_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
-              JQuickHashAggregateNodeProto.GroupingSetProto.class, JQuickHashAggregateNodeProto.GroupingSetProto.Builder.class);
+              GroupingSetProto.class, Builder.class);
     }
 
     /**
@@ -1466,7 +1466,7 @@ private static final long serialVersionUID = 0L;
 
       public final int getNumber() {
         if (this == UNRECOGNIZED) {
-          throw new java.lang.IllegalArgumentException(
+          throw new IllegalArgumentException(
               "Can't get the number of an unknown enum value.");
         }
         return value;
@@ -1477,7 +1477,7 @@ private static final long serialVersionUID = 0L;
        * @return The enum associated with the given numeric wire value.
        * @deprecated Use {@link #forNumber(int)} instead.
        */
-      @java.lang.Deprecated
+      @Deprecated
       public static GroupingSetType valueOf(int value) {
         return forNumber(value);
       }
@@ -1510,7 +1510,7 @@ private static final long serialVersionUID = 0L;
       public final com.google.protobuf.Descriptors.EnumValueDescriptor
           getValueDescriptor() {
         if (this == UNRECOGNIZED) {
-          throw new java.lang.IllegalStateException(
+          throw new IllegalStateException(
               "Can't get the descriptor of an unrecognized enum value.");
         }
         return getDescriptor().getValues().get(ordinal());
@@ -1521,7 +1521,7 @@ private static final long serialVersionUID = 0L;
       }
       public static final com.google.protobuf.Descriptors.EnumDescriptor
           getDescriptor() {
-        return JQuickHashAggregateNodeProto.GroupingSetProto.getDescriptor().getEnumTypes().get(0);
+        return GroupingSetProto.getDescriptor().getEnumTypes().get(0);
       }
 
       private static final GroupingSetType[] VALUES = values();
@@ -1529,7 +1529,7 @@ private static final long serialVersionUID = 0L;
       public static GroupingSetType valueOf(
           com.google.protobuf.Descriptors.EnumValueDescriptor desc) {
         if (desc.getType() != getDescriptor()) {
-          throw new java.lang.IllegalArgumentException(
+          throw new IllegalArgumentException(
             "EnumValueDescriptor is not for this type.");
         }
         if (desc.getIndex() == -1) {
@@ -1553,14 +1553,14 @@ private static final long serialVersionUID = 0L;
     /**
      * <code>repeated .com.github.paohaijiao.proto.JQuickExpressionProto keys = 1;</code>
      */
-    @java.lang.Override
+    @Override
     public java.util.List<JQuickExpressionProto> getKeysList() {
       return keys_;
     }
     /**
      * <code>repeated .com.github.paohaijiao.proto.JQuickExpressionProto keys = 1;</code>
      */
-    @java.lang.Override
+    @Override
     public java.util.List<? extends JQuickExpressionProtoOrBuilder>
         getKeysOrBuilderList() {
       return keys_;
@@ -1568,21 +1568,21 @@ private static final long serialVersionUID = 0L;
     /**
      * <code>repeated .com.github.paohaijiao.proto.JQuickExpressionProto keys = 1;</code>
      */
-    @java.lang.Override
+    @Override
     public int getKeysCount() {
       return keys_.size();
     }
     /**
      * <code>repeated .com.github.paohaijiao.proto.JQuickExpressionProto keys = 1;</code>
      */
-    @java.lang.Override
+    @Override
     public JQuickExpressionProto getKeys(int index) {
       return keys_.get(index);
     }
     /**
      * <code>repeated .com.github.paohaijiao.proto.JQuickExpressionProto keys = 1;</code>
      */
-    @java.lang.Override
+    @Override
     public JQuickExpressionProtoOrBuilder getKeysOrBuilder(
         int index) {
       return keys_.get(index);
@@ -1594,20 +1594,20 @@ private static final long serialVersionUID = 0L;
      * <code>.com.github.paohaijiao.proto.JQuickHashAggregateNodeProto.GroupingSetProto.GroupingSetType type = 2;</code>
      * @return The enum numeric value on the wire for type.
      */
-    @java.lang.Override public int getTypeValue() {
+    @Override public int getTypeValue() {
       return type_;
     }
     /**
      * <code>.com.github.paohaijiao.proto.JQuickHashAggregateNodeProto.GroupingSetProto.GroupingSetType type = 2;</code>
      * @return The type.
      */
-    @java.lang.Override public JQuickHashAggregateNodeProto.GroupingSetProto.GroupingSetType getType() {
-      JQuickHashAggregateNodeProto.GroupingSetProto.GroupingSetType result = JQuickHashAggregateNodeProto.GroupingSetProto.GroupingSetType.forNumber(type_);
-      return result == null ? JQuickHashAggregateNodeProto.GroupingSetProto.GroupingSetType.UNRECOGNIZED : result;
+    @Override public GroupingSetType getType() {
+      GroupingSetType result = GroupingSetType.forNumber(type_);
+      return result == null ? GroupingSetType.UNRECOGNIZED : result;
     }
 
     private byte memoizedIsInitialized = -1;
-    @java.lang.Override
+    @Override
     public final boolean isInitialized() {
       byte isInitialized = memoizedIsInitialized;
       if (isInitialized == 1) return true;
@@ -1617,19 +1617,19 @@ private static final long serialVersionUID = 0L;
       return true;
     }
 
-    @java.lang.Override
+    @Override
     public void writeTo(com.google.protobuf.CodedOutputStream output)
                         throws java.io.IOException {
       for (int i = 0; i < keys_.size(); i++) {
         output.writeMessage(1, keys_.get(i));
       }
-      if (type_ != JQuickHashAggregateNodeProto.GroupingSetProto.GroupingSetType.GS_SIMPLE.getNumber()) {
+      if (type_ != GroupingSetType.GS_SIMPLE.getNumber()) {
         output.writeEnum(2, type_);
       }
       getUnknownFields().writeTo(output);
     }
 
-    @java.lang.Override
+    @Override
     public int getSerializedSize() {
       int size = memoizedSize;
       if (size != -1) return size;
@@ -1639,7 +1639,7 @@ private static final long serialVersionUID = 0L;
         size += com.google.protobuf.CodedOutputStream
           .computeMessageSize(1, keys_.get(i));
       }
-      if (type_ != JQuickHashAggregateNodeProto.GroupingSetProto.GroupingSetType.GS_SIMPLE.getNumber()) {
+      if (type_ != GroupingSetType.GS_SIMPLE.getNumber()) {
         size += com.google.protobuf.CodedOutputStream
           .computeEnumSize(2, type_);
       }
@@ -1648,15 +1648,15 @@ private static final long serialVersionUID = 0L;
       return size;
     }
 
-    @java.lang.Override
-    public boolean equals(final java.lang.Object obj) {
+    @Override
+    public boolean equals(final Object obj) {
       if (obj == this) {
        return true;
       }
-      if (!(obj instanceof JQuickHashAggregateNodeProto.GroupingSetProto)) {
+      if (!(obj instanceof GroupingSetProto)) {
         return super.equals(obj);
       }
-      JQuickHashAggregateNodeProto.GroupingSetProto other = (JQuickHashAggregateNodeProto.GroupingSetProto) obj;
+      GroupingSetProto other = (GroupingSetProto) obj;
 
       if (!getKeysList()
           .equals(other.getKeysList())) return false;
@@ -1665,7 +1665,7 @@ private static final long serialVersionUID = 0L;
       return true;
     }
 
-    @java.lang.Override
+    @Override
     public int hashCode() {
       if (memoizedHashCode != 0) {
         return memoizedHashCode;
@@ -1683,69 +1683,69 @@ private static final long serialVersionUID = 0L;
       return hash;
     }
 
-    public static JQuickHashAggregateNodeProto.GroupingSetProto parseFrom(
+    public static GroupingSetProto parseFrom(
         java.nio.ByteBuffer data)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data);
     }
-    public static JQuickHashAggregateNodeProto.GroupingSetProto parseFrom(
+    public static GroupingSetProto parseFrom(
         java.nio.ByteBuffer data,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data, extensionRegistry);
     }
-    public static JQuickHashAggregateNodeProto.GroupingSetProto parseFrom(
+    public static GroupingSetProto parseFrom(
         com.google.protobuf.ByteString data)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data);
     }
-    public static JQuickHashAggregateNodeProto.GroupingSetProto parseFrom(
+    public static GroupingSetProto parseFrom(
         com.google.protobuf.ByteString data,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data, extensionRegistry);
     }
-    public static JQuickHashAggregateNodeProto.GroupingSetProto parseFrom(byte[] data)
+    public static GroupingSetProto parseFrom(byte[] data)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data);
     }
-    public static JQuickHashAggregateNodeProto.GroupingSetProto parseFrom(
+    public static GroupingSetProto parseFrom(
         byte[] data,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data, extensionRegistry);
     }
-    public static JQuickHashAggregateNodeProto.GroupingSetProto parseFrom(java.io.InputStream input)
+    public static GroupingSetProto parseFrom(java.io.InputStream input)
         throws java.io.IOException {
       return com.google.protobuf.GeneratedMessageV3
           .parseWithIOException(PARSER, input);
     }
-    public static JQuickHashAggregateNodeProto.GroupingSetProto parseFrom(
+    public static GroupingSetProto parseFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
       return com.google.protobuf.GeneratedMessageV3
           .parseWithIOException(PARSER, input, extensionRegistry);
     }
-    public static JQuickHashAggregateNodeProto.GroupingSetProto parseDelimitedFrom(java.io.InputStream input)
+    public static GroupingSetProto parseDelimitedFrom(java.io.InputStream input)
         throws java.io.IOException {
       return com.google.protobuf.GeneratedMessageV3
           .parseDelimitedWithIOException(PARSER, input);
     }
-    public static JQuickHashAggregateNodeProto.GroupingSetProto parseDelimitedFrom(
+    public static GroupingSetProto parseDelimitedFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
       return com.google.protobuf.GeneratedMessageV3
           .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
     }
-    public static JQuickHashAggregateNodeProto.GroupingSetProto parseFrom(
+    public static GroupingSetProto parseFrom(
         com.google.protobuf.CodedInputStream input)
         throws java.io.IOException {
       return com.google.protobuf.GeneratedMessageV3
           .parseWithIOException(PARSER, input);
     }
-    public static JQuickHashAggregateNodeProto.GroupingSetProto parseFrom(
+    public static GroupingSetProto parseFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
@@ -1753,23 +1753,23 @@ private static final long serialVersionUID = 0L;
           .parseWithIOException(PARSER, input, extensionRegistry);
     }
 
-    @java.lang.Override
+    @Override
     public Builder newBuilderForType() { return newBuilder(); }
     public static Builder newBuilder() {
       return DEFAULT_INSTANCE.toBuilder();
     }
-    public static Builder newBuilder(JQuickHashAggregateNodeProto.GroupingSetProto prototype) {
+    public static Builder newBuilder(GroupingSetProto prototype) {
       return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
     }
-    @java.lang.Override
+    @Override
     public Builder toBuilder() {
       return this == DEFAULT_INSTANCE
           ? new Builder() : new Builder().mergeFrom(this);
     }
 
-    @java.lang.Override
+    @Override
     protected Builder newBuilderForType(
-        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+        BuilderParent parent) {
       Builder builder = new Builder(parent);
       return builder;
     }
@@ -1779,18 +1779,18 @@ private static final long serialVersionUID = 0L;
     public static final class Builder extends
         com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
         // @@protoc_insertion_point(builder_implements:com.github.paohaijiao.proto.JQuickHashAggregateNodeProto.GroupingSetProto)
-        JQuickHashAggregateNodeProto.GroupingSetProtoOrBuilder {
+        GroupingSetProtoOrBuilder {
       public static final com.google.protobuf.Descriptors.Descriptor
           getDescriptor() {
         return JQuickPhysicalPlanProto.internal_static_com_github_paohaijiao_proto_JQuickHashAggregateNodeProto_GroupingSetProto_descriptor;
       }
 
-      @java.lang.Override
-      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      @Override
+      protected FieldAccessorTable
           internalGetFieldAccessorTable() {
         return JQuickPhysicalPlanProto.internal_static_com_github_paohaijiao_proto_JQuickHashAggregateNodeProto_GroupingSetProto_fieldAccessorTable
             .ensureFieldAccessorsInitialized(
-                JQuickHashAggregateNodeProto.GroupingSetProto.class, JQuickHashAggregateNodeProto.GroupingSetProto.Builder.class);
+                GroupingSetProto.class, Builder.class);
       }
 
       // Construct using com.github.paohaijiao.proto.JQuickHashAggregateNodeProto.GroupingSetProto.newBuilder()
@@ -1799,11 +1799,11 @@ private static final long serialVersionUID = 0L;
       }
 
       private Builder(
-          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+          BuilderParent parent) {
         super(parent);
 
       }
-      @java.lang.Override
+      @Override
       public Builder clear() {
         super.clear();
         bitField0_ = 0;
@@ -1818,36 +1818,36 @@ private static final long serialVersionUID = 0L;
         return this;
       }
 
-      @java.lang.Override
+      @Override
       public com.google.protobuf.Descriptors.Descriptor
           getDescriptorForType() {
         return JQuickPhysicalPlanProto.internal_static_com_github_paohaijiao_proto_JQuickHashAggregateNodeProto_GroupingSetProto_descriptor;
       }
 
-      @java.lang.Override
-      public JQuickHashAggregateNodeProto.GroupingSetProto getDefaultInstanceForType() {
-        return JQuickHashAggregateNodeProto.GroupingSetProto.getDefaultInstance();
+      @Override
+      public GroupingSetProto getDefaultInstanceForType() {
+        return GroupingSetProto.getDefaultInstance();
       }
 
-      @java.lang.Override
-      public JQuickHashAggregateNodeProto.GroupingSetProto build() {
-        JQuickHashAggregateNodeProto.GroupingSetProto result = buildPartial();
+      @Override
+      public GroupingSetProto build() {
+        GroupingSetProto result = buildPartial();
         if (!result.isInitialized()) {
           throw newUninitializedMessageException(result);
         }
         return result;
       }
 
-      @java.lang.Override
-      public JQuickHashAggregateNodeProto.GroupingSetProto buildPartial() {
-        JQuickHashAggregateNodeProto.GroupingSetProto result = new JQuickHashAggregateNodeProto.GroupingSetProto(this);
+      @Override
+      public GroupingSetProto buildPartial() {
+        GroupingSetProto result = new GroupingSetProto(this);
         buildPartialRepeatedFields(result);
         if (bitField0_ != 0) { buildPartial0(result); }
         onBuilt();
         return result;
       }
 
-      private void buildPartialRepeatedFields(JQuickHashAggregateNodeProto.GroupingSetProto result) {
+      private void buildPartialRepeatedFields(GroupingSetProto result) {
         if (keysBuilder_ == null) {
           if (((bitField0_ & 0x00000001) != 0)) {
             keys_ = java.util.Collections.unmodifiableList(keys_);
@@ -1859,57 +1859,57 @@ private static final long serialVersionUID = 0L;
         }
       }
 
-      private void buildPartial0(JQuickHashAggregateNodeProto.GroupingSetProto result) {
+      private void buildPartial0(GroupingSetProto result) {
         int from_bitField0_ = bitField0_;
         if (((from_bitField0_ & 0x00000002) != 0)) {
           result.type_ = type_;
         }
       }
 
-      @java.lang.Override
+      @Override
       public Builder clone() {
         return super.clone();
       }
-      @java.lang.Override
+      @Override
       public Builder setField(
           com.google.protobuf.Descriptors.FieldDescriptor field,
-          java.lang.Object value) {
+          Object value) {
         return super.setField(field, value);
       }
-      @java.lang.Override
+      @Override
       public Builder clearField(
           com.google.protobuf.Descriptors.FieldDescriptor field) {
         return super.clearField(field);
       }
-      @java.lang.Override
+      @Override
       public Builder clearOneof(
           com.google.protobuf.Descriptors.OneofDescriptor oneof) {
         return super.clearOneof(oneof);
       }
-      @java.lang.Override
+      @Override
       public Builder setRepeatedField(
           com.google.protobuf.Descriptors.FieldDescriptor field,
-          int index, java.lang.Object value) {
+          int index, Object value) {
         return super.setRepeatedField(field, index, value);
       }
-      @java.lang.Override
+      @Override
       public Builder addRepeatedField(
           com.google.protobuf.Descriptors.FieldDescriptor field,
-          java.lang.Object value) {
+          Object value) {
         return super.addRepeatedField(field, value);
       }
-      @java.lang.Override
+      @Override
       public Builder mergeFrom(com.google.protobuf.Message other) {
-        if (other instanceof JQuickHashAggregateNodeProto.GroupingSetProto) {
-          return mergeFrom((JQuickHashAggregateNodeProto.GroupingSetProto)other);
+        if (other instanceof GroupingSetProto) {
+          return mergeFrom((GroupingSetProto)other);
         } else {
           super.mergeFrom(other);
           return this;
         }
       }
 
-      public Builder mergeFrom(JQuickHashAggregateNodeProto.GroupingSetProto other) {
-        if (other == JQuickHashAggregateNodeProto.GroupingSetProto.getDefaultInstance()) return this;
+      public Builder mergeFrom(GroupingSetProto other) {
+        if (other == GroupingSetProto.getDefaultInstance()) return this;
         if (keysBuilder_ == null) {
           if (!other.keys_.isEmpty()) {
             if (keys_.isEmpty()) {
@@ -1944,18 +1944,18 @@ private static final long serialVersionUID = 0L;
         return this;
       }
 
-      @java.lang.Override
+      @Override
       public final boolean isInitialized() {
         return true;
       }
 
-      @java.lang.Override
+      @Override
       public Builder mergeFrom(
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
           throws java.io.IOException {
         if (extensionRegistry == null) {
-          throw new java.lang.NullPointerException();
+          throw new NullPointerException();
         }
         try {
           boolean done = false;
@@ -2138,7 +2138,7 @@ private static final long serialVersionUID = 0L;
        * <code>repeated .com.github.paohaijiao.proto.JQuickExpressionProto keys = 1;</code>
        */
       public Builder addAllKeys(
-          java.lang.Iterable<? extends JQuickExpressionProto> values) {
+          Iterable<? extends JQuickExpressionProto> values) {
         if (keysBuilder_ == null) {
           ensureKeysIsMutable();
           com.google.protobuf.AbstractMessageLite.Builder.addAll(
@@ -2245,7 +2245,7 @@ private static final long serialVersionUID = 0L;
        * <code>.com.github.paohaijiao.proto.JQuickHashAggregateNodeProto.GroupingSetProto.GroupingSetType type = 2;</code>
        * @return The enum numeric value on the wire for type.
        */
-      @java.lang.Override public int getTypeValue() {
+      @Override public int getTypeValue() {
         return type_;
       }
       /**
@@ -2263,17 +2263,17 @@ private static final long serialVersionUID = 0L;
        * <code>.com.github.paohaijiao.proto.JQuickHashAggregateNodeProto.GroupingSetProto.GroupingSetType type = 2;</code>
        * @return The type.
        */
-      @java.lang.Override
-      public JQuickHashAggregateNodeProto.GroupingSetProto.GroupingSetType getType() {
-        JQuickHashAggregateNodeProto.GroupingSetProto.GroupingSetType result = JQuickHashAggregateNodeProto.GroupingSetProto.GroupingSetType.forNumber(type_);
-        return result == null ? JQuickHashAggregateNodeProto.GroupingSetProto.GroupingSetType.UNRECOGNIZED : result;
+      @Override
+      public GroupingSetType getType() {
+        GroupingSetType result = GroupingSetType.forNumber(type_);
+        return result == null ? GroupingSetType.UNRECOGNIZED : result;
       }
       /**
        * <code>.com.github.paohaijiao.proto.JQuickHashAggregateNodeProto.GroupingSetProto.GroupingSetType type = 2;</code>
        * @param value The type to set.
        * @return This builder for chaining.
        */
-      public Builder setType(JQuickHashAggregateNodeProto.GroupingSetProto.GroupingSetType value) {
+      public Builder setType(GroupingSetType value) {
         if (value == null) {
           throw new NullPointerException();
         }
@@ -2292,13 +2292,13 @@ private static final long serialVersionUID = 0L;
         onChanged();
         return this;
       }
-      @java.lang.Override
+      @Override
       public final Builder setUnknownFields(
           final com.google.protobuf.UnknownFieldSet unknownFields) {
         return super.setUnknownFields(unknownFields);
       }
 
-      @java.lang.Override
+      @Override
       public final Builder mergeUnknownFields(
           final com.google.protobuf.UnknownFieldSet unknownFields) {
         return super.mergeUnknownFields(unknownFields);
@@ -2309,18 +2309,18 @@ private static final long serialVersionUID = 0L;
     }
 
     // @@protoc_insertion_point(class_scope:com.github.paohaijiao.proto.JQuickHashAggregateNodeProto.GroupingSetProto)
-    private static final JQuickHashAggregateNodeProto.GroupingSetProto DEFAULT_INSTANCE;
+    private static final GroupingSetProto DEFAULT_INSTANCE;
     static {
-      DEFAULT_INSTANCE = new JQuickHashAggregateNodeProto.GroupingSetProto();
+      DEFAULT_INSTANCE = new GroupingSetProto();
     }
 
-    public static JQuickHashAggregateNodeProto.GroupingSetProto getDefaultInstance() {
+    public static GroupingSetProto getDefaultInstance() {
       return DEFAULT_INSTANCE;
     }
 
     private static final com.google.protobuf.Parser<GroupingSetProto>
         PARSER = new com.google.protobuf.AbstractParser<GroupingSetProto>() {
-      @java.lang.Override
+      @Override
       public GroupingSetProto parsePartialFrom(
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
@@ -2344,13 +2344,13 @@ private static final long serialVersionUID = 0L;
       return PARSER;
     }
 
-    @java.lang.Override
+    @Override
     public com.google.protobuf.Parser<GroupingSetProto> getParserForType() {
       return PARSER;
     }
 
-    @java.lang.Override
-    public JQuickHashAggregateNodeProto.GroupingSetProto getDefaultInstanceForType() {
+    @Override
+    public GroupingSetProto getDefaultInstanceForType() {
       return DEFAULT_INSTANCE;
     }
 
@@ -2362,14 +2362,14 @@ private static final long serialVersionUID = 0L;
   /**
    * <code>repeated .com.github.paohaijiao.proto.JQuickExpressionProto group_keys = 1;</code>
    */
-  @java.lang.Override
+  @Override
   public java.util.List<JQuickExpressionProto> getGroupKeysList() {
     return groupKeys_;
   }
   /**
    * <code>repeated .com.github.paohaijiao.proto.JQuickExpressionProto group_keys = 1;</code>
    */
-  @java.lang.Override
+  @Override
   public java.util.List<? extends JQuickExpressionProtoOrBuilder>
       getGroupKeysOrBuilderList() {
     return groupKeys_;
@@ -2377,21 +2377,21 @@ private static final long serialVersionUID = 0L;
   /**
    * <code>repeated .com.github.paohaijiao.proto.JQuickExpressionProto group_keys = 1;</code>
    */
-  @java.lang.Override
+  @Override
   public int getGroupKeysCount() {
     return groupKeys_.size();
   }
   /**
    * <code>repeated .com.github.paohaijiao.proto.JQuickExpressionProto group_keys = 1;</code>
    */
-  @java.lang.Override
+  @Override
   public JQuickExpressionProto getGroupKeys(int index) {
     return groupKeys_.get(index);
   }
   /**
    * <code>repeated .com.github.paohaijiao.proto.JQuickExpressionProto group_keys = 1;</code>
    */
-  @java.lang.Override
+  @Override
   public JQuickExpressionProtoOrBuilder getGroupKeysOrBuilder(
       int index) {
     return groupKeys_.get(index);
@@ -2399,41 +2399,41 @@ private static final long serialVersionUID = 0L;
 
   public static final int AGGREGATES_FIELD_NUMBER = 2;
   @SuppressWarnings("serial")
-  private java.util.List<JQuickHashAggregateNodeProto.AggregateFunctionProto> aggregates_;
+  private java.util.List<AggregateFunctionProto> aggregates_;
   /**
    * <code>repeated .com.github.paohaijiao.proto.JQuickHashAggregateNodeProto.AggregateFunctionProto aggregates = 2;</code>
    */
-  @java.lang.Override
-  public java.util.List<JQuickHashAggregateNodeProto.AggregateFunctionProto> getAggregatesList() {
+  @Override
+  public java.util.List<AggregateFunctionProto> getAggregatesList() {
     return aggregates_;
   }
   /**
    * <code>repeated .com.github.paohaijiao.proto.JQuickHashAggregateNodeProto.AggregateFunctionProto aggregates = 2;</code>
    */
-  @java.lang.Override
-  public java.util.List<? extends JQuickHashAggregateNodeProto.AggregateFunctionProtoOrBuilder>
+  @Override
+  public java.util.List<? extends AggregateFunctionProtoOrBuilder>
       getAggregatesOrBuilderList() {
     return aggregates_;
   }
   /**
    * <code>repeated .com.github.paohaijiao.proto.JQuickHashAggregateNodeProto.AggregateFunctionProto aggregates = 2;</code>
    */
-  @java.lang.Override
+  @Override
   public int getAggregatesCount() {
     return aggregates_.size();
   }
   /**
    * <code>repeated .com.github.paohaijiao.proto.JQuickHashAggregateNodeProto.AggregateFunctionProto aggregates = 2;</code>
    */
-  @java.lang.Override
-  public JQuickHashAggregateNodeProto.AggregateFunctionProto getAggregates(int index) {
+  @Override
+  public AggregateFunctionProto getAggregates(int index) {
     return aggregates_.get(index);
   }
   /**
    * <code>repeated .com.github.paohaijiao.proto.JQuickHashAggregateNodeProto.AggregateFunctionProto aggregates = 2;</code>
    */
-  @java.lang.Override
-  public JQuickHashAggregateNodeProto.AggregateFunctionProtoOrBuilder getAggregatesOrBuilder(
+  @Override
+  public AggregateFunctionProtoOrBuilder getAggregatesOrBuilder(
       int index) {
     return aggregates_.get(index);
   }
@@ -2444,7 +2444,7 @@ private static final long serialVersionUID = 0L;
    * <code>.com.github.paohaijiao.proto.JQuickExpressionProto having_condition = 3;</code>
    * @return Whether the havingCondition field is set.
    */
-  @java.lang.Override
+  @Override
   public boolean hasHavingCondition() {
     return havingCondition_ != null;
   }
@@ -2452,14 +2452,14 @@ private static final long serialVersionUID = 0L;
    * <code>.com.github.paohaijiao.proto.JQuickExpressionProto having_condition = 3;</code>
    * @return The havingCondition.
    */
-  @java.lang.Override
+  @Override
   public JQuickExpressionProto getHavingCondition() {
     return havingCondition_ == null ? JQuickExpressionProto.getDefaultInstance() : havingCondition_;
   }
   /**
    * <code>.com.github.paohaijiao.proto.JQuickExpressionProto having_condition = 3;</code>
    */
-  @java.lang.Override
+  @Override
   public JQuickExpressionProtoOrBuilder getHavingConditionOrBuilder() {
     return havingCondition_ == null ? JQuickExpressionProto.getDefaultInstance() : havingCondition_;
   }
@@ -2470,55 +2470,55 @@ private static final long serialVersionUID = 0L;
    * <code>.com.github.paohaijiao.proto.JQuickAggregateStageProto stage = 4;</code>
    * @return The enum numeric value on the wire for stage.
    */
-  @java.lang.Override public int getStageValue() {
+  @Override public int getStageValue() {
     return stage_;
   }
   /**
    * <code>.com.github.paohaijiao.proto.JQuickAggregateStageProto stage = 4;</code>
    * @return The stage.
    */
-  @java.lang.Override public JQuickAggregateStageProto getStage() {
+  @Override public JQuickAggregateStageProto getStage() {
     JQuickAggregateStageProto result = JQuickAggregateStageProto.forNumber(stage_);
     return result == null ? JQuickAggregateStageProto.UNRECOGNIZED : result;
   }
 
   public static final int GROUPING_SETS_FIELD_NUMBER = 5;
   @SuppressWarnings("serial")
-  private java.util.List<JQuickHashAggregateNodeProto.GroupingSetProto> groupingSets_;
+  private java.util.List<GroupingSetProto> groupingSets_;
   /**
    * <code>repeated .com.github.paohaijiao.proto.JQuickHashAggregateNodeProto.GroupingSetProto grouping_sets = 5;</code>
    */
-  @java.lang.Override
-  public java.util.List<JQuickHashAggregateNodeProto.GroupingSetProto> getGroupingSetsList() {
+  @Override
+  public java.util.List<GroupingSetProto> getGroupingSetsList() {
     return groupingSets_;
   }
   /**
    * <code>repeated .com.github.paohaijiao.proto.JQuickHashAggregateNodeProto.GroupingSetProto grouping_sets = 5;</code>
    */
-  @java.lang.Override
-  public java.util.List<? extends JQuickHashAggregateNodeProto.GroupingSetProtoOrBuilder>
+  @Override
+  public java.util.List<? extends GroupingSetProtoOrBuilder>
       getGroupingSetsOrBuilderList() {
     return groupingSets_;
   }
   /**
    * <code>repeated .com.github.paohaijiao.proto.JQuickHashAggregateNodeProto.GroupingSetProto grouping_sets = 5;</code>
    */
-  @java.lang.Override
+  @Override
   public int getGroupingSetsCount() {
     return groupingSets_.size();
   }
   /**
    * <code>repeated .com.github.paohaijiao.proto.JQuickHashAggregateNodeProto.GroupingSetProto grouping_sets = 5;</code>
    */
-  @java.lang.Override
-  public JQuickHashAggregateNodeProto.GroupingSetProto getGroupingSets(int index) {
+  @Override
+  public GroupingSetProto getGroupingSets(int index) {
     return groupingSets_.get(index);
   }
   /**
    * <code>repeated .com.github.paohaijiao.proto.JQuickHashAggregateNodeProto.GroupingSetProto grouping_sets = 5;</code>
    */
-  @java.lang.Override
-  public JQuickHashAggregateNodeProto.GroupingSetProtoOrBuilder getGroupingSetsOrBuilder(
+  @Override
+  public GroupingSetProtoOrBuilder getGroupingSetsOrBuilder(
       int index) {
     return groupingSets_.get(index);
   }
@@ -2533,13 +2533,13 @@ private static final long serialVersionUID = 0L;
    * <code>bool use_memory_partial_agg = 6;</code>
    * @return The useMemoryPartialAgg.
    */
-  @java.lang.Override
+  @Override
   public boolean getUseMemoryPartialAgg() {
     return useMemoryPartialAgg_;
   }
 
   private byte memoizedIsInitialized = -1;
-  @java.lang.Override
+  @Override
   public final boolean isInitialized() {
     byte isInitialized = memoizedIsInitialized;
     if (isInitialized == 1) return true;
@@ -2549,7 +2549,7 @@ private static final long serialVersionUID = 0L;
     return true;
   }
 
-  @java.lang.Override
+  @Override
   public void writeTo(com.google.protobuf.CodedOutputStream output)
                       throws java.io.IOException {
     for (int i = 0; i < groupKeys_.size(); i++) {
@@ -2573,7 +2573,7 @@ private static final long serialVersionUID = 0L;
     getUnknownFields().writeTo(output);
   }
 
-  @java.lang.Override
+  @Override
   public int getSerializedSize() {
     int size = memoizedSize;
     if (size != -1) return size;
@@ -2608,8 +2608,8 @@ private static final long serialVersionUID = 0L;
     return size;
   }
 
-  @java.lang.Override
-  public boolean equals(final java.lang.Object obj) {
+  @Override
+  public boolean equals(final Object obj) {
     if (obj == this) {
      return true;
     }
@@ -2636,7 +2636,7 @@ private static final long serialVersionUID = 0L;
     return true;
   }
 
-  @java.lang.Override
+  @Override
   public int hashCode() {
     if (memoizedHashCode != 0) {
       return memoizedHashCode;
@@ -2739,7 +2739,7 @@ private static final long serialVersionUID = 0L;
         .parseWithIOException(PARSER, input, extensionRegistry);
   }
 
-  @java.lang.Override
+  @Override
   public Builder newBuilderForType() { return newBuilder(); }
   public static Builder newBuilder() {
     return DEFAULT_INSTANCE.toBuilder();
@@ -2747,15 +2747,15 @@ private static final long serialVersionUID = 0L;
   public static Builder newBuilder(JQuickHashAggregateNodeProto prototype) {
     return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
   }
-  @java.lang.Override
+  @Override
   public Builder toBuilder() {
     return this == DEFAULT_INSTANCE
         ? new Builder() : new Builder().mergeFrom(this);
   }
 
-  @java.lang.Override
+  @Override
   protected Builder newBuilderForType(
-      com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+      BuilderParent parent) {
     Builder builder = new Builder(parent);
     return builder;
   }
@@ -2775,12 +2775,12 @@ private static final long serialVersionUID = 0L;
       return JQuickPhysicalPlanProto.internal_static_com_github_paohaijiao_proto_JQuickHashAggregateNodeProto_descriptor;
     }
 
-    @java.lang.Override
-    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+    @Override
+    protected FieldAccessorTable
         internalGetFieldAccessorTable() {
       return JQuickPhysicalPlanProto.internal_static_com_github_paohaijiao_proto_JQuickHashAggregateNodeProto_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
-              JQuickHashAggregateNodeProto.class, JQuickHashAggregateNodeProto.Builder.class);
+              JQuickHashAggregateNodeProto.class, Builder.class);
     }
 
     // Construct using com.github.paohaijiao.proto.JQuickHashAggregateNodeProto.newBuilder()
@@ -2789,11 +2789,11 @@ private static final long serialVersionUID = 0L;
     }
 
     private Builder(
-        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+        BuilderParent parent) {
       super(parent);
 
     }
-    @java.lang.Override
+    @Override
     public Builder clear() {
       super.clear();
       bitField0_ = 0;
@@ -2828,18 +2828,18 @@ private static final long serialVersionUID = 0L;
       return this;
     }
 
-    @java.lang.Override
+    @Override
     public com.google.protobuf.Descriptors.Descriptor
         getDescriptorForType() {
       return JQuickPhysicalPlanProto.internal_static_com_github_paohaijiao_proto_JQuickHashAggregateNodeProto_descriptor;
     }
 
-    @java.lang.Override
+    @Override
     public JQuickHashAggregateNodeProto getDefaultInstanceForType() {
       return JQuickHashAggregateNodeProto.getDefaultInstance();
     }
 
-    @java.lang.Override
+    @Override
     public JQuickHashAggregateNodeProto build() {
       JQuickHashAggregateNodeProto result = buildPartial();
       if (!result.isInitialized()) {
@@ -2848,7 +2848,7 @@ private static final long serialVersionUID = 0L;
       return result;
     }
 
-    @java.lang.Override
+    @Override
     public JQuickHashAggregateNodeProto buildPartial() {
       JQuickHashAggregateNodeProto result = new JQuickHashAggregateNodeProto(this);
       buildPartialRepeatedFields(result);
@@ -2902,39 +2902,39 @@ private static final long serialVersionUID = 0L;
       }
     }
 
-    @java.lang.Override
+    @Override
     public Builder clone() {
       return super.clone();
     }
-    @java.lang.Override
+    @Override
     public Builder setField(
         com.google.protobuf.Descriptors.FieldDescriptor field,
-        java.lang.Object value) {
+        Object value) {
       return super.setField(field, value);
     }
-    @java.lang.Override
+    @Override
     public Builder clearField(
         com.google.protobuf.Descriptors.FieldDescriptor field) {
       return super.clearField(field);
     }
-    @java.lang.Override
+    @Override
     public Builder clearOneof(
         com.google.protobuf.Descriptors.OneofDescriptor oneof) {
       return super.clearOneof(oneof);
     }
-    @java.lang.Override
+    @Override
     public Builder setRepeatedField(
         com.google.protobuf.Descriptors.FieldDescriptor field,
-        int index, java.lang.Object value) {
+        int index, Object value) {
       return super.setRepeatedField(field, index, value);
     }
-    @java.lang.Override
+    @Override
     public Builder addRepeatedField(
         com.google.protobuf.Descriptors.FieldDescriptor field,
-        java.lang.Object value) {
+        Object value) {
       return super.addRepeatedField(field, value);
     }
-    @java.lang.Override
+    @Override
     public Builder mergeFrom(com.google.protobuf.Message other) {
       if (other instanceof JQuickHashAggregateNodeProto) {
         return mergeFrom((JQuickHashAggregateNodeProto)other);
@@ -3038,18 +3038,18 @@ private static final long serialVersionUID = 0L;
       return this;
     }
 
-    @java.lang.Override
+    @Override
     public final boolean isInitialized() {
       return true;
     }
 
-    @java.lang.Override
+    @Override
     public Builder mergeFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
       if (extensionRegistry == null) {
-        throw new java.lang.NullPointerException();
+        throw new NullPointerException();
       }
       try {
         boolean done = false;
@@ -3073,9 +3073,9 @@ private static final long serialVersionUID = 0L;
               break;
             } // case 10
             case 18: {
-              JQuickHashAggregateNodeProto.AggregateFunctionProto m =
+              AggregateFunctionProto m =
                   input.readMessage(
-                      JQuickHashAggregateNodeProto.AggregateFunctionProto.parser(),
+                      AggregateFunctionProto.parser(),
                       extensionRegistry);
               if (aggregatesBuilder_ == null) {
                 ensureAggregatesIsMutable();
@@ -3098,9 +3098,9 @@ private static final long serialVersionUID = 0L;
               break;
             } // case 32
             case 42: {
-              JQuickHashAggregateNodeProto.GroupingSetProto m =
+              GroupingSetProto m =
                   input.readMessage(
-                      JQuickHashAggregateNodeProto.GroupingSetProto.parser(),
+                      GroupingSetProto.parser(),
                       extensionRegistry);
               if (groupingSetsBuilder_ == null) {
                 ensureGroupingSetsIsMutable();
@@ -3270,7 +3270,7 @@ private static final long serialVersionUID = 0L;
      * <code>repeated .com.github.paohaijiao.proto.JQuickExpressionProto group_keys = 1;</code>
      */
     public Builder addAllGroupKeys(
-        java.lang.Iterable<? extends JQuickExpressionProto> values) {
+        Iterable<? extends JQuickExpressionProto> values) {
       if (groupKeysBuilder_ == null) {
         ensureGroupKeysIsMutable();
         com.google.protobuf.AbstractMessageLite.Builder.addAll(
@@ -3372,22 +3372,22 @@ private static final long serialVersionUID = 0L;
       return groupKeysBuilder_;
     }
 
-    private java.util.List<JQuickHashAggregateNodeProto.AggregateFunctionProto> aggregates_ =
+    private java.util.List<AggregateFunctionProto> aggregates_ =
       java.util.Collections.emptyList();
     private void ensureAggregatesIsMutable() {
       if (!((bitField0_ & 0x00000002) != 0)) {
-        aggregates_ = new java.util.ArrayList<JQuickHashAggregateNodeProto.AggregateFunctionProto>(aggregates_);
+        aggregates_ = new java.util.ArrayList<AggregateFunctionProto>(aggregates_);
         bitField0_ |= 0x00000002;
        }
     }
 
     private com.google.protobuf.RepeatedFieldBuilderV3<
-        JQuickHashAggregateNodeProto.AggregateFunctionProto, JQuickHashAggregateNodeProto.AggregateFunctionProto.Builder, JQuickHashAggregateNodeProto.AggregateFunctionProtoOrBuilder> aggregatesBuilder_;
+        AggregateFunctionProto, AggregateFunctionProto.Builder, AggregateFunctionProtoOrBuilder> aggregatesBuilder_;
 
     /**
      * <code>repeated .com.github.paohaijiao.proto.JQuickHashAggregateNodeProto.AggregateFunctionProto aggregates = 2;</code>
      */
-    public java.util.List<JQuickHashAggregateNodeProto.AggregateFunctionProto> getAggregatesList() {
+    public java.util.List<AggregateFunctionProto> getAggregatesList() {
       if (aggregatesBuilder_ == null) {
         return java.util.Collections.unmodifiableList(aggregates_);
       } else {
@@ -3407,7 +3407,7 @@ private static final long serialVersionUID = 0L;
     /**
      * <code>repeated .com.github.paohaijiao.proto.JQuickHashAggregateNodeProto.AggregateFunctionProto aggregates = 2;</code>
      */
-    public JQuickHashAggregateNodeProto.AggregateFunctionProto getAggregates(int index) {
+    public AggregateFunctionProto getAggregates(int index) {
       if (aggregatesBuilder_ == null) {
         return aggregates_.get(index);
       } else {
@@ -3418,7 +3418,7 @@ private static final long serialVersionUID = 0L;
      * <code>repeated .com.github.paohaijiao.proto.JQuickHashAggregateNodeProto.AggregateFunctionProto aggregates = 2;</code>
      */
     public Builder setAggregates(
-        int index, JQuickHashAggregateNodeProto.AggregateFunctionProto value) {
+        int index, AggregateFunctionProto value) {
       if (aggregatesBuilder_ == null) {
         if (value == null) {
           throw new NullPointerException();
@@ -3435,7 +3435,7 @@ private static final long serialVersionUID = 0L;
      * <code>repeated .com.github.paohaijiao.proto.JQuickHashAggregateNodeProto.AggregateFunctionProto aggregates = 2;</code>
      */
     public Builder setAggregates(
-        int index, JQuickHashAggregateNodeProto.AggregateFunctionProto.Builder builderForValue) {
+        int index, AggregateFunctionProto.Builder builderForValue) {
       if (aggregatesBuilder_ == null) {
         ensureAggregatesIsMutable();
         aggregates_.set(index, builderForValue.build());
@@ -3448,7 +3448,7 @@ private static final long serialVersionUID = 0L;
     /**
      * <code>repeated .com.github.paohaijiao.proto.JQuickHashAggregateNodeProto.AggregateFunctionProto aggregates = 2;</code>
      */
-    public Builder addAggregates(JQuickHashAggregateNodeProto.AggregateFunctionProto value) {
+    public Builder addAggregates(AggregateFunctionProto value) {
       if (aggregatesBuilder_ == null) {
         if (value == null) {
           throw new NullPointerException();
@@ -3465,7 +3465,7 @@ private static final long serialVersionUID = 0L;
      * <code>repeated .com.github.paohaijiao.proto.JQuickHashAggregateNodeProto.AggregateFunctionProto aggregates = 2;</code>
      */
     public Builder addAggregates(
-        int index, JQuickHashAggregateNodeProto.AggregateFunctionProto value) {
+        int index, AggregateFunctionProto value) {
       if (aggregatesBuilder_ == null) {
         if (value == null) {
           throw new NullPointerException();
@@ -3482,7 +3482,7 @@ private static final long serialVersionUID = 0L;
      * <code>repeated .com.github.paohaijiao.proto.JQuickHashAggregateNodeProto.AggregateFunctionProto aggregates = 2;</code>
      */
     public Builder addAggregates(
-        JQuickHashAggregateNodeProto.AggregateFunctionProto.Builder builderForValue) {
+        AggregateFunctionProto.Builder builderForValue) {
       if (aggregatesBuilder_ == null) {
         ensureAggregatesIsMutable();
         aggregates_.add(builderForValue.build());
@@ -3496,7 +3496,7 @@ private static final long serialVersionUID = 0L;
      * <code>repeated .com.github.paohaijiao.proto.JQuickHashAggregateNodeProto.AggregateFunctionProto aggregates = 2;</code>
      */
     public Builder addAggregates(
-        int index, JQuickHashAggregateNodeProto.AggregateFunctionProto.Builder builderForValue) {
+        int index, AggregateFunctionProto.Builder builderForValue) {
       if (aggregatesBuilder_ == null) {
         ensureAggregatesIsMutable();
         aggregates_.add(index, builderForValue.build());
@@ -3510,7 +3510,7 @@ private static final long serialVersionUID = 0L;
      * <code>repeated .com.github.paohaijiao.proto.JQuickHashAggregateNodeProto.AggregateFunctionProto aggregates = 2;</code>
      */
     public Builder addAllAggregates(
-        java.lang.Iterable<? extends JQuickHashAggregateNodeProto.AggregateFunctionProto> values) {
+        Iterable<? extends AggregateFunctionProto> values) {
       if (aggregatesBuilder_ == null) {
         ensureAggregatesIsMutable();
         com.google.protobuf.AbstractMessageLite.Builder.addAll(
@@ -3550,14 +3550,14 @@ private static final long serialVersionUID = 0L;
     /**
      * <code>repeated .com.github.paohaijiao.proto.JQuickHashAggregateNodeProto.AggregateFunctionProto aggregates = 2;</code>
      */
-    public JQuickHashAggregateNodeProto.AggregateFunctionProto.Builder getAggregatesBuilder(
+    public AggregateFunctionProto.Builder getAggregatesBuilder(
         int index) {
       return getAggregatesFieldBuilder().getBuilder(index);
     }
     /**
      * <code>repeated .com.github.paohaijiao.proto.JQuickHashAggregateNodeProto.AggregateFunctionProto aggregates = 2;</code>
      */
-    public JQuickHashAggregateNodeProto.AggregateFunctionProtoOrBuilder getAggregatesOrBuilder(
+    public AggregateFunctionProtoOrBuilder getAggregatesOrBuilder(
         int index) {
       if (aggregatesBuilder_ == null) {
         return aggregates_.get(index);  } else {
@@ -3567,7 +3567,7 @@ private static final long serialVersionUID = 0L;
     /**
      * <code>repeated .com.github.paohaijiao.proto.JQuickHashAggregateNodeProto.AggregateFunctionProto aggregates = 2;</code>
      */
-    public java.util.List<? extends JQuickHashAggregateNodeProto.AggregateFunctionProtoOrBuilder>
+    public java.util.List<? extends AggregateFunctionProtoOrBuilder>
          getAggregatesOrBuilderList() {
       if (aggregatesBuilder_ != null) {
         return aggregatesBuilder_.getMessageOrBuilderList();
@@ -3578,31 +3578,31 @@ private static final long serialVersionUID = 0L;
     /**
      * <code>repeated .com.github.paohaijiao.proto.JQuickHashAggregateNodeProto.AggregateFunctionProto aggregates = 2;</code>
      */
-    public JQuickHashAggregateNodeProto.AggregateFunctionProto.Builder addAggregatesBuilder() {
+    public AggregateFunctionProto.Builder addAggregatesBuilder() {
       return getAggregatesFieldBuilder().addBuilder(
-          JQuickHashAggregateNodeProto.AggregateFunctionProto.getDefaultInstance());
+          AggregateFunctionProto.getDefaultInstance());
     }
     /**
      * <code>repeated .com.github.paohaijiao.proto.JQuickHashAggregateNodeProto.AggregateFunctionProto aggregates = 2;</code>
      */
-    public JQuickHashAggregateNodeProto.AggregateFunctionProto.Builder addAggregatesBuilder(
+    public AggregateFunctionProto.Builder addAggregatesBuilder(
         int index) {
       return getAggregatesFieldBuilder().addBuilder(
-          index, JQuickHashAggregateNodeProto.AggregateFunctionProto.getDefaultInstance());
+          index, AggregateFunctionProto.getDefaultInstance());
     }
     /**
      * <code>repeated .com.github.paohaijiao.proto.JQuickHashAggregateNodeProto.AggregateFunctionProto aggregates = 2;</code>
      */
-    public java.util.List<JQuickHashAggregateNodeProto.AggregateFunctionProto.Builder>
+    public java.util.List<AggregateFunctionProto.Builder>
          getAggregatesBuilderList() {
       return getAggregatesFieldBuilder().getBuilderList();
     }
     private com.google.protobuf.RepeatedFieldBuilderV3<
-        JQuickHashAggregateNodeProto.AggregateFunctionProto, JQuickHashAggregateNodeProto.AggregateFunctionProto.Builder, JQuickHashAggregateNodeProto.AggregateFunctionProtoOrBuilder>
+        AggregateFunctionProto, AggregateFunctionProto.Builder, AggregateFunctionProtoOrBuilder>
         getAggregatesFieldBuilder() {
       if (aggregatesBuilder_ == null) {
         aggregatesBuilder_ = new com.google.protobuf.RepeatedFieldBuilderV3<
-            JQuickHashAggregateNodeProto.AggregateFunctionProto, JQuickHashAggregateNodeProto.AggregateFunctionProto.Builder, JQuickHashAggregateNodeProto.AggregateFunctionProtoOrBuilder>(
+            AggregateFunctionProto, AggregateFunctionProto.Builder, AggregateFunctionProtoOrBuilder>(
                 aggregates_,
                 ((bitField0_ & 0x00000002) != 0),
                 getParentForChildren(),
@@ -3736,7 +3736,7 @@ private static final long serialVersionUID = 0L;
      * <code>.com.github.paohaijiao.proto.JQuickAggregateStageProto stage = 4;</code>
      * @return The enum numeric value on the wire for stage.
      */
-    @java.lang.Override public int getStageValue() {
+    @Override public int getStageValue() {
       return stage_;
     }
     /**
@@ -3754,7 +3754,7 @@ private static final long serialVersionUID = 0L;
      * <code>.com.github.paohaijiao.proto.JQuickAggregateStageProto stage = 4;</code>
      * @return The stage.
      */
-    @java.lang.Override
+    @Override
     public JQuickAggregateStageProto getStage() {
       JQuickAggregateStageProto result = JQuickAggregateStageProto.forNumber(stage_);
       return result == null ? JQuickAggregateStageProto.UNRECOGNIZED : result;
@@ -3784,22 +3784,22 @@ private static final long serialVersionUID = 0L;
       return this;
     }
 
-    private java.util.List<JQuickHashAggregateNodeProto.GroupingSetProto> groupingSets_ =
+    private java.util.List<GroupingSetProto> groupingSets_ =
       java.util.Collections.emptyList();
     private void ensureGroupingSetsIsMutable() {
       if (!((bitField0_ & 0x00000010) != 0)) {
-        groupingSets_ = new java.util.ArrayList<JQuickHashAggregateNodeProto.GroupingSetProto>(groupingSets_);
+        groupingSets_ = new java.util.ArrayList<GroupingSetProto>(groupingSets_);
         bitField0_ |= 0x00000010;
        }
     }
 
     private com.google.protobuf.RepeatedFieldBuilderV3<
-        JQuickHashAggregateNodeProto.GroupingSetProto, JQuickHashAggregateNodeProto.GroupingSetProto.Builder, JQuickHashAggregateNodeProto.GroupingSetProtoOrBuilder> groupingSetsBuilder_;
+        GroupingSetProto, GroupingSetProto.Builder, GroupingSetProtoOrBuilder> groupingSetsBuilder_;
 
     /**
      * <code>repeated .com.github.paohaijiao.proto.JQuickHashAggregateNodeProto.GroupingSetProto grouping_sets = 5;</code>
      */
-    public java.util.List<JQuickHashAggregateNodeProto.GroupingSetProto> getGroupingSetsList() {
+    public java.util.List<GroupingSetProto> getGroupingSetsList() {
       if (groupingSetsBuilder_ == null) {
         return java.util.Collections.unmodifiableList(groupingSets_);
       } else {
@@ -3819,7 +3819,7 @@ private static final long serialVersionUID = 0L;
     /**
      * <code>repeated .com.github.paohaijiao.proto.JQuickHashAggregateNodeProto.GroupingSetProto grouping_sets = 5;</code>
      */
-    public JQuickHashAggregateNodeProto.GroupingSetProto getGroupingSets(int index) {
+    public GroupingSetProto getGroupingSets(int index) {
       if (groupingSetsBuilder_ == null) {
         return groupingSets_.get(index);
       } else {
@@ -3830,7 +3830,7 @@ private static final long serialVersionUID = 0L;
      * <code>repeated .com.github.paohaijiao.proto.JQuickHashAggregateNodeProto.GroupingSetProto grouping_sets = 5;</code>
      */
     public Builder setGroupingSets(
-        int index, JQuickHashAggregateNodeProto.GroupingSetProto value) {
+        int index, GroupingSetProto value) {
       if (groupingSetsBuilder_ == null) {
         if (value == null) {
           throw new NullPointerException();
@@ -3847,7 +3847,7 @@ private static final long serialVersionUID = 0L;
      * <code>repeated .com.github.paohaijiao.proto.JQuickHashAggregateNodeProto.GroupingSetProto grouping_sets = 5;</code>
      */
     public Builder setGroupingSets(
-        int index, JQuickHashAggregateNodeProto.GroupingSetProto.Builder builderForValue) {
+        int index, GroupingSetProto.Builder builderForValue) {
       if (groupingSetsBuilder_ == null) {
         ensureGroupingSetsIsMutable();
         groupingSets_.set(index, builderForValue.build());
@@ -3860,7 +3860,7 @@ private static final long serialVersionUID = 0L;
     /**
      * <code>repeated .com.github.paohaijiao.proto.JQuickHashAggregateNodeProto.GroupingSetProto grouping_sets = 5;</code>
      */
-    public Builder addGroupingSets(JQuickHashAggregateNodeProto.GroupingSetProto value) {
+    public Builder addGroupingSets(GroupingSetProto value) {
       if (groupingSetsBuilder_ == null) {
         if (value == null) {
           throw new NullPointerException();
@@ -3877,7 +3877,7 @@ private static final long serialVersionUID = 0L;
      * <code>repeated .com.github.paohaijiao.proto.JQuickHashAggregateNodeProto.GroupingSetProto grouping_sets = 5;</code>
      */
     public Builder addGroupingSets(
-        int index, JQuickHashAggregateNodeProto.GroupingSetProto value) {
+        int index, GroupingSetProto value) {
       if (groupingSetsBuilder_ == null) {
         if (value == null) {
           throw new NullPointerException();
@@ -3894,7 +3894,7 @@ private static final long serialVersionUID = 0L;
      * <code>repeated .com.github.paohaijiao.proto.JQuickHashAggregateNodeProto.GroupingSetProto grouping_sets = 5;</code>
      */
     public Builder addGroupingSets(
-        JQuickHashAggregateNodeProto.GroupingSetProto.Builder builderForValue) {
+        GroupingSetProto.Builder builderForValue) {
       if (groupingSetsBuilder_ == null) {
         ensureGroupingSetsIsMutable();
         groupingSets_.add(builderForValue.build());
@@ -3908,7 +3908,7 @@ private static final long serialVersionUID = 0L;
      * <code>repeated .com.github.paohaijiao.proto.JQuickHashAggregateNodeProto.GroupingSetProto grouping_sets = 5;</code>
      */
     public Builder addGroupingSets(
-        int index, JQuickHashAggregateNodeProto.GroupingSetProto.Builder builderForValue) {
+        int index, GroupingSetProto.Builder builderForValue) {
       if (groupingSetsBuilder_ == null) {
         ensureGroupingSetsIsMutable();
         groupingSets_.add(index, builderForValue.build());
@@ -3922,7 +3922,7 @@ private static final long serialVersionUID = 0L;
      * <code>repeated .com.github.paohaijiao.proto.JQuickHashAggregateNodeProto.GroupingSetProto grouping_sets = 5;</code>
      */
     public Builder addAllGroupingSets(
-        java.lang.Iterable<? extends JQuickHashAggregateNodeProto.GroupingSetProto> values) {
+        Iterable<? extends GroupingSetProto> values) {
       if (groupingSetsBuilder_ == null) {
         ensureGroupingSetsIsMutable();
         com.google.protobuf.AbstractMessageLite.Builder.addAll(
@@ -3962,14 +3962,14 @@ private static final long serialVersionUID = 0L;
     /**
      * <code>repeated .com.github.paohaijiao.proto.JQuickHashAggregateNodeProto.GroupingSetProto grouping_sets = 5;</code>
      */
-    public JQuickHashAggregateNodeProto.GroupingSetProto.Builder getGroupingSetsBuilder(
+    public GroupingSetProto.Builder getGroupingSetsBuilder(
         int index) {
       return getGroupingSetsFieldBuilder().getBuilder(index);
     }
     /**
      * <code>repeated .com.github.paohaijiao.proto.JQuickHashAggregateNodeProto.GroupingSetProto grouping_sets = 5;</code>
      */
-    public JQuickHashAggregateNodeProto.GroupingSetProtoOrBuilder getGroupingSetsOrBuilder(
+    public GroupingSetProtoOrBuilder getGroupingSetsOrBuilder(
         int index) {
       if (groupingSetsBuilder_ == null) {
         return groupingSets_.get(index);  } else {
@@ -3979,7 +3979,7 @@ private static final long serialVersionUID = 0L;
     /**
      * <code>repeated .com.github.paohaijiao.proto.JQuickHashAggregateNodeProto.GroupingSetProto grouping_sets = 5;</code>
      */
-    public java.util.List<? extends JQuickHashAggregateNodeProto.GroupingSetProtoOrBuilder>
+    public java.util.List<? extends GroupingSetProtoOrBuilder>
          getGroupingSetsOrBuilderList() {
       if (groupingSetsBuilder_ != null) {
         return groupingSetsBuilder_.getMessageOrBuilderList();
@@ -3990,31 +3990,31 @@ private static final long serialVersionUID = 0L;
     /**
      * <code>repeated .com.github.paohaijiao.proto.JQuickHashAggregateNodeProto.GroupingSetProto grouping_sets = 5;</code>
      */
-    public JQuickHashAggregateNodeProto.GroupingSetProto.Builder addGroupingSetsBuilder() {
+    public GroupingSetProto.Builder addGroupingSetsBuilder() {
       return getGroupingSetsFieldBuilder().addBuilder(
-          JQuickHashAggregateNodeProto.GroupingSetProto.getDefaultInstance());
+          GroupingSetProto.getDefaultInstance());
     }
     /**
      * <code>repeated .com.github.paohaijiao.proto.JQuickHashAggregateNodeProto.GroupingSetProto grouping_sets = 5;</code>
      */
-    public JQuickHashAggregateNodeProto.GroupingSetProto.Builder addGroupingSetsBuilder(
+    public GroupingSetProto.Builder addGroupingSetsBuilder(
         int index) {
       return getGroupingSetsFieldBuilder().addBuilder(
-          index, JQuickHashAggregateNodeProto.GroupingSetProto.getDefaultInstance());
+          index, GroupingSetProto.getDefaultInstance());
     }
     /**
      * <code>repeated .com.github.paohaijiao.proto.JQuickHashAggregateNodeProto.GroupingSetProto grouping_sets = 5;</code>
      */
-    public java.util.List<JQuickHashAggregateNodeProto.GroupingSetProto.Builder>
+    public java.util.List<GroupingSetProto.Builder>
          getGroupingSetsBuilderList() {
       return getGroupingSetsFieldBuilder().getBuilderList();
     }
     private com.google.protobuf.RepeatedFieldBuilderV3<
-        JQuickHashAggregateNodeProto.GroupingSetProto, JQuickHashAggregateNodeProto.GroupingSetProto.Builder, JQuickHashAggregateNodeProto.GroupingSetProtoOrBuilder>
+        GroupingSetProto, GroupingSetProto.Builder, GroupingSetProtoOrBuilder>
         getGroupingSetsFieldBuilder() {
       if (groupingSetsBuilder_ == null) {
         groupingSetsBuilder_ = new com.google.protobuf.RepeatedFieldBuilderV3<
-            JQuickHashAggregateNodeProto.GroupingSetProto, JQuickHashAggregateNodeProto.GroupingSetProto.Builder, JQuickHashAggregateNodeProto.GroupingSetProtoOrBuilder>(
+            GroupingSetProto, GroupingSetProto.Builder, GroupingSetProtoOrBuilder>(
                 groupingSets_,
                 ((bitField0_ & 0x00000010) != 0),
                 getParentForChildren(),
@@ -4033,7 +4033,7 @@ private static final long serialVersionUID = 0L;
      * <code>bool use_memory_partial_agg = 6;</code>
      * @return The useMemoryPartialAgg.
      */
-    @java.lang.Override
+    @Override
     public boolean getUseMemoryPartialAgg() {
       return useMemoryPartialAgg_;
     }
@@ -4067,13 +4067,13 @@ private static final long serialVersionUID = 0L;
       onChanged();
       return this;
     }
-    @java.lang.Override
+    @Override
     public final Builder setUnknownFields(
         final com.google.protobuf.UnknownFieldSet unknownFields) {
       return super.setUnknownFields(unknownFields);
     }
 
-    @java.lang.Override
+    @Override
     public final Builder mergeUnknownFields(
         final com.google.protobuf.UnknownFieldSet unknownFields) {
       return super.mergeUnknownFields(unknownFields);
@@ -4095,7 +4095,7 @@ private static final long serialVersionUID = 0L;
 
   private static final com.google.protobuf.Parser<JQuickHashAggregateNodeProto>
       PARSER = new com.google.protobuf.AbstractParser<JQuickHashAggregateNodeProto>() {
-    @java.lang.Override
+    @Override
     public JQuickHashAggregateNodeProto parsePartialFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
@@ -4119,12 +4119,12 @@ private static final long serialVersionUID = 0L;
     return PARSER;
   }
 
-  @java.lang.Override
+  @Override
   public com.google.protobuf.Parser<JQuickHashAggregateNodeProto> getParserForType() {
     return PARSER;
   }
 
-  @java.lang.Override
+  @Override
   public JQuickHashAggregateNodeProto getDefaultInstanceForType() {
     return DEFAULT_INSTANCE;
   }

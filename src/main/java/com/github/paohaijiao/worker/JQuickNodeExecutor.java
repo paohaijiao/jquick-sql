@@ -139,8 +139,7 @@ public class JQuickNodeExecutor {
         if (node.isDistinct()) {
             projectedRows = projectedRows.stream().distinct().collect(Collectors.toList());
         }
-
-        // 修复：将 JQuickPhysicalColumn 转换为 JQuickColumnMeta
+        //将 JQuickPhysicalColumn 转换为 JQuickColumnMeta
         List<JQuickColumnMeta> columnMetas = buildColumnMetasForProject(node);
         return new JQuickDataSet(columnMetas, projectedRows);
     }
@@ -149,24 +148,18 @@ public class JQuickNodeExecutor {
      * 执行 Hash Join
      */
     private JQuickDataSet executeHashJoin(JQuickHashJoinPhysicalNode node, JQuickWorker.JQuickTaskContext context) {
-        JQuickPhysicalPlanNode buildSide = node.getBuildSide() == JQuickHashJoinPhysicalNode.BuildSide.LEFT
-                ? node.getLeft() : node.getRight();
-        JQuickPhysicalPlanNode probeSide = node.getBuildSide() == JQuickHashJoinPhysicalNode.BuildSide.LEFT
-                ? node.getRight() : node.getLeft();
-
+        JQuickPhysicalPlanNode buildSide = node.getBuildSide() == JQuickHashJoinPhysicalNode.BuildSide.LEFT ? node.getLeft() : node.getRight();
+        JQuickPhysicalPlanNode probeSide = node.getBuildSide() == JQuickHashJoinPhysicalNode.BuildSide.LEFT ? node.getRight() : node.getLeft();
         JQuickDataSet buildData = executeNode(buildSide, context);
         Map<Object, List<JQuickRow>> hashTable = buildHashTable(buildData, node);
         JQuickDataSet probeData = executeNode(probeSide, context);
         List<JQuickRow> resultRows = new ArrayList<>();
-
         for (JQuickRow probeRow : probeData.getRows()) {
             Object joinKey = extractJoinKey(probeRow, node, false);
             List<JQuickRow> matchingRows = hashTable.get(joinKey);
-
             if (matchingRows != null) {
                 for (JQuickRow buildRow : matchingRows) {
-                    JQuickRow joined = joinRows(probeRow, buildRow, node.getJoinType(),
-                            node.getBuildSide() == JQuickHashJoinPhysicalNode.BuildSide.LEFT);
+                    JQuickRow joined = joinRows(probeRow, buildRow, node.getJoinType(), node.getBuildSide() == JQuickHashJoinPhysicalNode.BuildSide.LEFT);
                     if (joined != null) resultRows.add(joined);
                 }
             } else if (node.getJoinType() == com.github.paohaijiao.enums.JQuickJoinType.LEFT ||
@@ -175,8 +168,7 @@ public class JQuickNodeExecutor {
                 if (joined != null) resultRows.add(joined);
             }
         }
-
-        // 修复：将 JQuickPhysicalColumn 转换为 JQuickColumnMeta
+        //将 JQuickPhysicalColumn 转换为 JQuickColumnMeta
         List<JQuickColumnMeta> columnMetas = convertPhysicalColumnsToMeta(dataConverter.buildOutputSchema(node));
         return new JQuickDataSet(columnMetas, resultRows);
     }
@@ -188,7 +180,6 @@ public class JQuickNodeExecutor {
         JQuickDataSet leftData = executeNode(node.getLeft(), context);
         JQuickDataSet rightData = executeNode(node.getRight(), context);
         List<JQuickRow> resultRows = new ArrayList<>();
-
         for (JQuickRow leftRow : leftData.getRows()) {
             for (JQuickRow rightRow : rightData.getRows()) {
                 JQuickRow joined = joinRows(leftRow, rightRow, node.getJoinType(), true);
@@ -200,8 +191,7 @@ public class JQuickNodeExecutor {
                 }
             }
         }
-
-        // 修复：合并左右两侧的列元数据
+        //合并左右两侧的列元数据
         List<JQuickColumnMeta> columnMetas = new ArrayList<>();
         columnMetas.addAll(leftData.getColumns());
         columnMetas.addAll(rightData.getColumns());
@@ -227,7 +217,6 @@ public class JQuickNodeExecutor {
      */
     private JQuickDataSet executeHashAggregate(JQuickHashAggregatePhysicalNode node, JQuickWorker.JQuickTaskContext context) {
         JQuickDataSet input = executeNode(node.getChild(), context);
-
         if (node.getGroupKeys() == null || node.getGroupKeys().isEmpty()) {
             return executeGlobalAggregate(input, node);
         } else {
@@ -240,20 +229,16 @@ public class JQuickNodeExecutor {
      */
     private JQuickDataSet executeGroupedAggregate(JQuickDataSet input, JQuickHashAggregatePhysicalNode node) {
         Map<JQuickRow, List<JQuickRow>> groups = new HashMap<>();
-
         for (JQuickRow row : input.getRows()) {
             JQuickRow groupKey = extractGroupKey(row, node.getGroupKeys());
             groups.computeIfAbsent(groupKey, k -> new ArrayList<>()).add(row);
         }
-
         List<JQuickRow> resultRows = new ArrayList<>();
         for (Map.Entry<JQuickRow, List<JQuickRow>> entry : groups.entrySet()) {
             JQuickRow aggregated = new JQuickRow();
-
             for (Map.Entry<String, Object> keyEntry : entry.getKey().entrySet()) {
                 aggregated.put(keyEntry.getKey(), keyEntry.getValue());
             }
-
             for (JQuickHashAggregatePhysicalNode.AggregateFunction agg : node.getAggregates()) {
                 Object value = computeAggregate(entry.getValue(), agg);
                 String alias = agg.getAlias() != null ? agg.getAlias() : agg.getFunctionName();
@@ -261,14 +246,12 @@ public class JQuickNodeExecutor {
             }
             resultRows.add(aggregated);
         }
-
         if (node.getHavingCondition() != null) {
             resultRows = resultRows.stream()
                     .filter(row -> expressionEvaluator.evaluatePredicate(row, node.getHavingCondition()))
                     .collect(Collectors.toList());
         }
-
-        // 修复：构建聚合结果列元数据
+        //构建聚合结果列元数据
         List<JQuickColumnMeta> columnMetas = buildColumnMetasForAggregate(node);
         return new JQuickDataSet(columnMetas, resultRows);
     }
@@ -283,8 +266,7 @@ public class JQuickNodeExecutor {
             String alias = agg.getAlias() != null ? agg.getAlias() : agg.getFunctionName();
             result.put(alias, value);
         }
-
-        // 修复：构建聚合结果列元数据
+        //构建聚合结果列元数据
         List<JQuickColumnMeta> columnMetas = buildColumnMetasForAggregate(node);
         return new JQuickDataSet(columnMetas, Collections.singletonList(result));
     }
@@ -295,7 +277,6 @@ public class JQuickNodeExecutor {
     private JQuickDataSet executeSort(JQuickSortPhysicalNode node, JQuickWorker.JQuickTaskContext context) {
         JQuickDataSet input = executeNode(node.getChild(), context);
         List<JQuickRow> sortedRows = new ArrayList<>(input.getRows());
-
         sortedRows.sort((row1, row2) -> {
             for (JQuickSortPhysicalNode.OrderByItem item : node.getOrderByItems()) {
                 Object v1 = row1.get(item.getColumnName());
@@ -307,7 +288,6 @@ public class JQuickNodeExecutor {
             }
             return 0;
         });
-
         return new JQuickDataSet(input.getColumns(), sortedRows);
     }
 
@@ -319,11 +299,9 @@ public class JQuickNodeExecutor {
         List<JQuickRow> rows = sorted.getRows();
         int limit = node.getLimit();
         int offset = node.getOffset();
-
         if (offset >= rows.size()) {
             return JQuickDataSet.builder().build();
         }
-
         int endIndex = Math.min(offset + limit, rows.size());
         List<JQuickRow> limitedRows = rows.subList(offset, endIndex);
         return new JQuickDataSet(sorted.getColumns(), new ArrayList<>(limitedRows));
@@ -337,11 +315,9 @@ public class JQuickNodeExecutor {
         List<JQuickRow> rows = input.getRows();
         int limit = node.getLimit();
         int offset = node.getOffset();
-
         if (offset >= rows.size()) {
             return JQuickDataSet.builder().build();
         }
-
         int endIndex = Math.min(offset + limit, rows.size());
         List<JQuickRow> limitedRows = rows.subList(offset, endIndex);
         return new JQuickDataSet(input.getColumns(), new ArrayList<>(limitedRows));
@@ -353,7 +329,6 @@ public class JQuickNodeExecutor {
     private JQuickDataSet executeWindow(JQuickWindowPhysicalNode node, JQuickWorker.JQuickTaskContext context) {
         JQuickDataSet input = executeNode(node.getChild(), context);
         List<JQuickRow> resultRows = new ArrayList<>();
-
         for (JQuickRow row : input.getRows()) {
             JQuickRow newRow = new JQuickRow(row);
             for (JQuickWindowPhysicalNode.WindowFunction wf : node.getWindowFunctions()) {
@@ -363,7 +338,7 @@ public class JQuickNodeExecutor {
             resultRows.add(newRow);
         }
 
-        // 修复：合并原始列和窗口函数列
+        //合并原始列和窗口函数列
         List<JQuickColumnMeta> columnMetas = new ArrayList<>(input.getColumns());
         for (JQuickWindowPhysicalNode.WindowFunction wf : node.getWindowFunctions()) {
             columnMetas.add(new JQuickColumnMeta(wf.getAlias(), Object.class, "window"));
@@ -377,7 +352,6 @@ public class JQuickNodeExecutor {
     private JQuickDataSet executeSetOperation(JQuickSetOperationPhysicalNode node, JQuickWorker.JQuickTaskContext context) {
         JQuickDataSet leftData = executeNode(node.getLeft(), context);
         JQuickDataSet rightData = executeNode(node.getRight(), context);
-
         List<JQuickRow> resultRows;
         switch (node.getOperationType()) {
             case UNION:
@@ -418,8 +392,7 @@ public class JQuickNodeExecutor {
             }
             rows.add(row);
         }
-
-        // 修复：从 Values 节点构建列元数据
+        //从 Values 节点构建列元数据
         List<JQuickColumnMeta> columnMetas = new ArrayList<>();
         for (int i = 0; i < node.getColumnNames().size(); i++) {
             Class<?> type = i < node.getColumnTypes().size() ? node.getColumnTypes().get(i) : Object.class;
@@ -435,16 +408,11 @@ public class JQuickNodeExecutor {
         JQuickDataSet result = executeNode(node.getInitialPlan(), context);
         Set<JQuickRow> seenRows = new HashSet<>(result.getRows());
         JQuickDataSet workingSet = result;
-
         int depth = 0;
         while (depth < node.getMaxRecursionDepth() && !workingSet.isEmpty()) {
             JQuickDataSet newRows = executeNode(node.getRecursivePlan(), context);
-            List<JQuickRow> filteredRows = newRows.getRows().stream()
-                    .filter(row -> !seenRows.contains(row))
-                    .collect(Collectors.toList());
-
+            List<JQuickRow> filteredRows = newRows.getRows().stream().filter(row -> !seenRows.contains(row)).collect(Collectors.toList());
             if (filteredRows.isEmpty()) break;
-
             if (node.isUnionAll()) {
                 List<JQuickRow> allRows = new ArrayList<>(result.getRows());
                 allRows.addAll(filteredRows);
@@ -453,7 +421,6 @@ public class JQuickNodeExecutor {
                 seenRows.addAll(filteredRows);
                 result = new JQuickDataSet(result.getColumns(), new ArrayList<>(seenRows));
             }
-
             workingSet = new JQuickDataSet(result.getColumns(), filteredRows);
             depth++;
         }
@@ -466,9 +433,7 @@ public class JQuickNodeExecutor {
      */
     private JQuickDataSet executeExchange(JQuickExchangePhysicalNode node, JQuickWorker.JQuickTaskContext context) {
         JQuickDataSet input = executeNode(node.getChild(), context);
-        List<JQuickWorker.JQuickMemoryPartition> partitions = partitionManager.partitionData(
-                input, node, expressionEvaluator, node.getTargetParallelism());
-
+        List<JQuickWorker.JQuickMemoryPartition> partitions = partitionManager.partitionData(input, node, expressionEvaluator, node.getTargetParallelism());
         for (JQuickWorker.JQuickMemoryPartition partition : partitions) {
             partitionManager.sendToWorker(partition, node.getTargetParallelism(),
                     node.getExchangeType(), worker);
@@ -476,9 +441,6 @@ public class JQuickNodeExecutor {
 
         return JQuickDataSet.builder().build();
     }
-
-    // ==================== 辅助方法 ====================
-
     /**
      * 将 JQuickPhysicalColumn 列表转换为 JQuickColumnMeta 列表
      */
@@ -486,11 +448,7 @@ public class JQuickNodeExecutor {
         List<JQuickColumnMeta> columnMetas = new ArrayList<>();
         if (physicalColumns != null) {
             for (JQuickPhysicalColumn col : physicalColumns) {
-                columnMetas.add(new JQuickColumnMeta(
-                        col.getName(),
-                        col.getType(),
-                        col.getSourceTable() != null ? col.getSourceTable() : ""
-                ));
+                columnMetas.add(new JQuickColumnMeta(col.getName(), col.getType(), col.getSourceTable() != null ? col.getSourceTable() : ""));
             }
         }
         return columnMetas;
@@ -517,7 +475,6 @@ public class JQuickNodeExecutor {
      */
     private List<JQuickColumnMeta> buildColumnMetasForAggregate(JQuickHashAggregatePhysicalNode node) {
         List<JQuickColumnMeta> columnMetas = new ArrayList<>();
-
         // 添加分组键列
         if (node.getGroupKeys() != null) {
             for (JQuickExpression expr : node.getGroupKeys()) {
@@ -525,7 +482,6 @@ public class JQuickNodeExecutor {
                 columnMetas.add(new JQuickColumnMeta(name, Object.class, "group"));
             }
         }
-
         // 添加聚合函数列
         if (node.getAggregates() != null) {
             for (JQuickHashAggregatePhysicalNode.AggregateFunction agg : node.getAggregates()) {
@@ -628,7 +584,6 @@ public class JQuickNodeExecutor {
         String funcName = wf.getFunctionName().toLowerCase();
         List<JQuickRow> windowRows = data.getRows();
         int currentIdx = windowRows.indexOf(currentRow);
-
         switch (funcName) {
             case "row_number":
                 return (long) (currentIdx + 1);
@@ -655,9 +610,7 @@ public class JQuickNodeExecutor {
         }
     }
 
-    private JQuickRow joinRows(JQuickRow leftRow, JQuickRow rightRow,
-                               com.github.paohaijiao.enums.JQuickJoinType joinType,
-                               boolean leftIsBuild) {
+    private JQuickRow joinRows(JQuickRow leftRow, JQuickRow rightRow, com.github.paohaijiao.enums.JQuickJoinType joinType, boolean leftIsBuild) {
         JQuickRow result = new JQuickRow();
         if (leftIsBuild) {
             if (leftRow != null) result.putAll(leftRow);
@@ -682,7 +635,7 @@ public class JQuickNodeExecutor {
             double d2 = Double.parseDouble(v2.toString());
             return Double.compare(d1, d2);
         } catch (NumberFormatException e) {
-            // 回退到字符串比较
+            e.printStackTrace();
         }
         if (v1 instanceof Comparable && v2 instanceof Comparable) {
             @SuppressWarnings("unchecked")
@@ -748,21 +701,13 @@ public class JQuickNodeExecutor {
         return Object.class;
     }
 
-    // ==================== Proto 构建方法 ====================
-
     private JQuickPhysicalPlanNode buildPhysicalNode(JQuickPhysicalPlanNodeProto proto) {
         if (proto == null) return null;
 
         switch (proto.getNodeCase()) {
             case TABLE_SCAN:
                 JQuickTableScanNodeProto scanProto = proto.getTableScan();
-                JQuickTableScanPhysicalNode scanNode = new JQuickTableScanPhysicalNode(
-                        scanProto.getTableName(),
-                        scanProto.getAlias(),
-                        new HashSet<>(scanProto.getRequiredColumnsList()),
-                        null,
-                        null
-                );
+                JQuickTableScanPhysicalNode scanNode = new JQuickTableScanPhysicalNode(scanProto.getTableName(), scanProto.getAlias(), new HashSet<>(scanProto.getRequiredColumnsList()), null, null);
 //                scanNode.setUseMemoryDistribution(scanProto.getUseMemoryDistribution());
 //                try {
 //                    scanNode.setUseMemoryDistribution(scanProto.getUseMemoryDistribution());
@@ -771,32 +716,20 @@ public class JQuickNodeExecutor {
 //                }
                 return scanNode;
             case FILTER:
-                return new JQuickFilterPhysicalNode(
-                        buildExpression(proto.getFilter().getPredicate()), null);
+                return new JQuickFilterPhysicalNode(buildExpression(proto.getFilter().getPredicate()), null);
             case PROJECT:
                 JQuickProjectNodeProto projectProto = proto.getProject();
                 List<JQuickProjectPhysicalNode.SelectItem> selectItems = new ArrayList<>();
                 for (JQuickProjectNodeProto.SelectItemProto itemProto : projectProto.getSelectItemsList()) {
-                    selectItems.add(new JQuickProjectPhysicalNode.SelectItem(
-                            buildExpression(itemProto.getExpression()), itemProto.getAlias()));
+                    selectItems.add(new JQuickProjectPhysicalNode.SelectItem(buildExpression(itemProto.getExpression()), itemProto.getAlias()));
                 }
                 return new JQuickProjectPhysicalNode(selectItems, null, projectProto.getDistinct());
             case HASH_JOIN:
                 JQuickHashJoinNodeProto joinProto = proto.getHashJoin();
-                return new JQuickHashJoinPhysicalNode(
-                        convertJoinType(joinProto.getJoinType()), null, null,
-                        buildExpression(joinProto.getCondition()), new ArrayList<>(),
-                        joinProto.getBuildSide() == JQuickBuildSideProto.BUILD_SIDE_LEFT ?
-                                JQuickHashJoinPhysicalNode.BuildSide.LEFT : JQuickHashJoinPhysicalNode.BuildSide.RIGHT,
-                        JQuickHashJoinPhysicalNode.JoinDistribution.LOCAL);
+                return new JQuickHashJoinPhysicalNode(convertJoinType(joinProto.getJoinType()), null, null, buildExpression(joinProto.getCondition()), new ArrayList<>(), joinProto.getBuildSide() == JQuickBuildSideProto.BUILD_SIDE_LEFT ? JQuickHashJoinPhysicalNode.BuildSide.LEFT : JQuickHashJoinPhysicalNode.BuildSide.RIGHT, JQuickHashJoinPhysicalNode.JoinDistribution.LOCAL);
             case EXCHANGE:
                 JQuickExchangeNodeProto exchangeProto = proto.getExchange();
-                return new JQuickExchangePhysicalNode(
-                        convertExchangeType(exchangeProto.getExchangeType()),
-                        convertPartitionStrategy(exchangeProto.getPartitionStrategy()),
-                        new ArrayList<>(),
-                        exchangeProto.getParallelism(),
-                        null);
+                return new JQuickExchangePhysicalNode(convertExchangeType(exchangeProto.getExchangeType()), convertPartitionStrategy(exchangeProto.getPartitionStrategy()), new ArrayList<>(), exchangeProto.getParallelism(), null);
             case LIMIT:
                 JQuickLimitNodeProto limitProto = proto.getLimit();
                 return new JQuickLimitPhysicalNode(limitProto.getLimit(), limitProto.getOffset(), null);
@@ -820,8 +753,7 @@ public class JQuickNodeExecutor {
                     children.add(buildExpression(child));
                 }
                 if (children.size() >= 2) {
-                    return new JQuickBinaryExpression(children.get(0), children.get(1),
-                            convertBinaryOperator(proto.getBinaryOperator()));
+                    return new JQuickBinaryExpression(children.get(0), children.get(1), convertBinaryOperator(proto.getBinaryOperator()));
                 }
                 return null;
             default:

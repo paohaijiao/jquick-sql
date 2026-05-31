@@ -23,14 +23,14 @@ private static final long serialVersionUID = 0L;
     dataStreams_ = java.util.Collections.emptyList();
   }
 
-  @java.lang.Override
+  @Override
   @SuppressWarnings({"unused"})
-  protected java.lang.Object newInstance(
+  protected Object newInstance(
       UnusedPrivateParameter unused) {
     return new JQuickFragmentProto();
   }
 
-  @java.lang.Override
+  @Override
   public final com.google.protobuf.UnknownFieldSet
   getUnknownFields() {
     return this.unknownFields;
@@ -40,12 +40,12 @@ private static final long serialVersionUID = 0L;
     return JQuickPhysicalPlanProto.internal_static_com_github_paohaijiao_proto_JQuickFragmentProto_descriptor;
   }
 
-  @java.lang.Override
-  protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+  @Override
+  protected FieldAccessorTable
       internalGetFieldAccessorTable() {
     return JQuickPhysicalPlanProto.internal_static_com_github_paohaijiao_proto_JQuickFragmentProto_fieldAccessorTable
         .ensureFieldAccessorsInitialized(
-            JQuickFragmentProto.class, JQuickFragmentProto.Builder.class);
+            JQuickFragmentProto.class, Builder.class);
   }
 
   public static final int FRAGMENT_ID_FIELD_NUMBER = 1;
@@ -54,7 +54,7 @@ private static final long serialVersionUID = 0L;
    * <code>int64 fragment_id = 1;</code>
    * @return The fragmentId.
    */
-  @java.lang.Override
+  @Override
   public long getFragmentId() {
     return fragmentId_;
   }
@@ -65,14 +65,14 @@ private static final long serialVersionUID = 0L;
    * <code>.com.github.paohaijiao.proto.JQuickFragmentTypeProto type = 2;</code>
    * @return The enum numeric value on the wire for type.
    */
-  @java.lang.Override public int getTypeValue() {
+  @Override public int getTypeValue() {
     return type_;
   }
   /**
    * <code>.com.github.paohaijiao.proto.JQuickFragmentTypeProto type = 2;</code>
    * @return The type.
    */
-  @java.lang.Override public JQuickFragmentTypeProto getType() {
+  @Override public JQuickFragmentTypeProto getType() {
     JQuickFragmentTypeProto result = JQuickFragmentTypeProto.forNumber(type_);
     return result == null ? JQuickFragmentTypeProto.UNRECOGNIZED : result;
   }
@@ -83,7 +83,7 @@ private static final long serialVersionUID = 0L;
    * <code>.com.github.paohaijiao.proto.JQuickPhysicalPlanNodeProto plan = 3;</code>
    * @return Whether the plan field is set.
    */
-  @java.lang.Override
+  @Override
   public boolean hasPlan() {
     return plan_ != null;
   }
@@ -91,14 +91,14 @@ private static final long serialVersionUID = 0L;
    * <code>.com.github.paohaijiao.proto.JQuickPhysicalPlanNodeProto plan = 3;</code>
    * @return The plan.
    */
-  @java.lang.Override
+  @Override
   public JQuickPhysicalPlanNodeProto getPlan() {
     return plan_ == null ? JQuickPhysicalPlanNodeProto.getDefaultInstance() : plan_;
   }
   /**
    * <code>.com.github.paohaijiao.proto.JQuickPhysicalPlanNodeProto plan = 3;</code>
    */
-  @java.lang.Override
+  @Override
   public JQuickPhysicalPlanNodeProtoOrBuilder getPlanOrBuilder() {
     return plan_ == null ? JQuickPhysicalPlanNodeProto.getDefaultInstance() : plan_;
   }
@@ -110,8 +110,8 @@ private static final long serialVersionUID = 0L;
    * <code>repeated int64 child_fragment_ids = 4;</code>
    * @return A list containing the childFragmentIds.
    */
-  @java.lang.Override
-  public java.util.List<java.lang.Long>
+  @Override
+  public java.util.List<Long>
       getChildFragmentIdsList() {
     return childFragmentIds_;
   }
@@ -138,7 +138,7 @@ private static final long serialVersionUID = 0L;
    * <code>.com.github.paohaijiao.proto.JQuickExchangeNodeProto output_exchange = 5;</code>
    * @return Whether the outputExchange field is set.
    */
-  @java.lang.Override
+  @Override
   public boolean hasOutputExchange() {
     return outputExchange_ != null;
   }
@@ -146,14 +146,14 @@ private static final long serialVersionUID = 0L;
    * <code>.com.github.paohaijiao.proto.JQuickExchangeNodeProto output_exchange = 5;</code>
    * @return The outputExchange.
    */
-  @java.lang.Override
+  @Override
   public JQuickExchangeNodeProto getOutputExchange() {
     return outputExchange_ == null ? JQuickExchangeNodeProto.getDefaultInstance() : outputExchange_;
   }
   /**
    * <code>.com.github.paohaijiao.proto.JQuickExchangeNodeProto output_exchange = 5;</code>
    */
-  @java.lang.Override
+  @Override
   public JQuickExchangeNodeProtoOrBuilder getOutputExchangeOrBuilder() {
     return outputExchange_ == null ? JQuickExchangeNodeProto.getDefaultInstance() : outputExchange_;
   }
@@ -164,14 +164,14 @@ private static final long serialVersionUID = 0L;
   /**
    * <code>repeated .com.github.paohaijiao.proto.JQuickExchangeNodeProto input_exchanges = 6;</code>
    */
-  @java.lang.Override
+  @Override
   public java.util.List<JQuickExchangeNodeProto> getInputExchangesList() {
     return inputExchanges_;
   }
   /**
    * <code>repeated .com.github.paohaijiao.proto.JQuickExchangeNodeProto input_exchanges = 6;</code>
    */
-  @java.lang.Override
+  @Override
   public java.util.List<? extends JQuickExchangeNodeProtoOrBuilder>
       getInputExchangesOrBuilderList() {
     return inputExchanges_;
@@ -179,21 +179,21 @@ private static final long serialVersionUID = 0L;
   /**
    * <code>repeated .com.github.paohaijiao.proto.JQuickExchangeNodeProto input_exchanges = 6;</code>
    */
-  @java.lang.Override
+  @Override
   public int getInputExchangesCount() {
     return inputExchanges_.size();
   }
   /**
    * <code>repeated .com.github.paohaijiao.proto.JQuickExchangeNodeProto input_exchanges = 6;</code>
    */
-  @java.lang.Override
+  @Override
   public JQuickExchangeNodeProto getInputExchanges(int index) {
     return inputExchanges_.get(index);
   }
   /**
    * <code>repeated .com.github.paohaijiao.proto.JQuickExchangeNodeProto input_exchanges = 6;</code>
    */
-  @java.lang.Override
+  @Override
   public JQuickExchangeNodeProtoOrBuilder getInputExchangesOrBuilder(
       int index) {
     return inputExchanges_.get(index);
@@ -205,27 +205,27 @@ private static final long serialVersionUID = 0L;
    * <code>int32 parallelism = 7;</code>
    * @return The parallelism.
    */
-  @java.lang.Override
+  @Override
   public int getParallelism() {
     return parallelism_;
   }
 
   public static final int ASSIGNED_WORKER_ID_FIELD_NUMBER = 8;
   @SuppressWarnings("serial")
-  private volatile java.lang.Object assignedWorkerId_ = "";
+  private volatile Object assignedWorkerId_ = "";
   /**
    * <code>string assigned_worker_id = 8;</code>
    * @return The assignedWorkerId.
    */
-  @java.lang.Override
-  public java.lang.String getAssignedWorkerId() {
-    java.lang.Object ref = assignedWorkerId_;
-    if (ref instanceof java.lang.String) {
-      return (java.lang.String) ref;
+  @Override
+  public String getAssignedWorkerId() {
+    Object ref = assignedWorkerId_;
+    if (ref instanceof String) {
+      return (String) ref;
     } else {
       com.google.protobuf.ByteString bs = 
           (com.google.protobuf.ByteString) ref;
-      java.lang.String s = bs.toStringUtf8();
+      String s = bs.toStringUtf8();
       assignedWorkerId_ = s;
       return s;
     }
@@ -234,14 +234,14 @@ private static final long serialVersionUID = 0L;
    * <code>string assigned_worker_id = 8;</code>
    * @return The bytes for assignedWorkerId.
    */
-  @java.lang.Override
+  @Override
   public com.google.protobuf.ByteString
       getAssignedWorkerIdBytes() {
-    java.lang.Object ref = assignedWorkerId_;
-    if (ref instanceof java.lang.String) {
+    Object ref = assignedWorkerId_;
+    if (ref instanceof String) {
       com.google.protobuf.ByteString b = 
           com.google.protobuf.ByteString.copyFromUtf8(
-              (java.lang.String) ref);
+              (String) ref);
       assignedWorkerId_ = b;
       return b;
     } else {
@@ -259,7 +259,7 @@ private static final long serialVersionUID = 0L;
    * <code>.com.github.paohaijiao.proto.JQuickMemoryPartitionProto input_partition = 9;</code>
    * @return Whether the inputPartition field is set.
    */
-  @java.lang.Override
+  @Override
   public boolean hasInputPartition() {
     return inputPartition_ != null;
   }
@@ -271,7 +271,7 @@ private static final long serialVersionUID = 0L;
    * <code>.com.github.paohaijiao.proto.JQuickMemoryPartitionProto input_partition = 9;</code>
    * @return The inputPartition.
    */
-  @java.lang.Override
+  @Override
   public JQuickMemoryPartitionProto getInputPartition() {
     return inputPartition_ == null ? JQuickMemoryPartitionProto.getDefaultInstance() : inputPartition_;
   }
@@ -282,7 +282,7 @@ private static final long serialVersionUID = 0L;
    *
    * <code>.com.github.paohaijiao.proto.JQuickMemoryPartitionProto input_partition = 9;</code>
    */
-  @java.lang.Override
+  @Override
   public JQuickMemoryPartitionProtoOrBuilder getInputPartitionOrBuilder() {
     return inputPartition_ == null ? JQuickMemoryPartitionProto.getDefaultInstance() : inputPartition_;
   }
@@ -293,7 +293,7 @@ private static final long serialVersionUID = 0L;
    * <code>.com.github.paohaijiao.proto.JQuickMemoryPartitionProto output_partition = 10;</code>
    * @return Whether the outputPartition field is set.
    */
-  @java.lang.Override
+  @Override
   public boolean hasOutputPartition() {
     return outputPartition_ != null;
   }
@@ -301,14 +301,14 @@ private static final long serialVersionUID = 0L;
    * <code>.com.github.paohaijiao.proto.JQuickMemoryPartitionProto output_partition = 10;</code>
    * @return The outputPartition.
    */
-  @java.lang.Override
+  @Override
   public JQuickMemoryPartitionProto getOutputPartition() {
     return outputPartition_ == null ? JQuickMemoryPartitionProto.getDefaultInstance() : outputPartition_;
   }
   /**
    * <code>.com.github.paohaijiao.proto.JQuickMemoryPartitionProto output_partition = 10;</code>
    */
-  @java.lang.Override
+  @Override
   public JQuickMemoryPartitionProtoOrBuilder getOutputPartitionOrBuilder() {
     return outputPartition_ == null ? JQuickMemoryPartitionProto.getDefaultInstance() : outputPartition_;
   }
@@ -323,7 +323,7 @@ private static final long serialVersionUID = 0L;
    *
    * <code>repeated .com.github.paohaijiao.proto.JQuickDataStreamProto data_streams = 11;</code>
    */
-  @java.lang.Override
+  @Override
   public java.util.List<JQuickDataStreamProto> getDataStreamsList() {
     return dataStreams_;
   }
@@ -334,7 +334,7 @@ private static final long serialVersionUID = 0L;
    *
    * <code>repeated .com.github.paohaijiao.proto.JQuickDataStreamProto data_streams = 11;</code>
    */
-  @java.lang.Override
+  @Override
   public java.util.List<? extends JQuickDataStreamProtoOrBuilder>
       getDataStreamsOrBuilderList() {
     return dataStreams_;
@@ -346,7 +346,7 @@ private static final long serialVersionUID = 0L;
    *
    * <code>repeated .com.github.paohaijiao.proto.JQuickDataStreamProto data_streams = 11;</code>
    */
-  @java.lang.Override
+  @Override
   public int getDataStreamsCount() {
     return dataStreams_.size();
   }
@@ -357,7 +357,7 @@ private static final long serialVersionUID = 0L;
    *
    * <code>repeated .com.github.paohaijiao.proto.JQuickDataStreamProto data_streams = 11;</code>
    */
-  @java.lang.Override
+  @Override
   public JQuickDataStreamProto getDataStreams(int index) {
     return dataStreams_.get(index);
   }
@@ -368,14 +368,14 @@ private static final long serialVersionUID = 0L;
    *
    * <code>repeated .com.github.paohaijiao.proto.JQuickDataStreamProto data_streams = 11;</code>
    */
-  @java.lang.Override
+  @Override
   public JQuickDataStreamProtoOrBuilder getDataStreamsOrBuilder(
       int index) {
     return dataStreams_.get(index);
   }
 
   private byte memoizedIsInitialized = -1;
-  @java.lang.Override
+  @Override
   public final boolean isInitialized() {
     byte isInitialized = memoizedIsInitialized;
     if (isInitialized == 1) return true;
@@ -385,7 +385,7 @@ private static final long serialVersionUID = 0L;
     return true;
   }
 
-  @java.lang.Override
+  @Override
   public void writeTo(com.google.protobuf.CodedOutputStream output)
                       throws java.io.IOException {
     getSerializedSize();
@@ -429,7 +429,7 @@ private static final long serialVersionUID = 0L;
     getUnknownFields().writeTo(output);
   }
 
-  @java.lang.Override
+  @Override
   public int getSerializedSize() {
     int size = memoizedSize;
     if (size != -1) return size;
@@ -493,8 +493,8 @@ private static final long serialVersionUID = 0L;
     return size;
   }
 
-  @java.lang.Override
-  public boolean equals(final java.lang.Object obj) {
+  @Override
+  public boolean equals(final Object obj) {
     if (obj == this) {
      return true;
     }
@@ -540,7 +540,7 @@ private static final long serialVersionUID = 0L;
     return true;
   }
 
-  @java.lang.Override
+  @Override
   public int hashCode() {
     if (memoizedHashCode != 0) {
       return memoizedHashCode;
@@ -659,7 +659,7 @@ private static final long serialVersionUID = 0L;
         .parseWithIOException(PARSER, input, extensionRegistry);
   }
 
-  @java.lang.Override
+  @Override
   public Builder newBuilderForType() { return newBuilder(); }
   public static Builder newBuilder() {
     return DEFAULT_INSTANCE.toBuilder();
@@ -667,15 +667,15 @@ private static final long serialVersionUID = 0L;
   public static Builder newBuilder(JQuickFragmentProto prototype) {
     return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
   }
-  @java.lang.Override
+  @Override
   public Builder toBuilder() {
     return this == DEFAULT_INSTANCE
         ? new Builder() : new Builder().mergeFrom(this);
   }
 
-  @java.lang.Override
+  @Override
   protected Builder newBuilderForType(
-      com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+      BuilderParent parent) {
     Builder builder = new Builder(parent);
     return builder;
   }
@@ -691,12 +691,12 @@ private static final long serialVersionUID = 0L;
       return JQuickPhysicalPlanProto.internal_static_com_github_paohaijiao_proto_JQuickFragmentProto_descriptor;
     }
 
-    @java.lang.Override
-    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+    @Override
+    protected FieldAccessorTable
         internalGetFieldAccessorTable() {
       return JQuickPhysicalPlanProto.internal_static_com_github_paohaijiao_proto_JQuickFragmentProto_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
-              JQuickFragmentProto.class, JQuickFragmentProto.Builder.class);
+              JQuickFragmentProto.class, Builder.class);
     }
 
     // Construct using com.github.paohaijiao.proto.JQuickFragmentProto.newBuilder()
@@ -705,11 +705,11 @@ private static final long serialVersionUID = 0L;
     }
 
     private Builder(
-        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+        BuilderParent parent) {
       super(parent);
 
     }
-    @java.lang.Override
+    @Override
     public Builder clear() {
       super.clear();
       bitField0_ = 0;
@@ -755,18 +755,18 @@ private static final long serialVersionUID = 0L;
       return this;
     }
 
-    @java.lang.Override
+    @Override
     public com.google.protobuf.Descriptors.Descriptor
         getDescriptorForType() {
       return JQuickPhysicalPlanProto.internal_static_com_github_paohaijiao_proto_JQuickFragmentProto_descriptor;
     }
 
-    @java.lang.Override
+    @Override
     public JQuickFragmentProto getDefaultInstanceForType() {
       return JQuickFragmentProto.getDefaultInstance();
     }
 
-    @java.lang.Override
+    @Override
     public JQuickFragmentProto build() {
       JQuickFragmentProto result = buildPartial();
       if (!result.isInitialized()) {
@@ -775,7 +775,7 @@ private static final long serialVersionUID = 0L;
       return result;
     }
 
-    @java.lang.Override
+    @Override
     public JQuickFragmentProto buildPartial() {
       JQuickFragmentProto result = new JQuickFragmentProto(this);
       buildPartialRepeatedFields(result);
@@ -846,39 +846,39 @@ private static final long serialVersionUID = 0L;
       }
     }
 
-    @java.lang.Override
+    @Override
     public Builder clone() {
       return super.clone();
     }
-    @java.lang.Override
+    @Override
     public Builder setField(
         com.google.protobuf.Descriptors.FieldDescriptor field,
-        java.lang.Object value) {
+        Object value) {
       return super.setField(field, value);
     }
-    @java.lang.Override
+    @Override
     public Builder clearField(
         com.google.protobuf.Descriptors.FieldDescriptor field) {
       return super.clearField(field);
     }
-    @java.lang.Override
+    @Override
     public Builder clearOneof(
         com.google.protobuf.Descriptors.OneofDescriptor oneof) {
       return super.clearOneof(oneof);
     }
-    @java.lang.Override
+    @Override
     public Builder setRepeatedField(
         com.google.protobuf.Descriptors.FieldDescriptor field,
-        int index, java.lang.Object value) {
+        int index, Object value) {
       return super.setRepeatedField(field, index, value);
     }
-    @java.lang.Override
+    @Override
     public Builder addRepeatedField(
         com.google.protobuf.Descriptors.FieldDescriptor field,
-        java.lang.Object value) {
+        Object value) {
       return super.addRepeatedField(field, value);
     }
-    @java.lang.Override
+    @Override
     public Builder mergeFrom(com.google.protobuf.Message other) {
       if (other instanceof JQuickFragmentProto) {
         return mergeFrom((JQuickFragmentProto)other);
@@ -983,18 +983,18 @@ private static final long serialVersionUID = 0L;
       return this;
     }
 
-    @java.lang.Override
+    @Override
     public final boolean isInitialized() {
       return true;
     }
 
-    @java.lang.Override
+    @Override
     public Builder mergeFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
       if (extensionRegistry == null) {
-        throw new java.lang.NullPointerException();
+        throw new NullPointerException();
       }
       try {
         boolean done = false;
@@ -1116,7 +1116,7 @@ private static final long serialVersionUID = 0L;
      * <code>int64 fragment_id = 1;</code>
      * @return The fragmentId.
      */
-    @java.lang.Override
+    @Override
     public long getFragmentId() {
       return fragmentId_;
     }
@@ -1148,7 +1148,7 @@ private static final long serialVersionUID = 0L;
      * <code>.com.github.paohaijiao.proto.JQuickFragmentTypeProto type = 2;</code>
      * @return The enum numeric value on the wire for type.
      */
-    @java.lang.Override public int getTypeValue() {
+    @Override public int getTypeValue() {
       return type_;
     }
     /**
@@ -1166,7 +1166,7 @@ private static final long serialVersionUID = 0L;
      * <code>.com.github.paohaijiao.proto.JQuickFragmentTypeProto type = 2;</code>
      * @return The type.
      */
-    @java.lang.Override
+    @Override
     public JQuickFragmentTypeProto getType() {
       JQuickFragmentTypeProto result = JQuickFragmentTypeProto.forNumber(type_);
       return result == null ? JQuickFragmentTypeProto.UNRECOGNIZED : result;
@@ -1326,7 +1326,7 @@ private static final long serialVersionUID = 0L;
      * <code>repeated int64 child_fragment_ids = 4;</code>
      * @return A list containing the childFragmentIds.
      */
-    public java.util.List<java.lang.Long>
+    public java.util.List<Long>
         getChildFragmentIdsList() {
       return ((bitField0_ & 0x00000008) != 0) ?
                java.util.Collections.unmodifiableList(childFragmentIds_) : childFragmentIds_;
@@ -1378,7 +1378,7 @@ private static final long serialVersionUID = 0L;
      * @return This builder for chaining.
      */
     public Builder addAllChildFragmentIds(
-        java.lang.Iterable<? extends java.lang.Long> values) {
+        Iterable<? extends Long> values) {
       ensureChildFragmentIdsIsMutable();
       com.google.protobuf.AbstractMessageLite.Builder.addAll(
           values, childFragmentIds_);
@@ -1653,7 +1653,7 @@ private static final long serialVersionUID = 0L;
      * <code>repeated .com.github.paohaijiao.proto.JQuickExchangeNodeProto input_exchanges = 6;</code>
      */
     public Builder addAllInputExchanges(
-        java.lang.Iterable<? extends JQuickExchangeNodeProto> values) {
+        Iterable<? extends JQuickExchangeNodeProto> values) {
       if (inputExchangesBuilder_ == null) {
         ensureInputExchangesIsMutable();
         com.google.protobuf.AbstractMessageLite.Builder.addAll(
@@ -1760,7 +1760,7 @@ private static final long serialVersionUID = 0L;
      * <code>int32 parallelism = 7;</code>
      * @return The parallelism.
      */
-    @java.lang.Override
+    @Override
     public int getParallelism() {
       return parallelism_;
     }
@@ -1787,21 +1787,21 @@ private static final long serialVersionUID = 0L;
       return this;
     }
 
-    private java.lang.Object assignedWorkerId_ = "";
+    private Object assignedWorkerId_ = "";
     /**
      * <code>string assigned_worker_id = 8;</code>
      * @return The assignedWorkerId.
      */
-    public java.lang.String getAssignedWorkerId() {
-      java.lang.Object ref = assignedWorkerId_;
-      if (!(ref instanceof java.lang.String)) {
+    public String getAssignedWorkerId() {
+      Object ref = assignedWorkerId_;
+      if (!(ref instanceof String)) {
         com.google.protobuf.ByteString bs =
             (com.google.protobuf.ByteString) ref;
-        java.lang.String s = bs.toStringUtf8();
+        String s = bs.toStringUtf8();
         assignedWorkerId_ = s;
         return s;
       } else {
-        return (java.lang.String) ref;
+        return (String) ref;
       }
     }
     /**
@@ -1810,11 +1810,11 @@ private static final long serialVersionUID = 0L;
      */
     public com.google.protobuf.ByteString
         getAssignedWorkerIdBytes() {
-      java.lang.Object ref = assignedWorkerId_;
+      Object ref = assignedWorkerId_;
       if (ref instanceof String) {
         com.google.protobuf.ByteString b = 
             com.google.protobuf.ByteString.copyFromUtf8(
-                (java.lang.String) ref);
+                (String) ref);
         assignedWorkerId_ = b;
         return b;
       } else {
@@ -1827,7 +1827,7 @@ private static final long serialVersionUID = 0L;
      * @return This builder for chaining.
      */
     public Builder setAssignedWorkerId(
-        java.lang.String value) {
+        String value) {
       if (value == null) { throw new NullPointerException(); }
       assignedWorkerId_ = value;
       bitField0_ |= 0x00000080;
@@ -2311,7 +2311,7 @@ private static final long serialVersionUID = 0L;
      * <code>repeated .com.github.paohaijiao.proto.JQuickDataStreamProto data_streams = 11;</code>
      */
     public Builder addAllDataStreams(
-        java.lang.Iterable<? extends JQuickDataStreamProto> values) {
+        Iterable<? extends JQuickDataStreamProto> values) {
       if (dataStreamsBuilder_ == null) {
         ensureDataStreamsIsMutable();
         com.google.protobuf.AbstractMessageLite.Builder.addAll(
@@ -2444,13 +2444,13 @@ private static final long serialVersionUID = 0L;
       }
       return dataStreamsBuilder_;
     }
-    @java.lang.Override
+    @Override
     public final Builder setUnknownFields(
         final com.google.protobuf.UnknownFieldSet unknownFields) {
       return super.setUnknownFields(unknownFields);
     }
 
-    @java.lang.Override
+    @Override
     public final Builder mergeUnknownFields(
         final com.google.protobuf.UnknownFieldSet unknownFields) {
       return super.mergeUnknownFields(unknownFields);
@@ -2472,7 +2472,7 @@ private static final long serialVersionUID = 0L;
 
   private static final com.google.protobuf.Parser<JQuickFragmentProto>
       PARSER = new com.google.protobuf.AbstractParser<JQuickFragmentProto>() {
-    @java.lang.Override
+    @Override
     public JQuickFragmentProto parsePartialFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
@@ -2496,12 +2496,12 @@ private static final long serialVersionUID = 0L;
     return PARSER;
   }
 
-  @java.lang.Override
+  @Override
   public com.google.protobuf.Parser<JQuickFragmentProto> getParserForType() {
     return PARSER;
   }
 
-  @java.lang.Override
+  @Override
   public JQuickFragmentProto getDefaultInstanceForType() {
     return DEFAULT_INSTANCE;
   }

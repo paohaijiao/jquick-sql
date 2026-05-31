@@ -209,17 +209,14 @@ public class JQuickWorker {
     }
 
     private void receivePartition(JQuickMemoryPartitionProto partition) {
-        JQuickMemoryPartition memPartition = new JQuickMemoryPartition(
-                partition.getPartitionIndex(), partition.getTotalPartitions());
+        JQuickMemoryPartition memPartition = new JQuickMemoryPartition(partition.getPartitionIndex(), partition.getTotalPartitions());
         memPartition.setData(dataConverter.convertFromProto(partition.getData()));
         memPartition.setChunkIndex(partition.getPartitionIndex());
         memoryPartitions.put(partition.getPartitionId(), memPartition);
     }
 
     private void sendOutputPartition(JQuickDataSet result, JQuickMemoryPartitionProto outputPartition) {
-        JQuickMemoryPartition partition = new JQuickMemoryPartition(
-                outputPartition.getPartitionIndex(),
-                outputPartition.getTotalPartitions());
+        JQuickMemoryPartition partition = new JQuickMemoryPartition(outputPartition.getPartitionIndex(), outputPartition.getTotalPartitions());
         partition.setData(result);
         partitionManager.sendToWorker(partition, 1, JQuickExchangeType.GATHER, this);
     }
@@ -230,13 +227,11 @@ public class JQuickWorker {
     public void start() throws IOException {
         JQuickPhysicalPlanServiceImpl planService = new JQuickPhysicalPlanServiceImpl(this);
         distributionService = new JQuickDataDistributionServiceImpl(this);
-
         server = ServerBuilder.forPort(port)
                 .addService(planService)
                 .addService(distributionService)
                 .build()
                 .start();
-
         System.out.println("Worker " + workerId + " started on port " + port);
         System.out.println("Loaded " + functionManager.getAllInvokers().size() + " functions via SPI");
     }
@@ -266,8 +261,6 @@ public class JQuickWorker {
             server.awaitTermination();
         }
     }
-
-    // ==================== 内部类 ====================
 
     /**
      * 内存分区内部类
@@ -346,11 +339,17 @@ public class JQuickWorker {
      * 任务上下文内部类
      */
     class JQuickTaskContext {
+
         private final String taskId;
+
         private final JQuickExecuteTaskRequest request;
+
         private long processedRows;
+
         private long startTime;
+
         private long memoryUsed;
+
         private volatile boolean cancelled;
 
         JQuickTaskContext(String taskId, JQuickExecuteTaskRequest request) {

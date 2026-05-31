@@ -22,7 +22,6 @@ import com.github.paohaijiao.expression.domain.*;
 import com.github.paohaijiao.function.core.JQuickMethodFunctionProvider;
 import com.github.paohaijiao.function.manager.JQuickMethodInvocationManager;
 import com.github.paohaijiao.statement.JQuickRow;
-
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -60,13 +59,11 @@ public class JQuickExpressionEvaluator {
             return row.get(((JQuickColumnRefExpression) expr).getColumnName());
         } else if (expr instanceof JQuickLiteralExpression) {
             return ((JQuickLiteralExpression) expr).getValue();
-
         } else if (expr instanceof JQuickBinaryExpression) {
             JQuickBinaryExpression binary = (JQuickBinaryExpression) expr;
             Object left = evaluateExpression(row, binary.getLeft());
             Object right = evaluateExpression(row, binary.getRight());
             return applyBinaryOperator(left, right, binary.getOperator());
-
         } else if (expr instanceof JQuickUnaryExpression) {
             JQuickUnaryExpression unary = (JQuickUnaryExpression) expr;
             Object value = evaluateExpression(row, unary.getExpression());
@@ -130,7 +127,6 @@ public class JQuickExpressionEvaluator {
 
     private Object evaluateBuiltinFunction(String functionName, List<Object> args) {
         functionName = functionName.toLowerCase();
-
         // 字符串函数
         if (functionName.equals("upper") || functionName.equals("toupper")) {
             return args.isEmpty() || args.get(0) == null ? null : args.get(0).toString().toUpperCase();

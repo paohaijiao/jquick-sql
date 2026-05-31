@@ -19,14 +19,14 @@ private static final long serialVersionUID = 0L;
     orderByItems_ = java.util.Collections.emptyList();
   }
 
-  @java.lang.Override
+  @Override
   @SuppressWarnings({"unused"})
-  protected java.lang.Object newInstance(
+  protected Object newInstance(
       UnusedPrivateParameter unused) {
     return new JQuickTopNNodeProto();
   }
 
-  @java.lang.Override
+  @Override
   public final com.google.protobuf.UnknownFieldSet
   getUnknownFields() {
     return this.unknownFields;
@@ -36,12 +36,12 @@ private static final long serialVersionUID = 0L;
     return JQuickPhysicalPlanProto.internal_static_com_github_paohaijiao_proto_JQuickTopNNodeProto_descriptor;
   }
 
-  @java.lang.Override
-  protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+  @Override
+  protected FieldAccessorTable
       internalGetFieldAccessorTable() {
     return JQuickPhysicalPlanProto.internal_static_com_github_paohaijiao_proto_JQuickTopNNodeProto_fieldAccessorTable
         .ensureFieldAccessorsInitialized(
-            JQuickTopNNodeProto.class, JQuickTopNNodeProto.Builder.class);
+            JQuickTopNNodeProto.class, Builder.class);
   }
 
   public static final int ORDER_BY_ITEMS_FIELD_NUMBER = 1;
@@ -50,14 +50,14 @@ private static final long serialVersionUID = 0L;
   /**
    * <code>repeated .com.github.paohaijiao.proto.JQuickSortNodeProto.OrderByItemProto order_by_items = 1;</code>
    */
-  @java.lang.Override
+  @Override
   public java.util.List<JQuickSortNodeProto.OrderByItemProto> getOrderByItemsList() {
     return orderByItems_;
   }
   /**
    * <code>repeated .com.github.paohaijiao.proto.JQuickSortNodeProto.OrderByItemProto order_by_items = 1;</code>
    */
-  @java.lang.Override
+  @Override
   public java.util.List<? extends JQuickSortNodeProto.OrderByItemProtoOrBuilder>
       getOrderByItemsOrBuilderList() {
     return orderByItems_;
@@ -65,21 +65,21 @@ private static final long serialVersionUID = 0L;
   /**
    * <code>repeated .com.github.paohaijiao.proto.JQuickSortNodeProto.OrderByItemProto order_by_items = 1;</code>
    */
-  @java.lang.Override
+  @Override
   public int getOrderByItemsCount() {
     return orderByItems_.size();
   }
   /**
    * <code>repeated .com.github.paohaijiao.proto.JQuickSortNodeProto.OrderByItemProto order_by_items = 1;</code>
    */
-  @java.lang.Override
+  @Override
   public JQuickSortNodeProto.OrderByItemProto getOrderByItems(int index) {
     return orderByItems_.get(index);
   }
   /**
    * <code>repeated .com.github.paohaijiao.proto.JQuickSortNodeProto.OrderByItemProto order_by_items = 1;</code>
    */
-  @java.lang.Override
+  @Override
   public JQuickSortNodeProto.OrderByItemProtoOrBuilder getOrderByItemsOrBuilder(
       int index) {
     return orderByItems_.get(index);
@@ -91,7 +91,7 @@ private static final long serialVersionUID = 0L;
    * <code>int32 limit = 2;</code>
    * @return The limit.
    */
-  @java.lang.Override
+  @Override
   public int getLimit() {
     return limit_;
   }
@@ -102,13 +102,13 @@ private static final long serialVersionUID = 0L;
    * <code>int32 offset = 3;</code>
    * @return The offset.
    */
-  @java.lang.Override
+  @Override
   public int getOffset() {
     return offset_;
   }
 
   private byte memoizedIsInitialized = -1;
-  @java.lang.Override
+  @Override
   public final boolean isInitialized() {
     byte isInitialized = memoizedIsInitialized;
     if (isInitialized == 1) return true;
@@ -118,7 +118,7 @@ private static final long serialVersionUID = 0L;
     return true;
   }
 
-  @java.lang.Override
+  @Override
   public void writeTo(com.google.protobuf.CodedOutputStream output)
                       throws java.io.IOException {
     for (int i = 0; i < orderByItems_.size(); i++) {
@@ -133,7 +133,7 @@ private static final long serialVersionUID = 0L;
     getUnknownFields().writeTo(output);
   }
 
-  @java.lang.Override
+  @Override
   public int getSerializedSize() {
     int size = memoizedSize;
     if (size != -1) return size;
@@ -156,8 +156,8 @@ private static final long serialVersionUID = 0L;
     return size;
   }
 
-  @java.lang.Override
-  public boolean equals(final java.lang.Object obj) {
+  @Override
+  public boolean equals(final Object obj) {
     if (obj == this) {
      return true;
     }
@@ -176,7 +176,7 @@ private static final long serialVersionUID = 0L;
     return true;
   }
 
-  @java.lang.Override
+  @Override
   public int hashCode() {
     if (memoizedHashCode != 0) {
       return memoizedHashCode;
@@ -266,7 +266,7 @@ private static final long serialVersionUID = 0L;
         .parseWithIOException(PARSER, input, extensionRegistry);
   }
 
-  @java.lang.Override
+  @Override
   public Builder newBuilderForType() { return newBuilder(); }
   public static Builder newBuilder() {
     return DEFAULT_INSTANCE.toBuilder();
@@ -274,15 +274,15 @@ private static final long serialVersionUID = 0L;
   public static Builder newBuilder(JQuickTopNNodeProto prototype) {
     return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
   }
-  @java.lang.Override
+  @Override
   public Builder toBuilder() {
     return this == DEFAULT_INSTANCE
         ? new Builder() : new Builder().mergeFrom(this);
   }
 
-  @java.lang.Override
+  @Override
   protected Builder newBuilderForType(
-      com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+      BuilderParent parent) {
     Builder builder = new Builder(parent);
     return builder;
   }
@@ -298,12 +298,12 @@ private static final long serialVersionUID = 0L;
       return JQuickPhysicalPlanProto.internal_static_com_github_paohaijiao_proto_JQuickTopNNodeProto_descriptor;
     }
 
-    @java.lang.Override
-    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+    @Override
+    protected FieldAccessorTable
         internalGetFieldAccessorTable() {
       return JQuickPhysicalPlanProto.internal_static_com_github_paohaijiao_proto_JQuickTopNNodeProto_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
-              JQuickTopNNodeProto.class, JQuickTopNNodeProto.Builder.class);
+              JQuickTopNNodeProto.class, Builder.class);
     }
 
     // Construct using com.github.paohaijiao.proto.JQuickTopNNodeProto.newBuilder()
@@ -312,11 +312,11 @@ private static final long serialVersionUID = 0L;
     }
 
     private Builder(
-        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+        BuilderParent parent) {
       super(parent);
 
     }
-    @java.lang.Override
+    @Override
     public Builder clear() {
       super.clear();
       bitField0_ = 0;
@@ -332,18 +332,18 @@ private static final long serialVersionUID = 0L;
       return this;
     }
 
-    @java.lang.Override
+    @Override
     public com.google.protobuf.Descriptors.Descriptor
         getDescriptorForType() {
       return JQuickPhysicalPlanProto.internal_static_com_github_paohaijiao_proto_JQuickTopNNodeProto_descriptor;
     }
 
-    @java.lang.Override
+    @Override
     public JQuickTopNNodeProto getDefaultInstanceForType() {
       return JQuickTopNNodeProto.getDefaultInstance();
     }
 
-    @java.lang.Override
+    @Override
     public JQuickTopNNodeProto build() {
       JQuickTopNNodeProto result = buildPartial();
       if (!result.isInitialized()) {
@@ -352,7 +352,7 @@ private static final long serialVersionUID = 0L;
       return result;
     }
 
-    @java.lang.Override
+    @Override
     public JQuickTopNNodeProto buildPartial() {
       JQuickTopNNodeProto result = new JQuickTopNNodeProto(this);
       buildPartialRepeatedFields(result);
@@ -383,39 +383,39 @@ private static final long serialVersionUID = 0L;
       }
     }
 
-    @java.lang.Override
+    @Override
     public Builder clone() {
       return super.clone();
     }
-    @java.lang.Override
+    @Override
     public Builder setField(
         com.google.protobuf.Descriptors.FieldDescriptor field,
-        java.lang.Object value) {
+        Object value) {
       return super.setField(field, value);
     }
-    @java.lang.Override
+    @Override
     public Builder clearField(
         com.google.protobuf.Descriptors.FieldDescriptor field) {
       return super.clearField(field);
     }
-    @java.lang.Override
+    @Override
     public Builder clearOneof(
         com.google.protobuf.Descriptors.OneofDescriptor oneof) {
       return super.clearOneof(oneof);
     }
-    @java.lang.Override
+    @Override
     public Builder setRepeatedField(
         com.google.protobuf.Descriptors.FieldDescriptor field,
-        int index, java.lang.Object value) {
+        int index, Object value) {
       return super.setRepeatedField(field, index, value);
     }
-    @java.lang.Override
+    @Override
     public Builder addRepeatedField(
         com.google.protobuf.Descriptors.FieldDescriptor field,
-        java.lang.Object value) {
+        Object value) {
       return super.addRepeatedField(field, value);
     }
-    @java.lang.Override
+    @Override
     public Builder mergeFrom(com.google.protobuf.Message other) {
       if (other instanceof JQuickTopNNodeProto) {
         return mergeFrom((JQuickTopNNodeProto)other);
@@ -464,18 +464,18 @@ private static final long serialVersionUID = 0L;
       return this;
     }
 
-    @java.lang.Override
+    @Override
     public final boolean isInitialized() {
       return true;
     }
 
-    @java.lang.Override
+    @Override
     public Builder mergeFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
       if (extensionRegistry == null) {
-        throw new java.lang.NullPointerException();
+        throw new NullPointerException();
       }
       try {
         boolean done = false;
@@ -663,7 +663,7 @@ private static final long serialVersionUID = 0L;
      * <code>repeated .com.github.paohaijiao.proto.JQuickSortNodeProto.OrderByItemProto order_by_items = 1;</code>
      */
     public Builder addAllOrderByItems(
-        java.lang.Iterable<? extends JQuickSortNodeProto.OrderByItemProto> values) {
+        Iterable<? extends JQuickSortNodeProto.OrderByItemProto> values) {
       if (orderByItemsBuilder_ == null) {
         ensureOrderByItemsIsMutable();
         com.google.protobuf.AbstractMessageLite.Builder.addAll(
@@ -770,7 +770,7 @@ private static final long serialVersionUID = 0L;
      * <code>int32 limit = 2;</code>
      * @return The limit.
      */
-    @java.lang.Override
+    @Override
     public int getLimit() {
       return limit_;
     }
@@ -802,7 +802,7 @@ private static final long serialVersionUID = 0L;
      * <code>int32 offset = 3;</code>
      * @return The offset.
      */
-    @java.lang.Override
+    @Override
     public int getOffset() {
       return offset_;
     }
@@ -828,13 +828,13 @@ private static final long serialVersionUID = 0L;
       onChanged();
       return this;
     }
-    @java.lang.Override
+    @Override
     public final Builder setUnknownFields(
         final com.google.protobuf.UnknownFieldSet unknownFields) {
       return super.setUnknownFields(unknownFields);
     }
 
-    @java.lang.Override
+    @Override
     public final Builder mergeUnknownFields(
         final com.google.protobuf.UnknownFieldSet unknownFields) {
       return super.mergeUnknownFields(unknownFields);
@@ -856,7 +856,7 @@ private static final long serialVersionUID = 0L;
 
   private static final com.google.protobuf.Parser<JQuickTopNNodeProto>
       PARSER = new com.google.protobuf.AbstractParser<JQuickTopNNodeProto>() {
-    @java.lang.Override
+    @Override
     public JQuickTopNNodeProto parsePartialFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
@@ -880,12 +880,12 @@ private static final long serialVersionUID = 0L;
     return PARSER;
   }
 
-  @java.lang.Override
+  @Override
   public com.google.protobuf.Parser<JQuickTopNNodeProto> getParserForType() {
     return PARSER;
   }
 
-  @java.lang.Override
+  @Override
   public JQuickTopNNodeProto getDefaultInstanceForType() {
     return DEFAULT_INSTANCE;
   }
