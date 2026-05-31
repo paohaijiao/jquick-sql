@@ -100,5 +100,5 @@ public enum JQuickExchangeType {
      * <p>
      * 典型场景：TableScan → Filter → Project 等流水线连续操作，数据不跨节点
      */
-    FORWARD
+    PIPELINE
 }

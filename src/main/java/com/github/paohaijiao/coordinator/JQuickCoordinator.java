@@ -20,6 +20,9 @@ import com.github.paohaijiao.enums.JQuickFragmentType;
 import com.github.paohaijiao.fragment.JQuickFragment;
 import com.github.paohaijiao.fragment.JQuickFragmenter;
 import com.github.paohaijiao.physical.JQuickPhysicalPlanNode;
+import com.github.paohaijiao.physical.domain.JQuickPhysicalColumn;
+import com.github.paohaijiao.physical.domain.JQuickPhysicalStats;
+import com.github.paohaijiao.physical.node.*;
 import com.github.paohaijiao.proto.*;
 import com.github.paohaijiao.statement.JQuickDataSet;
 import com.github.paohaijiao.statement.JQuickRow;
@@ -45,7 +48,7 @@ import java.util.stream.Collectors;
  * 4. 处理任务失败和重试
  * 5. 管理查询生命周期
  */
-public class JQuickCoordinator {
+public class JQuickCoordinator extends JQuickConvertService{
 
     private static final Logger LOGGER = Logger.getLogger(JQuickCoordinator.class.getName());
 
@@ -413,38 +416,91 @@ public class JQuickCoordinator {
     }
 
     /**
-     * 转换物理计划节点为 Proto（简化实现）
+     * 转换物理计划节点为 Proto
      */
     private JQuickPhysicalPlanNodeProto convertPhysicalPlanToProto(JQuickPhysicalPlanNode node) {
-        JQuickPhysicalPlanNodeProto.Builder builder = JQuickPhysicalPlanNodeProto.newBuilder();
+        if (node == null) {
+            return JQuickPhysicalPlanNodeProto.newBuilder()
+                    .setNodeId("empty")
+                    .setNodeType("Empty")
+                    .setEmpty(JQuickEmptyNodeProto.newBuilder().build())
+                    .build();
+        }
+
+        JQuickPhysicalPlanNodeProto.Builder builder = JQuickPhysicalPlanNodeProto.newBuilder()
+                .setNodeId(UUID.randomUUID().toString())
+                .setNodeType(node.getNodeType());
+
+        for (JQuickPhysicalColumn col : node.getOutputSchema()) {
+            builder.addOutputSchema(convertPhysicalColumnToProto(col));
+        }
+
+        // 转换统计信息
+        JQuickPhysicalStats stats = node.getStats();
+        if (stats != null && stats.getEstimatedRowCount() > 0) {
+            builder.setStats(convertStatsToProto(stats));
+        }
+
         String nodeType = node.getNodeType();
+
         switch (nodeType) {
             case "TableScan":
+                builder.setTableScan(convertTableScanToProto((JQuickTableScanPhysicalNode) node));
                 break;
             case "Filter":
-                // builder.setFilter(...);
+                builder.setFilter(convertFilterToProto((JQuickFilterPhysicalNode) node));
                 break;
             case "Project":
-                // builder.setProject(...);
+                builder.setProject(convertProjectToProto((JQuickProjectPhysicalNode) node));
                 break;
             case "HashJoin":
-                // builder.setHashJoin(...);
+                builder.setHashJoin(convertHashJoinToProto((JQuickHashJoinPhysicalNode) node));
                 break;
-            case "Exchange":
-                // builder.setExchange(...);
+            case "NestedLoopJoin":
+                builder.setNestedLoopJoin(convertNestedLoopJoinToProto((JQuickNestedLoopJoinPhysicalNode) node));
+                break;
+            case "HashAggregate":
+                builder.setHashAggregate(convertHashAggregateToProto((JQuickHashAggregatePhysicalNode) node));
+                break;
+            case "Sort":
+                builder.setSort(convertSortToProto((JQuickSortPhysicalNode) node));
                 break;
             case "Limit":
-                // builder.setLimit(...);
+                builder.setLimit(convertLimitToProto((JQuickLimitPhysicalNode) node));
+                break;
+            case "Exchange":
+                builder.setExchange(convertExchangeToProto((JQuickExchangePhysicalNode) node));
+                break;
+            case "Values":
+                builder.setValues(convertValuesToProto((JQuickValuesPhysicalNode) node));
                 break;
             case "Empty":
-                // builder.setEmpty(...);
+                builder.setEmpty(JQuickEmptyNodeProto.newBuilder().build());
+                break;
+            case "Window":
+                builder.setWindow(convertWindowToProto((JQuickWindowPhysicalNode) node));
+                break;
+            case "SetOperation":
+                builder.setSetOperation(convertSetOperationToProto((JQuickSetOperationPhysicalNode) node));
+                break;
+            case "TopN":
+                builder.setTopN(convertTopNToProto((JQuickTopNPhysicalNode) node));
+                break;
+            case "RecursiveUnion":
+                builder.setRecursiveUnion(convertRecursiveUnionToProto((JQuickRecursiveUnionPhysicalNode) node));
                 break;
             default:
                 builder.setEmpty(JQuickEmptyNodeProto.newBuilder().build());
         }
 
+        // 添加子节点 ID
+        for (JQuickPhysicalPlanNode child : node.getChildren()) {
+            builder.addChildNodeIds("child_" + child.getNodeType());
+        }
+
         return builder.build();
     }
+
 
     /**
      * 转换 Fragment 类型
