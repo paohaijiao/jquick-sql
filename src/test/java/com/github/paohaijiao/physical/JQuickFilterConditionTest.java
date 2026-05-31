@@ -17,14 +17,12 @@ package com.github.paohaijiao.physical;
 
 import com.github.paohaijiao.enums.JQuickBinaryOperator;
 import com.github.paohaijiao.enums.JQuickJoinType;
-import com.github.paohaijiao.enums.JQuickUnaryOperator;
 import com.github.paohaijiao.expression.JQuickExpression;
 import com.github.paohaijiao.expression.domain.*;
 import com.github.paohaijiao.logic.JQuickLogicalPlanNode;
 import com.github.paohaijiao.logic.domain.*;
 import com.github.paohaijiao.logic2physical.JQuickPhysicalPlanGenerator;
 import com.github.paohaijiao.physical.node.JQuickFilterPhysicalNode;
-import com.github.paohaijiao.physical.node.JQuickRecursiveUnionPhysicalNode;
 import org.junit.Before;
 import org.junit.Test;
 

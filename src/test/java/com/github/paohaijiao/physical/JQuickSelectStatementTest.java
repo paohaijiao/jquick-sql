@@ -15,19 +15,20 @@
  */
 package com.github.paohaijiao.physical;
 
-import com.github.paohaijiao.ast.*;
 import com.github.paohaijiao.ast2logic.JQuickASTToLogicalPlanVisitor;
 import com.github.paohaijiao.enums.JQuickBinaryOperator;
-import com.github.paohaijiao.enums.JQuickJoinType;
-import com.github.paohaijiao.enums.JQuickSQLOperationType;
 import com.github.paohaijiao.expression.JQuickExpression;
 import com.github.paohaijiao.expression.domain.JQuickBinaryExpression;
 import com.github.paohaijiao.expression.domain.JQuickColumnRefExpression;
 import com.github.paohaijiao.expression.domain.JQuickLiteralExpression;
 import com.github.paohaijiao.logic.JQuickLogicalPlanNode;
-import com.github.paohaijiao.logic.domain.*;
+import com.github.paohaijiao.logic.domain.JQuickAggregateNode;
+import com.github.paohaijiao.logic.domain.JQuickProjectNode;
+import com.github.paohaijiao.logic.domain.JQuickTableScanNode;
+import com.github.paohaijiao.logic.domain.JQuickWithNode;
 import com.github.paohaijiao.logic2physical.JQuickPhysicalPlanGenerator;
-import com.github.paohaijiao.physical.node.*;
+import com.github.paohaijiao.physical.node.JQuickProjectPhysicalNode;
+import com.github.paohaijiao.physical.node.JQuickTableScanPhysicalNode;
 import org.junit.Before;
 import org.junit.Test;
 

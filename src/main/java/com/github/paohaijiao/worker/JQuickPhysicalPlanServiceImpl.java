@@ -17,7 +17,6 @@ package com.github.paohaijiao.worker;
 
 
 import com.github.paohaijiao.proto.*;
-import com.github.paohaijiao.statement.JQuickDataSet;
 import io.grpc.stub.StreamObserver;
 
 import java.util.logging.Level;

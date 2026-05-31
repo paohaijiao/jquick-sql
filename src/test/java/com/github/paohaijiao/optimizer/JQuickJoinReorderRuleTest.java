@@ -25,7 +25,6 @@ import com.github.paohaijiao.logic.JQuickLogicalPlanNode;
 import com.github.paohaijiao.logic.domain.JQuickFilterNode;
 import com.github.paohaijiao.logic.domain.JQuickJoinNode;
 import com.github.paohaijiao.logic.domain.JQuickTableScanNode;
-import com.github.paohaijiao.optimizer.impl.JQuickFilterMergeRule;
 import org.junit.Test;
 
 import static org.junit.Assert.*;

@@ -419,14 +419,13 @@ public class JQuickCoordinator extends JQuickConvertService{
      * 转换物理计划节点为 Proto
      */
     private JQuickPhysicalPlanNodeProto convertPhysicalPlanToProto(JQuickPhysicalPlanNode node) {
-        if (node == null) {
+        if (node == null||node.getNodeType().equalsIgnoreCase("Empty")) {
             return JQuickPhysicalPlanNodeProto.newBuilder()
                     .setNodeId("empty")
                     .setNodeType("Empty")
                     .setEmpty(JQuickEmptyNodeProto.newBuilder().build())
                     .build();
         }
-
         JQuickPhysicalPlanNodeProto.Builder builder = JQuickPhysicalPlanNodeProto.newBuilder()
                 .setNodeId(UUID.randomUUID().toString())
                 .setNodeType(node.getNodeType());
@@ -492,12 +491,9 @@ public class JQuickCoordinator extends JQuickConvertService{
             default:
                 builder.setEmpty(JQuickEmptyNodeProto.newBuilder().build());
         }
-
-        // 添加子节点 ID
         for (JQuickPhysicalPlanNode child : node.getChildren()) {
             builder.addChildNodeIds("child_" + child.getNodeType());
         }
-
         return builder.build();
     }
 

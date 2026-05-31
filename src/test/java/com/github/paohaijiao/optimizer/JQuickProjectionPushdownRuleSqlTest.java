@@ -22,12 +22,9 @@ import com.github.paohaijiao.expression.domain.JQuickBinaryExpression;
 import com.github.paohaijiao.expression.domain.JQuickColumnRefExpression;
 import com.github.paohaijiao.expression.domain.JQuickLiteralExpression;
 import com.github.paohaijiao.logic.JQuickLogicalPlanNode;
-import com.github.paohaijiao.logic.domain.JQuickFilterNode;
 import com.github.paohaijiao.logic.domain.JQuickJoinNode;
 import com.github.paohaijiao.logic.domain.JQuickProjectNode;
 import com.github.paohaijiao.logic.domain.JQuickTableScanNode;
-import com.github.paohaijiao.optimizer.impl.JQuickPredicatePushdownRule;
-import com.github.paohaijiao.optimizer.impl.JQuickProjectionPushdownRule;
 import org.junit.Test;
 
 import java.util.Arrays;

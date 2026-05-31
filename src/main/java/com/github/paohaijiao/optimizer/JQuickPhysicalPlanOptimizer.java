@@ -21,6 +21,7 @@ import com.github.paohaijiao.enums.JQuickPartitionStrategy;
 import com.github.paohaijiao.expression.JQuickExpression;
 import com.github.paohaijiao.physical.JQuickPhysicalPlanNode;
 import com.github.paohaijiao.physical.node.*;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
