@@ -2,12 +2,13 @@ package com.github.paohaijiao.expression;
 
 import com.github.paohaijiao.statement.JQuickRow;
 
+import java.io.Serializable;
 import java.util.List;
 
 /**
  * 表达式接口 - 所有表达式节点的基类
  */
-public interface JQuickExpression {
+public interface JQuickExpression extends Serializable {
 
     /**
      * 计算表达式的值

@@ -476,7 +476,7 @@ message JQuickDataChunkProto {
   int64 chunk_index = 3;
   bool is_last = 4;
   JQuickDataSetProto data = 5;
-  int32 partition_id = 6;              // 所属分区
+  string partition_id = 6;              // 所属分区
   int64 compressed_size = 7;
   int64 original_size = 8;
 

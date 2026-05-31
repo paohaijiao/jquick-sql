@@ -37,6 +37,7 @@ public class JQuickTableScanPhysicalNode implements JQuickPhysicalPlanNode {
 
     private final JQuickTablePartitionInfo partitionInfo;
 
+
     public JQuickTableScanPhysicalNode(String tableName, String alias, Set<String> requiredColumns, JQuickExpression filterPredicate) {
         this(tableName, alias, requiredColumns, filterPredicate, null);
     }
