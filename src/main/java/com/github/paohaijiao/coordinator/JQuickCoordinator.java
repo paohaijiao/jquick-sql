@@ -15,6 +15,7 @@
  */
 package com.github.paohaijiao.coordinator;
 
+import com.github.paohaijiao.console.JConsole;
 import com.github.paohaijiao.distributed.JQuickDistributedPlan;
 import com.github.paohaijiao.enums.JQuickFragmentType;
 import com.github.paohaijiao.fragment.JQuickFragment;
@@ -49,6 +50,9 @@ import java.util.stream.Collectors;
  * 5. 管理查询生命周期
  */
 public class JQuickCoordinator extends JQuickConvertService{
+
+
+    private JConsole console=JConsole.initConsoleEnvironment();
 
     private static final Logger LOGGER = Logger.getLogger(JQuickCoordinator.class.getName());
 
@@ -164,6 +168,7 @@ public class JQuickCoordinator extends JQuickConvertService{
      */
     public CompletableFuture<JQuickDataSet> executeQuery(String queryId, JQuickPhysicalPlanNode physicalPlan) {
         LOGGER.info(String.format("Executing query - queryId: %s", queryId));
+        console.info("Executing query - queryId: " + queryId);
         //切分物理计划为分布式片段
         JQuickDistributedPlan distributedPlan = fragmenter.fragment(physicalPlan);
         //创建查询执行上下文
@@ -190,6 +195,7 @@ public class JQuickCoordinator extends JQuickConvertService{
      * 实际执行查询
      */
     private JQuickDataSet doExecuteQuery(QueryExecution execution) {
+        console.info("Executing doExecuteQuery - doExecuteQuery: " + execution.getQueryId());
         JQuickDistributedPlan plan = execution.getDistributedPlan();
         JQuickFragment rootFragment = plan.getRootFragment();
         execution.setStatus(QueryExecution.QueryStatus.SCHEDULING);
@@ -209,6 +215,8 @@ public class JQuickCoordinator extends JQuickConvertService{
         List<JQuickDataSet> rootResults = rootFuture.join();
         //合并结果
         JQuickDataSet finalResult = mergeResults(rootResults);
+        finalResult.printSummary();
+        console.info("Executing finalResult : " + execution.getQueryId());
         execution.setStatus(QueryExecution.QueryStatus.COMPLETED);
         execution.getResultFuture().complete(finalResult);
         LOGGER.info(String.format("Query completed - queryId: %s, duration: %dms, resultRows: %d", execution.getQueryId(), execution.getExecutionTimeMs(), finalResult.size()));
@@ -311,7 +319,6 @@ public class JQuickCoordinator extends JQuickConvertService{
                 }
             }
         }
-
         throw new RuntimeException("Task failed after " + maxRetries + " retries", lastException);
     }
 
