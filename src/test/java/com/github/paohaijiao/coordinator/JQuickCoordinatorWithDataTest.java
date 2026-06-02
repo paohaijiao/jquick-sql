@@ -87,11 +87,25 @@ public class JQuickCoordinatorWithDataTest {
             workers.add(worker);
             endpoints.add(new WorkerEndpoint(workerId, "localhost", port, i));
         }
-
+        JQuickDataSet testData = createTestUsersData();
+        JQuickDataSourceManager.registerTable(TEST_TABLE_USERS, testData);
         coordinator = new JQuickCoordinator("coordinator_test", endpoints);
         registerTestData();
     }
-
+    private JQuickDataSet createTestUsersData() {
+        JQuickDataSet.Builder builder = JQuickDataSet.builder();
+        builder.addColumn("id", Integer.class, TEST_TABLE_USERS);
+        builder.addColumn("name", String.class, TEST_TABLE_USERS);
+        builder.addColumn("age", Integer.class, TEST_TABLE_USERS);
+        for (int i = 1; i <= 10; i++) {
+            JQuickRow row = new JQuickRow();
+            row.put("id", i);
+            row.put("name", "user_" + i);
+            row.put("age", 20 + i);
+            builder.addRow(row);
+        }
+        return builder.build();
+    }
     /**
      * 注册测试数据到 JQuickDataSourceManager
      */
@@ -322,6 +336,7 @@ public class JQuickCoordinatorWithDataTest {
         String queryId = "test_scan_" + System.currentTimeMillis();
         CompletableFuture<JQuickDataSet> future = coordinator.executeQuery(queryId, scanNode);
         JQuickDataSet result = future.get(30, TimeUnit.SECONDS);
+        result.printTable();
         assertNotNull("Result should not be null", result);
         assertEquals("Should have 10 rows", 10, result.size());
         assertEquals("Should have 3 columns", 3, result.getColumnNames().size());
@@ -335,9 +350,7 @@ public class JQuickCoordinatorWithDataTest {
     @Test
     public void testExecuteTableScanAllColumns() throws Exception {
         // 不指定 requiredColumns，应该返回所有列
-        JQuickTableScanPhysicalNode scanNode = new JQuickTableScanPhysicalNode(
-                TEST_TABLE_USERS, "t", null, null
-        );
+        JQuickTableScanPhysicalNode scanNode = new JQuickTableScanPhysicalNode(TEST_TABLE_USERS, "t", null, null);
         String queryId = "test_scan_all_" + System.currentTimeMillis();
         CompletableFuture<JQuickDataSet> future = coordinator.executeQuery(queryId, scanNode);
         JQuickDataSet result = future.get(30, TimeUnit.SECONDS);

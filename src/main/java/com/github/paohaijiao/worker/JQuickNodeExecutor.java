@@ -1,5 +1,6 @@
 package com.github.paohaijiao.worker;
 
+import com.github.paohaijiao.datasource.JQuickDataSourceManager;
 import com.github.paohaijiao.enums.JQuickBinaryOperator;
 import com.github.paohaijiao.enums.JQuickExchangeType;
 import com.github.paohaijiao.enums.JQuickPartitionStrategy;
@@ -570,7 +571,7 @@ public class JQuickNodeExecutor {
                 return rows.stream().map(r -> expressionEvaluator.evaluateExpression(r, agg.getArgument())).min((a, b) -> compareValues(a, b, false)).orElse(null);
             default:
                 List<Object> args = rows.stream().map(r -> expressionEvaluator.evaluateExpression(r, agg.getArgument())).collect(Collectors.toList());
-                return expressionEvaluator.evaluateFunctionViaSPI(funcName, args);
+                return expressionEvaluator.evaluateFunction(funcName, args);
         }
     }
 
@@ -600,7 +601,7 @@ public class JQuickNodeExecutor {
                 if (wf.getArgument() != null) {
                     args.add(expressionEvaluator.evaluateExpression(currentRow, wf.getArgument()));
                 }
-                return expressionEvaluator.evaluateFunctionViaSPI(funcName, args);
+                return expressionEvaluator.evaluateFunction(funcName, args);
         }
     }
 
@@ -643,13 +644,15 @@ public class JQuickNodeExecutor {
         if (tableName == null) {
             return JQuickDataSet.builder().build();
         }
-        JQuickDataSet.Builder builder = JQuickDataSet.builder();
-        if (columns != null && !columns.isEmpty()) {
-            for (String colName : columns) {
-                builder.addColumn(colName, Object.class, tableName);
-            }
+        JQuickDataSet tableData = JQuickDataSourceManager.getTable(tableName);
+        if (tableData == null) {
+            return JQuickDataSet.builder().build();
         }
-        return builder.build();
+        if (columns != null && !columns.isEmpty()) {
+            return tableData.select(columns.toArray(new String[0]));
+        }
+
+        return tableData;
     }
 
     private JQuickDataSet readFromMemoryPartition(String partitionId, Set<String> columns) {
