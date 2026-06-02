@@ -1,4 +1,4 @@
-package com.github.paohaijiao.worker;
+package com.github.paohaijiao.distributed.worker;
 
 import com.github.paohaijiao.datasource.JQuickDataSourceManager;
 import com.github.paohaijiao.enums.JQuickBinaryOperator;
@@ -435,8 +435,7 @@ public class JQuickNodeExecutor {
         JQuickDataSet input = executeNode(node.getChild(), context);
         List<JQuickWorker.JQuickMemoryPartition> partitions = partitionManager.partitionData(input, node, expressionEvaluator, node.getTargetParallelism());
         for (JQuickWorker.JQuickMemoryPartition partition : partitions) {
-            partitionManager.sendToWorker(partition, node.getTargetParallelism(),
-                    node.getExchangeType(), worker);
+            partitionManager.sendToWorker(partition, node.getTargetParallelism(), node.getExchangeType(), worker);
         }
 
         return JQuickDataSet.builder().build();

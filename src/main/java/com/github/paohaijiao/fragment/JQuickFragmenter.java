@@ -99,6 +99,9 @@ public class JQuickFragmenter {
      * 判断是否应该为节点创建新的 Fragment
      */
     private boolean shouldCreateNewFragment(JQuickPhysicalPlanNode node) {
+        if (node.getChildren().isEmpty()) {
+            return false;
+        }
         if (node instanceof JQuickExchangePhysicalNode) {
             return true;
         }
@@ -119,6 +122,9 @@ public class JQuickFragmenter {
                 return false;
             }
             return !agg.getGroupKeys().isEmpty();
+        }
+        if (node instanceof JQuickFilterPhysicalNode || node instanceof JQuickProjectPhysicalNode) {
+            return false;
         }
 
         return false;
@@ -191,12 +197,12 @@ public class JQuickFragmenter {
             }
             return new JQuickExchangeNode(exchangeId, JQuickExchangeType.GATHER, JQuickPartitionStrategy.REPLICATE, (List<JQuickExpression>) null, 1);
         }
-        if (node instanceof JQuickTableScanPhysicalNode) {
-            return new JQuickExchangeNode(exchangeId, JQuickExchangeType.REPARTITION,JQuickPartitionStrategy.ROUND_ROBIN, (List<JQuickExpression>) null, defaultParallelism);
-        }
         if (node instanceof JQuickExchangePhysicalNode) {
             JQuickExchangePhysicalNode exchange = (JQuickExchangePhysicalNode) node;
             return new JQuickExchangeNode(exchangeId, exchange.getExchangeType(), exchange.getPartitionStrategy(), exchange.getPartitionKeys(), exchange.getTargetParallelism());
+        }
+        if (node instanceof JQuickTableScanPhysicalNode) {
+            return new JQuickExchangeNode(exchangeId, JQuickExchangeType.BROADCAST, JQuickPartitionStrategy.REPLICATE, (List<JQuickExpression>) null, defaultParallelism);
         }
         return new JQuickExchangeNode(exchangeId, JQuickExchangeType.BROADCAST, JQuickPartitionStrategy.REPLICATE, (List<JQuickExpression>) null, defaultParallelism
         );

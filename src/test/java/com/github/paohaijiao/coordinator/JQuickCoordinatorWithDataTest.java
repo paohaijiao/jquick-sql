@@ -15,9 +15,10 @@ package com.github.paohaijiao.coordinator;
  * Copyright (c) [2025-2099] Martin (goudingcheng@gmail.com)
  */
 
-import com.github.paohaijiao.coordinator.JQuickCoordinator.QueryExecution;
-import com.github.paohaijiao.coordinator.JQuickCoordinator.TaskExecution;
-import com.github.paohaijiao.coordinator.JQuickCoordinator.WorkerEndpoint;
+import com.github.paohaijiao.distributed.coordinator.JQuickCoordinator;
+import com.github.paohaijiao.distributed.coordinator.JQuickCoordinator.QueryExecution;
+import com.github.paohaijiao.distributed.coordinator.JQuickCoordinator.TaskExecution;
+import com.github.paohaijiao.distributed.coordinator.JQuickCoordinator.WorkerEndpoint;
 import com.github.paohaijiao.datasource.JQuickDataSourceManager;
 import com.github.paohaijiao.enums.JQuickBinaryOperator;
 import com.github.paohaijiao.enums.JQuickJoinType;
@@ -25,18 +26,13 @@ import com.github.paohaijiao.expression.JQuickExpression;
 import com.github.paohaijiao.expression.domain.JQuickBinaryExpression;
 import com.github.paohaijiao.expression.domain.JQuickColumnRefExpression;
 import com.github.paohaijiao.expression.domain.JQuickLiteralExpression;
-import com.github.paohaijiao.physical.JQuickPhysicalPlanNode;
-import com.github.paohaijiao.physical.domain.JQuickPhysicalColumn;
+import com.github.paohaijiao.function.manager.JQuickMethodInvocationManager;
 import com.github.paohaijiao.physical.node.*;
-import com.github.paohaijiao.proto.JQuickExecuteTaskResponse;
-import com.github.paohaijiao.proto.JQuickTaskStatusProto;
 import com.github.paohaijiao.statement.JQuickColumnMeta;
 import com.github.paohaijiao.statement.JQuickDataSet;
 import com.github.paohaijiao.statement.JQuickRow;
-import com.github.paohaijiao.worker.JQuickWorker;
-import io.grpc.inprocess.InProcessChannelBuilder;
-import io.grpc.inprocess.InProcessServerBuilder;
-import io.grpc.stub.StreamObserver;
+import com.github.paohaijiao.distributed.worker.JQuickExpressionEvaluator;
+import com.github.paohaijiao.distributed.worker.JQuickWorker;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -44,9 +40,7 @@ import org.junit.Test;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 import static org.junit.Assert.*;
 
@@ -87,8 +81,14 @@ public class JQuickCoordinatorWithDataTest {
             workers.add(worker);
             endpoints.add(new WorkerEndpoint(workerId, "localhost", port, i));
         }
-        JQuickDataSet testData = createTestUsersData();
-        JQuickDataSourceManager.registerTable(TEST_TABLE_USERS, testData);
+        JQuickDataSet usersData = createUsersDataSet();
+        JQuickDataSet ordersData = createOrdersDataSet();
+        JQuickDataSet employeesData = createEmployeesDataSet();
+
+        // 注册到 DataSourceManager（用于 Coordinator 本地访问）
+        JQuickDataSourceManager.registerTable(TEST_TABLE_USERS, usersData);
+        JQuickDataSourceManager.registerTable(TEST_TABLE_ORDERS, ordersData);
+        JQuickDataSourceManager.registerTable(TEST_TABLE_EMPLOYEES, employeesData);
         coordinator = new JQuickCoordinator("coordinator_test", endpoints);
         registerTestData();
     }
@@ -326,7 +326,7 @@ public class JQuickCoordinatorWithDataTest {
         coordinator.removeWorker("worker_new");
         assertEquals(initialSize, coordinator.getWorkerStatus().size());
     }
-    @Test
+    @Test//passs
     public void testExecuteTableScanQuery() throws Exception {
         // 创建 TableScan 计划
         Set<String> requiredColumns = new HashSet<>(Arrays.asList("id", "name", "age"));
@@ -346,8 +346,32 @@ public class JQuickCoordinatorWithDataTest {
         assertTrue(columnNames.contains("name"));
         assertTrue(columnNames.contains("age"));
     }
+    @Test//pass
+    public void testDebugFilterExpression() throws Exception {
+        // 先获取原始数据，手动验证过滤条件
+        JQuickDataSet usersData = JQuickDataSourceManager.getTable(TEST_TABLE_USERS);
+        System.out.println("Original data:");
+        usersData.printTable();
+        JQuickExpression predicate = new JQuickBinaryExpression(new JQuickColumnRefExpression("age"), new JQuickLiteralExpression(28), JQuickBinaryOperator.GT);
+        JQuickExpressionEvaluator evaluator = new JQuickExpressionEvaluator(JQuickMethodInvocationManager.getInstance());
+        for (JQuickRow row : usersData.getRows()) {
+            boolean result = evaluator.evaluatePredicate(row, predicate);
+            System.out.println("Row: age=" + row.get("age") + ", result=" + result);
+        }
+        // 手动过滤
+        JQuickDataSet filtered = usersData.filter(row -> {
+            Object age = row.get("age");
+            if (age instanceof Integer) {
+                return (Integer) age > 28;
+            }
+            System.out.println("Age type: " + (age != null ? age.getClass() : "null"));
+            return false;
+        });
 
-    @Test
+        System.out.println("Manual filter result size: " + filtered.size());
+        filtered.printTable();
+    }
+    @Test//pass
     public void testExecuteTableScanAllColumns() throws Exception {
         // 不指定 requiredColumns，应该返回所有列
         JQuickTableScanPhysicalNode scanNode = new JQuickTableScanPhysicalNode(TEST_TABLE_USERS, "t", null, null);

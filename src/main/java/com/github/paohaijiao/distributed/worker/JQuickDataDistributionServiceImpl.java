@@ -13,7 +13,7 @@
  *
  * Copyright (c) [2025-2099] Martin (goudingcheng@gmail.com)
  */
-package com.github.paohaijiao.worker;
+package com.github.paohaijiao.distributed.worker;
 
 import com.github.paohaijiao.console.JConsole;
 import com.github.paohaijiao.proto.*;

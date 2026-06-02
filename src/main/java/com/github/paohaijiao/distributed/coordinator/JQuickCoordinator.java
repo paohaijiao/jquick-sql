@@ -13,7 +13,7 @@
  *
  * Copyright (c) [2025-2099] Martin (goudingcheng@gmail.com)
  */
-package com.github.paohaijiao.coordinator;
+package com.github.paohaijiao.distributed.coordinator;
 
 import com.github.paohaijiao.console.JConsole;
 import com.github.paohaijiao.distributed.JQuickDistributedPlan;
@@ -27,8 +27,8 @@ import com.github.paohaijiao.physical.node.*;
 import com.github.paohaijiao.proto.*;
 import com.github.paohaijiao.statement.JQuickDataSet;
 import com.github.paohaijiao.statement.JQuickRow;
-import com.github.paohaijiao.worker.JQuickDataConverter;
-import com.github.paohaijiao.worker.JQuickWorker;
+import com.github.paohaijiao.distributed.worker.JQuickDataConverter;
+import com.github.paohaijiao.distributed.worker.JQuickWorker;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.stub.StreamObserver;

@@ -15,14 +15,14 @@
  */
 package com.github.paohaijiao.grpc;
 
-import com.github.paohaijiao.coordinator.JQuickCoordinator;
+import com.github.paohaijiao.distributed.coordinator.JQuickCoordinator;
 import com.github.paohaijiao.datasource.JQuickDataSourceManager;
 import com.github.paohaijiao.physical.node.JQuickTableScanPhysicalNode;
 import com.github.paohaijiao.proto.*;
 import com.github.paohaijiao.statement.JQuickColumnMeta;
 import com.github.paohaijiao.statement.JQuickDataSet;
 import com.github.paohaijiao.statement.JQuickRow;
-import com.github.paohaijiao.worker.JQuickWorker;
+import com.github.paohaijiao.distributed.worker.JQuickWorker;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.stub.StreamObserver;

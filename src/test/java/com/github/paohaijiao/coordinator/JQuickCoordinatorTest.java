@@ -15,26 +15,19 @@ package com.github.paohaijiao.coordinator;
  *
  * Copyright (c) [2025-2099] Martin (goudingcheng@gmail.com)
  */
-import com.github.paohaijiao.coordinator.JQuickCoordinator.QueryExecution;
-import com.github.paohaijiao.coordinator.JQuickCoordinator.TaskExecution;
-import com.github.paohaijiao.coordinator.JQuickCoordinator.WorkerEndpoint;
+import com.github.paohaijiao.distributed.coordinator.JQuickCoordinator;
+import com.github.paohaijiao.distributed.coordinator.JQuickCoordinator.QueryExecution;
+import com.github.paohaijiao.distributed.coordinator.JQuickCoordinator.TaskExecution;
+import com.github.paohaijiao.distributed.coordinator.JQuickCoordinator.WorkerEndpoint;
 import com.github.paohaijiao.enums.JQuickBinaryOperator;
 import com.github.paohaijiao.enums.JQuickJoinType;
 import com.github.paohaijiao.expression.JQuickExpression;
 import com.github.paohaijiao.expression.domain.JQuickBinaryExpression;
 import com.github.paohaijiao.expression.domain.JQuickColumnRefExpression;
 import com.github.paohaijiao.expression.domain.JQuickLiteralExpression;
-import com.github.paohaijiao.physical.JQuickPhysicalPlanNode;
-import com.github.paohaijiao.physical.domain.JQuickPhysicalColumn;
 import com.github.paohaijiao.physical.node.*;
-import com.github.paohaijiao.proto.JQuickExecuteTaskResponse;
-import com.github.paohaijiao.proto.JQuickTaskStatusProto;
 import com.github.paohaijiao.statement.JQuickDataSet;
-import com.github.paohaijiao.statement.JQuickRow;
-import com.github.paohaijiao.worker.JQuickWorker;
-import io.grpc.Server;
-import io.grpc.inprocess.InProcessChannelBuilder;
-import io.grpc.inprocess.InProcessServerBuilder;
+import com.github.paohaijiao.distributed.worker.JQuickWorker;
 import io.grpc.stub.StreamObserver;
 import org.junit.After;
 import org.junit.Before;
@@ -43,9 +36,7 @@ import org.junit.Test;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 import static org.junit.Assert.*;
 

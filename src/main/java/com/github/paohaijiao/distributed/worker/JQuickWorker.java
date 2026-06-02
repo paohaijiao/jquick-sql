@@ -1,4 +1,4 @@
-package com.github.paohaijiao.worker;
+package com.github.paohaijiao.distributed.worker;
 
 import com.github.paohaijiao.enums.JQuickExchangeType;
 import com.github.paohaijiao.function.manager.JQuickMethodInvocationManager;
