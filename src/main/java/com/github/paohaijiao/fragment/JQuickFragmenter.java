@@ -124,8 +124,9 @@ public class JQuickFragmenter {
             return !agg.getGroupKeys().isEmpty();
         }
         if (node instanceof JQuickFilterPhysicalNode || node instanceof JQuickProjectPhysicalNode) {
-            return false;
+            return true;
         }
+
 
         return false;
     }
@@ -178,9 +179,6 @@ public class JQuickFragmenter {
         processedSources.add(node);
     }
 
-    /**
-     * 创建输出 Exchange
-     */
     private JQuickExchangeNode createOutputExchange(JQuickPhysicalPlanNode node) {
         String exchangeId = "exchange_" + exchangeIdGenerator.incrementAndGet();
         if (node instanceof JQuickHashJoinPhysicalNode) {
@@ -197,15 +195,20 @@ public class JQuickFragmenter {
             }
             return new JQuickExchangeNode(exchangeId, JQuickExchangeType.GATHER, JQuickPartitionStrategy.REPLICATE, (List<JQuickExpression>) null, 1);
         }
+
         if (node instanceof JQuickExchangePhysicalNode) {
             JQuickExchangePhysicalNode exchange = (JQuickExchangePhysicalNode) node;
             return new JQuickExchangeNode(exchangeId, exchange.getExchangeType(), exchange.getPartitionStrategy(), exchange.getPartitionKeys(), exchange.getTargetParallelism());
         }
+
         if (node instanceof JQuickTableScanPhysicalNode) {
-            return new JQuickExchangeNode(exchangeId, JQuickExchangeType.BROADCAST, JQuickPartitionStrategy.REPLICATE, (List<JQuickExpression>) null, defaultParallelism);
+            return new JQuickExchangeNode(exchangeId, JQuickExchangeType.SHUFFLE, JQuickPartitionStrategy.ROUND_ROBIN, (List<JQuickExpression>) null, defaultParallelism);
         }
-        return new JQuickExchangeNode(exchangeId, JQuickExchangeType.BROADCAST, JQuickPartitionStrategy.REPLICATE, (List<JQuickExpression>) null, defaultParallelism
-        );
+
+        if (node instanceof JQuickFilterPhysicalNode || node instanceof JQuickProjectPhysicalNode) {
+            return new JQuickExchangeNode(exchangeId, JQuickExchangeType.SHUFFLE, JQuickPartitionStrategy.ROUND_ROBIN, (List<JQuickExpression>) null, defaultParallelism);
+        }
+        return new JQuickExchangeNode(exchangeId, JQuickExchangeType.BROADCAST, JQuickPartitionStrategy.REPLICATE, (List<JQuickExpression>) null, defaultParallelism);
     }
 
     /**

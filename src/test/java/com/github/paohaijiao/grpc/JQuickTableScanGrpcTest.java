@@ -166,25 +166,17 @@ public class JQuickTableScanGrpcTest {
     @Test
     public void testTableScanPartialColumns() throws Exception {
         LOGGER.info("=== Test: TableScan Partial Columns ===");
-
         Set<String> requiredColumns = new HashSet<>(Arrays.asList("id", "name"));
-        JQuickTableScanPhysicalNode scanNode = new JQuickTableScanPhysicalNode(
-                TEST_TABLE_NAME, null, requiredColumns, null
-        );
-
+        JQuickTableScanPhysicalNode scanNode = new JQuickTableScanPhysicalNode(TEST_TABLE_NAME, null, requiredColumns, null);
         CompletableFuture<JQuickDataSet> future = coordinator.executeQuery("query_partial", scanNode);
         JQuickDataSet result = future.get(30, TimeUnit.SECONDS);
-
+        result.printTable();
         assertNotNull(result);
         assertEquals(2, result.getColumns().size());
-
-        // 验证列名
         List<String> columnNames = result.getColumnNames();
         assertTrue(columnNames.contains("id"));
         assertTrue(columnNames.contains("name"));
         assertFalse(columnNames.contains("email"));
-
-        LOGGER.info("Partial columns result size: " + result.size());
     }
 
     /**
@@ -193,19 +185,13 @@ public class JQuickTableScanGrpcTest {
     @Test
     public void testTableScanWithAlias() throws Exception {
         LOGGER.info("=== Test: TableScan With Alias ===");
-
         String alias = "u";
         Set<String> requiredColumns = new HashSet<>(Arrays.asList("id", "name"));
-        JQuickTableScanPhysicalNode scanNode = new JQuickTableScanPhysicalNode(
-                TEST_TABLE_NAME, alias, requiredColumns, null
-        );
-
+        JQuickTableScanPhysicalNode scanNode = new JQuickTableScanPhysicalNode(TEST_TABLE_NAME, alias, requiredColumns, null);
         CompletableFuture<JQuickDataSet> future = coordinator.executeQuery("query_alias", scanNode);
         JQuickDataSet result = future.get(30, TimeUnit.SECONDS);
-
         assertNotNull(result);
         assertEquals(2, result.getColumns().size());
-
         LOGGER.info("Alias test completed");
     }
 
@@ -215,30 +201,21 @@ public class JQuickTableScanGrpcTest {
     @Test
     public void testConcurrentTableScans() throws Exception {
         LOGGER.info("=== Test: Concurrent TableScans ===");
-
         int queryCount = 5;
         List<CompletableFuture<JQuickDataSet>> futures = new ArrayList<>();
-
         for (int i = 0; i < queryCount; i++) {
             Set<String> requiredColumns = new HashSet<>(Arrays.asList("id", "name"));
-            JQuickTableScanPhysicalNode scanNode = new JQuickTableScanPhysicalNode(
-                    TEST_TABLE_NAME, null, requiredColumns, null
-            );
+            JQuickTableScanPhysicalNode scanNode = new JQuickTableScanPhysicalNode(TEST_TABLE_NAME, null, requiredColumns, null);
             futures.add(coordinator.executeQuery("concurrent_" + i, scanNode));
         }
-
         // 等待所有查询完成
-        CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
-                .get(60, TimeUnit.SECONDS);
-
+        CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).get(60, TimeUnit.SECONDS);
         // 验证所有查询都有结果
         for (CompletableFuture<JQuickDataSet> future : futures) {
             JQuickDataSet result = future.get();
             assertNotNull(result);
             assertEquals(100, result.size());
         }
-
-        LOGGER.info("All " + queryCount + " concurrent queries completed");
     }
 
     /**
@@ -247,18 +224,9 @@ public class JQuickTableScanGrpcTest {
     @Test
     public void testDirectGrpcCall() throws Exception {
         LOGGER.info("=== Test: Direct gRPC Call ===");
-
-        // 直接连接到 Worker
-        ManagedChannel channel = ManagedChannelBuilder
-                .forAddress("localhost", BASE_PORT)
-                .usePlaintext()
-                .build();
-
+        ManagedChannel channel = ManagedChannelBuilder.forAddress("localhost", BASE_PORT).usePlaintext().build();
         try {
-            JQuickPhysicalPlanServiceGrpc.JQuickPhysicalPlanServiceBlockingStub stub =
-                    JQuickPhysicalPlanServiceGrpc.newBlockingStub(channel);
-
-            // 构建 TableScan 节点 Proto
+            JQuickPhysicalPlanServiceGrpc.JQuickPhysicalPlanServiceBlockingStub stub = JQuickPhysicalPlanServiceGrpc.newBlockingStub(channel);
             JQuickTableScanNodeProto scanProto = JQuickTableScanNodeProto.newBuilder()
                     .setTableName(TEST_TABLE_NAME)
                     .addRequiredColumns("id")
@@ -288,14 +256,10 @@ public class JQuickTableScanGrpcTest {
                     .build();
 
             JQuickExecuteTaskResponse response = stub.executeTask(request);
-
             assertNotNull(response);
             assertEquals(JQuickTaskStatusProto.TASK_SUCCESS, response.getStatus());
             assertTrue(response.hasResultData());
-
             JQuickDataSetProto resultData = response.getResultData();
-            LOGGER.info("Direct gRPC call succeeded, result rows: " + resultData.getRowsCount());
-
         } finally {
             channel.shutdown();
         }
@@ -307,16 +271,13 @@ public class JQuickTableScanGrpcTest {
     @Test
     public void testStreamingGrpcCall() throws Exception {
         LOGGER.info("=== Test: Streaming gRPC Call ===");
-
         ManagedChannel channel = ManagedChannelBuilder
                 .forAddress("localhost", BASE_PORT)
                 .usePlaintext()
                 .build();
 
         try {
-            JQuickPhysicalPlanServiceGrpc.JQuickPhysicalPlanServiceStub stub =
-                    JQuickPhysicalPlanServiceGrpc.newStub(channel);
-
+            JQuickPhysicalPlanServiceGrpc.JQuickPhysicalPlanServiceStub stub = JQuickPhysicalPlanServiceGrpc.newStub(channel);
             JQuickTableScanNodeProto scanProto = JQuickTableScanNodeProto.newBuilder()
                     .setTableName(TEST_TABLE_NAME)
                     .addRequiredColumns("id")
