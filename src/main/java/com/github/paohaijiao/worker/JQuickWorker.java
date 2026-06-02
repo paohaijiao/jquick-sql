@@ -62,8 +62,6 @@ public class JQuickWorker {
         this.workerChannels = new ConcurrentHashMap<>();
         this.distributionStubs = new ConcurrentHashMap<>();
         this.functionManager = JQuickMethodInvocationManager.getInstance();
-
-        // 初始化服务组件
         this.expressionEvaluator = new JQuickExpressionEvaluator(functionManager);
         this.partitionManager = new JQuickPartitionManager();
         this.dataConverter = new JQuickDataConverter();
@@ -130,11 +128,7 @@ public class JQuickWorker {
                     .setMemoryUsedBytes(context.getMemoryUsedBytes())
                     .build();
         } catch (Exception e) {
-            return JQuickExecuteTaskResponse.newBuilder()
-                    .setTaskId(taskId)
-                    .setStatus(JQuickTaskStatusProto.TASK_FAILED)
-                    .setErrorMessage(e.getMessage())
-                    .build();
+            return JQuickExecuteTaskResponse.newBuilder().setTaskId(taskId).setStatus(JQuickTaskStatusProto.TASK_FAILED).setErrorMessage(e.getMessage()).build();
         } finally {
             activeTasks.remove(taskId);
         }
@@ -173,17 +167,9 @@ public class JQuickWorker {
         if (context != null) {
             context.cancel();
             activeTasks.remove(taskId);
-            return JQuickCancelQueryResponse.newBuilder()
-                    .setQueryId(request.getQueryId())
-                    .setSuccess(true)
-                    .setMessage("Task cancelled: " + request.getReason())
-                    .build();
+            return JQuickCancelQueryResponse.newBuilder().setQueryId(request.getQueryId()).setSuccess(true).setMessage("Task cancelled: " + request.getReason()).build();
         }
-        return JQuickCancelQueryResponse.newBuilder()
-                .setQueryId(request.getQueryId())
-                .setSuccess(false)
-                .setMessage("Task not found: " + taskId)
-                .build();
+        return JQuickCancelQueryResponse.newBuilder().setQueryId(request.getQueryId()).setSuccess(false).setMessage("Task not found: " + taskId).build();
     }
 
     /**

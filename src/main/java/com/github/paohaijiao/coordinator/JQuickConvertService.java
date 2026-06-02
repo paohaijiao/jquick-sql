@@ -75,18 +75,12 @@ public class JQuickConvertService {
      * 转换 Project 节点
      */
     protected JQuickProjectNodeProto convertProjectToProto(JQuickProjectPhysicalNode node) {
-        JQuickProjectNodeProto.Builder builder = JQuickProjectNodeProto.newBuilder()
-                .setDistinct(node.isDistinct());
-
+        JQuickProjectNodeProto.Builder builder = JQuickProjectNodeProto.newBuilder().setDistinct(node.isDistinct());
         for (JQuickProjectPhysicalNode.SelectItem item : node.getSelectItems()) {
-            JQuickProjectNodeProto.SelectItemProto.Builder itemBuilder =
-                    JQuickProjectNodeProto.SelectItemProto.newBuilder()
-                            .setExpression(convertExpressionToProto(item.getExpression()));
-
+            JQuickProjectNodeProto.SelectItemProto.Builder itemBuilder = JQuickProjectNodeProto.SelectItemProto.newBuilder().setExpression(convertExpressionToProto(item.getExpression()));
             if (item.getAlias() != null) {
                 itemBuilder.setAlias(item.getAlias());
             }
-
             builder.addSelectItems(itemBuilder.build());
         }
 
@@ -101,18 +95,15 @@ public class JQuickConvertService {
                 .setJoinType(convertJoinTypeToProto(node.getJoinType()))
                 .setBuildSide(convertBuildSideToProto(node.getBuildSide()))
                 .setDistribution(convertJoinDistributionToProto(node.getDistribution()));
-
         if (node.getCondition() != null) {
             builder.setCondition(convertExpressionToProto(node.getCondition()));
         }
-
         for (JQuickHashJoinPhysicalNode.JoinKeyPair keyPair : node.getJoinKeys()) {
-            builder.addJoinKeys(JQuickHashJoinNodeProto.JoinKeyPairProto.newBuilder()
+                    builder.addJoinKeys(JQuickHashJoinNodeProto.JoinKeyPairProto.newBuilder()
                     .setLeftKey(convertExpressionToProto(keyPair.getLeftKey()))
                     .setRightKey(convertExpressionToProto(keyPair.getRightKey()))
                     .build());
         }
-
         return builder.build();
     }
 
@@ -120,13 +111,10 @@ public class JQuickConvertService {
      * 转换 NestedLoopJoin 节点
      */
     protected JQuickNestedLoopJoinNodeProto convertNestedLoopJoinToProto(JQuickNestedLoopJoinPhysicalNode node) {
-        JQuickNestedLoopJoinNodeProto.Builder builder = JQuickNestedLoopJoinNodeProto.newBuilder()
-                .setJoinType(convertJoinTypeToProto(node.getJoinType()));
-
+        JQuickNestedLoopJoinNodeProto.Builder builder = JQuickNestedLoopJoinNodeProto.newBuilder().setJoinType(convertJoinTypeToProto(node.getJoinType()));
         if (node.getCondition() != null) {
             builder.setCondition(convertExpressionToProto(node.getCondition()));
         }
-
         return builder.build();
     }
 
@@ -134,22 +122,17 @@ public class JQuickConvertService {
      * 转换 HashAggregate 节点
      */
     protected JQuickHashAggregateNodeProto convertHashAggregateToProto(JQuickHashAggregatePhysicalNode node) {
-        JQuickHashAggregateNodeProto.Builder builder = JQuickHashAggregateNodeProto.newBuilder()
-                .setStage(convertAggregateStageToProto(node.getStage()));
-
+        JQuickHashAggregateNodeProto.Builder builder = JQuickHashAggregateNodeProto.newBuilder().setStage(convertAggregateStageToProto(node.getStage()));
         for (JQuickExpression groupKey : node.getGroupKeys()) {
             builder.addGroupKeys(convertExpressionToProto(groupKey));
         }
-
         for (JQuickHashAggregatePhysicalNode.AggregateFunction agg : node.getAggregates()) {
-            JQuickHashAggregateNodeProto.AggregateFunctionProto.Builder aggBuilder =
-                    JQuickHashAggregateNodeProto.AggregateFunctionProto.newBuilder()
+            JQuickHashAggregateNodeProto.AggregateFunctionProto.Builder aggBuilder = JQuickHashAggregateNodeProto.AggregateFunctionProto.newBuilder()
                             .setFunctionName(agg.getFunctionName())
                             .setDistinct(agg.isDistinct())
                             .setAlias(agg.getAlias())
                             .setIsCountStar(agg.isCountStar())
                             .setInternalStage(convertAggregateStageToProto(agg.getInternalStage()));
-
             if (agg.getArgument() != null) {
                 aggBuilder.setArgument(convertExpressionToProto(agg.getArgument()));
             }
@@ -159,11 +142,9 @@ public class JQuickConvertService {
 
             builder.addAggregates(aggBuilder.build());
         }
-
         if (node.getHavingCondition() != null) {
             builder.setHavingCondition(convertExpressionToProto(node.getHavingCondition()));
         }
-
         return builder.build();
     }
 
@@ -172,7 +153,6 @@ public class JQuickConvertService {
      */
     protected JQuickSortNodeProto convertSortToProto(JQuickSortPhysicalNode node) {
         JQuickSortNodeProto.Builder builder = JQuickSortNodeProto.newBuilder();
-
         for (JQuickSortPhysicalNode.OrderByItem item : node.getOrderByItems()) {
             builder.addOrderByItems(JQuickSortNodeProto.OrderByItemProto.newBuilder()
                     .setColumnName(item.getColumnName())
@@ -210,27 +190,19 @@ public class JQuickConvertService {
      * 转换 Values 节点
      */
     protected JQuickValuesNodeProto convertValuesToProto(JQuickValuesPhysicalNode node) {
-        JQuickValuesNodeProto.Builder builder = JQuickValuesNodeProto.newBuilder()
-                .addAllColumnNames(node.getColumnNames());
-
+        JQuickValuesNodeProto.Builder builder = JQuickValuesNodeProto.newBuilder().addAllColumnNames(node.getColumnNames());
         for (Class<?> type : node.getColumnTypes()) {
             builder.addColumnTypes(type.getName());
         }
-
         for (List<Object> rowValues : node.getRows()) {
             JQuickRowProto.Builder rowBuilder = JQuickRowProto.newBuilder();
             for (int i = 0; i < rowValues.size() && i < node.getColumnNames().size(); i++) {
                 Object value = rowValues.get(i);
-                com.google.protobuf.Any anyValue = com.google.protobuf.Any.pack(
-                        com.google.protobuf.Value.newBuilder()
-                                .setStringValue(value != null ? value.toString() : "")
-                                .build()
-                );
+                com.google.protobuf.Any anyValue = com.google.protobuf.Any.pack(com.google.protobuf.Value.newBuilder().setStringValue(value != null ? value.toString() : "").build());
                 rowBuilder.putData(node.getColumnNames().get(i), anyValue);
             }
             builder.addRows(rowBuilder.build());
         }
-
         return builder.build();
     }
 
@@ -240,14 +212,10 @@ public class JQuickConvertService {
     protected JQuickWindowNodeProto convertWindowToProto(JQuickWindowPhysicalNode node) {
         JQuickWindowNodeProto.Builder builder = JQuickWindowNodeProto.newBuilder();
         for (JQuickWindowPhysicalNode.WindowFunction wf : node.getWindowFunctions()) {
-            JQuickWindowNodeProto.WindowFunctionProto.Builder wfBuilder =
-                    JQuickWindowNodeProto.WindowFunctionProto.newBuilder()
-                            .setFunctionName(wf.getFunctionName())
-                            .setAlias(wf.getAlias());
+            JQuickWindowNodeProto.WindowFunctionProto.Builder wfBuilder = JQuickWindowNodeProto.WindowFunctionProto.newBuilder().setFunctionName(wf.getFunctionName()).setAlias(wf.getAlias());
             if (wf.getArgument() != null) {
                 wfBuilder.setArgument(convertExpressionToProto(wf.getArgument()));
             }
-
             if (wf.getWindowSpec() != null) {
                 wfBuilder.setWindowSpec(convertWindowSpecToProto(wf.getWindowSpec()));
             }
@@ -283,14 +251,10 @@ public class JQuickConvertService {
      * 转换 WindowFrame 到 Proto
      */
     protected JQuickWindowNodeProto.WindowFrameProto convertWindowFrameToProto(JQuickWindowPhysicalNode.WindowFrame frame) {
-        JQuickWindowNodeProto.WindowFrameProto.Builder builder =
-                JQuickWindowNodeProto.WindowFrameProto.newBuilder()
-                        .setFrameType(frame.getFrameType() == JQuickWindowPhysicalNode.WindowFrame.FrameType.ROWS
-                                ? JQuickWindowNodeProto.WindowFrameProto.FrameType.FRAME_ROWS
-                                : JQuickWindowNodeProto.WindowFrameProto.FrameType.FRAME_RANGE)
+        JQuickWindowNodeProto.WindowFrameProto.Builder builder = JQuickWindowNodeProto.WindowFrameProto.newBuilder()
+                        .setFrameType(frame.getFrameType() == JQuickWindowPhysicalNode.WindowFrame.FrameType.ROWS ? JQuickWindowNodeProto.WindowFrameProto.FrameType.FRAME_ROWS : JQuickWindowNodeProto.WindowFrameProto.FrameType.FRAME_RANGE)
                         .setStartType(convertBoundaryTypeToProto(frame.getStartType()))
                         .setEndType(convertBoundaryTypeToProto(frame.getEndType()));
-
         if (frame.getStartOffset() != null) {
             builder.setStartOffset(convertExpressionToProto(frame.getStartOffset()));
         }
@@ -335,7 +299,6 @@ public class JQuickConvertService {
                 .setCteName(node.getCteName())
                 .setUnionAll(node.isUnionAll())
                 .setMaxRecursionDepth(node.getMaxRecursionDepth());
-
         if (node.getColumnNames() != null) {
             builder.addAllColumnNames(node.getColumnNames());
         }
@@ -377,7 +340,6 @@ public class JQuickConvertService {
                     .build();
         }
         JQuickExpressionProto.Builder builder = JQuickExpressionProto.newBuilder();
-
         if (expr instanceof JQuickColumnRefExpression) {
             builder.setType(JQuickExpressionTypeProto.EXPR_COLUMN_REF).setValue(((JQuickColumnRefExpression) expr).getColumnName());
         } else if (expr instanceof JQuickLiteralExpression) {

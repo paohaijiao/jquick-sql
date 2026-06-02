@@ -15,6 +15,7 @@
  */
 package com.github.paohaijiao.worker;
 
+import com.github.paohaijiao.console.JConsole;
 import com.github.paohaijiao.enums.JQuickBinaryOperator;
 import com.github.paohaijiao.enums.JQuickUnaryOperator;
 import com.github.paohaijiao.expression.JQuickExpression;
@@ -32,6 +33,8 @@ import java.util.stream.Collectors;
  * 表达式求值服务
  */
 public class JQuickExpressionEvaluator {
+
+    JConsole console=JConsole.initConsoleEnvironment();
 
     private final JQuickMethodInvocationManager functionManager;
 
@@ -75,7 +78,7 @@ public class JQuickExpressionEvaluator {
             for (JQuickExpression arg : func.getArguments()) {
                 args.add(evaluateExpression(row, arg));
             }
-            return evaluateFunctionViaSPI(func.getFunctionName(), args);
+            return evaluateFunction(func.getFunctionName(), args);
         } else if (expr instanceof JQuickBetweenExpression) {
             JQuickBetweenExpression between = (JQuickBetweenExpression) expr;
             Object value = evaluateExpression(row, between.getExpression());
@@ -112,14 +115,14 @@ public class JQuickExpressionEvaluator {
         return null;
     }
 
-    public Object evaluateFunctionViaSPI(String functionName, List<Object> args) {
+    public Object evaluateFunction(String functionName, List<Object> args) {
         Collection<JQuickMethodFunctionProvider> providers = functionManager.getAllInvokers();
         for (JQuickMethodFunctionProvider provider : providers) {
             if (provider.getMethodName().equalsIgnoreCase(functionName)) {
                 try {
                     return provider.invoke(args);
                 } catch (Exception e) {
-                    return evaluateBuiltinFunction(functionName, args);
+                    console.error("evaluefunction occurred exception",e);
                 }
             }
         }

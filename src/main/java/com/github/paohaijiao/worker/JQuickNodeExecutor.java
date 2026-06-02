@@ -25,14 +25,14 @@ import java.util.stream.Collectors;
 public class JQuickNodeExecutor {
 
     private final JQuickWorker worker;
+
     private final JQuickExpressionEvaluator expressionEvaluator;
+
     private final JQuickPartitionManager partitionManager;
+
     private final JQuickDataConverter dataConverter;
 
-    public JQuickNodeExecutor(JQuickWorker worker,
-                              JQuickExpressionEvaluator expressionEvaluator,
-                              JQuickPartitionManager partitionManager,
-                              JQuickDataConverter dataConverter) {
+    public JQuickNodeExecutor(JQuickWorker worker, JQuickExpressionEvaluator expressionEvaluator, JQuickPartitionManager partitionManager, JQuickDataConverter dataConverter) {
         this.worker = worker;
         this.expressionEvaluator = expressionEvaluator;
         this.partitionManager = partitionManager;
@@ -125,7 +125,6 @@ public class JQuickNodeExecutor {
     private JQuickDataSet executeProject(JQuickProjectPhysicalNode node, JQuickWorker.JQuickTaskContext context) {
         JQuickDataSet input = executeNode(node.getChild(), context);
         List<JQuickRow> projectedRows = new ArrayList<>();
-
         for (JQuickRow row : input.getRows()) {
             JQuickRow newRow = new JQuickRow();
             for (JQuickProjectPhysicalNode.SelectItem item : node.getSelectItems()) {
@@ -545,7 +544,6 @@ public class JQuickNodeExecutor {
 
     private Object computeAggregate(List<JQuickRow> rows, JQuickHashAggregatePhysicalNode.AggregateFunction agg) {
         String funcName = agg.getFunctionName().toLowerCase();
-
         switch (funcName) {
             case "count":
                 if (agg.isDistinct()) {
@@ -569,13 +567,9 @@ public class JQuickNodeExecutor {
                         .map(r -> expressionEvaluator.evaluateExpression(r, agg.getArgument()))
                         .max((a, b) -> compareValues(a, b, false)).orElse(null);
             case "min":
-                return rows.stream()
-                        .map(r -> expressionEvaluator.evaluateExpression(r, agg.getArgument()))
-                        .min((a, b) -> compareValues(a, b, false)).orElse(null);
+                return rows.stream().map(r -> expressionEvaluator.evaluateExpression(r, agg.getArgument())).min((a, b) -> compareValues(a, b, false)).orElse(null);
             default:
-                List<Object> args = rows.stream()
-                        .map(r -> expressionEvaluator.evaluateExpression(r, agg.getArgument()))
-                        .collect(Collectors.toList());
+                List<Object> args = rows.stream().map(r -> expressionEvaluator.evaluateExpression(r, agg.getArgument())).collect(Collectors.toList());
                 return expressionEvaluator.evaluateFunctionViaSPI(funcName, args);
         }
     }

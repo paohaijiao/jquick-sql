@@ -15,6 +15,7 @@
  */
 package com.github.paohaijiao.worker;
 
+import com.github.paohaijiao.console.JConsole;
 import com.github.paohaijiao.proto.*;
 import com.github.paohaijiao.statement.JQuickDataSet;
 import com.github.paohaijiao.statement.JQuickRow;
@@ -25,8 +26,6 @@ import io.grpc.stub.StreamObserver;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * 数据分发服务实现类
@@ -44,7 +43,7 @@ import java.util.logging.Logger;
  */
 public class JQuickDataDistributionServiceImpl extends JQuickDataDistributionServiceGrpc.JQuickDataDistributionServiceImplBase {
 
-    private static final Logger LOGGER = Logger.getLogger(JQuickDataDistributionServiceImpl.class.getName());
+    private static final JConsole console = JConsole.initConsoleEnvironment();
     // 缓存过期时间（毫秒），默认30分钟
     private static final long CACHE_EXPIRY_MS = 30 * 60 * 1000;
     private final JQuickWorker worker;
@@ -70,7 +69,7 @@ public class JQuickDataDistributionServiceImpl extends JQuickDataDistributionSer
         this.lastAccessTime = new ConcurrentHashMap<>();
         this.cleanupScheduler = Executors.newSingleThreadScheduledExecutor();
         cleanupScheduler.scheduleAtFixedRate(this::cleanupExpiredCache, 5, 5, TimeUnit.MINUTES);
-        LOGGER.info("JQuickDataDistributionServiceImpl initialized");
+        console.info("JQuickDataDistributionServiceImpl initialized");
     }
 
     /**
@@ -83,7 +82,7 @@ public class JQuickDataDistributionServiceImpl extends JQuickDataDistributionSer
      */
     @Override
     public StreamObserver<JQuickDataChunkProto> sendData(StreamObserver<JQuickEmptyNodeProto> responseObserver) {
-        LOGGER.fine("New data stream connection established");
+        console.info("New data stream connection established");
         return new DataReceiveStreamObserver(responseObserver);
     }
 
@@ -100,9 +99,8 @@ public class JQuickDataDistributionServiceImpl extends JQuickDataDistributionSer
         String partitionId = request.getPartitionId();
         int chunkIndex = request.getChunkIndex();
         boolean streaming = request.getStreaming();
-        // 更新访问时间
         updateAccessTime(partitionId);
-        LOGGER.fine(String.format("Receive data request - partitionId: %s, chunkIndex: %d, streaming: %s", partitionId, chunkIndex, streaming));
+        console.info(String.format("Receive data request - partitionId: %s, chunkIndex: %d, streaming: %s", partitionId, chunkIndex, streaming));
         try {
             List<JQuickDataChunkProto> chunks = receivedDataCache.get(partitionId);
             if (chunks == null || chunks.isEmpty()) {
@@ -156,7 +154,7 @@ public class JQuickDataDistributionServiceImpl extends JQuickDataDistributionSer
             }
 
         } catch (Exception e) {
-            LOGGER.log(Level.WARNING, String.format("Receive data failed - partitionId: %s", partitionId), e);
+            console.warn(String.format("Receive data failed - partitionId: %s", partitionId), e);
             responseObserver.onError(e);
         }
     }
@@ -170,7 +168,7 @@ public class JQuickDataDistributionServiceImpl extends JQuickDataDistributionSer
      */
     public void subscribeToBroadcast(String broadcastId, StreamObserver<JQuickDataChunkProto> observer) {
         broadcastReceivers.computeIfAbsent(broadcastId, k -> new CopyOnWriteArrayList<>()).add(observer);
-        LOGGER.fine(String.format("Subscribed to broadcast - broadcastId: %s", broadcastId));
+        console.info(String.format("Subscribed to broadcast - broadcastId: %s", broadcastId));
     }
 
     /**
@@ -185,7 +183,7 @@ public class JQuickDataDistributionServiceImpl extends JQuickDataDistributionSer
             receivers.remove(observer);
             if (receivers.isEmpty()) {
                 broadcastReceivers.remove(broadcastId);
-                LOGGER.fine(String.format("Broadcast removed - broadcastId: %s", broadcastId));
+                console.info(String.format("Broadcast removed - broadcastId: %s", broadcastId));
             }
         }
     }
@@ -260,26 +258,24 @@ public class JQuickDataDistributionServiceImpl extends JQuickDataDistributionSer
     public CompletableFuture<Void> sendDataToWorker(String targetWorkerId, String host, int port, JQuickDataChunkProto chunk) {
         CompletableFuture<Void> future = new CompletableFuture<>();
         try {
-            ManagedChannel channel = ManagedChannelBuilder
-                    .forAddress(host, port)
-                    .usePlaintext()
-                    .build();
+            ManagedChannel channel = ManagedChannelBuilder.forAddress(host, port).usePlaintext().build();
             JQuickDataDistributionServiceGrpc.JQuickDataDistributionServiceStub stub = JQuickDataDistributionServiceGrpc.newStub(channel);
             StreamObserver<JQuickDataChunkProto> requestObserver = stub.sendData(
                     new StreamObserver<JQuickEmptyNodeProto>() {
                         @Override
                         public void onNext(JQuickEmptyNodeProto value) {
                         }
+
                         @Override
                         public void onError(Throwable t) {
-                            LOGGER.log(Level.WARNING, String.format("Send data to worker failed - target: %s:%d, workerId: %s", host, port, targetWorkerId), t);
+                            console.warn(String.format("Send data to worker failed - target: %s:%d, workerId: %s", host, port, targetWorkerId), t);
                             future.completeExceptionally(t);
                             channel.shutdown();
                         }
 
                         @Override
                         public void onCompleted() {
-                            LOGGER.fine(String.format("Send data to worker completed - target: %s:%d, workerId: %s", host, port, targetWorkerId));
+                            console.warn(String.format("Send data to worker completed - target: %s:%d, workerId: %s", host, port, targetWorkerId));
                             future.complete(null);
                             channel.shutdown();
                         }
@@ -288,7 +284,7 @@ public class JQuickDataDistributionServiceImpl extends JQuickDataDistributionSer
             requestObserver.onNext(chunk);
             requestObserver.onCompleted();
         } catch (Exception e) {
-            LOGGER.log(Level.WARNING, String.format("Send data to worker error - target: %s:%d", host, port), e);
+            console.warn(String.format("Send data to worker error - target: %s:%d", host, port), e);
             future.completeExceptionally(e);
         }
 
@@ -324,14 +320,14 @@ public class JQuickDataDistributionServiceImpl extends JQuickDataDistributionSer
         receivedDataCache.remove(partitionId);
         receiveCompletionFutures.remove(partitionId);
         lastAccessTime.remove(partitionId);
-        LOGGER.fine(String.format("Cleared partition cache - partitionId: %s", partitionId));
+        console.info(String.format("Cleared partition cache - partitionId: %s", partitionId));
     }
 
     /**
      * 关闭服务，清理资源
      */
     public void shutdown() {
-        LOGGER.info("Shutting down JQuickDataDistributionServiceImpl...");
+        console.info("Shutting down JQuickDataDistributionServiceImpl...");
         cleanupScheduler.shutdown();
         try {
             if (!cleanupScheduler.awaitTermination(30, TimeUnit.SECONDS)) {
@@ -347,7 +343,6 @@ public class JQuickDataDistributionServiceImpl extends JQuickDataDistributionSer
                 try {
                     observer.onCompleted();
                 } catch (Exception e) {
-                    // 忽略关闭时的错误
                 }
             }
         }
@@ -355,8 +350,9 @@ public class JQuickDataDistributionServiceImpl extends JQuickDataDistributionSer
         receiveCompletionFutures.clear();
         broadcastReceivers.clear();
         lastAccessTime.clear();
-        LOGGER.info("JQuickDataDistributionServiceImpl shutdown complete");
+        console.info("JQuickDataDistributionServiceImpl shutdown complete");
     }
+
     /**
      * 构建获取数据响应
      */
@@ -395,7 +391,7 @@ public class JQuickDataDistributionServiceImpl extends JQuickDataDistributionSer
             } else if (lastAccess != null && (now - lastAccess) > CACHE_EXPIRY_MS * 2) {
                 // 未完成但长时间未访问，也清理（可能是 abandoned）
                 toRemove.add(partitionId);
-                LOGGER.warning(String.format("Removing abandoned incomplete partition - partitionId: %s", partitionId));
+                console.warn(String.format("Removing abandoned incomplete partition - partitionId: %s", partitionId));
             }
         }
 
@@ -403,10 +399,10 @@ public class JQuickDataDistributionServiceImpl extends JQuickDataDistributionSer
             receivedDataCache.remove(partitionId);
             receiveCompletionFutures.remove(partitionId);
             lastAccessTime.remove(partitionId);
-            LOGGER.fine(String.format("Cleaned up expired cache - partitionId: %s", partitionId));
+            console.info(String.format("Cleaned up expired cache - partitionId: %s", partitionId));
         }
         if (!toRemove.isEmpty()) {
-            LOGGER.info(String.format("Cache cleanup completed - removed %d partitions", toRemove.size()));
+            console.info(String.format("Cache cleanup completed - removed %d partitions", toRemove.size()));
         }
     }
 
@@ -428,7 +424,7 @@ public class JQuickDataDistributionServiceImpl extends JQuickDataDistributionSer
 
         @Override
         public void onNext(JQuickDataChunkProto chunk) {
-            String chunkPartitionId = String.valueOf(chunk.getPartitionId());
+            String chunkPartitionId = chunk.getPartitionId();
             this.currentPartitionId = chunkPartitionId;
             // 获取或创建分区缓存
             List<JQuickDataChunkProto> chunks = receivedDataCache.computeIfAbsent(chunkPartitionId, k -> new CopyOnWriteArrayList<>());
@@ -439,18 +435,18 @@ public class JQuickDataDistributionServiceImpl extends JQuickDataDistributionSer
             updateAccessTime(chunkPartitionId);
             // 按序列号排序
             chunks.sort(Comparator.comparingLong(JQuickDataChunkProto::getSequenceId));
-            LOGGER.finest(String.format("Received data chunk - partitionId: %s, chunkIndex: %d, isLast: %s, dataSize: %d", chunkPartitionId, chunk.getChunkIndex(), chunk.getIsLast(), chunk.getData().getSerializedSize()));
+            console.info(String.format("Received data chunk - partitionId: %s, chunkIndex: %d, isLast: %s, dataSize: %d", chunkPartitionId, chunk.getChunkIndex(), chunk.getIsLast(), chunk.getData().getSerializedSize()));
             // 如果是最后一个块，标记完成
             if (chunk.getIsLast()) {
                 CompletableFuture<Void> future = receiveCompletionFutures.computeIfAbsent(chunkPartitionId, k -> new CompletableFuture<>());
                 future.complete(null);
-                LOGGER.fine(String.format("Partition complete - partitionId: %s, totalChunks: %d", chunkPartitionId, chunks.size()));
+                console.info(String.format("Partition complete - partitionId: %s, totalChunks: %d", chunkPartitionId, chunks.size()));
             }
         }
 
         @Override
         public void onError(Throwable t) {
-            LOGGER.log(Level.WARNING, "Data receive stream error", t);
+            console.warn("Data receive stream error", t);
             // 清理不完整的数据
             if (currentPartitionId != null) {
                 List<JQuickDataChunkProto> chunks = receivedDataCache.get(currentPartitionId);
@@ -471,7 +467,7 @@ public class JQuickDataDistributionServiceImpl extends JQuickDataDistributionSer
 
         @Override
         public void onCompleted() {
-            LOGGER.fine("Data receive stream completed");
+            console.info("Data receive stream completed");
             responseObserver.onNext(JQuickEmptyNodeProto.newBuilder().build());
             responseObserver.onCompleted();
         }
@@ -483,11 +479,17 @@ public class JQuickDataDistributionServiceImpl extends JQuickDataDistributionSer
      * 负责接收广播数据并转发给所有订阅者
      */
     private class BroadcastDataReceiver implements StreamObserver<JQuickDataChunkProto> {
+
         private final String broadcastId;
+
         private final StreamObserver<JQuickBroadcastResponse> responseObserver;
+
         private final List<String> failedWorkers;
+
         private int receivedCount;
+
         private int successCount;
+
         BroadcastDataReceiver(String broadcastId, StreamObserver<JQuickBroadcastResponse> responseObserver) {
             this.broadcastId = broadcastId;
             this.responseObserver = responseObserver;
@@ -507,17 +509,16 @@ public class JQuickDataDistributionServiceImpl extends JQuickDataDistributionSer
                         successCount++;
                     } catch (Exception e) {
                         failedWorkers.add(receiver.toString());
-                        LOGGER.log(Level.WARNING, String.format("Broadcast to receiver failed - broadcastId: %s", broadcastId), e);
+                        console.warn(String.format("Broadcast to receiver failed - broadcastId: %s", broadcastId), e);
                     }
                 }
             }
-
-            LOGGER.finest(String.format("Broadcast chunk sent - broadcastId: %s, chunkIndex: %d, receivers: %d", broadcastId, chunk.getChunkIndex(), receivers != null ? receivers.size() : 0));
+            console.warn(String.format("Broadcast chunk sent - broadcastId: %s, chunkIndex: %d, receivers: %d", broadcastId, chunk.getChunkIndex(), receivers != null ? receivers.size() : 0));
         }
 
         @Override
         public void onError(Throwable t) {
-            LOGGER.log(Level.WARNING, String.format("Broadcast error - broadcastId: %s", broadcastId), t);
+            console.warn(String.format("Broadcast error - broadcastId: %s", broadcastId), t);
             JQuickBroadcastResponse response = JQuickBroadcastResponse.newBuilder()
                     .setSuccess(false)
                     .setSuccessCount(successCount)
@@ -531,12 +532,8 @@ public class JQuickDataDistributionServiceImpl extends JQuickDataDistributionSer
 
         @Override
         public void onCompleted() {
-            LOGGER.info(String.format("Broadcast completed - broadcastId: %s, chunks: %d, successCount: %d", broadcastId, receivedCount, successCount));
-            JQuickBroadcastResponse response = JQuickBroadcastResponse.newBuilder()
-                    .setSuccess(true)
-                    .setSuccessCount(successCount)
-                    .addAllFailedWorkers(failedWorkers)
-                    .build();
+            console.info(String.format("Broadcast completed - broadcastId: %s, chunks: %d, successCount: %d", broadcastId, receivedCount, successCount));
+            JQuickBroadcastResponse response = JQuickBroadcastResponse.newBuilder().setSuccess(true).setSuccessCount(successCount).addAllFailedWorkers(failedWorkers).build();
             responseObserver.onNext(response);
             responseObserver.onCompleted();
             // 通知所有接收者完成
@@ -546,7 +543,7 @@ public class JQuickDataDistributionServiceImpl extends JQuickDataDistributionSer
                     try {
                         receiver.onCompleted();
                     } catch (Exception e) {
-                        LOGGER.log(Level.FINE, "Error completing broadcast receiver", e);
+                        console.info("Error completing broadcast receiver", e);
                     }
                 }
             }

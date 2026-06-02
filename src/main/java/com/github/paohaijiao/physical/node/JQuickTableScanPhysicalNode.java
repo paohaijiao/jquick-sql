@@ -98,7 +98,12 @@ public class JQuickTableScanPhysicalNode implements JQuickPhysicalPlanNode {
         long dataSize = JQuickDataSourceManager.getEstimatedDataSize(tableName);
         if (requiredColumns != null && !requiredColumns.isEmpty()) {
             int totalCols = JQuickDataSourceManager.getColumnNames(tableName).size();
-            dataSize = dataSize * requiredColumns.size() / totalCols;
+            if(0!=totalCols) {
+                dataSize = dataSize * requiredColumns.size() / totalCols;
+            }else{
+                totalCols=0;
+            }
+
         }
         if (filterPredicate != null) {
             rowCount = rowCount / 2;

@@ -41,11 +41,8 @@ public class JQuickDataConverter {
     public JQuickDataSetProto convertToProto(JQuickDataSet data) {
         JQuickDataSetProto.Builder builder = JQuickDataSetProto.newBuilder();
         for (JQuickColumnMeta col : data.getColumns()) {
-            builder.addColumns(JQuickColumnMetaProto.newBuilder()
-                    .setName(col.getName())
-                    .setTypeName(col.getType().getName())
-                    .setSource(col.getSource())
-                    .build());
+            builder.addColumns(JQuickColumnMetaProto.newBuilder().setName(col.getName())
+            .setTypeName(col.getType().getName()).setSource(col.getSource()).build());
         }
         for (JQuickRow row : data.getRows()) {
             JQuickRowProto.Builder rowBuilder = JQuickRowProto.newBuilder();
@@ -72,7 +69,6 @@ public class JQuickDataConverter {
                 columns.add(new JQuickColumnMeta(colProto.getName(), Object.class, colProto.getSource()));
             }
         }
-
         List<JQuickRow> rows = new ArrayList<>();
         for (JQuickRowProto rowProto : proto.getRowsList()) {
             JQuickRow row = new JQuickRow();

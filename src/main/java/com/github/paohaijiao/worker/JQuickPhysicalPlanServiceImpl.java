@@ -16,6 +16,7 @@
 package com.github.paohaijiao.worker;
 
 
+import com.github.paohaijiao.console.JConsole;
 import com.github.paohaijiao.proto.*;
 import io.grpc.stub.StreamObserver;
 
@@ -32,7 +33,7 @@ import java.util.logging.Logger;
  */
 public class JQuickPhysicalPlanServiceImpl extends JQuickPhysicalPlanServiceGrpc.JQuickPhysicalPlanServiceImplBase {
 
-    private static final Logger LOGGER = Logger.getLogger(JQuickPhysicalPlanServiceImpl.class.getName());
+    private static final JConsole console = JConsole.initConsoleEnvironment();
 
     private final JQuickWorker worker;
 
@@ -52,15 +53,15 @@ public class JQuickPhysicalPlanServiceImpl extends JQuickPhysicalPlanServiceGrpc
     public void executeTask(JQuickExecuteTaskRequest request, StreamObserver<JQuickExecuteTaskResponse> responseObserver) {
         String taskId = request.getTaskId();
         String queryId = request.getQueryId();
-        LOGGER.info(String.format("Received executeTask request - taskId: %s, queryId: %s, taskIndex: %d/%d", taskId, queryId, request.getTaskIndex(), request.getTotalTasks()));
+        console.info(String.format("Received executeTask request - taskId: %s, queryId: %s, taskIndex: %d/%d", taskId, queryId, request.getTaskIndex(), request.getTotalTasks()));
         try {
             // 委托给 Worker 执行
             JQuickExecuteTaskResponse response = worker.executeTask(request);
-            LOGGER.info(String.format("Task completed - taskId: %s, status: %s, processedRows: %d, executionTime: %dms", taskId, response.getStatus(), response.getProcessedRows(), response.getExecutionTimeMs()));
+            console.info(String.format("Task completed - taskId: %s, status: %s, processedRows: %d, executionTime: %dms", taskId, response.getStatus(), response.getProcessedRows(), response.getExecutionTimeMs()));
             responseObserver.onNext(response);
             responseObserver.onCompleted();
         } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, String.format("Task execution failed - taskId: %s", taskId), e);
+            console.error( String.format("Task execution failed - taskId: %s", taskId), e);
             JQuickExecuteTaskResponse errorResponse = JQuickExecuteTaskResponse.newBuilder()
                     .setTaskId(taskId)
                     .setStatus(JQuickTaskStatusProto.TASK_FAILED)
@@ -83,13 +84,13 @@ public class JQuickPhysicalPlanServiceImpl extends JQuickPhysicalPlanServiceGrpc
     public void executeTaskStream(JQuickExecuteTaskRequest request, StreamObserver<JQuickDataChunkProto> responseObserver) {
         String taskId = request.getTaskId();
         String queryId = request.getQueryId();
-        LOGGER.info(String.format("Received executeTaskStream request - taskId: %s, queryId: %s", taskId, queryId));
+        console.info(String.format("Received executeTaskStream request - taskId: %s, queryId: %s", taskId, queryId));
         try {
             // 委托给 Worker 流式执行
             worker.executeTaskStream(request, responseObserver);
-            LOGGER.info(String.format("Streaming task completed - taskId: %s", taskId));
+            console.info(String.format("Streaming task completed - taskId: %s", taskId));
         } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, String.format("Streaming task failed - taskId: %s", taskId), e);
+            console.error(String.format("Streaming task failed - taskId: %s", taskId), e);
             responseObserver.onError(e);
         }
     }
@@ -106,14 +107,14 @@ public class JQuickPhysicalPlanServiceImpl extends JQuickPhysicalPlanServiceGrpc
     public void cancelTask(JQuickCancelQueryRequest request, StreamObserver<JQuickCancelQueryResponse> responseObserver) {
         String queryId = request.getQueryId();
         String reason = request.getReason();
-        LOGGER.info(String.format("Received cancelTask request - queryId: %s, reason: %s", queryId, reason));
+        console.info(String.format("Received cancelTask request - queryId: %s, reason: %s", queryId, reason));
         try {
             JQuickCancelQueryResponse response = worker.cancelTask(request);
-            LOGGER.info(String.format("Task cancelled - queryId: %s, success: %s", queryId, response.getSuccess()));
+            console.info(String.format("Task cancelled - queryId: %s, success: %s", queryId, response.getSuccess()));
             responseObserver.onNext(response);
             responseObserver.onCompleted();
         } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, String.format("Cancel task failed - queryId: %s", queryId), e);
+            console.error( String.format("Cancel task failed - queryId: %s", queryId), e);
             JQuickCancelQueryResponse errorResponse = JQuickCancelQueryResponse.newBuilder()
                     .setQueryId(queryId)
                     .setSuccess(false)

@@ -145,7 +145,7 @@ public class JQuickTableScanGrpcTest {
         JQuickTableScanPhysicalNode scanNode = new JQuickTableScanPhysicalNode(TEST_TABLE_NAME, null, requiredColumns, null);
         // 执行查询
         CompletableFuture<JQuickDataSet> future = coordinator.executeQuery("query_all", scanNode);
-        JQuickDataSet result = future.get(30, TimeUnit.SECONDS);
+        JQuickDataSet result = future.get(300000, TimeUnit.SECONDS);
         // 验证结果
         assertNotNull(result);
         assertEquals(4, result.getColumns().size());

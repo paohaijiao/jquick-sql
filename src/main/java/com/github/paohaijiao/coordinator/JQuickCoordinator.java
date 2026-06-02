@@ -139,9 +139,7 @@ public class JQuickCoordinator extends JQuickConvertService{
         List<WorkerEndpoint> endpoints = new ArrayList<>();
         for (int i = 0; i < workers.size(); i++) {
             JQuickWorker worker = workers.get(i);
-            endpoints.add(new WorkerEndpoint(
-                    worker.getWorkerId(), "localhost", DEFAULT_WORKER_PORT + i, i
-            ));
+            endpoints.add(new WorkerEndpoint(worker.getWorkerId(), "localhost", DEFAULT_WORKER_PORT + i, i));
         }
         return new JQuickCoordinator(coordinatorId, endpoints);
     }
@@ -237,10 +235,8 @@ public class JQuickCoordinator extends JQuickConvertService{
             CompletableFuture<JQuickExecuteTaskResponse> taskFuture = scheduleTask(fragment, idx, parallelism, execution);
             taskFutures.add(taskFuture);
         }
-
         // 等待所有任务完成并收集结果
-        return CompletableFuture.allOf(taskFutures.toArray(new CompletableFuture[0]))
-                .thenApply(v -> {
+        return CompletableFuture.allOf(taskFutures.toArray(new CompletableFuture[0])).thenApply(v -> {
                     List<JQuickDataSet> results = new ArrayList<>();
                     for (CompletableFuture<JQuickExecuteTaskResponse> future : taskFutures) {
                         try {
@@ -266,7 +262,6 @@ public class JQuickCoordinator extends JQuickConvertService{
      */
     private CompletableFuture<JQuickExecuteTaskResponse> scheduleTask(JQuickFragment fragment, int taskIndex, int totalTasks, QueryExecution execution) {
         String taskId = String.format("%s_%d_%d", execution.getQueryId(), fragment.getFragmentId(), taskIndex);
-        // 选择 Worker（简单的轮询策略）
         WorkerEndpoint worker = selectWorker(taskIndex, totalTasks);
         TaskExecution taskExec = new TaskExecution(fragment.getFragmentId(), taskIndex, totalTasks, worker);
         execution.getTasks().put(taskId, taskExec);
@@ -591,14 +586,11 @@ public class JQuickCoordinator extends JQuickConvertService{
      * 拓扑排序 Fragment（确保依赖顺序）
      */
     private List<JQuickFragment> topologicalSort(List<JQuickFragment> fragments) {
-        // 简单实现：按深度排序（叶子节点先执行）
         Map<JQuickFragment, Integer> depthMap = new HashMap<>();
         for (JQuickFragment fragment : fragments) {
             depthMap.put(fragment, calculateDepth(fragment));
         }
-        return fragments.stream()
-                .sorted(Comparator.comparingInt(depthMap::get))
-                .collect(Collectors.toList());
+        return fragments.stream().sorted(Comparator.comparingInt(depthMap::get)).collect(Collectors.toList());
     }
 
     private int calculateDepth(JQuickFragment fragment) {
