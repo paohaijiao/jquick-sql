@@ -81,16 +81,11 @@ public class JQuickCoordinatorWithDataTest {
             workers.add(worker);
             endpoints.add(new WorkerEndpoint(workerId, "localhost", port, i));
         }
-        JQuickDataSet usersData = createUsersDataSet();
-        JQuickDataSet ordersData = createOrdersDataSet();
-        JQuickDataSet employeesData = createEmployeesDataSet();
 
-        // 注册到 DataSourceManager（用于 Coordinator 本地访问）
-        JQuickDataSourceManager.registerTable(TEST_TABLE_USERS, usersData);
-        JQuickDataSourceManager.registerTable(TEST_TABLE_ORDERS, ordersData);
-        JQuickDataSourceManager.registerTable(TEST_TABLE_EMPLOYEES, employeesData);
-        coordinator = new JQuickCoordinator("coordinator_test", endpoints);
+
         registerTestData();
+        coordinator = new JQuickCoordinator("coordinator_test", endpoints);
+
     }
     private JQuickDataSet createTestUsersData() {
         JQuickDataSet.Builder builder = JQuickDataSet.builder();
@@ -113,11 +108,9 @@ public class JQuickCoordinatorWithDataTest {
         // 创建 users 表测试数据
         JQuickDataSet usersData = createUsersDataSet();
         JQuickDataSourceManager.registerTable(TEST_TABLE_USERS, usersData);
-
         // 创建 orders 表测试数据
         JQuickDataSet ordersData = createOrdersDataSet();
         JQuickDataSourceManager.registerTable(TEST_TABLE_ORDERS, ordersData);
-
         // 创建 employees 表测试数据
         JQuickDataSet employeesData = createEmployeesDataSet();
         JQuickDataSourceManager.registerTable(TEST_TABLE_EMPLOYEES, employeesData);
@@ -137,39 +130,16 @@ public class JQuickCoordinatorWithDataTest {
         );
 
         List<JQuickRow> rows = new ArrayList<>();
-
-        // 添加 10 条测试数据
-        rows.add(createRow(new Object[][]{
-                {"id", 1}, {"name", "Alice"}, {"age", 25}, {"email", "alice@example.com"}, {"city", "Beijing"}
-        }));
-        rows.add(createRow(new Object[][]{
-                {"id", 2}, {"name", "Bob"}, {"age", 30}, {"email", "bob@example.com"}, {"city", "Shanghai"}
-        }));
-        rows.add(createRow(new Object[][]{
-                {"id", 3}, {"name", "Charlie"}, {"age", 35}, {"email", "charlie@example.com"}, {"city", "Beijing"}
-        }));
-        rows.add(createRow(new Object[][]{
-                {"id", 4}, {"name", "Diana"}, {"age", 28}, {"email", "diana@example.com"}, {"city", "Guangzhou"}
-        }));
-        rows.add(createRow(new Object[][]{
-                {"id", 5}, {"name", "Eve"}, {"age", 22}, {"email", "eve@example.com"}, {"city", "Shanghai"}
-        }));
-        rows.add(createRow(new Object[][]{
-                {"id", 6}, {"name", "Frank"}, {"age", 40}, {"email", "frank@example.com"}, {"city", "Beijing"}
-        }));
-        rows.add(createRow(new Object[][]{
-                {"id", 7}, {"name", "Grace"}, {"age", 27}, {"email", "grace@example.com"}, {"city", "Shenzhen"}
-        }));
-        rows.add(createRow(new Object[][]{
-                {"id", 8}, {"name", "Henry"}, {"age", 33}, {"email", "henry@example.com"}, {"city", "Guangzhou"}
-        }));
-        rows.add(createRow(new Object[][]{
-                {"id", 9}, {"name", "Ivy"}, {"age", 26}, {"email", "ivy@example.com"}, {"city", "Beijing"}
-        }));
-        rows.add(createRow(new Object[][]{
-                {"id", 10}, {"name", "Jack"}, {"age", 29}, {"email", "jack@example.com"}, {"city", "Shanghai"}
-        }));
-
+        rows.add(createRow(new Object[][]{{"id", 1}, {"name", "Alice"}, {"age", 25}, {"email", "alice@example.com"}, {"city", "Beijing"}}));
+        rows.add(createRow(new Object[][]{{"id", 2}, {"name", "Bob"}, {"age", 30}, {"email", "bob@example.com"}, {"city", "Shanghai"}}));
+        rows.add(createRow(new Object[][]{{"id", 3}, {"name", "Charlie"}, {"age", 35}, {"email", "charlie@example.com"}, {"city", "Beijing"}}));
+        rows.add(createRow(new Object[][]{{"id", 4}, {"name", "Diana"}, {"age", 28}, {"email", "diana@example.com"}, {"city", "Guangzhou"}}));
+        rows.add(createRow(new Object[][]{{"id", 5}, {"name", "Eve"}, {"age", 22}, {"email", "eve@example.com"}, {"city", "Shanghai"}}));
+        rows.add(createRow(new Object[][]{{"id", 6}, {"name", "Frank"}, {"age", 40}, {"email", "frank@example.com"}, {"city", "Beijing"}}));
+        rows.add(createRow(new Object[][]{{"id", 7}, {"name", "Grace"}, {"age", 27}, {"email", "grace@example.com"}, {"city", "Shenzhen"}}));
+        rows.add(createRow(new Object[][]{{"id", 8}, {"name", "Henry"}, {"age", 33}, {"email", "henry@example.com"}, {"city", "Guangzhou"}}));
+        rows.add(createRow(new Object[][]{{"id", 9}, {"name", "Ivy"}, {"age", 26}, {"email", "ivy@example.com"}, {"city", "Beijing"}}));
+        rows.add(createRow(new Object[][]{{"id", 10}, {"name", "Jack"}, {"age", 29}, {"email", "jack@example.com"}, {"city", "Shanghai"}}));
         return new JQuickDataSet(columns, rows);
     }
 
@@ -185,40 +155,17 @@ public class JQuickCoordinatorWithDataTest {
                 new JQuickColumnMeta("amount", Double.class, TEST_TABLE_ORDERS),
                 new JQuickColumnMeta("order_date", String.class, TEST_TABLE_ORDERS)
         );
-
         List<JQuickRow> rows = new ArrayList<>();
-
-        rows.add(createRow(new Object[][]{
-                {"order_id", 101}, {"user_id", 1}, {"product", "Laptop"}, {"amount", 5999.0}, {"order_date", "2024-01-15"}
-        }));
-        rows.add(createRow(new Object[][]{
-                {"order_id", 102}, {"user_id", 1}, {"product", "Mouse"}, {"amount", 99.0}, {"order_date", "2024-01-20"}
-        }));
-        rows.add(createRow(new Object[][]{
-                {"order_id", 103}, {"user_id", 2}, {"product", "Keyboard"}, {"amount", 299.0}, {"order_date", "2024-02-10"}
-        }));
-        rows.add(createRow(new Object[][]{
-                {"order_id", 104}, {"user_id", 3}, {"product", "Monitor"}, {"amount", 1999.0}, {"order_date", "2024-02-15"}
-        }));
-        rows.add(createRow(new Object[][]{
-                {"order_id", 105}, {"user_id", 3}, {"product", "USB Cable"}, {"amount", 29.0}, {"order_date", "2024-03-01"}
-        }));
-        rows.add(createRow(new Object[][]{
-                {"order_id", 106}, {"user_id", 5}, {"product", "Headset"}, {"amount", 399.0}, {"order_date", "2024-03-10"}
-        }));
-        rows.add(createRow(new Object[][]{
-                {"order_id", 107}, {"user_id", 7}, {"product", "Webcam"}, {"amount", 499.0}, {"order_date", "2024-03-15"}
-        }));
-        rows.add(createRow(new Object[][]{
-                {"order_id", 108}, {"user_id", 8}, {"product", "Desk"}, {"amount", 899.0}, {"order_date", "2024-04-01"}
-        }));
-        rows.add(createRow(new Object[][]{
-                {"order_id", 109}, {"user_id", 10}, {"product", "Chair"}, {"amount", 1299.0}, {"order_date", "2024-04-05"}
-        }));
-        rows.add(createRow(new Object[][]{
-                {"order_id", 110}, {"user_id", 2}, {"product", "Mouse Pad"}, {"amount", 49.0}, {"order_date", "2024-04-10"}
-        }));
-
+        rows.add(createRow(new Object[][]{{"order_id", 101}, {"user_id", 1}, {"product", "Laptop"}, {"amount", 5999.0}, {"order_date", "2024-01-15"}}));
+        rows.add(createRow(new Object[][]{{"order_id", 102}, {"user_id", 1}, {"product", "Mouse"}, {"amount", 99.0}, {"order_date", "2024-01-20"}}));
+        rows.add(createRow(new Object[][]{{"order_id", 103}, {"user_id", 2}, {"product", "Keyboard"}, {"amount", 299.0}, {"order_date", "2024-02-10"}}));
+        rows.add(createRow(new Object[][]{{"order_id", 104}, {"user_id", 3}, {"product", "Monitor"}, {"amount", 1999.0}, {"order_date", "2024-02-15"}}));
+        rows.add(createRow(new Object[][]{{"order_id", 105}, {"user_id", 3}, {"product", "USB Cable"}, {"amount", 29.0}, {"order_date", "2024-03-01"}}));
+        rows.add(createRow(new Object[][]{{"order_id", 106}, {"user_id", 5}, {"product", "Headset"}, {"amount", 399.0}, {"order_date", "2024-03-10"}}));
+        rows.add(createRow(new Object[][]{{"order_id", 107}, {"user_id", 7}, {"product", "Webcam"}, {"amount", 499.0}, {"order_date", "2024-03-15"}}));
+        rows.add(createRow(new Object[][]{{"order_id", 108}, {"user_id", 8}, {"product", "Desk"}, {"amount", 899.0}, {"order_date", "2024-04-01"}}));
+        rows.add(createRow(new Object[][]{{"order_id", 109}, {"user_id", 10}, {"product", "Chair"}, {"amount", 1299.0}, {"order_date", "2024-04-05"}}));
+        rows.add(createRow(new Object[][]{{"order_id", 110}, {"user_id", 2}, {"product", "Mouse Pad"}, {"amount", 49.0}, {"order_date", "2024-04-10"}}));
         return new JQuickDataSet(columns, rows);
     }
 
@@ -234,40 +181,17 @@ public class JQuickCoordinatorWithDataTest {
                 new JQuickColumnMeta("salary", Double.class, TEST_TABLE_EMPLOYEES),
                 new JQuickColumnMeta("hire_date", String.class, TEST_TABLE_EMPLOYEES)
         );
-
         List<JQuickRow> rows = new ArrayList<>();
-
-        rows.add(createRow(new Object[][]{
-                {"emp_id", 1}, {"name", "Alice"}, {"department", "Engineering"}, {"salary", 85000.0}, {"hire_date", "2020-01-15"}
-        }));
-        rows.add(createRow(new Object[][]{
-                {"emp_id", 2}, {"name", "Bob"}, {"department", "Sales"}, {"salary", 65000.0}, {"hire_date", "2019-06-20"}
-        }));
-        rows.add(createRow(new Object[][]{
-                {"emp_id", 3}, {"name", "Charlie"}, {"department", "Engineering"}, {"salary", 95000.0}, {"hire_date", "2018-03-10"}
-        }));
-        rows.add(createRow(new Object[][]{
-                {"emp_id", 4}, {"name", "Diana"}, {"department", "HR"}, {"salary", 55000.0}, {"hire_date", "2021-02-01"}
-        }));
-        rows.add(createRow(new Object[][]{
-                {"emp_id", 5}, {"name", "Eve"}, {"department", "Sales"}, {"salary", 70000.0}, {"hire_date", "2020-08-15"}
-        }));
-        rows.add(createRow(new Object[][]{
-                {"emp_id", 6}, {"name", "Frank"}, {"department", "Engineering"}, {"salary", 110000.0}, {"hire_date", "2017-11-20"}
-        }));
-        rows.add(createRow(new Object[][]{
-                {"emp_id", 7}, {"name", "Grace"}, {"department", "Marketing"}, {"salary", 60000.0}, {"hire_date", "2021-07-01"}
-        }));
-        rows.add(createRow(new Object[][]{
-                {"emp_id", 8}, {"name", "Henry"}, {"department", "Engineering"}, {"salary", 78000.0}, {"hire_date", "2020-12-10"}
-        }));
-        rows.add(createRow(new Object[][]{
-                {"emp_id", 9}, {"name", "Ivy"}, {"department", "Sales"}, {"salary", 72000.0}, {"hire_date", "2019-09-05"}
-        }));
-        rows.add(createRow(new Object[][]{
-                {"emp_id", 10}, {"name", "Jack"}, {"department", "Engineering"}, {"salary", 89000.0}, {"hire_date", "2020-04-25"}
-        }));
-
+        rows.add(createRow(new Object[][]{{"emp_id", 1}, {"name", "Alice"}, {"department", "Engineering"}, {"salary", 85000.0}, {"hire_date", "2020-01-15"}}));
+        rows.add(createRow(new Object[][]{{"emp_id", 2}, {"name", "Bob"}, {"department", "Sales"}, {"salary", 65000.0}, {"hire_date", "2019-06-20"}}));
+        rows.add(createRow(new Object[][]{{"emp_id", 3}, {"name", "Charlie"}, {"department", "Engineering"}, {"salary", 95000.0}, {"hire_date", "2018-03-10"}}));
+        rows.add(createRow(new Object[][]{{"emp_id", 4}, {"name", "Diana"}, {"department", "HR"}, {"salary", 55000.0}, {"hire_date", "2021-02-01"}}));
+        rows.add(createRow(new Object[][]{{"emp_id", 5}, {"name", "Eve"}, {"department", "Sales"}, {"salary", 70000.0}, {"hire_date", "2020-08-15"}}));
+        rows.add(createRow(new Object[][]{{"emp_id", 6}, {"name", "Frank"}, {"department", "Engineering"}, {"salary", 110000.0}, {"hire_date", "2017-11-20"}}));
+        rows.add(createRow(new Object[][]{{"emp_id", 7}, {"name", "Grace"}, {"department", "Marketing"}, {"salary", 60000.0}, {"hire_date", "2021-07-01"}}));
+        rows.add(createRow(new Object[][]{{"emp_id", 8}, {"name", "Henry"}, {"department", "Engineering"}, {"salary", 78000.0}, {"hire_date", "2020-12-10"}}));
+        rows.add(createRow(new Object[][]{{"emp_id", 9}, {"name", "Ivy"}, {"department", "Sales"}, {"salary", 72000.0}, {"hire_date", "2019-09-05"}}));
+        rows.add(createRow(new Object[][]{{"emp_id", 10}, {"name", "Jack"}, {"department", "Engineering"}, {"salary", 89000.0}, {"hire_date", "2020-04-25"}}));
         return new JQuickDataSet(columns, rows);
     }
 
@@ -330,9 +254,7 @@ public class JQuickCoordinatorWithDataTest {
     public void testExecuteTableScanQuery() throws Exception {
         // 创建 TableScan 计划
         Set<String> requiredColumns = new HashSet<>(Arrays.asList("id", "name", "age"));
-        JQuickTableScanPhysicalNode scanNode = new JQuickTableScanPhysicalNode(
-                TEST_TABLE_USERS, "t", requiredColumns, null
-        );
+        JQuickTableScanPhysicalNode scanNode = new JQuickTableScanPhysicalNode(TEST_TABLE_USERS, "t", requiredColumns, null);
         String queryId = "test_scan_" + System.currentTimeMillis();
         CompletableFuture<JQuickDataSet> future = coordinator.executeQuery(queryId, scanNode);
         JQuickDataSet result = future.get(30, TimeUnit.SECONDS);
@@ -340,7 +262,6 @@ public class JQuickCoordinatorWithDataTest {
         assertNotNull("Result should not be null", result);
         assertEquals("Should have 10 rows", 10, result.size());
         assertEquals("Should have 3 columns", 3, result.getColumnNames().size());
-        // 验证列名
         List<String> columnNames = result.getColumnNames();
         assertTrue(columnNames.contains("id"));
         assertTrue(columnNames.contains("name"));
@@ -348,7 +269,6 @@ public class JQuickCoordinatorWithDataTest {
     }
     @Test//pass
     public void testDebugFilterExpression() throws Exception {
-        // 先获取原始数据，手动验证过滤条件
         JQuickDataSet usersData = JQuickDataSourceManager.getTable(TEST_TABLE_USERS);
         System.out.println("Original data:");
         usersData.printTable();
@@ -367,7 +287,6 @@ public class JQuickCoordinatorWithDataTest {
             System.out.println("Age type: " + (age != null ? age.getClass() : "null"));
             return false;
         });
-
         System.out.println("Manual filter result size: " + filtered.size());
         filtered.printTable();
     }
@@ -395,7 +314,7 @@ public class JQuickCoordinatorWithDataTest {
         result.printTable();
         assertNotNull(result);
         // 验证过滤结果（age > 28 的用户：Bob(30), Charlie(35), Frank(40), Henry(33), Jack(29) -> 5人）
-        assertEquals("Should have 5 rows with age > 28", 5, result.size());
+         assertEquals("Should have 5 rows with age > 28", 5, result.size());
         // 验证所有行的 age 都大于 28
         for (JQuickRow row : result.getRows()) {
             int age = row.getInt("age");

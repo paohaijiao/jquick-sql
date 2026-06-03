@@ -35,8 +35,6 @@ import io.grpc.stub.StreamObserver;
 
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 /**
@@ -54,7 +52,6 @@ public class JQuickCoordinator extends JQuickConvertService{
 
     private JConsole console=JConsole.initConsoleEnvironment();
 
-    private static final Logger LOGGER = Logger.getLogger(JQuickCoordinator.class.getName());
 
     // 默认配置
     private static final int DEFAULT_WORKER_PORT = 9000;
@@ -154,7 +151,7 @@ public class JQuickCoordinator extends JQuickConvertService{
                 if (System.currentTimeMillis() - worker.getLastHeartbeat() > 60000) {
                     if (worker.isHealthy()) {
                         worker.setHealthy(false);
-                        LOGGER.warning(String.format("Worker %s marked as unhealthy", worker.getWorkerId()));
+                        console.warn(String.format("Worker %s marked as unhealthy", worker.getWorkerId()));
                     }
                 }
             }
@@ -165,22 +162,18 @@ public class JQuickCoordinator extends JQuickConvertService{
      * 设置带超时的查询执行
      */
     public CompletableFuture<JQuickDataSet> executeQuery(String queryId, JQuickPhysicalPlanNode physicalPlan) {
-        LOGGER.info(String.format("Executing query - queryId: %s", queryId));
         console.info("Executing query - queryId: " + queryId);
-        //切分物理计划为分布式片段
-        JQuickDistributedPlan distributedPlan = fragmenter.fragment(physicalPlan);
-        //创建查询执行上下文
-        QueryExecution execution = new QueryExecution(queryId, distributedPlan);
+        JQuickDistributedPlan distributedPlan = fragmenter.fragment(physicalPlan);//切分物理计划为分布式片段
+        QueryExecution execution = new QueryExecution(queryId, distributedPlan); //创建查询执行上下文
         activeQueries.put(queryId, execution);
         execution.setStatus(QueryExecution.QueryStatus.PLANNING);
-        //异步执行
-        CompletableFuture<JQuickDataSet> future = CompletableFuture.supplyAsync(() -> {
+        CompletableFuture<JQuickDataSet> future = CompletableFuture.supplyAsync(() -> {//异步执行
             try {
                 return doExecuteQuery(execution);
             } catch (Exception e) {
                 execution.setStatus(QueryExecution.QueryStatus.FAILED);
                 execution.setErrorMessage(e.getMessage());
-                LOGGER.log(Level.SEVERE, String.format("Query execution failed - queryId: %s", queryId), e);
+                console.error(String.format("Query execution failed - queryId: %s", queryId), e);
                 throw new CompletionException(e);
             } finally {
                 cleanupQuery(queryId);
@@ -197,27 +190,22 @@ public class JQuickCoordinator extends JQuickConvertService{
         JQuickDistributedPlan plan = execution.getDistributedPlan();
         JQuickFragment rootFragment = plan.getRootFragment();
         execution.setStatus(QueryExecution.QueryStatus.SCHEDULING);
-        //遍历所有 Fragment，调度执行
-        List<JQuickFragment> allFragments = collectAllFragments(rootFragment);
-        //按依赖关系排序（叶子节点先执行）
-        List<JQuickFragment> sortedFragments = topologicalSort(allFragments);
+        List<JQuickFragment> allFragments = collectAllFragments(rootFragment);//遍历所有 Fragment，调度执行
+        List<JQuickFragment> sortedFragments = topologicalSort(allFragments);//按依赖关系排序（叶子节点先执行）
         execution.setStatus(QueryExecution.QueryStatus.RUNNING);
-        // 执行每个 Fragment
-        Map<Long, CompletableFuture<List<JQuickDataSet>>> fragmentResults = new ConcurrentHashMap<>();
+        Map<Long, CompletableFuture<List<JQuickDataSet>>> fragmentResults = new ConcurrentHashMap<>();// 执行每个 Fragment
         for (JQuickFragment fragment : sortedFragments) {
             CompletableFuture<List<JQuickDataSet>> fragmentFuture = executeFragment(fragment, execution);
             fragmentResults.put(fragment.getFragmentId(), fragmentFuture);
         }
-        //等待根 Fragment 完成并返回结果
-        CompletableFuture<List<JQuickDataSet>> rootFuture = fragmentResults.get(rootFragment.getFragmentId());
+        CompletableFuture<List<JQuickDataSet>> rootFuture = fragmentResults.get(rootFragment.getFragmentId());//等待根 Fragment 完成并返回结果
         List<JQuickDataSet> rootResults = rootFuture.join();
-        //合并结果
-        JQuickDataSet finalResult = mergeResults(rootResults);
+        JQuickDataSet finalResult = mergeResults(rootResults);//合并结果
         finalResult.printSummary();
         console.info("Executing finalResult : " + execution.getQueryId());
         execution.setStatus(QueryExecution.QueryStatus.COMPLETED);
         execution.getResultFuture().complete(finalResult);
-        LOGGER.info(String.format("Query completed - queryId: %s, duration: %dms, resultRows: %d", execution.getQueryId(), execution.getExecutionTimeMs(), finalResult.size()));
+        console.info(String.format("Query completed - queryId: %s, duration: %dms, resultRows: %d", execution.getQueryId(), execution.getExecutionTimeMs(), finalResult.size()));
         return finalResult;
     }
 
@@ -227,10 +215,9 @@ public class JQuickCoordinator extends JQuickConvertService{
     private CompletableFuture<List<JQuickDataSet>> executeFragment(JQuickFragment fragment, QueryExecution execution) {
         JQuickFragmentType fragmentType = fragment.getType();
         int parallelism = fragment.getParallelism();
-        LOGGER.fine(String.format("Executing fragment - fragmentId: %d, type: %s, parallelism: %d", fragment.getFragmentId(), fragmentType, parallelism));
+        console.info(String.format("Executing fragment - fragmentId: %d, type: %s, parallelism: %d", fragment.getFragmentId(), fragmentType, parallelism));
         List<CompletableFuture<JQuickExecuteTaskResponse>> taskFutures = new ArrayList<>();
-        // 为每个并行度创建任务
-        for (int taskIndex = 0; taskIndex < parallelism; taskIndex++) {
+        for (int taskIndex = 0; taskIndex < parallelism; taskIndex++) {// 为每个并行度创建任务
             final int idx = taskIndex;
             CompletableFuture<JQuickExecuteTaskResponse> taskFuture = scheduleTask(fragment, idx, parallelism, execution);
             taskFutures.add(taskFuture);
@@ -247,10 +234,10 @@ public class JQuickCoordinator extends JQuickConvertService{
                                     results.add(data);
                                 }
                             } else {
-                                LOGGER.warning(String.format("Task failed - fragmentId: %d, error: %s", fragment.getFragmentId(), response.getErrorMessage()));
+                                console.warn(String.format("Task failed - fragmentId: %d, error: %s", fragment.getFragmentId(), response.getErrorMessage()));
                             }
                         } catch (Exception e) {
-                            LOGGER.log(Level.WARNING, String.format("Task execution error - fragmentId: %d", fragment.getFragmentId()), e);
+                            console.warn(String.format("Task execution error - fragmentId: %d", fragment.getFragmentId()), e);
                         }
                     }
                     return results;
@@ -275,13 +262,13 @@ public class JQuickCoordinator extends JQuickConvertService{
                 taskExec.setStatus(TaskExecution.TaskStatus.SUCCESS);
                 taskExec.setEndTime(System.currentTimeMillis());
                 future.complete(response);
-                LOGGER.fine(String.format("Task completed - taskId: %s, worker: %s, duration: %dms", taskId, worker.getWorkerId(), taskExec.getExecutionTimeMs()));
+                console.info(String.format("Task completed - taskId: %s, worker: %s, duration: %dms", taskId, worker.getWorkerId(), taskExec.getExecutionTimeMs()));
             } catch (Exception e) {
                 taskExec.setStatus(TaskExecution.TaskStatus.FAILED);
                 taskExec.setErrorMessage(e.getMessage());
                 taskExec.setEndTime(System.currentTimeMillis());
                 future.completeExceptionally(e);
-                LOGGER.log(Level.WARNING, String.format("Task failed - taskId: %s, worker: %s", taskId, worker.getWorkerId()), e);
+                console.warn( String.format("Task failed - taskId: %s, worker: %s", taskId, worker.getWorkerId()), e);
             }
         });
         return withTimeout(future, taskTimeoutMs, TimeUnit.MILLISECONDS);
@@ -300,7 +287,7 @@ public class JQuickCoordinator extends JQuickConvertService{
                     // 重新选择健康的 Worker
                     worker = selectHealthyWorker();
                     taskExec.getAssignedWorker().setHealthy(false);
-                    LOGGER.info(String.format("Reassigning task due to unhealthy worker - taskId: %s, newWorker: %s", request.getTaskId(), worker.getWorkerId()));
+                    console.info(String.format("Reassigning task due to unhealthy worker - taskId: %s, newWorker: %s", request.getTaskId(), worker.getWorkerId()));
                 }
                 return doExecuteTask(request, worker);
             } catch (Exception e) {
@@ -309,7 +296,7 @@ public class JQuickCoordinator extends JQuickConvertService{
                 taskExec.incrementRetryCount();
                 if (attempt <= maxRetries) {
                     long backoffMs = Math.min(1000 * (long) Math.pow(2, attempt), 10000);
-                    LOGGER.info(String.format("Retrying task - taskId: %s, attempt: %d/%d, backoff: %dms", request.getTaskId(), attempt, maxRetries, backoffMs));
+                    console.info(String.format("Retrying task - taskId: %s, attempt: %d/%d, backoff: %dms", request.getTaskId(), attempt, maxRetries, backoffMs));
                     Thread.sleep(backoffMs);
                 }
             }
@@ -329,7 +316,7 @@ public class JQuickCoordinator extends JQuickConvertService{
      * 流式执行查询（适用于大数据量结果）
      */
     public CompletableFuture<Void> executeQueryStream(String queryId, JQuickPhysicalPlanNode physicalPlan, StreamObserver<JQuickDataChunkProto> responseObserver) {
-        LOGGER.info(String.format("Executing streaming query - queryId: %s", queryId));
+        console.info(String.format("Executing streaming query - queryId: %s", queryId));
         CompletableFuture<Void> future = new CompletableFuture<>();
         executor.submit(() -> {
             try {
@@ -342,7 +329,7 @@ public class JQuickCoordinator extends JQuickConvertService{
                 future.complete(null);
                 cleanupQuery(queryId);
             } catch (Exception e) {
-                LOGGER.log(Level.SEVERE, String.format("Streaming query failed - queryId: %s", queryId), e);
+                console.error(String.format("Streaming query failed - queryId: %s", queryId), e);
                 responseObserver.onError(e);
                 future.completeExceptionally(e);
                 cleanupQuery(queryId);
@@ -374,13 +361,13 @@ public class JQuickCoordinator extends JQuickConvertService{
 
                 @Override
                 public void onError(Throwable t) {
-                    LOGGER.log(Level.WARNING, String.format("Stream task error - taskId: %s", taskId), t);
+                    console.error(String.format("Stream task error - taskId: %s", taskId), t);
                     streamFuture.completeExceptionally(t);
                 }
 
                 @Override
                 public void onCompleted() {
-                    LOGGER.fine(String.format("Stream task completed - taskId: %s", taskId));
+                    console.info(String.format("Stream task completed - taskId: %s", taskId));
                     streamFuture.complete(null);
                 }
             });
@@ -624,7 +611,7 @@ public class JQuickCoordinator extends JQuickConvertService{
      * 取消查询
      */
     public CompletableFuture<Boolean> cancelQuery(String queryId, String reason) {
-        LOGGER.info(String.format("Cancelling query - queryId: %s, reason: %s", queryId, reason));
+        console.info(String.format("Cancelling query - queryId: %s, reason: %s", queryId, reason));
         QueryExecution execution = activeQueries.get(queryId);
         if (execution == null) {
             return CompletableFuture.completedFuture(false);
@@ -646,11 +633,11 @@ public class JQuickCoordinator extends JQuickConvertService{
                 stub.cancelTask(request, new StreamObserver<JQuickCancelQueryResponse>() {
                     @Override
                     public void onNext(JQuickCancelQueryResponse response) {
-                        LOGGER.fine(String.format("Task cancelled - queryId: %s, worker: %s, success: %s", queryId, worker.getWorkerId(), response.getSuccess()));
+                        console.info(String.format("Task cancelled - queryId: %s, worker: %s, success: %s", queryId, worker.getWorkerId(), response.getSuccess()));
                     }
                     @Override
                     public void onError(Throwable t) {
-                        LOGGER.log(Level.FINE, String.format("Cancel task error - queryId: %s", queryId), t);
+                        console.error(String.format("Cancel task error - queryId: %s", queryId), t);
                         cancelFuture.complete(null);
                     }
 
@@ -672,7 +659,7 @@ public class JQuickCoordinator extends JQuickConvertService{
      */
     private void cleanupQuery(String queryId) {
         activeQueries.remove(queryId);
-        LOGGER.fine(String.format("Cleaned up query - queryId: %s", queryId));
+        console.info(String.format("Cleaned up query - queryId: %s", queryId));
     }
 
     /**
@@ -703,7 +690,7 @@ public class JQuickCoordinator extends JQuickConvertService{
         workers.add(worker);
         workerIdMap.put(worker.getWorkerId(), worker);
         workerIndexMap.put(workers.size() - 1, worker);
-        LOGGER.info(String.format("Worker added - %s", worker));
+        console.info(String.format("Worker added - %s", worker));
     }
 
     /**
@@ -718,7 +705,7 @@ public class JQuickCoordinator extends JQuickConvertService{
             if (channel != null) {
                 channel.shutdown();
             }
-            LOGGER.info(String.format("Worker removed - %s", worker));
+            console.info(String.format("Worker removed - %s", worker));
         }
     }
 
@@ -726,7 +713,7 @@ public class JQuickCoordinator extends JQuickConvertService{
      * 关闭 Coordinator
      */
     public void shutdown() {
-        LOGGER.info("Shutting down JQuickCoordinator...");
+        console.info("Shutting down JQuickCoordinator...");
         running = false;
         // 取消所有活跃查询
         for (String queryId : new ArrayList<>(activeQueries.keySet())) {
@@ -751,7 +738,7 @@ public class JQuickCoordinator extends JQuickConvertService{
         for (ManagedChannel channel : workerChannels.values()) {
             channel.shutdown();
         }
-        LOGGER.info("JQuickCoordinator shutdown complete");
+        console.info("JQuickCoordinator shutdown complete");
     }
 
     /**
