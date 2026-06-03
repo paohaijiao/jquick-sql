@@ -121,13 +121,41 @@ public class JQuickFragmenter {
             if (agg.getStage() == JQuickHashAggregatePhysicalNode.AggregateStage.FINAL) {
                 return false;
             }
-            return !agg.getGroupKeys().isEmpty();
+            if (agg.getStage() == JQuickHashAggregatePhysicalNode.AggregateStage.PARTIAL) {
+                return true;
+            }
+            if (agg.getStage() == JQuickHashAggregatePhysicalNode.AggregateStage.SINGLE) {
+                return !agg.getGroupKeys().isEmpty();
+            }
+            return false;
         }
-        if (node instanceof JQuickFilterPhysicalNode || node instanceof JQuickProjectPhysicalNode) {
+        if (node instanceof JQuickFilterPhysicalNode ) {
             return true;
         }
-
-
+        if ( node instanceof JQuickProjectPhysicalNode) {
+            return true;
+        }
+        if (node instanceof JQuickLimitPhysicalNode) {
+            JQuickLimitPhysicalNode limit = (JQuickLimitPhysicalNode) node;
+            return true;
+        }
+        if (node instanceof JQuickTopNPhysicalNode) {
+            return true;
+        }
+        if (node instanceof JQuickSetOperationPhysicalNode) {
+            JQuickSetOperationPhysicalNode setOp = (JQuickSetOperationPhysicalNode) node;
+            switch (setOp.getOperationType()) {
+                case UNION_ALL:
+                    return true;
+                case UNION:
+                    return true;
+                case INTERSECT:
+                case EXCEPT:
+                    return true;
+                default:
+                    return false;
+            }
+        }
         return false;
     }
 
@@ -186,7 +214,6 @@ public class JQuickFragmenter {
             List<JQuickExpression> partitionKeys = extractJoinPartitionKeys(join);
             return new JQuickExchangeNode(exchangeId, JQuickExchangeType.SHUFFLE, JQuickPartitionStrategy.HASH, partitionKeys, defaultParallelism);
         }
-
         if (node instanceof JQuickHashAggregatePhysicalNode) {
             JQuickHashAggregatePhysicalNode agg = (JQuickHashAggregatePhysicalNode) node;
             List<JQuickExpression> groupKeys = agg.getGroupKeys();
@@ -195,18 +222,22 @@ public class JQuickFragmenter {
             }
             return new JQuickExchangeNode(exchangeId, JQuickExchangeType.GATHER, JQuickPartitionStrategy.REPLICATE, (List<JQuickExpression>) null, 1);
         }
-
         if (node instanceof JQuickExchangePhysicalNode) {
             JQuickExchangePhysicalNode exchange = (JQuickExchangePhysicalNode) node;
             return new JQuickExchangeNode(exchangeId, exchange.getExchangeType(), exchange.getPartitionStrategy(), exchange.getPartitionKeys(), exchange.getTargetParallelism());
         }
-
         if (node instanceof JQuickTableScanPhysicalNode) {
             return new JQuickExchangeNode(exchangeId, JQuickExchangeType.SHUFFLE, JQuickPartitionStrategy.ROUND_ROBIN, (List<JQuickExpression>) null, defaultParallelism);
         }
-
         if (node instanceof JQuickFilterPhysicalNode || node instanceof JQuickProjectPhysicalNode) {
             return new JQuickExchangeNode(exchangeId, JQuickExchangeType.SHUFFLE, JQuickPartitionStrategy.ROUND_ROBIN, (List<JQuickExpression>) null, defaultParallelism);
+        }
+        if (node instanceof JQuickLimitPhysicalNode) {
+            JQuickLimitPhysicalNode limit = (JQuickLimitPhysicalNode) node;
+            return new JQuickExchangeNode(exchangeId, JQuickExchangeType.GATHER, JQuickPartitionStrategy.REPLICATE, Collections.emptyList(), 1);
+        }
+        if (node instanceof JQuickTopNPhysicalNode) {
+            return new JQuickExchangeNode(exchangeId, JQuickExchangeType.GATHER, JQuickPartitionStrategy.REPLICATE, Collections.emptyList(), 1);
         }
         return new JQuickExchangeNode(exchangeId, JQuickExchangeType.BROADCAST, JQuickPartitionStrategy.REPLICATE, (List<JQuickExpression>) null, defaultParallelism);
     }
