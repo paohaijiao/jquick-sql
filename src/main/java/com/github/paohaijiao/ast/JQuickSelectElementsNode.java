@@ -22,7 +22,9 @@ import java.util.List;
  * selectElements : (star='*' | selectElement) (',' selectElement)*
  */
 public class JQuickSelectElementsNode implements JQuickASTNode {
+
     private final boolean isStar;
+
     private final List<JQuickSelectElementNode> selectElements;
 
     public JQuickSelectElementsNode(boolean isStar, List<JQuickSelectElementNode> selectElements) {

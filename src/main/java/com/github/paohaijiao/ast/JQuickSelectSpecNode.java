@@ -20,6 +20,7 @@ package com.github.paohaijiao.ast;
  * selectSpec : (ALL | DISTINCT)
  */
 public class JQuickSelectSpecNode implements JQuickASTNode {
+
     private final boolean distinct;
 
     public JQuickSelectSpecNode(boolean distinct) {

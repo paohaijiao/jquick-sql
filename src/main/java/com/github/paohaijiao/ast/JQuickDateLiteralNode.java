@@ -23,7 +23,9 @@ package com.github.paohaijiao.ast;
  * @since 2026/5/17
  */
 public class JQuickDateLiteralNode implements JQuickASTNode {
+
     private final String dateString;
+
     private final String format;
 
     public JQuickDateLiteralNode(String dateString, String format) {

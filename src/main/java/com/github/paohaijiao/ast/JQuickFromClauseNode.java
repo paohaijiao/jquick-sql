@@ -19,6 +19,7 @@ package com.github.paohaijiao.ast;
  * fromClause : FROM tableNameItem
  */
 public class JQuickFromClauseNode implements JQuickASTNode {
+
     private final JQuickTableNameItemNode tableNameItem;
 
     public JQuickFromClauseNode(JQuickTableNameItemNode tableNameItem) {

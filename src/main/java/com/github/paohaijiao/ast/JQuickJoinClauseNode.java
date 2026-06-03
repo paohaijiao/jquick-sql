@@ -21,9 +21,13 @@ import com.github.paohaijiao.enums.JQuickJoinType;
  * joinClause : joinType JOIN tableNameItem (ON fullColumnName '=' fullColumnName)?
  */
 public class JQuickJoinClauseNode implements JQuickASTNode {
+
     private final JQuickJoinType joinType;
+
     private final JQuickTableNameItemNode tableNameItem;
+
     private final JQuickFullColumnNameNode leftColumn;
+
     private final JQuickFullColumnNameNode rightColumn;
 
     public JQuickJoinClauseNode(JQuickJoinType joinType, JQuickTableNameItemNode tableNameItem, JQuickFullColumnNameNode leftColumn, JQuickFullColumnNameNode rightColumn) {

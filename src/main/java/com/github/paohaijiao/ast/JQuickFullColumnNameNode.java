@@ -19,7 +19,9 @@ package com.github.paohaijiao.ast;
  * fullColumnName : uid dottedId?
  */
 public class JQuickFullColumnNameNode implements JQuickASTNode {
+
     private final String uid;
+
     private final String dottedId;
 
     public JQuickFullColumnNameNode(String uid, String dottedId) {

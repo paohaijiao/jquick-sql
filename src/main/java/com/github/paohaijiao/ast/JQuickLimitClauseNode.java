@@ -21,8 +21,11 @@ package com.github.paohaijiao.ast;
  * | LIMIT limitWithOffset
  */
 public class JQuickLimitClauseNode implements JQuickASTNode {
+
     private final JQuickExpressionNode limit;
+
     private final JQuickExpressionNode offset;
+
     private final boolean hasOffset;
 
     public JQuickLimitClauseNode(JQuickExpressionNode limit) {

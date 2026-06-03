@@ -19,6 +19,7 @@ package com.github.paohaijiao.ast;
  * havingClause : HAVING filterCondition
  */
 public class JQuickHavingClauseNode implements JQuickASTNode {
+
     private final JQuickFilterConditionNode filterCondition;
 
     public JQuickHavingClauseNode(JQuickFilterConditionNode filterCondition) {

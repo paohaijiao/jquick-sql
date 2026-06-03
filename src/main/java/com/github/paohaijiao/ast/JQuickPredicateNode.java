@@ -35,34 +35,47 @@ public class JQuickPredicateNode implements JQuickASTNode {
 
     // IS NULL谓词
     private final JQuickPredicateNode isNullPredicate;
+
     private final boolean isNotNull;
 
     // 二元比较谓词
     private final JQuickPredicateNode left;
+
     private final JQuickPredicateNode right;
+
     private final ComparisonOperator comparisonOperator;
 
     // BETWEEN谓词
     private final JQuickPredicateNode betweenPredicate;
+
     private final boolean betweenNot;
+
     private final JQuickPredicateNode betweenLow;
+
     private final JQuickPredicateNode betweenHigh;
 
     // IN谓词
     private final JQuickPredicateNode inPredicate;
+
     private final boolean inNot;
+
     private final JQuickSelectStatementNode inSubquery;
+
     private final JQuickExpressionsNode inExpressions;
 
     // LIKE谓词
     private final JQuickPredicateNode likePredicate;
+
     private final boolean likeNot;
+
     private final JQuickPredicateNode likePattern;
 
     // REGEXP谓词
     private final JQuickPredicateNode regexpPredicate;
+
     private final boolean regexpNot;
-    private final JQuickPredicateNode regexpPattern;
+
+   private final JQuickPredicateNode regexpPattern;
 
     // EXISTS谓词
     private final JQuickExpressionNode existsExpression;

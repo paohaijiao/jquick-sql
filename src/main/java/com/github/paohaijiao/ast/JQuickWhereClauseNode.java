@@ -20,6 +20,7 @@ package com.github.paohaijiao.ast;
  * whereClause : WHERE filterCondition
  */
 public class JQuickWhereClauseNode implements JQuickASTNode {
+
     private final JQuickFilterConditionNode filterCondition;
 
     public JQuickWhereClauseNode(JQuickFilterConditionNode filterCondition) {

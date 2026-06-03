@@ -25,7 +25,9 @@ package com.github.paohaijiao.ast;
  * | dateLiteral
  */
 public class JQuickConstantNode implements JQuickASTNode {
+
     private final Object value;
+
     private final ConstantType type;
 
     public JQuickConstantNode(Object value, ConstantType type) {

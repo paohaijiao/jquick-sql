@@ -68,13 +68,7 @@ public class JQuickASTToLogicalPlanVisitor {
                     if (cte.getRecursivePart() != null) {
                         recursivePlan = visit(cte.getRecursivePart());
                     }
-                    JQuickLogicalPlanNode recursiveCtePlan = buildRecursiveCTEPlan(
-                            cte.getName(),
-                            cte.getColumnNames(),
-                            initialPlan,
-                            recursivePlan,
-                            cte.isUnionAll()
-                    );
+                    JQuickLogicalPlanNode recursiveCtePlan = buildRecursiveCTEPlan(cte.getName(), cte.getColumnNames(), initialPlan, recursivePlan, cte.isUnionAll());
                     recursiveCteMap.put(cte.getName(), recursiveCtePlan);
 
                 } else if (cte.getQuery() != null) {

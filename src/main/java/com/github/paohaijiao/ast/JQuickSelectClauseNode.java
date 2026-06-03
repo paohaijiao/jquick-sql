@@ -30,14 +30,23 @@ import java.util.List;
  * limitClause?
  */
 public class JQuickSelectClauseNode implements JQuickASTNode {
+
     private final JQuickSelectSpecNode selectSpec;
+
     private final JQuickSelectElementsNode selectElements;
+
     private final JQuickFromClauseNode fromClause;
+
     private final List<JQuickJoinClauseNode> joinClauses;
+
     private final JQuickWhereClauseNode whereClause;
+
     private final JQuickGroupByClauseNode groupByClause;
+
     private final JQuickHavingClauseNode havingClause;
+
     private final JQuickOrderByClauseNode orderByClause;
+
     private final JQuickLimitClauseNode limitClause;
 
     private JQuickSelectClauseNode(Builder builder) {

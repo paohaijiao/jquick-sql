@@ -19,7 +19,9 @@ package com.github.paohaijiao.ast;
  * orderByExpression : expression (ASC | DESC)?
  */
 public class JQuickOrderByExpressionNode implements JQuickASTNode {
+
     private final JQuickExpressionNode expression;
+
     private final boolean ascending;
 
     public JQuickOrderByExpressionNode(JQuickExpressionNode expression, boolean ascending) {

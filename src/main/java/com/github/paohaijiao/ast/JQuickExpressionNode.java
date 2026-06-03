@@ -23,12 +23,19 @@ package com.github.paohaijiao.ast;
  * | selectClause                                      #selectResult
  */
 public class JQuickExpressionNode implements JQuickASTNode {
+
     private final JQuickExpressionNode innerExpression;
+
     private final boolean isParen;
+
     private final boolean isNot;
+
     private final JQuickExpressionAtomNode expressionAtom;
+
     private final JQuickSelectClauseNode selectClause;
+
     private final JQuickCaseWhenNode caseWhenNode;
+
     private final ExpressionType type;
 
     // 括号表达式

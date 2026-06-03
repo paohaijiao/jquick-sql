@@ -19,6 +19,7 @@ package com.github.paohaijiao.ast;
  * functionArg : expression
  */
 public class JQuickFunctionArgNode implements JQuickASTNode {
+
     private final JQuickExpressionNode expression;
 
     public JQuickFunctionArgNode(JQuickExpressionNode expression) {

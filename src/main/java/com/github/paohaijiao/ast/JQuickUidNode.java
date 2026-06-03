@@ -19,6 +19,7 @@ package com.github.paohaijiao.ast;
  * uid : simpleId
  */
 public class JQuickUidNode implements JQuickASTNode {
+
     private final String value;
 
     public JQuickUidNode(String value) {

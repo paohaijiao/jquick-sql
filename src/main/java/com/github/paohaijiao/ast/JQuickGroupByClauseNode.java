@@ -19,6 +19,7 @@ package com.github.paohaijiao.ast;
  * groupByClause : GROUP BY expressions
  */
 public class JQuickGroupByClauseNode implements JQuickASTNode {
+
     private final JQuickExpressionsNode expressions;
 
     public JQuickGroupByClauseNode(JQuickExpressionsNode expressions) {

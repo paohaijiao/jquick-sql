@@ -19,7 +19,9 @@ package com.github.paohaijiao.ast;
  * selectElement : expression (AS? uid)?
  */
 public class JQuickSelectElementNode implements JQuickASTNode {
+
     private final JQuickExpressionNode expression;
+
     private final String alias;
 
     public JQuickSelectElementNode(JQuickExpressionNode expression, String alias) {

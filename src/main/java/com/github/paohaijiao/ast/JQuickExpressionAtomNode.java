@@ -29,16 +29,27 @@ import java.util.List;
  * | unaryOperator expressionAtom                                  #unaryExpressionAtom
  */
 public class JQuickExpressionAtomNode implements JQuickASTNode {
+
     private final JQuickConstantNode constant;
+
     private final JQuickFullColumnNameNode fullColumnName;
+
     private final JQuickFunctionCallNode functionCall;
+
     private final List<JQuickExpressionNode> nestedExpressions;
+
     private final JQuickSelectStatementNode subquery;
+
     private final JQuickExpressionAtomNode left;
+
     private final JQuickExpressionAtomNode right;
+
     private final MathOperator mathOperator;
+
     private final UnaryOperator unaryOperator;
+
     private final AtomType type;
+
     private final JQuickCaseWhenNode caseWhen;
 
     // 常量

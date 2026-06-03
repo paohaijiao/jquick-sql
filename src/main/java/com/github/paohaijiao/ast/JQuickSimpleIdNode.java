@@ -19,6 +19,7 @@ package com.github.paohaijiao.ast;
  * simpleId : IDENTIFIER
  */
 public class JQuickSimpleIdNode implements JQuickASTNode {
+
     private final String identifier;
 
     public JQuickSimpleIdNode(String identifier) {

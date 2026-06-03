@@ -21,9 +21,13 @@ package com.github.paohaijiao.ast;
  * | '(' selectExpression ')' AS uid
  */
 public class JQuickTableNameItemNode implements JQuickASTNode {
+
     private final String tableName;
+
     private final String alias;
+
     private final JQuickSelectExpressionNode subquery;
+
     private final boolean isSubquery;
 
     public JQuickTableNameItemNode(String tableName, String alias) {
