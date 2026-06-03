@@ -163,7 +163,9 @@ public class JQuickDatasetOpTest {
         JQuickSetOperationNode intersectNode = new JQuickSetOperationNode(JQuickSQLOperationType.INTERSECT, leftQuery, rightQuery);
         JQuickPhysicalPlanNode physicalPlan = generator.generate(intersectNode);
         JQuickSetOperationPhysicalNode setOpNode = (JQuickSetOperationPhysicalNode) physicalPlan;
-        System.out.println(setOpNode);
+        JQuickDistributedPlan distributedPlan= fragmenter.fragment(setOpNode);
+        fragmenter.printFragments(distributedPlan);
+        System.out.println(physicalPlan);
     }
     /**
      * 测试5：多个集合操作嵌套
@@ -183,6 +185,8 @@ public class JQuickDatasetOpTest {
         JQuickSetOperationNode innerUnion2 = new JQuickSetOperationNode(JQuickSQLOperationType.UNION, table3, table4);
         JQuickSetOperationNode outerIntersect = new JQuickSetOperationNode(JQuickSQLOperationType.INTERSECT, innerUnion, innerUnion2);
         JQuickPhysicalPlanNode physicalPlan = generator.generate(outerIntersect);
+        JQuickDistributedPlan distributedPlan= fragmenter.fragment(physicalPlan);
+        fragmenter.printFragments(distributedPlan);
         System.out.println(physicalPlan);
     }
 
