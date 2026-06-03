@@ -1,5 +1,6 @@
 package com.github.paohaijiao.fragment;
 
+import com.github.paohaijiao.console.JConsole;
 import com.github.paohaijiao.distributed.JQuickDistributedPlan;
 import com.github.paohaijiao.enums.JQuickExchangeType;
 import com.github.paohaijiao.enums.JQuickFragmentType;
@@ -22,6 +23,8 @@ import java.util.concurrent.atomic.AtomicInteger;
  * 4. 建立 Fragment 之间的数据依赖关系
  */
 public class JQuickFragmenter {
+
+    private static JConsole console=JConsole.initConsoleEnvironment();
 
     private final int defaultParallelism;
 
@@ -83,7 +86,7 @@ public class JQuickFragmenter {
         nodeToFragment.put(node, fragment);
         List<JQuickPhysicalPlanNode> children = getChildren(node);
         if (shouldCreateNewFragment(node)) {
-            createNewFragmentForNode(node, fragment, children, visited);
+            createNewFragmentForNode(node, fragment, children, visited);//将一个大查询拆解成多个可以独立并行执行的小任务单元
             return;
         }
         for (JQuickPhysicalPlanNode child : children) {
@@ -142,11 +145,15 @@ public class JQuickFragmenter {
      * 为节点创建新的 Fragment
      */
     private void createNewFragmentForNode(JQuickPhysicalPlanNode node, JQuickFragment parentFragment, List<JQuickPhysicalPlanNode> children, Set<JQuickPhysicalPlanNode> visited) {
+        console.info("=== Creating new fragment for node: " + node.getNodeType());
         JQuickFragment newFragment = createFragment(JQuickFragmentType.INTERMEDIATE, node, defaultParallelism);
         JQuickExchangeNode outputExchange = createOutputExchange(node);
         newFragment.setOutput(outputExchange);
+        console.info("Created output exchange: " + outputExchange);
         JQuickExchangeNode inputExchange = createInputExchange(outputExchange);
         parentFragment.addInput(inputExchange);
+        console.info("Created input exchange: " + inputExchange);
+        console.info("Parent fragment " + parentFragment.getFragmentId() + " now has " + parentFragment.getInputs().size() + " inputs");
         parentFragment.addChild(newFragment);
         nodeToFragment.put(node, newFragment);
         JQuickFragment savedFragment = currentFragment;
@@ -183,20 +190,21 @@ public class JQuickFragmenter {
         String exchangeId = "exchange_" + exchangeIdGenerator.incrementAndGet();
         if (node instanceof JQuickHashJoinPhysicalNode) {
             JQuickHashJoinPhysicalNode join = (JQuickHashJoinPhysicalNode) node;
-            List<JQuickExpression> partitionKeys = extractJoinPartitionKeys(join);
+            List<JQuickExpression> partitionKeys = extractJoinPartitionKeys(join);//让相同的 join key 落到同一个节点
+            // 按 join key 进行哈希分区
             return new JQuickExchangeNode(exchangeId, JQuickExchangeType.SHUFFLE, JQuickPartitionStrategy.HASH, partitionKeys, defaultParallelism);
         }
-
         if (node instanceof JQuickHashAggregatePhysicalNode) {
             JQuickHashAggregatePhysicalNode agg = (JQuickHashAggregatePhysicalNode) node;
             List<JQuickExpression> groupKeys = agg.getGroupKeys();
-            if (!groupKeys.isEmpty()) {
+            if (!groupKeys.isEmpty()) {//无 GROUP BY：全局聚合只需要一个结果，所以 GATHER 到一个节点
                 return new JQuickExchangeNode(exchangeId, JQuickExchangeType.SHUFFLE, JQuickPartitionStrategy.HASH, groupKeys, defaultParallelism);
             }
+            //有 GROUP BY：需要相同分组键的数据在一起，所以按分组键 HASH 分发
             return new JQuickExchangeNode(exchangeId, JQuickExchangeType.GATHER, JQuickPartitionStrategy.REPLICATE, (List<JQuickExpression>) null, 1);
         }
 
-        if (node instanceof JQuickExchangePhysicalNode) {
+        if (node instanceof JQuickExchangePhysicalNode) {    // 透传用户指定的策略
             JQuickExchangePhysicalNode exchange = (JQuickExchangePhysicalNode) node;
             return new JQuickExchangeNode(exchangeId, exchange.getExchangeType(), exchange.getPartitionStrategy(), exchange.getPartitionKeys(), exchange.getTargetParallelism());
         }
@@ -206,7 +214,8 @@ public class JQuickFragmenter {
         }
 
         if (node instanceof JQuickFilterPhysicalNode || node instanceof JQuickProjectPhysicalNode) {
-            return new JQuickExchangeNode(exchangeId, JQuickExchangeType.SHUFFLE, JQuickPartitionStrategy.ROUND_ROBIN, (List<JQuickExpression>) null, defaultParallelism);
+            console.info("Creating output exchange for Filter node");
+            return new JQuickExchangeNode(exchangeId, JQuickExchangeType.GATHER, JQuickPartitionStrategy.REPLICATE, (List<JQuickExpression>) null, 1);
         }
         return new JQuickExchangeNode(exchangeId, JQuickExchangeType.BROADCAST, JQuickPartitionStrategy.REPLICATE, (List<JQuickExpression>) null, defaultParallelism);
     }
@@ -281,7 +290,7 @@ public class JQuickFragmenter {
         printFragment(root, 0);
     }
 
-    private void printFragment(JQuickFragment fragment, int depth) {
+    public void printFragment(JQuickFragment fragment, int depth) {
         StringBuilder indent = new StringBuilder();
         for (int i = 0; i < depth; i++) {
             indent.append("  ");

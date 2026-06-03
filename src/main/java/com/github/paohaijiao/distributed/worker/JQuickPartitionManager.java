@@ -15,6 +15,7 @@
  */
 package com.github.paohaijiao.distributed.worker;
 
+import com.github.paohaijiao.console.JConsole;
 import com.github.paohaijiao.enums.JQuickExchangeType;
 import com.github.paohaijiao.enums.JQuickPartitionStrategy;
 import com.github.paohaijiao.expression.JQuickExpression;
@@ -37,6 +38,8 @@ import java.util.concurrent.TimeUnit;
  * 分区管理服务 - 处理数据分区和分发
  */
 public class JQuickPartitionManager {
+
+    private JConsole console=JConsole.initConsoleEnvironment();
 
     /**
      * 数据分区逻辑
@@ -149,13 +152,23 @@ public class JQuickPartitionManager {
      * 发送数据到目标 Worker
      */
     public void sendToWorker(JQuickWorker.JQuickMemoryPartition partition, int targetParallelism, JQuickExchangeType exchangeType, JQuickWorker worker) {
+        console.info("=== sendToWorker Debug ===");
+        console.info("Partition index: " + partition.getIndex());
+        console.info("Target parallelism: " + targetParallelism);
+        console.info("Exchange type: " + exchangeType);
+        console.info("Partition data size: " + partition.getData().size());
         if (exchangeType == JQuickExchangeType.GATHER) {
+            console.info("Using GATHER, sending to worker 0");
             sendToSingleWorker(partition, 0, worker);
         } else if (exchangeType == JQuickExchangeType.BROADCAST) {
+            console.info("Using BROADCAST, sending to all workers");
             sendToAllWorkers(partition, worker);
-        } else {
+        }else if (exchangeType == JQuickExchangeType.SHUFFLE) {
             int targetWorkerId = partition.getIndex() % targetParallelism;
+            console.info("Using SHUFFLE, target worker: " + targetWorkerId);
             sendToSingleWorker(partition, targetWorkerId, worker);
+        } else {
+            console.info("Unknown exchange type: " + exchangeType);
         }
     }
 
