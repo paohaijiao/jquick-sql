@@ -1,5 +1,6 @@
 package com.github.paohaijiao.distributed.worker;
 
+import com.github.paohaijiao.console.JConsole;
 import com.github.paohaijiao.datasource.JQuickDataSourceManager;
 import com.github.paohaijiao.enums.JQuickBinaryOperator;
 import com.github.paohaijiao.enums.JQuickExchangeType;
@@ -24,6 +25,8 @@ import java.util.stream.Collectors;
  * 节点执行服务 - 负责执行各种物理计划节点
  */
 public class JQuickNodeExecutor {
+
+    private JConsole console=JConsole.initConsoleEnvironment();
 
     private final JQuickWorker worker;
 
@@ -433,9 +436,20 @@ public class JQuickNodeExecutor {
      */
     private JQuickDataSet executeExchange(JQuickExchangePhysicalNode node, JQuickWorker.JQuickTaskContext context) {
         JQuickDataSet input = executeNode(node.getChild(), context);
+        console.info("=== Exchange Debug ===");
+        console.info("Input data rows: " + input.size());
+        console.info("Exchange type: " + node.getExchangeType());
+        console.info("Target parallelism: " + node.getTargetParallelism());
+        console.info("Partition strategy: " + node.getPartitionStrategy());
         List<JQuickWorker.JQuickMemoryPartition> partitions = partitionManager.partitionData(input, node, expressionEvaluator, node.getTargetParallelism());
+        console.info("Created " + partitions.size() + " partitions");
+        for (int i = 0; i < partitions.size(); i++) {
+            JQuickWorker.JQuickMemoryPartition partition = partitions.get(i);
+            console.info("Partition " + i + ": " + partition.getData().size() + " rows");
+        }
         for (JQuickWorker.JQuickMemoryPartition partition : partitions) {
             partitionManager.sendToWorker(partition, node.getTargetParallelism(), node.getExchangeType(), worker);
+            console.info("Sent partition " + partition.getIndex() + " to worker");
         }
 
         return JQuickDataSet.builder().build();

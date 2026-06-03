@@ -47,9 +47,7 @@ public class JQuickConvertService {
      * 转换 TableScan 节点
      */
     protected JQuickTableScanNodeProto convertTableScanToProto(JQuickTableScanPhysicalNode node) {
-        JQuickTableScanNodeProto.Builder builder = JQuickTableScanNodeProto.newBuilder()
-                .setTableName(node.getTableName())
-                .setAlias(node.getAlias() != null ? node.getAlias() : "");
+        JQuickTableScanNodeProto.Builder builder = JQuickTableScanNodeProto.newBuilder().setTableName(node.getTableName()).setAlias(node.getAlias() != null ? node.getAlias() : "");
         if (node.getRequiredColumns() != null) {
             builder.addAllRequiredColumns(node.getRequiredColumns());
         }
@@ -66,9 +64,7 @@ public class JQuickConvertService {
      * 转换 Filter 节点
      */
     protected JQuickFilterNodeProto convertFilterToProto(JQuickFilterPhysicalNode node) {
-        return JQuickFilterNodeProto.newBuilder()
-                .setPredicate(convertExpressionToProto(node.getPredicate()))
-                .build();
+        return JQuickFilterNodeProto.newBuilder().setPredicate(convertExpressionToProto(node.getPredicate())).build();
     }
 
     /**
@@ -83,7 +79,6 @@ public class JQuickConvertService {
             }
             builder.addSelectItems(itemBuilder.build());
         }
-
         return builder.build();
     }
 
@@ -91,10 +86,7 @@ public class JQuickConvertService {
      * 转换 HashJoin 节点
      */
     protected JQuickHashJoinNodeProto convertHashJoinToProto(JQuickHashJoinPhysicalNode node) {
-        JQuickHashJoinNodeProto.Builder builder = JQuickHashJoinNodeProto.newBuilder()
-                .setJoinType(convertJoinTypeToProto(node.getJoinType()))
-                .setBuildSide(convertBuildSideToProto(node.getBuildSide()))
-                .setDistribution(convertJoinDistributionToProto(node.getDistribution()));
+        JQuickHashJoinNodeProto.Builder builder = JQuickHashJoinNodeProto.newBuilder().setJoinType(convertJoinTypeToProto(node.getJoinType())).setBuildSide(convertBuildSideToProto(node.getBuildSide())).setDistribution(convertJoinDistributionToProto(node.getDistribution()));
         if (node.getCondition() != null) {
             builder.setCondition(convertExpressionToProto(node.getCondition()));
         }

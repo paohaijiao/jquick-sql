@@ -1,5 +1,6 @@
 package com.github.paohaijiao.distributed.worker;
 
+import com.github.paohaijiao.console.JConsole;
 import com.github.paohaijiao.enums.JQuickExchangeType;
 import com.github.paohaijiao.function.manager.JQuickMethodInvocationManager;
 import com.github.paohaijiao.proto.*;
@@ -23,6 +24,8 @@ import java.util.concurrent.Executors;
  * Worker 节点 - 执行物理计划片段
  */
 public class JQuickWorker {
+
+    private static JConsole console=JConsole.initConsoleEnvironment();
 
     private final String workerId;
 
@@ -202,6 +205,11 @@ public class JQuickWorker {
     }
 
     private void sendOutputPartition(JQuickDataSet result, JQuickMemoryPartitionProto outputPartition) {
+        console.info("=== sendOutputPartition Debug ===");
+        console.info("Result rows: " + result.size());
+        console.info("Output partition: " + outputPartition.getPartitionId());
+        console.info("Partition index: " + outputPartition.getPartitionIndex());
+        console.info("Total partitions: " + outputPartition.getTotalPartitions());
         JQuickMemoryPartition partition = new JQuickMemoryPartition(outputPartition.getPartitionIndex(), outputPartition.getTotalPartitions());
         partition.setData(result);
         partitionManager.sendToWorker(partition, 1, JQuickExchangeType.GATHER, this);

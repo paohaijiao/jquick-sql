@@ -15,7 +15,9 @@
  */
 package com.github.paohaijiao.distributed;
 
+import com.github.paohaijiao.console.JConsole;
 import com.github.paohaijiao.enums.JQuickFragmentType;
+import com.github.paohaijiao.exchange.JQuickExchangeNode;
 import com.github.paohaijiao.fragment.JQuickFragment;
 
 import java.util.*;
@@ -24,6 +26,8 @@ import java.util.*;
  * 分布式执行计划
  */
 public class JQuickDistributedPlan {
+
+    private static JConsole console=JConsole.initConsoleEnvironment();
 
     private final JQuickFragment rootFragment;
 

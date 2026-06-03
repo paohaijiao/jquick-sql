@@ -69,7 +69,6 @@ public class JQuickCoordinatorTest {
             JQuickWorker worker = new JQuickWorker(workerId, port);
             worker.start();
             workers.add(worker);
-
             endpoints.add(new WorkerEndpoint(workerId, "localhost", port, i));
         }
         coordinator = new JQuickCoordinator("coordinator_test", endpoints);
