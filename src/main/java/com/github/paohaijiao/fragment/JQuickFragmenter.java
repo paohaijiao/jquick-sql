@@ -119,6 +119,9 @@ public class JQuickFragmenter {
         if (node instanceof JQuickNestedLoopJoinPhysicalNode) {
             return true;
         }
+        if (node instanceof JQuickFilterPhysicalNode || node instanceof JQuickProjectPhysicalNode) {
+            return true;
+        }
         if (node instanceof JQuickHashAggregatePhysicalNode) {
             JQuickHashAggregatePhysicalNode agg = (JQuickHashAggregatePhysicalNode) node;
             if (agg.getStage() == JQuickHashAggregatePhysicalNode.AggregateStage.FINAL) {
@@ -126,11 +129,6 @@ public class JQuickFragmenter {
             }
             return !agg.getGroupKeys().isEmpty();
         }
-        if (node instanceof JQuickFilterPhysicalNode || node instanceof JQuickProjectPhysicalNode) {
-            return true;
-        }
-
-
         return false;
     }
 

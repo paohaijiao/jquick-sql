@@ -19,6 +19,8 @@ package com.github.paohaijiao.fragment;
 import com.github.paohaijiao.enums.JQuickFragmentType;
 import com.github.paohaijiao.exchange.JQuickExchangeNode;
 import com.github.paohaijiao.physical.JQuickPhysicalPlanNode;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -92,10 +94,5 @@ public class JQuickFragment {
     public int getParallelism() { return parallelism; }
 
     public String getAssignedHost() { return assignedHost; }
-
-    @Override
-    public String toString() {
-        return String.format("Fragment{id=%d, type=%s, parallelism=%d}", fragmentId, type, parallelism);
-    }
 }
 

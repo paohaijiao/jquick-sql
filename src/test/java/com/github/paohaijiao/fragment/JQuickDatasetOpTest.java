@@ -117,7 +117,7 @@ public class JQuickDatasetOpTest {
         JQuickSetOperationNode unionNode = new JQuickSetOperationNode(JQuickSQLOperationType.UNION, leftQuery, rightQuery);
         JQuickPhysicalPlanNode physicalPlan = generator.generate(unionNode);
         JQuickDistributedPlan distributedPlan= fragmenter.fragment(physicalPlan);
-        distributedPlan.printPlan();
+//        distributedPlan.printPlan();
         fragmenter.printFragments(distributedPlan);
         System.out.println("=== UNION操作测试通过 ===");
         System.out.println("物理计划结构: SetOperation(UNION) -> Project, Project");
@@ -144,6 +144,8 @@ public class JQuickDatasetOpTest {
         JQuickProjectNode rightQueryModified = new JQuickProjectNode(rightQuery.getSelectItems(), newRightFilter, rightQuery.isDistinct());
         JQuickSetOperationNode unionAllNode = new JQuickSetOperationNode(JQuickSQLOperationType.UNION_ALL, leftQueryModified, rightQueryModified);
         JQuickPhysicalPlanNode physicalPlan = generator.generate(unionAllNode);
+        JQuickDistributedPlan distributedPlan= fragmenter.fragment(physicalPlan);
+        fragmenter.printFragments(distributedPlan);
         System.out.println(physicalPlan);
     }
     /**
