@@ -59,11 +59,7 @@ public class JQuickPhysicalPlanServiceImpl extends JQuickPhysicalPlanServiceGrpc
             responseObserver.onCompleted();
         } catch (Exception e) {
             console.error( String.format("Task execution failed - taskId: %s", taskId), e);
-            JQuickExecuteTaskResponse errorResponse = JQuickExecuteTaskResponse.newBuilder()
-                    .setTaskId(taskId)
-                    .setStatus(JQuickTaskStatusProto.TASK_FAILED)
-                    .setErrorMessage(e.getMessage())
-                    .build();
+            JQuickExecuteTaskResponse errorResponse = JQuickExecuteTaskResponse.newBuilder().setTaskId(taskId).setStatus(JQuickTaskStatusProto.TASK_FAILED).setErrorMessage(e.getMessage()).build();
             responseObserver.onNext(errorResponse);
             responseObserver.onCompleted();
         }

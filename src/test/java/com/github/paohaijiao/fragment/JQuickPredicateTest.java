@@ -2,6 +2,7 @@ package com.github.paohaijiao.fragment;
 
 import com.github.paohaijiao.ast.*;
 import com.github.paohaijiao.ast2logic.JQuickASTToLogicalPlanVisitor;
+import com.github.paohaijiao.distributed.JQuickDistributedPlan;
 import com.github.paohaijiao.logic.JQuickLogicalPlanNode;
 import com.github.paohaijiao.logic2physical.JQuickPhysicalPlanGenerator;
 import com.github.paohaijiao.physical.JQuickPhysicalPlanNode;
@@ -17,7 +18,12 @@ import static org.junit.Assert.assertTrue;
 public class JQuickPredicateTest {
 
     private final JQuickASTToLogicalPlanVisitor visitor = new JQuickASTToLogicalPlanVisitor();
+
     private JQuickPhysicalPlanGenerator generator= new JQuickPhysicalPlanGenerator();
+
+    private JQuickFragmenter fragmenter = new JQuickFragmenter(4);
+
+    private JQuickFragmenter verboseFragmenter = new JQuickFragmenter(8);
 
     /**
      * 创建 FROM 子句
@@ -106,6 +112,8 @@ public class JQuickPredicateTest {
         assertTrue(isFilterNodePresent(plan));
         JQuickPhysicalPlanNode planNode= generator.generate(plan);
         System.out.println(planNode);
+        JQuickDistributedPlan distributedPlan= fragmenter.fragment(planNode);
+        fragmenter.printFragments(distributedPlan);
     }
     /**
      * 测试 IS NOT NULL 谓词
@@ -122,6 +130,8 @@ public class JQuickPredicateTest {
         assertTrue(isFilterNodePresent(plan));
         JQuickPhysicalPlanNode planNode= generator.generate(plan);
         System.out.println(planNode);
+        JQuickDistributedPlan distributedPlan= fragmenter.fragment(planNode);
+        fragmenter.printFragments(distributedPlan);
     }
     /**
      * 测试大于 (>) 比较谓词
@@ -138,6 +148,8 @@ public class JQuickPredicateTest {
         assertTrue(isFilterNodePresent(plan));
         JQuickPhysicalPlanNode planNode= generator.generate(plan);
         System.out.println(planNode);
+        JQuickDistributedPlan distributedPlan= fragmenter.fragment(planNode);
+        fragmenter.printFragments(distributedPlan);
     }
     /**
      * 测试 BETWEEN 谓词
@@ -159,6 +171,8 @@ public class JQuickPredicateTest {
         assertTrue(isFilterNodePresent(plan));
         JQuickPhysicalPlanNode planNode= generator.generate(plan);
         System.out.println(planNode);
+        JQuickDistributedPlan distributedPlan= fragmenter.fragment(planNode);
+        fragmenter.printFragments(distributedPlan);
     }
     /**
      * 测试 NOT BETWEEN 谓词
@@ -180,6 +194,9 @@ public class JQuickPredicateTest {
         assertTrue(isFilterNodePresent(plan));
         JQuickPhysicalPlanNode planNode= generator.generate(plan);
         System.out.println(planNode);
+        JQuickDistributedPlan distributedPlan= fragmenter.fragment(planNode);
+        fragmenter.printFragments(distributedPlan);
+
     }
     /**
      * 测试 IN 谓词（值列表）
@@ -204,6 +221,8 @@ public class JQuickPredicateTest {
         assertTrue(isFilterNodePresent(plan));
         JQuickPhysicalPlanNode planNode= generator.generate(plan);
         System.out.println(planNode);
+        JQuickDistributedPlan distributedPlan= fragmenter.fragment(planNode);
+        fragmenter.printFragments(distributedPlan);
     }
 
     /**
@@ -228,6 +247,8 @@ public class JQuickPredicateTest {
         assertTrue(isFilterNodePresent(plan));
         JQuickPhysicalPlanNode planNode= generator.generate(plan);
         System.out.println(planNode);
+        JQuickDistributedPlan distributedPlan= fragmenter.fragment(planNode);
+        fragmenter.printFragments(distributedPlan);
     }
     /**
      * 测试 LIKE 谓词
@@ -244,6 +265,8 @@ public class JQuickPredicateTest {
         assertTrue(isFilterNodePresent(plan));
         JQuickPhysicalPlanNode planNode= generator.generate(plan);
         System.out.println(planNode);
+        JQuickDistributedPlan distributedPlan= fragmenter.fragment(planNode);
+        fragmenter.printFragments(distributedPlan);
     }
     /**
      * 测试 LIKE 谓词
@@ -260,6 +283,8 @@ public class JQuickPredicateTest {
         assertTrue(isFilterNodePresent(plan));
         JQuickPhysicalPlanNode planNode= generator.generate(plan);
         System.out.println(planNode);
+        JQuickDistributedPlan distributedPlan= fragmenter.fragment(planNode);
+        fragmenter.printFragments(distributedPlan);
     }
     /**
      * 测试 REGEXP  谓词
@@ -276,6 +301,8 @@ public class JQuickPredicateTest {
         assertTrue(isFilterNodePresent(plan));
         JQuickPhysicalPlanNode planNode= generator.generate(plan);
         System.out.println(planNode);
+        JQuickDistributedPlan distributedPlan= fragmenter.fragment(planNode);
+        fragmenter.printFragments(distributedPlan);
     }
     /**
      * 测试 LIKE 谓词
@@ -292,6 +319,8 @@ public class JQuickPredicateTest {
         assertTrue(isFilterNodePresent(plan));
         JQuickPhysicalPlanNode planNode= generator.generate(plan);
         System.out.println(planNode);
+        JQuickDistributedPlan distributedPlan= fragmenter.fragment(planNode);
+        fragmenter.printFragments(distributedPlan);
     }
     /**
      * 测试 EXISTS 谓词
@@ -334,6 +363,8 @@ public class JQuickPredicateTest {
         assertNotNull(plan);
         JQuickPhysicalPlanNode planNode= generator.generate(plan);
         System.out.println(planNode);
+        JQuickDistributedPlan distributedPlan= fragmenter.fragment(planNode);
+        fragmenter.printFragments(distributedPlan);
     }
 
 

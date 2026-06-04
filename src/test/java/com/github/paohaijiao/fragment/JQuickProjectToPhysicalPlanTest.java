@@ -15,6 +15,7 @@
  */
 package com.github.paohaijiao.fragment;
 
+import com.github.paohaijiao.distributed.JQuickDistributedPlan;
 import com.github.paohaijiao.enums.JQuickBinaryOperator;
 import com.github.paohaijiao.expression.JQuickExpression;
 import com.github.paohaijiao.expression.domain.*;
@@ -41,10 +42,14 @@ import static org.junit.Assert.assertNotNull;
 public class JQuickProjectToPhysicalPlanTest {
 
     private JQuickPhysicalPlanGenerator generator;
+    private JQuickFragmenter fragmenter;
+    private JQuickFragmenter verboseFragmenter;
 
     @Before
     public void setUp() {
         generator = new JQuickPhysicalPlanGenerator();
+        fragmenter = new JQuickFragmenter(4);
+        verboseFragmenter = new JQuickFragmenter(8);
     }
     /**
      * 创建表扫描节点
@@ -163,6 +168,8 @@ public class JQuickProjectToPhysicalPlanTest {
         JQuickProjectNode projectNode = createSimpleProject(usersScan, "id", "name", "age");
         JQuickPhysicalPlanNode physicalPlan = generator.generate(projectNode);
         System.out.println(physicalPlan);
+        JQuickDistributedPlan distributedPlan= fragmenter.fragment(physicalPlan);
+        fragmenter.printFragments(distributedPlan);
     }
     /**
      * 测试3：表达式投影（算术运算）
@@ -179,6 +186,8 @@ public class JQuickProjectToPhysicalPlanTest {
         JQuickProjectNode projectNode = new JQuickProjectNode(items, employeesScan);
         JQuickPhysicalPlanNode physicalPlan = generator.generate(projectNode);
         assertNotNull(physicalPlan);
+        JQuickDistributedPlan distributedPlan= fragmenter.fragment(physicalPlan);
+        fragmenter.printFragments(distributedPlan);
     }
     /**
      * 测试5：函数调用投影
@@ -197,6 +206,8 @@ public class JQuickProjectToPhysicalPlanTest {
         JQuickProjectNode projectNode = new JQuickProjectNode(items, usersScan);
         JQuickPhysicalPlanNode physicalPlan = generator.generate(projectNode);
         assertNotNull(physicalPlan);
+        JQuickDistributedPlan distributedPlan= fragmenter.fragment(physicalPlan);
+        fragmenter.printFragments(distributedPlan);
     }
     /**
      *
@@ -216,6 +227,8 @@ public class JQuickProjectToPhysicalPlanTest {
         JQuickProjectNode projectNode = new JQuickProjectNode(items, joinNode);
         JQuickPhysicalPlanNode physicalPlan = generator.generate(projectNode);
         assertNotNull(physicalPlan);
+        JQuickDistributedPlan distributedPlan= fragmenter.fragment(physicalPlan);
+        fragmenter.printFragments(distributedPlan);
     }
     /**
      * 测试11：多层嵌套投影
@@ -231,6 +244,8 @@ public class JQuickProjectToPhysicalPlanTest {
         JQuickPhysicalPlanNode physicalPlan = generator.generate(innerProject);
         assertNotNull(physicalPlan);
         assertEquals("Project", physicalPlan.getNodeType());
+        JQuickDistributedPlan distributedPlan= fragmenter.fragment(physicalPlan);
+        fragmenter.printFragments(distributedPlan);
     }
     /**
      *
@@ -245,6 +260,8 @@ public class JQuickProjectToPhysicalPlanTest {
         JQuickSortNode sortNode = new JQuickSortNode(orderByItems, projectNode);
         JQuickPhysicalPlanNode physicalPlan = generator.generate(sortNode);
         assertNotNull(physicalPlan);
+        JQuickDistributedPlan distributedPlan= fragmenter.fragment(physicalPlan);
+        fragmenter.printFragments(distributedPlan);
     }
     /***
      * SQL示例：SELECT id, name FROM users LIMIT 10
@@ -256,6 +273,8 @@ public class JQuickProjectToPhysicalPlanTest {
         JQuickLimitNode limitNode = new JQuickLimitNode(10, projectNode);
         JQuickPhysicalPlanNode physicalPlan = generator.generate(limitNode);
         assertNotNull(physicalPlan);
+        JQuickDistributedPlan distributedPlan= fragmenter.fragment(physicalPlan);
+        fragmenter.printFragments(distributedPlan);
     }
     /**
      * 测试16：CASE WHEN 表达式投影
@@ -274,6 +293,8 @@ public class JQuickProjectToPhysicalPlanTest {
         JQuickPhysicalPlanNode physicalPlan = generator.generate(projectNode);
         assertNotNull(physicalPlan);
         assertEquals("Project", physicalPlan.getNodeType());
+        JQuickDistributedPlan distributedPlan= fragmenter.fragment(physicalPlan);
+        fragmenter.printFragments(distributedPlan);
     }
 
     /**
@@ -297,6 +318,8 @@ public class JQuickProjectToPhysicalPlanTest {
         assertNotNull(physicalPlan);
         System.out.println("=== 字符串拼接投影测试通过 ===");
         System.out.println("表达式: CONCAT(first_name, ' ', last_name) AS full_name");
+        JQuickDistributedPlan distributedPlan= fragmenter.fragment(physicalPlan);
+        fragmenter.printFragments(distributedPlan);
     }
     /**
     **
@@ -312,8 +335,8 @@ public class JQuickProjectToPhysicalPlanTest {
         JQuickGroupByNode groupByNode = new JQuickGroupByNode(groupKeys, aggregates, salesScan, havingCondition);
         JQuickPhysicalPlanNode physicalPlan = generator.generate(groupByNode);
         assertNotNull(physicalPlan);
-        JQuickHashAggregatePhysicalNode aggNode = (JQuickHashAggregatePhysicalNode) physicalPlan;
-        System.out.println(physicalPlan);
+        JQuickDistributedPlan distributedPlan= fragmenter.fragment(physicalPlan);
+        fragmenter.printFragments(distributedPlan);
 
     }
 

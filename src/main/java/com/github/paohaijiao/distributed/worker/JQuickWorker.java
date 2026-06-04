@@ -42,7 +42,6 @@ public class JQuickWorker {
     private final Map<Integer, JQuickDataDistributionServiceGrpc.JQuickDataDistributionServiceStub> distributionStubs;
 
     private final JQuickMethodInvocationManager functionManager;
-    // 服务组件
 
     private final JQuickExpressionEvaluator expressionEvaluator;
 
@@ -226,8 +225,8 @@ public class JQuickWorker {
                 .addService(distributionService)
                 .build()
                 .start();
-        System.out.println("Worker " + workerId + " started on port " + port);
-        System.out.println("Loaded " + functionManager.getAllInvokers().size() + " functions via SPI");
+        console.info("Worker " + workerId + " started on port " + port);
+        console.info("Loaded " + functionManager.getAllInvokers().size() + " functions via SPI");
     }
 
     /**
@@ -244,7 +243,7 @@ public class JQuickWorker {
         if (distributionService != null) {
             distributionService.shutdown();
         }
-        System.out.println("Worker " + workerId + " stopped");
+        console.info("Worker " + workerId + " stopped");
     }
 
     /**
@@ -260,11 +259,14 @@ public class JQuickWorker {
      * 内存分区内部类
      */
     static class JQuickMemoryPartition {
-        private final int index;
-        private final int total;
-        private JQuickDataSet data;
-        private int chunkIndex;
 
+        private final int index;
+
+        private final int total;
+
+        private JQuickDataSet data;
+
+        private int chunkIndex;
         JQuickMemoryPartition(int index, int total) {
             this.index = index;
             this.total = total;

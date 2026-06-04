@@ -15,6 +15,7 @@
  */
 package com.github.paohaijiao.fragment;
 
+import com.github.paohaijiao.distributed.JQuickDistributedPlan;
 import com.github.paohaijiao.logic.domain.JQuickTableScanNode;
 import com.github.paohaijiao.logic2physical.JQuickPhysicalPlanGenerator;
 import com.github.paohaijiao.physical.JQuickPhysicalPlanNode;
@@ -33,10 +34,13 @@ import static org.junit.Assert.*;
  */
 public class JQuickPhysicalPlanTest {
     private JQuickPhysicalPlanGenerator generator;
-
+    private JQuickFragmenter fragmenter;
+    private JQuickFragmenter verboseFragmenter;
     @Before
     public void setUp() {
         generator = new JQuickPhysicalPlanGenerator();
+        fragmenter = new JQuickFragmenter(4);
+        verboseFragmenter = new JQuickFragmenter(8);
     }
     @Test
     public void testTableScanConversion() {
@@ -48,5 +52,7 @@ public class JQuickPhysicalPlanTest {
         JQuickTableScanPhysicalNode scanNode = (JQuickTableScanPhysicalNode) physicalPlan;
         assertEquals("users", scanNode.getTableName());
         assertEquals("u", scanNode.getAlias());
+        JQuickDistributedPlan distributedPlan= fragmenter.fragment(scanNode);
+        fragmenter.printFragments(distributedPlan);
     }
 }

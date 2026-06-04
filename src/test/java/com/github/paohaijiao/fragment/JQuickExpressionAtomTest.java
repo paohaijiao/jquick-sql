@@ -2,6 +2,7 @@ package com.github.paohaijiao.fragment;
 
 import com.github.paohaijiao.ast.*;
 import com.github.paohaijiao.ast2logic.JQuickASTToLogicalPlanVisitor;
+import com.github.paohaijiao.distributed.JQuickDistributedPlan;
 import com.github.paohaijiao.logic.JQuickLogicalPlanNode;
 import com.github.paohaijiao.logic2physical.JQuickPhysicalPlanGenerator;
 import com.github.paohaijiao.physical.JQuickPhysicalPlanNode;
@@ -19,11 +20,15 @@ public class JQuickExpressionAtomTest {
     private JQuickASTToLogicalPlanVisitor visitor;
 
     private JQuickPhysicalPlanGenerator generator= new JQuickPhysicalPlanGenerator();
+    private JQuickFragmenter fragmenter;
+    private JQuickFragmenter verboseFragmenter;
 
 
     @Before
     public void setUp() {
         visitor = new JQuickASTToLogicalPlanVisitor();
+        fragmenter = new JQuickFragmenter(4);
+        verboseFragmenter = new JQuickFragmenter(8);
     }
     /**
      * 创建 FROM 子句
@@ -91,7 +96,9 @@ public class JQuickExpressionAtomTest {
         JQuickLogicalPlanNode plan = visitor.visit(selectClause);
         assertNotNull(plan);
         JQuickPhysicalPlanNode planNode= generator.generate(plan);
-        System.out.println(planNode);
+        JQuickDistributedPlan distributedPlan= fragmenter.fragment(planNode);
+//        distributedPlan.printPlan();
+        fragmenter.printFragments(distributedPlan);
     }
 
     /**
@@ -109,7 +116,9 @@ public class JQuickExpressionAtomTest {
         JQuickLogicalPlanNode plan = visitor.visit(selectClause);
         assertNotNull(plan);
         JQuickPhysicalPlanNode planNode= generator.generate(plan);
-        System.out.println(planNode);
+        JQuickDistributedPlan distributedPlan= fragmenter.fragment(planNode);
+//        distributedPlan.printPlan();
+        fragmenter.printFragments(distributedPlan);
     }
     /**
      * 测试函数调用
@@ -127,7 +136,9 @@ public class JQuickExpressionAtomTest {
         JQuickLogicalPlanNode plan = visitor.visit(selectClause);
         assertNotNull(plan);
         JQuickPhysicalPlanNode planNode= generator.generate(plan);
-        System.out.println(planNode);
+        JQuickDistributedPlan distributedPlan= fragmenter.fragment(planNode);
+//        distributedPlan.printPlan();
+        fragmenter.printFragments(distributedPlan);
     }
     /**
      * 测试多层嵌套表达式
@@ -160,6 +171,9 @@ public class JQuickExpressionAtomTest {
         assertNotNull(plan);
         JQuickPhysicalPlanNode planNode= generator.generate(plan);
         System.out.println(planNode);
+        JQuickDistributedPlan distributedPlan= fragmenter.fragment(planNode);
+//        distributedPlan.printPlan();
+        fragmenter.printFragments(distributedPlan);
     }
 
     /**
@@ -193,6 +207,9 @@ public class JQuickExpressionAtomTest {
         assertNotNull(plan);
         JQuickPhysicalPlanNode planNode= generator.generate(plan);
         System.out.println(planNode);
+        JQuickDistributedPlan distributedPlan= fragmenter.fragment(planNode);
+//        distributedPlan.printPlan();
+        fragmenter.printFragments(distributedPlan);
     }
     /**
      * 测试 NOT 一元运算
@@ -211,6 +228,9 @@ public class JQuickExpressionAtomTest {
         assertNotNull(plan);
         JQuickPhysicalPlanNode planNode= generator.generate(plan);
         System.out.println(planNode);
+        JQuickDistributedPlan distributedPlan= fragmenter.fragment(planNode);
+//        distributedPlan.printPlan();
+        fragmenter.printFragments(distributedPlan);
     }
     /**
      * 测试多种 ExpressionAtom 类型混合
@@ -244,6 +264,9 @@ public class JQuickExpressionAtomTest {
         assertNotNull(plan);
         JQuickPhysicalPlanNode planNode= generator.generate(plan);
         System.out.println(planNode);
+        JQuickDistributedPlan distributedPlan= fragmenter.fragment(planNode);
+//        distributedPlan.printPlan();
+        fragmenter.printFragments(distributedPlan);
     }
 
 }

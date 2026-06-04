@@ -43,6 +43,7 @@ public class JQuickFragmentTest {
     private JQuickFragmenter fragmenter;
     private JQuickFragmenter verboseFragmenter;
 
+
     @Before
     public void setUp() {
         fragmenter = new JQuickFragmenter(4);

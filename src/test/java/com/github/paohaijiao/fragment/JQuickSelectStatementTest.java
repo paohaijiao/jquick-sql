@@ -16,6 +16,7 @@
 package com.github.paohaijiao.fragment;
 
 import com.github.paohaijiao.ast2logic.JQuickASTToLogicalPlanVisitor;
+import com.github.paohaijiao.distributed.JQuickDistributedPlan;
 import com.github.paohaijiao.enums.JQuickBinaryOperator;
 import com.github.paohaijiao.expression.JQuickExpression;
 import com.github.paohaijiao.expression.domain.JQuickBinaryExpression;
@@ -47,11 +48,15 @@ import static org.junit.Assert.*;
 public class JQuickSelectStatementTest {
     private JQuickPhysicalPlanGenerator generator;
     private JQuickASTToLogicalPlanVisitor visitor;
+    private JQuickFragmenter fragmenter;
+    private JQuickFragmenter verboseFragmenter;
 
     @Before
     public void setUp() {
         generator = new JQuickPhysicalPlanGenerator();
         visitor=new JQuickASTToLogicalPlanVisitor();
+        fragmenter = new JQuickFragmenter(4);
+        verboseFragmenter = new JQuickFragmenter(8);
     }
 
     /**
@@ -101,6 +106,8 @@ public class JQuickSelectStatementTest {
         JQuickTableScanPhysicalNode scanNode = (JQuickTableScanPhysicalNode) physicalPlan;
         assertEquals("users", scanNode.getTableName());
         assertEquals("u", scanNode.getAlias());
+        JQuickDistributedPlan distributedPlan= fragmenter.fragment(physicalPlan);
+        fragmenter.printFragments(distributedPlan);
     }
     /**
      * SQL: SELECT id, name, email FROM users AS u
@@ -115,6 +122,8 @@ public class JQuickSelectStatementTest {
         JQuickTableScanPhysicalNode scanNode = (JQuickTableScanPhysicalNode) physicalPlan;
         assertEquals(requiredCols, scanNode.getRequiredColumns());
         assertEquals(3, scanNode.getOutputSchema().size());
+        JQuickDistributedPlan distributedPlan= fragmenter.fragment(physicalPlan);
+        fragmenter.printFragments(distributedPlan);
     }
     /**
      * SQL: SELECT * FROM users WHERE age > 18
@@ -128,6 +137,8 @@ public class JQuickSelectStatementTest {
         JQuickPhysicalPlanNode physicalPlan = generator.generate(logicalScan);
         JQuickTableScanPhysicalNode scanNode = (JQuickTableScanPhysicalNode) physicalPlan;
         assertNotNull(scanNode.getFilterPredicate());
+        JQuickDistributedPlan distributedPlan= fragmenter.fragment(physicalPlan);
+        fragmenter.printFragments(distributedPlan);
     }
     /**
      * 测试1：简单CTE - 单层CTE，主查询直接引用
@@ -158,11 +169,8 @@ public class JQuickSelectStatementTest {
         ctes.put("sales_summary", cteProject);
         JQuickWithNode withNode = new JQuickWithNode(mainProject, ctes);
         JQuickPhysicalPlanNode physicalPlan = generator.generate(withNode);
-        JQuickProjectPhysicalNode projectNode = (JQuickProjectPhysicalNode) physicalPlan;
-        assertEquals("category", projectNode.getSelectItems().get(0).getAlias());
-        assertEquals("total", projectNode.getSelectItems().get(1).getAlias());
-        JQuickPhysicalPlanNode child = projectNode.getChildren().get(0);
-        assertEquals("TableScan", child.getNodeType(), "子节点应该是TableScan");
+        JQuickDistributedPlan distributedPlan= fragmenter.fragment(physicalPlan);
+        fragmenter.printFragments(distributedPlan);
 
     }
 

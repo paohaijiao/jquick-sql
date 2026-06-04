@@ -15,6 +15,7 @@
  */
 package com.github.paohaijiao.fragment;
 
+import com.github.paohaijiao.distributed.JQuickDistributedPlan;
 import com.github.paohaijiao.enums.JQuickBinaryOperator;
 import com.github.paohaijiao.enums.JQuickJoinType;
 import com.github.paohaijiao.expression.JQuickExpression;
@@ -40,10 +41,14 @@ import java.util.*;
 public class JQuickFilterConditionTest {
 
     private JQuickPhysicalPlanGenerator generator;
+    private JQuickFragmenter fragmenter;
+    private JQuickFragmenter verboseFragmenter;
 
     @Before
     public void setUp() {
         generator = new JQuickPhysicalPlanGenerator();
+        fragmenter = new JQuickFragmenter(4);
+        verboseFragmenter = new JQuickFragmenter(8);
     }
     /**
      * 创建表扫描节点
@@ -149,6 +154,9 @@ public class JQuickFilterConditionTest {
         JQuickBinaryExpression binaryExpr = (JQuickBinaryExpression) actualPredicate;
         System.out.println("=== AND条件测试通过 ===");
         System.out.println("条件: age > 18 AND status = 'active'");
+        JQuickDistributedPlan distributedPlan= fragmenter.fragment(filterPhysical);
+        fragmenter.printFragments(distributedPlan);
+
     }
     /**
      * 测试4：复合条件 OR
@@ -168,6 +176,8 @@ public class JQuickFilterConditionTest {
         JQuickBinaryExpression binaryExpr = (JQuickBinaryExpression) actualPredicate;
         System.out.println("=== OR条件测试通过 ===");
         System.out.println("条件: age > 18 OR vip = true");
+        JQuickDistributedPlan distributedPlan= fragmenter.fragment(filterPhysical);
+        fragmenter.printFragments(distributedPlan);
     }
     /**
      * 测试6：嵌套条件（AND/OR组合）
@@ -188,6 +198,8 @@ public class JQuickFilterConditionTest {
         JQuickBinaryExpression innerExpr = (JQuickBinaryExpression) leftChild;
         System.out.println("=== 嵌套条件测试通过 ===");
         System.out.println("条件: (age > 18 AND status = 'active') OR vip = true");
+        JQuickDistributedPlan distributedPlan= fragmenter.fragment(filterPhysical);
+        fragmenter.printFragments(distributedPlan);
     }
     /**
      * 测试7：BETWEEN 条件
@@ -205,6 +217,8 @@ public class JQuickFilterConditionTest {
         JQuickBetweenExpression betweenExpr = (JQuickBetweenExpression) actualPredicate;
         System.out.println("=== BETWEEN条件测试通过 ===");
         System.out.println("条件: age BETWEEN 18 AND 65");
+        JQuickDistributedPlan distributedPlan= fragmenter.fragment(filterPhysical);
+        fragmenter.printFragments(distributedPlan);
     }
     /**
      *
@@ -251,6 +265,8 @@ public class JQuickFilterConditionTest {
         JQuickWithNode withNode = new JQuickWithNode(mainProject, ctes);
         JQuickPhysicalPlanNode physicalPlan = generator.generate(withNode);
         System.out.println(physicalPlan);
+        JQuickDistributedPlan distributedPlan= fragmenter.fragment(physicalPlan);
+        fragmenter.printFragments(distributedPlan);
     }
 
 }
