@@ -18,6 +18,7 @@ package com.github.paohaijiao.distributed.coordinator;
 import com.github.paohaijiao.console.JConsole;
 import com.github.paohaijiao.distributed.JQuickDistributedPlan;
 import com.github.paohaijiao.enums.JQuickFragmentType;
+import com.github.paohaijiao.exchange.JQuickExchangeNode;
 import com.github.paohaijiao.fragment.JQuickFragment;
 import com.github.paohaijiao.fragment.JQuickFragmenter;
 import com.github.paohaijiao.physical.JQuickPhysicalPlanNode;
@@ -381,14 +382,22 @@ public class JQuickCoordinator extends JQuickConvertService{
      */
     private JQuickExecuteTaskRequest buildTaskRequest(String queryId, String taskId, JQuickFragment fragment, int taskIndex, int totalTasks) {
         JQuickFragmentProto fragmentProto = convertFragmentToProto(fragment);
-        return JQuickExecuteTaskRequest.newBuilder()
+        JQuickExecuteTaskRequest.Builder builder = JQuickExecuteTaskRequest.newBuilder()
                 .setQueryId(queryId)
                 .setTaskId(taskId)
                 .setTaskIndex(taskIndex)
                 .setTotalTasks(totalTasks)
                 .setFragment(fragmentProto)
-                .setMemoryLimitBytes(1024 * 1024 * 1024)  // 1GB 默认
-                .build();
+                .setMemoryLimitBytes(1024 * 1024 * 1024);
+        for (JQuickExchangeNode input : fragment.getInputs()) {
+            JQuickMemoryPartitionProto partitionProto = JQuickMemoryPartitionProto.newBuilder()
+                    .setPartitionId(input.getExchangeId())
+                    .setPartitionIndex(taskIndex)
+                    .setTotalPartitions(totalTasks)
+                    .build();
+            builder.addInputPartitions(partitionProto);
+        }
+        return builder.build();
     }
 
     /**

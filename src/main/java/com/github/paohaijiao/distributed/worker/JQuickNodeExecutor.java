@@ -435,21 +435,21 @@ public class JQuickNodeExecutor {
      * 执行 Exchange - 数据分发
      */
     private JQuickDataSet executeExchange(JQuickExchangePhysicalNode node, JQuickWorker.JQuickTaskContext context) {
-        JQuickDataSet input = executeNode(node.getChild(), context);
+        JQuickDataSet input = executeNode(node.getChild(), context);//获取数据
         console.info("=== Exchange Debug ===");
         console.info("Input data rows: " + input.size());
         console.info("Exchange type: " + node.getExchangeType());
         console.info("Target parallelism: " + node.getTargetParallelism());
         console.info("Partition strategy: " + node.getPartitionStrategy());
-        List<JQuickWorker.JQuickMemoryPartition> partitions = partitionManager.partitionData(input, node, expressionEvaluator, node.getTargetParallelism());
+        List<JQuickWorker.JQuickMemoryPartition> partitions = partitionManager.partitionData(input, node, expressionEvaluator, node.getTargetParallelism());//进行分区
         console.info("Created " + partitions.size() + " partitions");
-        for (int i = 0; i < partitions.size(); i++) {
+        for (int i = 0; i < partitions.size(); i++) {//获取分区数据信息
             JQuickWorker.JQuickMemoryPartition partition = partitions.get(i);
             console.info("Partition " + i + ": " + partition.getData().size() + " rows");
         }
         for (JQuickWorker.JQuickMemoryPartition partition : partitions) {
             partitionManager.sendToWorker(partition, node.getTargetParallelism(), node.getExchangeType(), worker);
-            console.info("Sent partition " + partition.getIndex() + " to worker");
+            console.info("Sent partition " + partition.getIndex() + " to worker");//发送数据到下游节点
         }
 
         return JQuickDataSet.builder().build();

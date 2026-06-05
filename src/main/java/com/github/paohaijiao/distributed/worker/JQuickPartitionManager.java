@@ -107,25 +107,25 @@ public class JQuickPartitionManager {
      */
     private int computeHashPartition(JQuickRow row, List<JQuickExpression> partitionKeys, int numPartitions, JQuickExpressionEvaluator evaluator) {
         int hash = 0;
-        if (partitionKeys == null || partitionKeys.isEmpty()) {
+        if (partitionKeys == null || partitionKeys.isEmpty()) {//没有指定分区键,使用整行数据的哈希值
             return Math.abs(row.hashCode()) % numPartitions;
         }
-        for (JQuickExpression key : partitionKeys) {
+        for (JQuickExpression key : partitionKeys) {//有分区键,根据分区键计算哈希值
             Object value = evaluator.evaluateExpression(row, key);
             hash = 31 * hash + (value != null ? value.hashCode() : 0);
         }
-        return Math.abs(hash) % numPartitions;
+        return Math.abs(hash) % numPartitions;//确保结果为非负数，然后取模得到分区编号
     }
 
     /**
      * 计算范围分区
      */
     private int computeRangePartition(JQuickRow row, List<JQuickExpression> partitionKeys, int numPartitions, JQuickExpressionEvaluator evaluator) {
-        if (partitionKeys == null || partitionKeys.isEmpty()) {
+        if (partitionKeys == null || partitionKeys.isEmpty()) {// 没有分区键时，默认返回分区 0
             return 0;
         }
-        Object value = evaluator.evaluateExpression(row, partitionKeys.get(0));
-        if (value == null) {
+        Object value = evaluator.evaluateExpression(row, partitionKeys.get(0)); // 只使用第一个分区键进行范围分区
+        if (value == null) {    // 值为 null 时，默认返回分区 0
             return 0;
         }
         return Math.abs(value.hashCode()) % numPartitions;
@@ -135,7 +135,7 @@ public class JQuickPartitionManager {
      * 计算桶分区
      */
     private int computeBucketPartition(JQuickRow row, List<JQuickExpression> partitionKeys, int numPartitions, JQuickExpressionEvaluator evaluator) {
-        if (partitionKeys == null || partitionKeys.isEmpty()) {
+        if (partitionKeys == null || partitionKeys.isEmpty()) { // 没有分区键：使用整行数据的 hashCode
             return Math.abs(row.hashCode()) % numPartitions;
         }
         int hash = 0;
