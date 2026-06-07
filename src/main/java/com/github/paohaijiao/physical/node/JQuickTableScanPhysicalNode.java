@@ -22,6 +22,7 @@ import com.github.paohaijiao.physical.JQuickPhysicalPlanVisitor;
 import com.github.paohaijiao.physical.domain.JQuickPhysicalColumn;
 import com.github.paohaijiao.physical.domain.JQuickPhysicalStats;
 import com.github.paohaijiao.physical.domain.JQuickTablePartitionInfo;
+import com.github.paohaijiao.statement.JQuickColumnMeta;
 
 import java.util.*;
 
@@ -65,8 +66,13 @@ public class JQuickTableScanPhysicalNode implements JQuickPhysicalPlanNode {
         List<JQuickPhysicalColumn> columns = new ArrayList<>();
         if (requiredColumns != null) {
             for (String col : requiredColumns) {
-                String colName = alias != null ? alias + "." + col : col;
-                columns.add(new JQuickPhysicalColumn(colName, Object.class, tableName, true));
+                columns.add(new JQuickPhysicalColumn(col, Object.class, tableName, true));
+            }
+        }else{
+            List<JQuickColumnMeta> columnMetas = JQuickDataSourceManager.getColumnMeta(tableName);
+            for (com.github.paohaijiao.statement.JQuickColumnMeta meta : columnMetas) {
+                String colName = meta.getName();
+                columns.add(new JQuickPhysicalColumn(colName, meta.getType(), tableName, true));
             }
         }
         return columns;

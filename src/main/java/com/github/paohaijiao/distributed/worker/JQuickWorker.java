@@ -349,7 +349,7 @@ public class JQuickWorker {
     /**
      * 任务上下文内部类
      */
-    class JQuickTaskContext {
+   public class JQuickTaskContext {
 
         private final String taskId;
 
@@ -363,7 +363,7 @@ public class JQuickWorker {
 
         private volatile boolean cancelled;
 
-        JQuickTaskContext(String taskId, JQuickExecuteTaskRequest request) {
+        public JQuickTaskContext(String taskId, JQuickExecuteTaskRequest request) {
             this.taskId = taskId;
             this.request = request;
             this.startTime = System.currentTimeMillis();
@@ -371,27 +371,27 @@ public class JQuickWorker {
             this.cancelled = false;
         }
 
-        void addProcessedRows(long rows) {
+        public void addProcessedRows(long rows) {
             this.processedRows += rows;
         }
 
-        void cancel() {
+        public void cancel() {
             this.cancelled = true;
         }
 
-        boolean isCancelled() {
+        public boolean isCancelled() {
             return cancelled;
         }
 
-        long getProcessedRows() {
+        public long getProcessedRows() {
             return processedRows;
         }
 
-        long getExecutionTimeMs() {
+        public long getExecutionTimeMs() {
             return System.currentTimeMillis() - startTime;
         }
 
-        long getMemoryUsedBytes() {
+        public long getMemoryUsedBytes() {
             return memoryUsed;
         }
     }

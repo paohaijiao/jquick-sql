@@ -38,6 +38,45 @@ public class JQuickExpressionEvaluator {
 
     private final JQuickMethodInvocationManager functionManager;
 
+    private Map<String, String> aliasToTableMap = new HashMap<>();
+
+    private Map<String, String> columnAliasMap = new HashMap<>();
+
+    /**
+     * 设置别名上下文（在 JOIN 时使用）
+     */
+    public void setAliasContext(Map<String, String> aliasToTable, Map<String, String> columnAliasToActual) {
+        this.aliasToTableMap = aliasToTable != null ? aliasToTable : new HashMap<>();
+        this.columnAliasMap = columnAliasToActual != null ? columnAliasToActual : new HashMap<>();
+    }
+
+    /**
+     * 清除别名上下文
+     */
+    public void clearAliasContext() {
+        this.aliasToTableMap.clear();
+        this.columnAliasMap.clear();
+    }
+
+    /**
+     * 解析带别名的列名
+     */
+    private String resolveColumnName(String columnName) {
+        if (columnAliasMap.containsKey(columnName)) {
+            return columnAliasMap.get(columnName);
+        }
+        if (columnName.contains(".")) {
+            String[] parts = columnName.split("\\.", 2);
+            String alias = parts[0];
+            String actualColumn = parts[1];
+            if (aliasToTableMap.containsKey(alias)) {
+                return actualColumn;
+            }
+            return columnName;
+        }
+        return columnName;
+    }
+
     public JQuickExpressionEvaluator(JQuickMethodInvocationManager functionManager) {
         this.functionManager = functionManager;
     }
@@ -60,6 +99,21 @@ public class JQuickExpressionEvaluator {
     public Object evaluateExpression(JQuickRow row, JQuickExpression expr) {
         if (expr == null) return null;
         if (expr instanceof JQuickColumnRefExpression) {
+            String rawColumnName = ((JQuickColumnRefExpression) expr).getColumnName();
+            String resolvedColumnName = resolveColumnName(rawColumnName);
+            Object value = row.get(rawColumnName);
+            if (value != null || row.containsKey(rawColumnName)) {
+                return value;
+            }
+            value = row.get(resolvedColumnName);
+            if (value != null || row.containsKey(resolvedColumnName)) {
+                return value;
+            }
+            for (Map.Entry<String, Object> entry : row.entrySet()) {
+                if (entry.getKey().equalsIgnoreCase(rawColumnName) || entry.getKey().equalsIgnoreCase(resolvedColumnName)) {
+                    return entry.getValue();
+                }
+            }
             return row.get(((JQuickColumnRefExpression) expr).getColumnName());
         } else if (expr instanceof JQuickLiteralExpression) {
             return ((JQuickLiteralExpression) expr).getValue();

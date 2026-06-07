@@ -80,7 +80,6 @@ public class JQuickCoordinator extends JQuickConvertService{
 
     private final Map<String, JQuickPhysicalPlanServiceGrpc.JQuickPhysicalPlanServiceStub> workerStubs;
 
-    // 任务管理
     private final Map<String, QueryExecution> activeQueries;
 
     private final ExecutorService executor;
@@ -193,6 +192,7 @@ public class JQuickCoordinator extends JQuickConvertService{
         execution.setStatus(QueryExecution.QueryStatus.SCHEDULING);
         List<JQuickFragment> allFragments = collectAllFragments(rootFragment);//遍历所有 Fragment，调度执行
         List<JQuickFragment> sortedFragments = topologicalSort(allFragments);//按依赖关系排序（叶子节点先执行）
+        console.info("Fragment execution order: " + sortedFragments.stream().map(f -> f.getFragmentId() + "(" + f.getType() + ")").collect(Collectors.joining(" -> ")));
         execution.setStatus(QueryExecution.QueryStatus.RUNNING);
         Map<Long, CompletableFuture<List<JQuickDataSet>>> fragmentResults = new ConcurrentHashMap<>();// 执行每个 Fragment
         for (JQuickFragment fragment : sortedFragments) {

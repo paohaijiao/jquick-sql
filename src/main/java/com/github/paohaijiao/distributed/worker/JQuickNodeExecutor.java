@@ -153,6 +153,26 @@ public class JQuickNodeExecutor {
     private JQuickDataSet executeHashJoin(JQuickHashJoinPhysicalNode node, JQuickWorker.JQuickTaskContext context) {
         JQuickPhysicalPlanNode buildSide = node.getBuildSide() == JQuickHashJoinPhysicalNode.BuildSide.LEFT ? node.getLeft() : node.getRight();
         JQuickPhysicalPlanNode probeSide = node.getBuildSide() == JQuickHashJoinPhysicalNode.BuildSide.LEFT ? node.getRight() : node.getLeft();
+        List<JQuickPhysicalColumn> leftSchema = node.getLeft().getOutputSchema();
+        List<JQuickPhysicalColumn> rightSchema = node.getRight().getOutputSchema();
+        Map<String, String> aliasToTable = new HashMap<>();
+        Map<String, String> columnAliasToActual = new HashMap<>();
+        String leftAlias = extractTableAlias(node.getLeft());
+        String rightAlias = extractTableAlias(node.getRight());
+        if (leftAlias != null) {
+            aliasToTable.put(leftAlias, "left");
+            for (JQuickPhysicalColumn col : leftSchema) {
+                columnAliasToActual.put(leftAlias + "." + col.getName(), col.getName());
+            }
+        }
+        if (rightAlias != null) {
+            aliasToTable.put(rightAlias, "right");
+            for (JQuickPhysicalColumn col : rightSchema) {
+                columnAliasToActual.put(rightAlias + "." + col.getName(), col.getName());
+            }
+        }
+        expressionEvaluator.setAliasContext(aliasToTable, columnAliasToActual);
+        try {
         JQuickDataSet buildData = executeNode(buildSide, context);
         Map<Object, List<JQuickRow>> hashTable = buildHashTable(buildData, node);
         JQuickDataSet probeData = executeNode(probeSide, context);
@@ -165,15 +185,16 @@ public class JQuickNodeExecutor {
                     JQuickRow joined = joinRows(probeRow, buildRow, node.getJoinType(), node.getBuildSide() == JQuickHashJoinPhysicalNode.BuildSide.LEFT);
                     if (joined != null) resultRows.add(joined);
                 }
-            } else if (node.getJoinType() == com.github.paohaijiao.enums.JQuickJoinType.LEFT ||
-                    node.getJoinType() == com.github.paohaijiao.enums.JQuickJoinType.FULL) {
+            } else if (node.getJoinType() == com.github.paohaijiao.enums.JQuickJoinType.LEFT || node.getJoinType() == com.github.paohaijiao.enums.JQuickJoinType.FULL) {
                 JQuickRow joined = joinRows(probeRow, null, node.getJoinType(), true);
                 if (joined != null) resultRows.add(joined);
             }
         }
-        //将 JQuickPhysicalColumn 转换为 JQuickColumnMeta
         List<JQuickColumnMeta> columnMetas = convertPhysicalColumnsToMeta(dataConverter.buildOutputSchema(node));
         return new JQuickDataSet(columnMetas, resultRows);
+        } finally {
+            expressionEvaluator.clearAliasContext();
+        }
     }
 
     /**
@@ -206,8 +227,20 @@ public class JQuickNodeExecutor {
      */
     private Map<Object, List<JQuickRow>> buildHashTable(JQuickDataSet data, JQuickHashJoinPhysicalNode node) {
         Map<Object, List<JQuickRow>> hashTable = new HashMap<>();
+        List<JQuickHashJoinPhysicalNode.JoinKeyPair> joinKeys = node.getJoinKeys();
+        boolean isCompositeKey = joinKeys.size() > 1;
         for (JQuickRow row : data.getRows()) {
-            Object key = extractJoinKey(row, node, true);
+            Object key;
+            if (isCompositeKey) {
+                List<Object> compositeKey = new ArrayList<>();
+                for (JQuickHashJoinPhysicalNode.JoinKeyPair keyPair : joinKeys) {
+                    Object keyValue = expressionEvaluator.evaluateExpression(row, keyPair.getLeftKey());
+                    compositeKey.add(keyValue);
+                }
+                key = compositeKey;
+            } else {
+                key = expressionEvaluator.evaluateExpression(row, joinKeys.get(0).getLeftKey());
+            }
             if (key != null) {
                 hashTable.computeIfAbsent(key, k -> new ArrayList<>()).add(row);
             }
@@ -340,8 +373,6 @@ public class JQuickNodeExecutor {
             }
             resultRows.add(newRow);
         }
-
-        //合并原始列和窗口函数列
         List<JQuickColumnMeta> columnMetas = new ArrayList<>(input.getColumns());
         for (JQuickWindowPhysicalNode.WindowFunction wf : node.getWindowFunctions()) {
             columnMetas.add(new JQuickColumnMeta(wf.getAlias(), Object.class, "window"));
@@ -539,10 +570,19 @@ public class JQuickNodeExecutor {
     private Object extractJoinKey(JQuickRow row, JQuickHashJoinPhysicalNode node, boolean isBuildSide) {
         List<JQuickHashJoinPhysicalNode.JoinKeyPair> joinKeys = node.getJoinKeys();
         if (joinKeys.isEmpty()) return null;
-
-        JQuickHashJoinPhysicalNode.JoinKeyPair keyPair = joinKeys.get(0);
-        JQuickExpression keyExpr = isBuildSide ? keyPair.getLeftKey() : keyPair.getRightKey();
-        return expressionEvaluator.evaluateExpression(row, keyExpr);
+        if (joinKeys.size() == 1) {
+            JQuickHashJoinPhysicalNode.JoinKeyPair keyPair = joinKeys.get(0);
+            JQuickExpression keyExpr = isBuildSide ? keyPair.getLeftKey() : keyPair.getRightKey();
+            return expressionEvaluator.evaluateExpression(row, keyExpr);
+        } else {
+            List<Object> compositeKey = new ArrayList<>();
+            for (JQuickHashJoinPhysicalNode.JoinKeyPair keyPair : joinKeys) {
+                JQuickExpression keyExpr = isBuildSide ? keyPair.getLeftKey() : keyPair.getRightKey();
+                Object keyValue = expressionEvaluator.evaluateExpression(row, keyExpr);
+                compositeKey.add(keyValue);
+            }
+            return compositeKey;
+        }
     }
 
     private JQuickRow extractGroupKey(JQuickRow row, List<JQuickExpression> groupKeys) {
@@ -718,12 +758,6 @@ public class JQuickNodeExecutor {
             case TABLE_SCAN:
                 JQuickTableScanNodeProto scanProto = proto.getTableScan();
                 JQuickTableScanPhysicalNode scanNode = new JQuickTableScanPhysicalNode(scanProto.getTableName(), scanProto.getAlias(), new HashSet<>(scanProto.getRequiredColumnsList()), null, null);
-//                scanNode.setUseMemoryDistribution(scanProto.getUseMemoryDistribution());
-//                try {
-//                    scanNode.setUseMemoryDistribution(scanProto.getUseMemoryDistribution());
-//                } catch (NoSuchMethodError e) {
-//                    // 方法不存在，忽略
-//                }
                 return scanNode;
             case FILTER:
                 return new JQuickFilterPhysicalNode(buildExpression(proto.getFilter().getPredicate()), null);
@@ -859,5 +893,19 @@ public class JQuickNodeExecutor {
             default:
                 return JQuickBinaryOperator.EQ;
         }
+    }
+
+    /**
+     * 提取表别名
+     */
+    private String extractTableAlias(JQuickPhysicalPlanNode node) {
+        if (node instanceof JQuickTableScanPhysicalNode) {
+            return ((JQuickTableScanPhysicalNode) node).getAlias();
+        }
+        for (JQuickPhysicalPlanNode child : node.getChildren()) {
+            String alias = extractTableAlias(child);
+            if (alias != null) return alias;
+        }
+        return null;
     }
 }
