@@ -11,7 +11,7 @@ public interface JQuickMemoryShuffleNodeProtoOrBuilder extends
    * <code>string shuffle_id = 1;</code>
    * @return The shuffleId.
    */
-  String getShuffleId();
+  java.lang.String getShuffleId();
   /**
    * <code>string shuffle_id = 1;</code>
    * @return The bytes for shuffleId.
@@ -110,8 +110,8 @@ public interface JQuickMemoryShuffleNodeProtoOrBuilder extends
   /**
    * Use {@link #getPartitionWorkerMapMap()} instead.
    */
-  @Deprecated
-  java.util.Map<Integer, String>
+  @java.lang.Deprecated
+  java.util.Map<java.lang.Integer, java.lang.String>
   getPartitionWorkerMap();
   /**
    * <pre>
@@ -120,7 +120,7 @@ public interface JQuickMemoryShuffleNodeProtoOrBuilder extends
    *
    * <code>map&lt;int32, string&gt; partition_worker_map = 8;</code>
    */
-  java.util.Map<Integer, String>
+  java.util.Map<java.lang.Integer, java.lang.String>
   getPartitionWorkerMapMap();
   /**
    * <pre>
@@ -130,10 +130,10 @@ public interface JQuickMemoryShuffleNodeProtoOrBuilder extends
    * <code>map&lt;int32, string&gt; partition_worker_map = 8;</code>
    */
   /* nullable */
-String getPartitionWorkerMapOrDefault(
+java.lang.String getPartitionWorkerMapOrDefault(
       int key,
       /* nullable */
-String defaultValue);
+java.lang.String defaultValue);
   /**
    * <pre>
    * 目标Worker映射
@@ -141,6 +141,6 @@ String defaultValue);
    *
    * <code>map&lt;int32, string&gt; partition_worker_map = 8;</code>
    */
-  String getPartitionWorkerMapOrThrow(
+  java.lang.String getPartitionWorkerMapOrThrow(
       int key);
 }

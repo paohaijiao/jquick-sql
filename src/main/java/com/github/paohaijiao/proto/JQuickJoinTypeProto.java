@@ -75,7 +75,7 @@ public enum JQuickJoinTypeProto
 
   public final int getNumber() {
     if (this == UNRECOGNIZED) {
-      throw new IllegalArgumentException(
+      throw new java.lang.IllegalArgumentException(
           "Can't get the number of an unknown enum value.");
     }
     return value;
@@ -86,7 +86,7 @@ public enum JQuickJoinTypeProto
    * @return The enum associated with the given numeric wire value.
    * @deprecated Use {@link #forNumber(int)} instead.
    */
-  @Deprecated
+  @java.lang.Deprecated
   public static JQuickJoinTypeProto valueOf(int value) {
     return forNumber(value);
   }
@@ -123,7 +123,7 @@ public enum JQuickJoinTypeProto
   public final com.google.protobuf.Descriptors.EnumValueDescriptor
       getValueDescriptor() {
     if (this == UNRECOGNIZED) {
-      throw new IllegalStateException(
+      throw new java.lang.IllegalStateException(
           "Can't get the descriptor of an unrecognized enum value.");
     }
     return getDescriptor().getValues().get(ordinal());
@@ -142,7 +142,7 @@ public enum JQuickJoinTypeProto
   public static JQuickJoinTypeProto valueOf(
       com.google.protobuf.Descriptors.EnumValueDescriptor desc) {
     if (desc.getType() != getDescriptor()) {
-      throw new IllegalArgumentException(
+      throw new java.lang.IllegalArgumentException(
         "EnumValueDescriptor is not for this type.");
     }
     if (desc.getIndex() == -1) {

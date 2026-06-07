@@ -106,6 +106,10 @@ public class JQuickFragmenter {
             return false;
         }
         if (node instanceof JQuickExchangePhysicalNode) {
+            JQuickPhysicalPlanNode child = node.getChildren().get(0);
+            if (child instanceof JQuickTableScanPhysicalNode) {
+                return false;  // TableScan 应该和 Exchange 在同一个 Fragment
+            }
             return true;
         }
         if (node instanceof JQuickHashJoinPhysicalNode) {

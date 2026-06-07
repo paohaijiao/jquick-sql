@@ -754,27 +754,20 @@ public class JQuickCoordinator extends JQuickConvertService{
      * 打印执行统计信息
      */
     public void printStatistics() {
-        System.out.println("=== JQuickCoordinator Statistics ===");
-        System.out.println("Coordinator ID: " + coordinatorId);
-        System.out.println("Active Queries: " + activeQueries.size());
-        System.out.println("Workers: " + workers.size());
-        System.out.println("Healthy Workers: " + workers.stream().filter(WorkerEndpoint::isHealthy).count());
-        System.out.println();
+        console.info("=== JQuickCoordinator Statistics ===");
+        console.info("Coordinator ID: " + coordinatorId);
+        console.info("Active Queries: " + activeQueries.size());
+        console.info("Workers: " + workers.size());
+        console.info("Healthy Workers: " + workers.stream().filter(WorkerEndpoint::isHealthy).count());
         for (QueryExecution execution : activeQueries.values()) {
-            System.out.println("Query: " + execution.getQueryId());
-            System.out.println("  Status: " + execution.getStatus());
-            System.out.println("  Duration: " + execution.getExecutionTimeMs() + "ms");
-            System.out.println("  Tasks: " + execution.getTasks().size());
-
-            long successTasks = execution.getTasks().values().stream()
-                    .filter(t -> t.getStatus() == TaskExecution.TaskStatus.SUCCESS)
-                    .count();
-            long failedTasks = execution.getTasks().values().stream()
-                    .filter(t -> t.getStatus() == TaskExecution.TaskStatus.FAILED)
-                    .count();
-
-            System.out.println("  Successful Tasks: " + successTasks);
-            System.out.println("  Failed Tasks: " + failedTasks);
+            console.info("Query: " + execution.getQueryId());
+            console.info("  Status: " + execution.getStatus());
+            console.info("  Duration: " + execution.getExecutionTimeMs() + "ms");
+            console.info("  Tasks: " + execution.getTasks().size());
+            long successTasks = execution.getTasks().values().stream().filter(t -> t.getStatus() == TaskExecution.TaskStatus.SUCCESS).count();
+            long failedTasks = execution.getTasks().values().stream().filter(t -> t.getStatus() == TaskExecution.TaskStatus.FAILED).count();
+            console.info("  Successful Tasks: " + successTasks);
+            console.info("  Failed Tasks: " + failedTasks);
         }
     }
 
@@ -801,7 +794,82 @@ public class JQuickCoordinator extends JQuickConvertService{
 
         return timeoutFuture;
     }
+    /**
+     * 广播表数据到所有 Worker
+     */
+    public CompletableFuture<Void> broadcastTable(String tableName, JQuickDataSet data, boolean overwrite) {
+        List<CompletableFuture<Void>> futures = new ArrayList<>();
+        for (WorkerEndpoint worker : workers) {
+            CompletableFuture<Void> future = sendTableToWorker(worker, tableName, data, overwrite);
+            futures.add(future);
+        }
+        return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
+    }
 
+    /**
+     * 发送表数据到指定 Worker
+     */
+    private CompletableFuture<Void> sendTableToWorker(WorkerEndpoint worker, String tableName, JQuickDataSet data, boolean overwrite) {
+        CompletableFuture<Void> future = new CompletableFuture<>();
+        try {
+            JQuickTableServiceGrpc.JQuickTableServiceStub stub = getTableServiceStub(worker);
+            RegisterTableRequest request = RegisterTableRequest.newBuilder()
+                    .setTableName(tableName)
+                    .setData(dataConverter.convertToProto(data))
+                    .setOverwrite(overwrite)
+                    .build();
+            stub.registerTable(request, new StreamObserver<RegisterTableResponse>() {
+                @Override
+                public void onNext(RegisterTableResponse response) {
+                    if (response.getSuccess()) {
+                        console.info(String.format("Table registered on worker %s - table: %s, rows: %d", worker.getWorkerId(), tableName, response.getRowCount()));
+                    } else {
+                        console.warn(String.format("Table registration failed on worker %s - table: %s, message: %s", worker.getWorkerId(), tableName, response.getMessage()));
+                    }
+                }
+
+                @Override
+                public void onError(Throwable t) {
+                    console.error(String.format("Failed to send table to worker %s", worker.getWorkerId()), t);
+                    future.completeExceptionally(t);
+                }
+
+                @Override
+                public void onCompleted() {
+                    future.complete(null);
+                }
+            });
+
+        } catch (Exception e) {
+            future.completeExceptionally(e);
+        }
+
+        return future;
+    }
+
+    /**
+     * 获取 TableService Stub
+     */
+    private JQuickTableServiceGrpc.JQuickTableServiceStub getTableServiceStub(WorkerEndpoint worker) {
+        ManagedChannel channel = workerChannels.computeIfAbsent(worker.getWorkerId(), k ->
+                ManagedChannelBuilder.forAddress(worker.getHost(), worker.getPort())
+                        .usePlaintext()
+                        .build()
+        );
+        return JQuickTableServiceGrpc.newStub(channel);
+    }
+
+    /**
+     * 批量广播多个表
+     */
+    public CompletableFuture<Void> broadcastTables(Map<String, JQuickDataSet> tables, boolean overwrite) {
+        List<CompletableFuture<Void>> futures = new ArrayList<>();
+        for (Map.Entry<String, JQuickDataSet> entry : tables.entrySet()) {
+            CompletableFuture<Void> future = broadcastTable(entry.getKey(), entry.getValue(), overwrite);
+            futures.add(future);
+        }
+        return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
+    }
     /**
      * Worker 节点端点信息（轻量级，仅包含连接信息）
      * 注意：这不是 Worker 实现，而是对远程 Worker 的引用

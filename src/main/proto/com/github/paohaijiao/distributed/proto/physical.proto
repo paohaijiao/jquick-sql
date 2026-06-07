@@ -633,11 +633,43 @@ message JQuickGetResultRequest {
   int32 offset = 3;
   bool fetch_continuously = 4;
 }
+message RegisterTableRequest {
+  string table_name = 1;
+  JQuickDataSetProto data = 2;
+  bool overwrite = 3;  // 是否覆盖已存在的表
+}
 
+message RegisterTableResponse {
+  bool success = 1;
+  string message = 2;
+  int64 row_count = 3;
+}
+message RegisterTablesResponse {
+  bool success = 1;
+  int32 registered_count = 2;
+  repeated string failed_tables = 3;
+}
+message DropTableRequest {
+  string table_name = 1;
+}
+
+message DropTableResponse {
+  bool success = 1;
+  string message = 2;
+}
 // ============================================================================
 // gRPC 服务定义
 // ============================================================================
+service JQuickTableService {
+  // 注册表数据到 Worker
+  rpc RegisterTable(RegisterTableRequest) returns (RegisterTableResponse);
 
+  // 批量注册表
+  rpc RegisterTables(stream RegisterTableRequest) returns (RegisterTablesResponse);
+
+  // 删除表
+  rpc DropTable(DropTableRequest) returns (DropTableResponse);
+}
 // 物理计划服务（Worker 端）
 service JQuickPhysicalPlanService {
   rpc ExecuteTask(JQuickExecuteTaskRequest) returns (JQuickExecuteTaskResponse);

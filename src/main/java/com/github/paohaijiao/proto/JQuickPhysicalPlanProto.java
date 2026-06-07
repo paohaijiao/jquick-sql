@@ -360,6 +360,31 @@ public final class JQuickPhysicalPlanProto {
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_com_github_paohaijiao_proto_JQuickGetResultRequest_fieldAccessorTable;
   static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_com_github_paohaijiao_proto_RegisterTableRequest_descriptor;
+  static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_com_github_paohaijiao_proto_RegisterTableRequest_fieldAccessorTable;
+  static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_com_github_paohaijiao_proto_RegisterTableResponse_descriptor;
+  static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_com_github_paohaijiao_proto_RegisterTableResponse_fieldAccessorTable;
+  static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_com_github_paohaijiao_proto_RegisterTablesResponse_descriptor;
+  static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_com_github_paohaijiao_proto_RegisterTablesResponse_fieldAccessorTable;
+  static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_com_github_paohaijiao_proto_DropTableRequest_descriptor;
+  static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_com_github_paohaijiao_proto_DropTableRequest_fieldAccessorTable;
+  static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_com_github_paohaijiao_proto_DropTableResponse_descriptor;
+  static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_com_github_paohaijiao_proto_DropTableResponse_fieldAccessorTable;
+  static final com.google.protobuf.Descriptors.Descriptor
     internal_static_com_github_paohaijiao_proto_JQuickBroadcastResponse_descriptor;
   static final 
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
@@ -767,87 +792,107 @@ public final class JQuickPhysicalPlanProto {
       "message\030\003 \001(\t\"h\n\026JQuickGetResultRequest\022" +
       "\020\n\010query_id\030\001 \001(\t\022\020\n\010max_rows\030\002 \001(\005\022\016\n\006o" +
       "ffset\030\003 \001(\005\022\032\n\022fetch_continuously\030\004 \001(\010\"" +
-      "Y\n\027JQuickBroadcastResponse\022\017\n\007success\030\001 " +
-      "\001(\010\022\025\n\rsuccess_count\030\002 \001(\005\022\026\n\016failed_wor" +
-      "kers\030\003 \003(\t*\250\001\n\034JQuickPartitionStrategyPr" +
-      "oto\022\022\n\016PARTITION_HASH\020\000\022\023\n\017PARTITION_RAN" +
-      "GE\020\001\022\031\n\025PARTITION_ROUND_ROBIN\020\002\022\027\n\023PARTI" +
-      "TION_BROADCAST\020\003\022\025\n\021PARTITION_FORWARD\020\004\022",
-      "\024\n\020PARTITION_CUSTOM\020\005*\340\001\n\031JQuickExpressi" +
-      "onTypeProto\022\023\n\017EXPR_COLUMN_REF\020\000\022\020\n\014EXPR" +
-      "_LITERAL\020\001\022\021\n\rEXPR_FUNCTION\020\002\022\030\n\024EXPR_BI" +
-      "NARY_OPERATOR\020\003\022\027\n\023EXPR_UNARY_OPERATOR\020\004" +
-      "\022\022\n\016EXPR_CASE_WHEN\020\005\022\021\n\rEXPR_SUBQUERY\020\006\022" +
-      "\013\n\007EXPR_IN\020\007\022\020\n\014EXPR_BETWEEN\020\010\022\020\n\014EXPR_I" +
-      "S_NULL\020\t*\344\001\n\031JQuickBinaryOperatorProto\022\t" +
-      "\n\005OP_EQ\020\000\022\t\n\005OP_NE\020\001\022\t\n\005OP_LT\020\002\022\n\n\006OP_LT" +
-      "E\020\003\022\t\n\005OP_GT\020\004\022\n\n\006OP_GTE\020\005\022\n\n\006OP_AND\020\006\022\t" +
-      "\n\005OP_OR\020\007\022\013\n\007OP_LIKE\020\010\022\t\n\005OP_IN\020\t\022\r\n\tOP_" +
-      "NOT_IN\020\n\022\013\n\007OP_PLUS\020\013\022\014\n\010OP_MINUS\020\014\022\017\n\013O" +
-      "P_MULTIPLY\020\r\022\r\n\tOP_DIVIDE\020\016\022\n\n\006OP_MOD\020\017*" +
-      "\201\001\n\023JQuickJoinTypeProto\022\016\n\nJOIN_INNER\020\000\022" +
-      "\r\n\tJOIN_LEFT\020\001\022\016\n\nJOIN_RIGHT\020\002\022\r\n\tJOIN_F" +
-      "ULL\020\003\022\016\n\nJOIN_CROSS\020\004\022\r\n\tJOIN_SEMI\020\005\022\r\n\t" +
-      "JOIN_ANTI\020\006*A\n\024JQuickBuildSideProto\022\023\n\017B" +
-      "UILD_SIDE_LEFT\020\000\022\024\n\020BUILD_SIDE_RIGHT\020\001*}" +
-      "\n\033JQuickJoinDistributionProto\022\023\n\017JOIN_DI" +
-      "ST_LOCAL\020\000\022\025\n\021JOIN_DIST_SHUFFLE\020\001\022\027\n\023JOI" +
-      "N_DIST_BROADCAST\020\002\022\031\n\025JOIN_DIST_PARTITIO" +
-      "NED\020\003*K\n\031JQuickAggregateStageProto\022\017\n\013AG" +
-      "G_PARTIAL\020\000\022\r\n\tAGG_FINAL\020\001\022\016\n\nAGG_SINGLE" +
-      "\020\002*o\n\027JQuickExchangeTypeProto\022\016\n\nEX_SHUF" +
-      "FLE\020\000\022\020\n\014EX_BROADCAST\020\001\022\r\n\tEX_GATHER\020\002\022\022" +
-      "\n\016EX_REPARTITION\020\003\022\017\n\013EX_PIPELINE\020\004*b\n\033J" +
-      "QuickSQLOperationTypeProto\022\r\n\tSET_UNION\020" +
-      "\000\022\021\n\rSET_UNION_ALL\020\001\022\021\n\rSET_INTERSECT\020\002\022" +
-      "\016\n\nSET_EXCEPT\020\003*\\\n\027JQuickFragmentTypePro" +
-      "to\022\023\n\017FRAGMENT_SOURCE\020\000\022\031\n\025FRAGMENT_INTE" +
-      "RMEDIATE\020\001\022\021\n\rFRAGMENT_SINK\020\002*r\n\025JQuickT" +
-      "askStatusProto\022\020\n\014TASK_PENDING\020\000\022\020\n\014TASK" +
-      "_RUNNING\020\001\022\020\n\014TASK_SUCCESS\020\002\022\017\n\013TASK_FAI" +
-      "LED\020\003\022\022\n\016TASK_CANCELLED\020\004*\243\001\n\025JQuickQuer" +
-      "yStateProto\022\021\n\rQUERY_PENDING\020\000\022\022\n\016QUERY_" +
-      "PLANNING\020\001\022\024\n\020QUERY_SCHEDULING\020\002\022\021\n\rQUER" +
-      "Y_RUNNING\020\003\022\023\n\017QUERY_SUCCEEDED\020\004\022\020\n\014QUER" +
-      "Y_FAILED\020\005\022\023\n\017QUERY_CANCELLED\020\0062\227\003\n\031JQui" +
-      "ckPhysicalPlanService\022|\n\013ExecuteTask\0225.c" +
-      "om.github.paohaijiao.proto.JQuickExecute" +
-      "TaskRequest\0326.com.github.paohaijiao.prot" +
-      "o.JQuickExecuteTaskResponse\022\177\n\021ExecuteTa" +
-      "skStream\0225.com.github.paohaijiao.proto.J" +
-      "QuickExecuteTaskRequest\0321.com.github.pao" +
-      "haijiao.proto.JQuickDataChunkProto0\001\022{\n\n" +
-      "CancelTask\0225.com.github.paohaijiao.proto" +
-      ".JQuickCancelQueryRequest\0326.com.github.p" +
-      "aohaijiao.proto.JQuickCancelQueryRespons" +
-      "e2\213\003\n\035JQuickDataDistributionService\022r\n\010S" +
-      "endData\0221.com.github.paohaijiao.proto.JQ" +
-      "uickDataChunkProto\0321.com.github.paohaiji" +
-      "ao.proto.JQuickEmptyNodeProto(\001\022z\n\013Recei" +
-      "veData\0223.com.github.paohaijiao.proto.JQu" +
-      "ickFetchDataRequest\0324.com.github.paohaij" +
-      "iao.proto.JQuickFetchDataResponse0\001\022z\n\rB" +
-      "roadcastData\0221.com.github.paohaijiao.pro" +
-      "to.JQuickDataChunkProto\0324.com.github.pao" +
-      "haijiao.proto.JQuickBroadcastResponse(\0012" +
-      "\213\005\n\030JQuickCoordinatorService\022|\n\013SubmitQu" +
-      "ery\0225.com.github.paohaijiao.proto.JQuick" +
-      "SubmitQueryRequest\0326.com.github.paohaiji" +
-      "ao.proto.JQuickSubmitQueryResponse\022\177\n\016Ge" +
-      "tQueryStatus\0225.com.github.paohaijiao.pro" +
-      "to.JQuickQueryStatusRequest\0326.com.github" +
-      ".paohaijiao.proto.JQuickQueryStatusRespo" +
-      "nse\022|\n\013CancelQuery\0225.com.github.paohaiji" +
-      "ao.proto.JQuickCancelQueryRequest\0326.com." +
-      "github.paohaijiao.proto.JQuickCancelQuer" +
-      "yResponse\022z\n\016GetQueryResult\0223.com.github" +
-      ".paohaijiao.proto.JQuickGetResultRequest" +
-      "\0321.com.github.paohaijiao.proto.JQuickDat" +
-      "aChunkProto0\001\022v\n\tHeartbeat\0223.com.github." +
-      "paohaijiao.proto.JQuickHeartbeatRequest\032" +
-      "4.com.github.paohaijiao.proto.JQuickHear" +
-      "tbeatResponseB8\n\033com.github.paohaijiao.p" +
-      "rotoB\027JQuickPhysicalPlanProtoP\001b\006proto3"
+      "|\n\024RegisterTableRequest\022\022\n\ntable_name\030\001 " +
+      "\001(\t\022=\n\004data\030\002 \001(\0132/.com.github.paohaijia" +
+      "o.proto.JQuickDataSetProto\022\021\n\toverwrite\030" +
+      "\003 \001(\010\"L\n\025RegisterTableResponse\022\017\n\007succes" +
+      "s\030\001 \001(\010\022\017\n\007message\030\002 \001(\t\022\021\n\trow_count\030\003 " +
+      "\001(\003\"Z\n\026RegisterTablesResponse\022\017\n\007success",
+      "\030\001 \001(\010\022\030\n\020registered_count\030\002 \001(\005\022\025\n\rfail" +
+      "ed_tables\030\003 \003(\t\"&\n\020DropTableRequest\022\022\n\nt" +
+      "able_name\030\001 \001(\t\"5\n\021DropTableResponse\022\017\n\007" +
+      "success\030\001 \001(\010\022\017\n\007message\030\002 \001(\t\"Y\n\027JQuick" +
+      "BroadcastResponse\022\017\n\007success\030\001 \001(\010\022\025\n\rsu" +
+      "ccess_count\030\002 \001(\005\022\026\n\016failed_workers\030\003 \003(" +
+      "\t*\250\001\n\034JQuickPartitionStrategyProto\022\022\n\016PA" +
+      "RTITION_HASH\020\000\022\023\n\017PARTITION_RANGE\020\001\022\031\n\025P" +
+      "ARTITION_ROUND_ROBIN\020\002\022\027\n\023PARTITION_BROA" +
+      "DCAST\020\003\022\025\n\021PARTITION_FORWARD\020\004\022\024\n\020PARTIT" +
+      "ION_CUSTOM\020\005*\340\001\n\031JQuickExpressionTypePro" +
+      "to\022\023\n\017EXPR_COLUMN_REF\020\000\022\020\n\014EXPR_LITERAL\020" +
+      "\001\022\021\n\rEXPR_FUNCTION\020\002\022\030\n\024EXPR_BINARY_OPER" +
+      "ATOR\020\003\022\027\n\023EXPR_UNARY_OPERATOR\020\004\022\022\n\016EXPR_" +
+      "CASE_WHEN\020\005\022\021\n\rEXPR_SUBQUERY\020\006\022\013\n\007EXPR_I" +
+      "N\020\007\022\020\n\014EXPR_BETWEEN\020\010\022\020\n\014EXPR_IS_NULL\020\t*" +
+      "\344\001\n\031JQuickBinaryOperatorProto\022\t\n\005OP_EQ\020\000" +
+      "\022\t\n\005OP_NE\020\001\022\t\n\005OP_LT\020\002\022\n\n\006OP_LTE\020\003\022\t\n\005OP" +
+      "_GT\020\004\022\n\n\006OP_GTE\020\005\022\n\n\006OP_AND\020\006\022\t\n\005OP_OR\020\007" +
+      "\022\013\n\007OP_LIKE\020\010\022\t\n\005OP_IN\020\t\022\r\n\tOP_NOT_IN\020\n\022" +
+      "\013\n\007OP_PLUS\020\013\022\014\n\010OP_MINUS\020\014\022\017\n\013OP_MULTIPL" +
+      "Y\020\r\022\r\n\tOP_DIVIDE\020\016\022\n\n\006OP_MOD\020\017*\201\001\n\023JQuic" +
+      "kJoinTypeProto\022\016\n\nJOIN_INNER\020\000\022\r\n\tJOIN_L" +
+      "EFT\020\001\022\016\n\nJOIN_RIGHT\020\002\022\r\n\tJOIN_FULL\020\003\022\016\n\n" +
+      "JOIN_CROSS\020\004\022\r\n\tJOIN_SEMI\020\005\022\r\n\tJOIN_ANTI" +
+      "\020\006*A\n\024JQuickBuildSideProto\022\023\n\017BUILD_SIDE" +
+      "_LEFT\020\000\022\024\n\020BUILD_SIDE_RIGHT\020\001*}\n\033JQuickJ" +
+      "oinDistributionProto\022\023\n\017JOIN_DIST_LOCAL\020" +
+      "\000\022\025\n\021JOIN_DIST_SHUFFLE\020\001\022\027\n\023JOIN_DIST_BR" +
+      "OADCAST\020\002\022\031\n\025JOIN_DIST_PARTITIONED\020\003*K\n\031" +
+      "JQuickAggregateStageProto\022\017\n\013AGG_PARTIAL" +
+      "\020\000\022\r\n\tAGG_FINAL\020\001\022\016\n\nAGG_SINGLE\020\002*o\n\027JQu" +
+      "ickExchangeTypeProto\022\016\n\nEX_SHUFFLE\020\000\022\020\n\014" +
+      "EX_BROADCAST\020\001\022\r\n\tEX_GATHER\020\002\022\022\n\016EX_REPA" +
+      "RTITION\020\003\022\017\n\013EX_PIPELINE\020\004*b\n\033JQuickSQLO" +
+      "perationTypeProto\022\r\n\tSET_UNION\020\000\022\021\n\rSET_" +
+      "UNION_ALL\020\001\022\021\n\rSET_INTERSECT\020\002\022\016\n\nSET_EX" +
+      "CEPT\020\003*\\\n\027JQuickFragmentTypeProto\022\023\n\017FRA" +
+      "GMENT_SOURCE\020\000\022\031\n\025FRAGMENT_INTERMEDIATE\020" +
+      "\001\022\021\n\rFRAGMENT_SINK\020\002*r\n\025JQuickTaskStatus" +
+      "Proto\022\020\n\014TASK_PENDING\020\000\022\020\n\014TASK_RUNNING\020" +
+      "\001\022\020\n\014TASK_SUCCESS\020\002\022\017\n\013TASK_FAILED\020\003\022\022\n\016" +
+      "TASK_CANCELLED\020\004*\243\001\n\025JQuickQueryStatePro" +
+      "to\022\021\n\rQUERY_PENDING\020\000\022\022\n\016QUERY_PLANNING\020" +
+      "\001\022\024\n\020QUERY_SCHEDULING\020\002\022\021\n\rQUERY_RUNNING" +
+      "\020\003\022\023\n\017QUERY_SUCCEEDED\020\004\022\020\n\014QUERY_FAILED\020" +
+      "\005\022\023\n\017QUERY_CANCELLED\020\0062\364\002\n\022JQuickTableSe" +
+      "rvice\022v\n\rRegisterTable\0221.com.github.paoh" +
+      "aijiao.proto.RegisterTableRequest\0322.com." +
+      "github.paohaijiao.proto.RegisterTableRes" +
+      "ponse\022z\n\016RegisterTables\0221.com.github.pao" +
+      "haijiao.proto.RegisterTableRequest\0323.com" +
+      ".github.paohaijiao.proto.RegisterTablesR" +
+      "esponse(\001\022j\n\tDropTable\022-.com.github.paoh" +
+      "aijiao.proto.DropTableRequest\032..com.gith" +
+      "ub.paohaijiao.proto.DropTableResponse2\227\003" +
+      "\n\031JQuickPhysicalPlanService\022|\n\013ExecuteTa" +
+      "sk\0225.com.github.paohaijiao.proto.JQuickE" +
+      "xecuteTaskRequest\0326.com.github.paohaijia" +
+      "o.proto.JQuickExecuteTaskResponse\022\177\n\021Exe" +
+      "cuteTaskStream\0225.com.github.paohaijiao.p" +
+      "roto.JQuickExecuteTaskRequest\0321.com.gith" +
+      "ub.paohaijiao.proto.JQuickDataChunkProto" +
+      "0\001\022{\n\nCancelTask\0225.com.github.paohaijiao" +
+      ".proto.JQuickCancelQueryRequest\0326.com.gi" +
+      "thub.paohaijiao.proto.JQuickCancelQueryR" +
+      "esponse2\213\003\n\035JQuickDataDistributionServic" +
+      "e\022r\n\010SendData\0221.com.github.paohaijiao.pr" +
+      "oto.JQuickDataChunkProto\0321.com.github.pa" +
+      "ohaijiao.proto.JQuickEmptyNodeProto(\001\022z\n" +
+      "\013ReceiveData\0223.com.github.paohaijiao.pro" +
+      "to.JQuickFetchDataRequest\0324.com.github.p" +
+      "aohaijiao.proto.JQuickFetchDataResponse0" +
+      "\001\022z\n\rBroadcastData\0221.com.github.paohaiji" +
+      "ao.proto.JQuickDataChunkProto\0324.com.gith" +
+      "ub.paohaijiao.proto.JQuickBroadcastRespo" +
+      "nse(\0012\213\005\n\030JQuickCoordinatorService\022|\n\013Su" +
+      "bmitQuery\0225.com.github.paohaijiao.proto." +
+      "JQuickSubmitQueryRequest\0326.com.github.pa" +
+      "ohaijiao.proto.JQuickSubmitQueryResponse" +
+      "\022\177\n\016GetQueryStatus\0225.com.github.paohaiji" +
+      "ao.proto.JQuickQueryStatusRequest\0326.com." +
+      "github.paohaijiao.proto.JQuickQueryStatu" +
+      "sResponse\022|\n\013CancelQuery\0225.com.github.pa" +
+      "ohaijiao.proto.JQuickCancelQueryRequest\032" +
+      "6.com.github.paohaijiao.proto.JQuickCanc" +
+      "elQueryResponse\022z\n\016GetQueryResult\0223.com." +
+      "github.paohaijiao.proto.JQuickGetResultR" +
+      "equest\0321.com.github.paohaijiao.proto.JQu" +
+      "ickDataChunkProto0\001\022v\n\tHeartbeat\0223.com.g" +
+      "ithub.paohaijiao.proto.JQuickHeartbeatRe" +
+      "quest\0324.com.github.paohaijiao.proto.JQui" +
+      "ckHeartbeatResponseB8\n\033com.github.paohai" +
+      "jiao.protoB\027JQuickPhysicalPlanProtoP\001b\006p" +
+      "roto3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
@@ -1269,8 +1314,38 @@ public final class JQuickPhysicalPlanProto {
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_com_github_paohaijiao_proto_JQuickGetResultRequest_descriptor,
         new String[] { "QueryId", "MaxRows", "Offset", "FetchContinuously", });
-    internal_static_com_github_paohaijiao_proto_JQuickBroadcastResponse_descriptor =
+    internal_static_com_github_paohaijiao_proto_RegisterTableRequest_descriptor =
       getDescriptor().getMessageTypes().get(47);
+    internal_static_com_github_paohaijiao_proto_RegisterTableRequest_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_com_github_paohaijiao_proto_RegisterTableRequest_descriptor,
+        new String[] { "TableName", "Data", "Overwrite", });
+    internal_static_com_github_paohaijiao_proto_RegisterTableResponse_descriptor =
+      getDescriptor().getMessageTypes().get(48);
+    internal_static_com_github_paohaijiao_proto_RegisterTableResponse_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_com_github_paohaijiao_proto_RegisterTableResponse_descriptor,
+        new String[] { "Success", "Message", "RowCount", });
+    internal_static_com_github_paohaijiao_proto_RegisterTablesResponse_descriptor =
+      getDescriptor().getMessageTypes().get(49);
+    internal_static_com_github_paohaijiao_proto_RegisterTablesResponse_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_com_github_paohaijiao_proto_RegisterTablesResponse_descriptor,
+        new String[] { "Success", "RegisteredCount", "FailedTables", });
+    internal_static_com_github_paohaijiao_proto_DropTableRequest_descriptor =
+      getDescriptor().getMessageTypes().get(50);
+    internal_static_com_github_paohaijiao_proto_DropTableRequest_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_com_github_paohaijiao_proto_DropTableRequest_descriptor,
+        new String[] { "TableName", });
+    internal_static_com_github_paohaijiao_proto_DropTableResponse_descriptor =
+      getDescriptor().getMessageTypes().get(51);
+    internal_static_com_github_paohaijiao_proto_DropTableResponse_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_com_github_paohaijiao_proto_DropTableResponse_descriptor,
+        new String[] { "Success", "Message", });
+    internal_static_com_github_paohaijiao_proto_JQuickBroadcastResponse_descriptor =
+      getDescriptor().getMessageTypes().get(52);
     internal_static_com_github_paohaijiao_proto_JQuickBroadcastResponse_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_com_github_paohaijiao_proto_JQuickBroadcastResponse_descriptor,

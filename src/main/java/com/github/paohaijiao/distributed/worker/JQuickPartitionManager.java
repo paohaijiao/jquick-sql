@@ -14,8 +14,8 @@
  * Copyright (c) [2025-2099] Martin (goudingcheng@gmail.com)
  */
 package com.github.paohaijiao.distributed.worker;
-
 import com.github.paohaijiao.console.JConsole;
+import com.github.paohaijiao.distributed.coordinator.JQuickCoordinator.WorkerEndpoint;
 import com.github.paohaijiao.enums.JQuickExchangeType;
 import com.github.paohaijiao.enums.JQuickPartitionStrategy;
 import com.github.paohaijiao.expression.JQuickExpression;
@@ -29,9 +29,9 @@ import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.stub.StreamObserver;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -39,7 +39,52 @@ import java.util.concurrent.TimeUnit;
  */
 public class JQuickPartitionManager {
 
-    private JConsole console=JConsole.initConsoleEnvironment();
+    private JConsole console = JConsole.initConsoleEnvironment();
+
+    // Worker 端点映射：workerId -> WorkerEndpoint
+    private final Map<String, WorkerEndpoint> workerEndpoints;
+
+    // gRPC 通道缓存
+    private final Map<String, ManagedChannel> channelCache;
+
+    // gRPC Stub 缓存
+    private final Map<String, JQuickDataDistributionServiceGrpc.JQuickDataDistributionServiceStub> stubCache;
+
+    public JQuickPartitionManager() {
+        this.workerEndpoints = new ConcurrentHashMap<>();
+        this.channelCache = new ConcurrentHashMap<>();
+        this.stubCache = new ConcurrentHashMap<>();
+    }
+
+    /**
+     * 设置 Worker 端点信息（从 Coordinator 传入）
+     */
+    public void setWorkerEndpoints(List<WorkerEndpoint> endpoints) {
+        workerEndpoints.clear();
+        for (WorkerEndpoint endpoint : endpoints) {
+            workerEndpoints.put(endpoint.getWorkerId(), endpoint);
+            console.info("Registered worker endpoint: " + endpoint.getWorkerId() + " -> " + endpoint.getHost() + ":" + endpoint.getPort());
+        }
+    }
+
+    /**
+     * 获取 Worker 端点
+     */
+    public WorkerEndpoint getWorkerEndpoint(String workerId) {
+        return workerEndpoints.get(workerId);
+    }
+
+    /**
+     * 获取 Worker 端点（通过索引）
+     */
+    public WorkerEndpoint getWorkerEndpointByIndex(int index) {
+        for (WorkerEndpoint endpoint : workerEndpoints.values()) {
+            if (endpoint.getIndex() == index) {
+                return endpoint;
+            }
+        }
+        return null;
+    }
 
     /**
      * 数据分区逻辑
@@ -61,7 +106,6 @@ public class JQuickPartitionManager {
                     partitions.get(partition).addRow(row);
                 }
                 break;
-
             case RANGE:
                 for (JQuickRow row : data.getRows()) {
                     int partition = computeRangePartition(row, node.getPartitionKeys(), numPartitions, expressionEvaluator);
@@ -74,14 +118,12 @@ public class JQuickPartitionManager {
                     partitions.get(idx++ % numPartitions).addRow(row);
                 }
                 break;
-
             case BUCKET:
                 for (JQuickRow row : data.getRows()) {
                     int bucketId = computeBucketPartition(row, node.getPartitionKeys(), numPartitions, expressionEvaluator);
                     partitions.get(bucketId).addRow(row);
                 }
                 break;
-
             case REPLICATE:
                 for (JQuickRow row : data.getRows()) {
                     for (JQuickWorker.JQuickMemoryPartition partition : partitions) {
@@ -89,7 +131,6 @@ public class JQuickPartitionManager {
                     }
                 }
                 break;
-
             default:
                 if (!partitions.isEmpty()) {
                     for (JQuickRow row : data.getRows()) {
@@ -103,81 +144,61 @@ public class JQuickPartitionManager {
     }
 
     /**
-     * 计算哈希分区
-     */
-    private int computeHashPartition(JQuickRow row, List<JQuickExpression> partitionKeys, int numPartitions, JQuickExpressionEvaluator evaluator) {
-        int hash = 0;
-        if (partitionKeys == null || partitionKeys.isEmpty()) {//没有指定分区键,使用整行数据的哈希值
-            return Math.abs(row.hashCode()) % numPartitions;
-        }
-        for (JQuickExpression key : partitionKeys) {//有分区键,根据分区键计算哈希值
-            Object value = evaluator.evaluateExpression(row, key);
-            hash = 31 * hash + (value != null ? value.hashCode() : 0);
-        }
-        return Math.abs(hash) % numPartitions;//确保结果为非负数，然后取模得到分区编号
-    }
-
-    /**
-     * 计算范围分区
-     */
-    private int computeRangePartition(JQuickRow row, List<JQuickExpression> partitionKeys, int numPartitions, JQuickExpressionEvaluator evaluator) {
-        if (partitionKeys == null || partitionKeys.isEmpty()) {// 没有分区键时，默认返回分区 0
-            return 0;
-        }
-        Object value = evaluator.evaluateExpression(row, partitionKeys.get(0)); // 只使用第一个分区键进行范围分区
-        if (value == null) {    // 值为 null 时，默认返回分区 0
-            return 0;
-        }
-        return Math.abs(value.hashCode()) % numPartitions;
-    }
-
-    /**
-     * 计算桶分区
-     */
-    private int computeBucketPartition(JQuickRow row, List<JQuickExpression> partitionKeys, int numPartitions, JQuickExpressionEvaluator evaluator) {
-        if (partitionKeys == null || partitionKeys.isEmpty()) { // 没有分区键：使用整行数据的 hashCode
-            return Math.abs(row.hashCode()) % numPartitions;
-        }
-        int hash = 0;
-        for (JQuickExpression key : partitionKeys) {
-            Object value = evaluator.evaluateExpression(row, key);
-            if (value != null) {
-                hash = 31 * hash + value.hashCode();
-            }
-        }
-        return Math.abs(hash) % numPartitions;
-    }
-
-    /**
-     * 发送数据到目标 Worker
+     * 发送数据到目标 Worker（使用 WorkerEndpoint）
      */
     public void sendToWorker(JQuickWorker.JQuickMemoryPartition partition, int targetParallelism, JQuickExchangeType exchangeType, JQuickWorker worker) {
-        console.info("=== sendToWorker Debug ===");
-        console.info("Partition index: " + partition.getIndex());
-        console.info("Target parallelism: " + targetParallelism);
-        console.info("Exchange type: " + exchangeType);
-        console.info("Partition data size: " + partition.getData().size());
-        if (exchangeType == JQuickExchangeType.GATHER) {
-            console.info("Using GATHER, sending to worker 0");
-            sendToSingleWorker(partition, 0, worker);
-        } else if (exchangeType == JQuickExchangeType.BROADCAST) {
-            console.info("Using BROADCAST, sending to all workers");
-            sendToAllWorkers(partition, worker);
-        }else if (exchangeType == JQuickExchangeType.SHUFFLE) {
-            int targetWorkerId = partition.getIndex() % targetParallelism;
-            console.info("Using SHUFFLE, target worker: " + targetWorkerId);
-            sendToSingleWorker(partition, targetWorkerId, worker);
-        } else {
-            console.info("Unknown exchange type: " + exchangeType);
-        }
+        sendToWorker(partition, targetParallelism, exchangeType, worker, null);
     }
 
     /**
-     * 发送到单个 Worker
+     * 发送数据到目标 Worker（带目标 Worker 索引）
      */
-    private void sendToSingleWorker(JQuickWorker.JQuickMemoryPartition partition, int targetWorkerId, JQuickWorker worker) {
+    public void sendToWorker(JQuickWorker.JQuickMemoryPartition partition, int targetParallelism, JQuickExchangeType exchangeType, JQuickWorker worker, Integer specificWorkerIndex) {
+        console.info("=== sendToWorker Debug ===");
+        console.info("Partition index: " + partition.getIndex());
+        console.info("Partition data size: " + partition.getData().size());
+        if (partition.getData().isEmpty()) {
+            console.info("Partition data is empty, skipping send");
+            return;
+        }
+        WorkerEndpoint targetEndpoint = null;
+        if (specificWorkerIndex != null) {
+            // 使用指定的 Worker 索引
+            targetEndpoint = getWorkerEndpointByIndex(specificWorkerIndex);
+            console.info("Using specific worker index: " + specificWorkerIndex);
+        } else if (exchangeType == JQuickExchangeType.GATHER) {
+            // GATHER：发送到 Worker 0（Coordinator 所在节点）
+            targetEndpoint = getWorkerEndpointByIndex(0);
+            console.info("Using GATHER, sending to worker 0");
+        } else if (exchangeType == JQuickExchangeType.SHUFFLE) {
+            // SHUFFLE：根据分区索引决定目标 Worker
+            int targetWorkerId = partition.getIndex() % targetParallelism;
+            targetEndpoint = getWorkerEndpointByIndex(targetWorkerId);
+            console.info("Using SHUFFLE, target worker index: " + targetWorkerId);
+        } else if (exchangeType == JQuickExchangeType.BROADCAST) {
+            // BROADCAST：发送到所有 Worker
+            for (WorkerEndpoint endpoint : workerEndpoints.values()) {
+                sendToSingleWorker(partition, endpoint, worker);
+            }
+            return;
+        } else {
+            // 默认：发送到 Worker 0
+            targetEndpoint = getWorkerEndpointByIndex(0);
+        }
+
+        if (targetEndpoint == null) {
+            console.error("No target worker endpoint found for exchange type: " + exchangeType);
+            return;
+        }
+        sendToSingleWorker(partition, targetEndpoint, worker);
+    }
+
+    /**
+     * 发送到单个 Worker（使用 WorkerEndpoint）
+     */
+    private void sendToSingleWorker(JQuickWorker.JQuickMemoryPartition partition, WorkerEndpoint targetEndpoint, JQuickWorker worker) {
         JQuickDataChunkProto chunk = buildDataChunk(partition, worker);
-        sendChunkAsync(chunk, targetWorkerId, worker);
+        sendChunkAsync(chunk, targetEndpoint, worker);
     }
 
     /**
@@ -185,8 +206,8 @@ public class JQuickPartitionManager {
      */
     private void sendToAllWorkers(JQuickWorker.JQuickMemoryPartition partition, JQuickWorker worker) {
         JQuickDataChunkProto chunk = buildDataChunk(partition, worker);
-        for (int i = 0; i < 4; i++) {
-            sendChunkAsync(chunk, i, worker);
+        for (WorkerEndpoint endpoint : workerEndpoints.values()) {
+            sendChunkAsync(chunk, endpoint, worker);
         }
     }
 
@@ -205,42 +226,109 @@ public class JQuickPartitionManager {
     }
 
     /**
-     * 异步发送数据块
+     * 异步发送数据块（使用 WorkerEndpoint）
      */
-    private void sendChunkAsync(JQuickDataChunkProto chunk, int targetWorkerId, JQuickWorker worker) {
+    private void sendChunkAsync(JQuickDataChunkProto chunk, WorkerEndpoint targetEndpoint, JQuickWorker worker) {
+        String endpointKey = targetEndpoint.getWorkerId();
         worker.getExecutor().submit(() -> {
             try {
-                JQuickDataDistributionServiceGrpc.JQuickDataDistributionServiceStub stub = getDistributionStub(targetWorkerId, worker);
+                JQuickDataDistributionServiceGrpc.JQuickDataDistributionServiceStub stub = getDistributionStub(targetEndpoint, worker);
                 CompletableFuture<Void> future = new CompletableFuture<>();
                 stub.sendData(new StreamObserver<JQuickEmptyNodeProto>() {
                     @Override
                     public void onNext(JQuickEmptyNodeProto value) {
+                        // 接收确认
                     }
+
                     @Override
                     public void onError(Throwable t) {
+                        console.error("Send data to worker failed: " + targetEndpoint.getWorkerId(), t);
                         future.completeExceptionally(t);
                     }
 
                     @Override
                     public void onCompleted() {
+                        console.info("Send data to worker completed: " + targetEndpoint.getWorkerId());
                         future.complete(null);
                     }
                 }).onNext(chunk);
+
+                // 等待发送完成（带超时）
                 future.get(30, TimeUnit.SECONDS);
+                console.info("Sent partition " + chunk.getPartitionId() + " to worker " + targetEndpoint.getWorkerId());
+
             } catch (Exception e) {
-               e.printStackTrace();
+                console.error("Failed to send chunk to worker: " + targetEndpoint.getWorkerId(), e);
             }
         });
     }
 
     /**
-     * 获取分发服务 Stub
+     * 获取分发服务 Stub（使用 WorkerEndpoint）
      */
-    private JQuickDataDistributionServiceGrpc.JQuickDataDistributionServiceStub getDistributionStub(int workerId, JQuickWorker worker) {
-        return worker.getDistributionStubs().computeIfAbsent(workerId, id -> {
-            ManagedChannel channel = ManagedChannelBuilder.forAddress("localhost", 9000 + id).usePlaintext().build();
-            worker.getWorkerChannels().put(id, channel);
+    private JQuickDataDistributionServiceGrpc.JQuickDataDistributionServiceStub getDistributionStub(WorkerEndpoint endpoint, JQuickWorker worker) {
+        return stubCache.computeIfAbsent(endpoint.getWorkerId(), id -> {
+            ManagedChannel channel = ManagedChannelBuilder
+                    .forAddress(endpoint.getHost(), endpoint.getPort())
+                    .usePlaintext()
+                    .build();
+            channelCache.put(endpoint.getWorkerId(), channel);
+            worker.getWorkerChannels().put(endpoint.getIndex(), channel);
+            console.info("Created gRPC channel to worker: " + endpoint.getWorkerId() + " at " + endpoint.getHost() + ":" + endpoint.getPort());
             return JQuickDataDistributionServiceGrpc.newStub(channel);
         });
+    }
+
+    private int computeHashPartition(JQuickRow row, List<JQuickExpression> partitionKeys, int numPartitions, JQuickExpressionEvaluator evaluator) {
+        int hash = 0;
+        if (partitionKeys == null || partitionKeys.isEmpty()) {
+            return Math.abs(row.hashCode()) % numPartitions;
+        }
+        for (JQuickExpression key : partitionKeys) {
+            Object value = evaluator.evaluateExpression(row, key);
+            hash = 31 * hash + (value != null ? value.hashCode() : 0);
+        }
+        return Math.abs(hash) % numPartitions;
+    }
+
+    private int computeRangePartition(JQuickRow row, List<JQuickExpression> partitionKeys, int numPartitions, JQuickExpressionEvaluator evaluator) {
+        if (partitionKeys == null || partitionKeys.isEmpty()) {
+            return 0;
+        }
+        Object value = evaluator.evaluateExpression(row, partitionKeys.get(0));
+        if (value == null) {
+            return 0;
+        }
+        return Math.abs(value.hashCode()) % numPartitions;
+    }
+
+    private int computeBucketPartition(JQuickRow row, List<JQuickExpression> partitionKeys, int numPartitions, JQuickExpressionEvaluator evaluator) {
+        if (partitionKeys == null || partitionKeys.isEmpty()) {
+            return Math.abs(row.hashCode()) % numPartitions;
+        }
+        int hash = 0;
+        for (JQuickExpression key : partitionKeys) {
+            Object value = evaluator.evaluateExpression(row, key);
+            if (value != null) {
+                hash = 31 * hash + value.hashCode();
+            }
+        }
+        return Math.abs(hash) % numPartitions;
+    }
+
+    /**
+     * 关闭所有连接
+     */
+    public void shutdown() {
+        for (ManagedChannel channel : channelCache.values()) {
+            try {
+                channel.shutdown();
+            } catch (Exception e) {
+                // ignore
+            }
+        }
+        channelCache.clear();
+        stubCache.clear();
+        workerEndpoints.clear();
     }
 }

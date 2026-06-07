@@ -36,6 +36,7 @@ public class JQuickNodeExecutor {
 
     private final JQuickDataConverter dataConverter;
 
+
     public JQuickNodeExecutor(JQuickWorker worker, JQuickExpressionEvaluator expressionEvaluator, JQuickPartitionManager partitionManager, JQuickDataConverter dataConverter) {
         this.worker = worker;
         this.expressionEvaluator = expressionEvaluator;
@@ -58,7 +59,6 @@ public class JQuickNodeExecutor {
         if (node == null) {
             return JQuickDataSet.builder().build();
         }
-
         if (node instanceof JQuickTableScanPhysicalNode) {
             return executeTableScan((JQuickTableScanPhysicalNode) node, context);
         } else if (node instanceof JQuickFilterPhysicalNode) {
@@ -100,7 +100,7 @@ public class JQuickNodeExecutor {
         String tableName = node.getTableName();
         Set<String> requiredColumns = node.getRequiredColumns();
         JQuickDataSet data;
-        boolean useMemoryDist = false;
+        boolean useMemoryDist = true;
         if (node.getPartitionInfo() != null && useMemoryDist) {
             data = readFromMemoryPartition(tableName, requiredColumns);
         } else {

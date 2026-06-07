@@ -1,6 +1,8 @@
 package com.github.paohaijiao.distributed.worker;
 
 import com.github.paohaijiao.console.JConsole;
+import com.github.paohaijiao.datasource.JQuickDataSourceManager;
+import com.github.paohaijiao.distributed.coordinator.JQuickCoordinator;
 import com.github.paohaijiao.enums.JQuickExchangeType;
 import com.github.paohaijiao.function.manager.JQuickMethodInvocationManager;
 import com.github.paohaijiao.proto.*;
@@ -39,6 +41,9 @@ public class JQuickWorker {
 
     private final Map<Integer, ManagedChannel> workerChannels;
 
+    private JQuickTableServiceImpl tableService;
+
+
     private final Map<Integer, JQuickDataDistributionServiceGrpc.JQuickDataDistributionServiceStub> distributionStubs;
 
     private final JQuickMethodInvocationManager functionManager;
@@ -55,6 +60,8 @@ public class JQuickWorker {
 
     private JQuickDataDistributionServiceImpl distributionService;
 
+
+
     public JQuickWorker(String workerId, int port) {
         this.workerId = workerId;
         this.port = port;
@@ -69,7 +76,9 @@ public class JQuickWorker {
         this.dataConverter = new JQuickDataConverter();
         this.nodeExecutor = new JQuickNodeExecutor(this, expressionEvaluator, partitionManager, dataConverter);
     }
-
+    public void setWorkerEndpoints(List<JQuickCoordinator.WorkerEndpoint> endpoints) {
+        partitionManager.setWorkerEndpoints(endpoints);
+    }
     public String getWorkerId() {
         return workerId;
     }
@@ -220,9 +229,11 @@ public class JQuickWorker {
     public void start() throws IOException {
         JQuickPhysicalPlanServiceImpl planService = new JQuickPhysicalPlanServiceImpl(this);
         distributionService = new JQuickDataDistributionServiceImpl(this);
+        tableService = new JQuickTableServiceImpl(dataConverter);
         server = ServerBuilder.forPort(port)
                 .addService(planService)
                 .addService(distributionService)
+                .addService(tableService)
                 .build()
                 .start();
         console.info("Worker " + workerId + " started on port " + port);
@@ -253,6 +264,9 @@ public class JQuickWorker {
         if (server != null) {
             server.awaitTermination();
         }
+    }
+    public void registerTableLocally(String tableName, JQuickDataSet data) {
+        JQuickDataSourceManager.registerTable(tableName, data);
     }
 
     /**

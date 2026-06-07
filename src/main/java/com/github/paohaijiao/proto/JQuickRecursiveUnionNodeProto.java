@@ -498,18 +498,18 @@ private static final long serialVersionUID = 0L;
       return this;
     }
 
-    @Override
+    @java.lang.Override
     public final boolean isInitialized() {
       return true;
     }
 
-    @Override
+    @java.lang.Override
     public Builder mergeFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
       if (extensionRegistry == null) {
-        throw new NullPointerException();
+        throw new java.lang.NullPointerException();
       }
       try {
         boolean done = false;
@@ -525,7 +525,7 @@ private static final long serialVersionUID = 0L;
               break;
             } // case 10
             case 18: {
-              String s = input.readStringRequireUtf8();
+              java.lang.String s = input.readStringRequireUtf8();
               ensureColumnNamesIsMutable();
               columnNames_.add(s);
               break;
@@ -557,21 +557,21 @@ private static final long serialVersionUID = 0L;
     }
     private int bitField0_;
 
-    private Object cteName_ = "";
+    private java.lang.Object cteName_ = "";
     /**
      * <code>string cte_name = 1;</code>
      * @return The cteName.
      */
-    public String getCteName() {
-      Object ref = cteName_;
-      if (!(ref instanceof String)) {
+    public java.lang.String getCteName() {
+      java.lang.Object ref = cteName_;
+      if (!(ref instanceof java.lang.String)) {
         com.google.protobuf.ByteString bs =
             (com.google.protobuf.ByteString) ref;
-        String s = bs.toStringUtf8();
+        java.lang.String s = bs.toStringUtf8();
         cteName_ = s;
         return s;
       } else {
-        return (String) ref;
+        return (java.lang.String) ref;
       }
     }
     /**
@@ -580,11 +580,11 @@ private static final long serialVersionUID = 0L;
      */
     public com.google.protobuf.ByteString
         getCteNameBytes() {
-      Object ref = cteName_;
+      java.lang.Object ref = cteName_;
       if (ref instanceof String) {
         com.google.protobuf.ByteString b = 
             com.google.protobuf.ByteString.copyFromUtf8(
-                (String) ref);
+                (java.lang.String) ref);
         cteName_ = b;
         return b;
       } else {
@@ -597,7 +597,7 @@ private static final long serialVersionUID = 0L;
      * @return This builder for chaining.
      */
     public Builder setCteName(
-        String value) {
+        java.lang.String value) {
       if (value == null) { throw new NullPointerException(); }
       cteName_ = value;
       bitField0_ |= 0x00000001;
@@ -656,7 +656,7 @@ private static final long serialVersionUID = 0L;
      * @param index The index of the element to return.
      * @return The columnNames at the given index.
      */
-    public String getColumnNames(int index) {
+    public java.lang.String getColumnNames(int index) {
       return columnNames_.get(index);
     }
     /**
@@ -675,7 +675,7 @@ private static final long serialVersionUID = 0L;
      * @return This builder for chaining.
      */
     public Builder setColumnNames(
-        int index, String value) {
+        int index, java.lang.String value) {
       if (value == null) { throw new NullPointerException(); }
       ensureColumnNamesIsMutable();
       columnNames_.set(index, value);
@@ -688,7 +688,7 @@ private static final long serialVersionUID = 0L;
      * @return This builder for chaining.
      */
     public Builder addColumnNames(
-        String value) {
+        java.lang.String value) {
       if (value == null) { throw new NullPointerException(); }
       ensureColumnNamesIsMutable();
       columnNames_.add(value);
@@ -701,7 +701,7 @@ private static final long serialVersionUID = 0L;
      * @return This builder for chaining.
      */
     public Builder addAllColumnNames(
-        Iterable<String> values) {
+        java.lang.Iterable<java.lang.String> values) {
       ensureColumnNamesIsMutable();
       com.google.protobuf.AbstractMessageLite.Builder.addAll(
           values, columnNames_);
@@ -738,7 +738,7 @@ private static final long serialVersionUID = 0L;
      * <code>bool union_all = 3;</code>
      * @return The unionAll.
      */
-    @Override
+    @java.lang.Override
     public boolean getUnionAll() {
       return unionAll_;
     }
@@ -770,7 +770,7 @@ private static final long serialVersionUID = 0L;
      * <code>int32 max_recursion_depth = 4;</code>
      * @return The maxRecursionDepth.
      */
-    @Override
+    @java.lang.Override
     public int getMaxRecursionDepth() {
       return maxRecursionDepth_;
     }
@@ -796,13 +796,13 @@ private static final long serialVersionUID = 0L;
       onChanged();
       return this;
     }
-    @Override
+    @java.lang.Override
     public final Builder setUnknownFields(
         final com.google.protobuf.UnknownFieldSet unknownFields) {
       return super.setUnknownFields(unknownFields);
     }
 
-    @Override
+    @java.lang.Override
     public final Builder mergeUnknownFields(
         final com.google.protobuf.UnknownFieldSet unknownFields) {
       return super.mergeUnknownFields(unknownFields);
@@ -824,7 +824,7 @@ private static final long serialVersionUID = 0L;
 
   private static final com.google.protobuf.Parser<JQuickRecursiveUnionNodeProto>
       PARSER = new com.google.protobuf.AbstractParser<JQuickRecursiveUnionNodeProto>() {
-    @Override
+    @java.lang.Override
     public JQuickRecursiveUnionNodeProto parsePartialFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
@@ -848,12 +848,12 @@ private static final long serialVersionUID = 0L;
     return PARSER;
   }
 
-  @Override
+  @java.lang.Override
   public com.google.protobuf.Parser<JQuickRecursiveUnionNodeProto> getParserForType() {
     return PARSER;
   }
 
-  @Override
+  @java.lang.Override
   public JQuickRecursiveUnionNodeProto getDefaultInstanceForType() {
     return DEFAULT_INSTANCE;
   }

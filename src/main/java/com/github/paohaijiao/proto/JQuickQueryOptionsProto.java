@@ -18,14 +18,14 @@ private static final long serialVersionUID = 0L;
   private JQuickQueryOptionsProto() {
   }
 
-  @Override
+  @java.lang.Override
   @SuppressWarnings({"unused"})
-  protected Object newInstance(
+  protected java.lang.Object newInstance(
       UnusedPrivateParameter unused) {
     return new JQuickQueryOptionsProto();
   }
 
-  @Override
+  @java.lang.Override
   public final com.google.protobuf.UnknownFieldSet
   getUnknownFields() {
     return this.unknownFields;
@@ -35,12 +35,12 @@ private static final long serialVersionUID = 0L;
     return JQuickPhysicalPlanProto.internal_static_com_github_paohaijiao_proto_JQuickQueryOptionsProto_descriptor;
   }
 
-  @Override
-  protected FieldAccessorTable
+  @java.lang.Override
+  protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internalGetFieldAccessorTable() {
     return JQuickPhysicalPlanProto.internal_static_com_github_paohaijiao_proto_JQuickQueryOptionsProto_fieldAccessorTable
         .ensureFieldAccessorsInitialized(
-            JQuickQueryOptionsProto.class, Builder.class);
+            JQuickQueryOptionsProto.class, JQuickQueryOptionsProto.Builder.class);
   }
 
   public static final int TIMEOUT_SECONDS_FIELD_NUMBER = 1;
@@ -49,7 +49,7 @@ private static final long serialVersionUID = 0L;
    * <code>int32 timeout_seconds = 1;</code>
    * @return The timeoutSeconds.
    */
-  @Override
+  @java.lang.Override
   public int getTimeoutSeconds() {
     return timeoutSeconds_;
   }
@@ -60,7 +60,7 @@ private static final long serialVersionUID = 0L;
    * <code>int32 max_result_rows = 2;</code>
    * @return The maxResultRows.
    */
-  @Override
+  @java.lang.Override
   public int getMaxResultRows() {
     return maxResultRows_;
   }
@@ -71,7 +71,7 @@ private static final long serialVersionUID = 0L;
    * <code>bool collect_metrics = 3;</code>
    * @return The collectMetrics.
    */
-  @Override
+  @java.lang.Override
   public boolean getCollectMetrics() {
     return collectMetrics_;
   }
@@ -86,7 +86,7 @@ private static final long serialVersionUID = 0L;
    * <code>int64 memory_limit_mb = 4;</code>
    * @return The memoryLimitMb.
    */
-  @Override
+  @java.lang.Override
   public long getMemoryLimitMb() {
     return memoryLimitMb_;
   }
@@ -101,13 +101,13 @@ private static final long serialVersionUID = 0L;
    * <code>bool use_memory_optimized = 5;</code>
    * @return The useMemoryOptimized.
    */
-  @Override
+  @java.lang.Override
   public boolean getUseMemoryOptimized() {
     return useMemoryOptimized_;
   }
 
   private byte memoizedIsInitialized = -1;
-  @Override
+  @java.lang.Override
   public final boolean isInitialized() {
     byte isInitialized = memoizedIsInitialized;
     if (isInitialized == 1) return true;
@@ -117,7 +117,7 @@ private static final long serialVersionUID = 0L;
     return true;
   }
 
-  @Override
+  @java.lang.Override
   public void writeTo(com.google.protobuf.CodedOutputStream output)
                       throws java.io.IOException {
     if (timeoutSeconds_ != 0) {
@@ -138,7 +138,7 @@ private static final long serialVersionUID = 0L;
     getUnknownFields().writeTo(output);
   }
 
-  @Override
+  @java.lang.Override
   public int getSerializedSize() {
     int size = memoizedSize;
     if (size != -1) return size;
@@ -169,8 +169,8 @@ private static final long serialVersionUID = 0L;
     return size;
   }
 
-  @Override
-  public boolean equals(final Object obj) {
+  @java.lang.Override
+  public boolean equals(final java.lang.Object obj) {
     if (obj == this) {
      return true;
     }
@@ -193,7 +193,7 @@ private static final long serialVersionUID = 0L;
     return true;
   }
 
-  @Override
+  @java.lang.Override
   public int hashCode() {
     if (memoizedHashCode != 0) {
       return memoizedHashCode;
@@ -288,7 +288,7 @@ private static final long serialVersionUID = 0L;
         .parseWithIOException(PARSER, input, extensionRegistry);
   }
 
-  @Override
+  @java.lang.Override
   public Builder newBuilderForType() { return newBuilder(); }
   public static Builder newBuilder() {
     return DEFAULT_INSTANCE.toBuilder();
@@ -296,15 +296,15 @@ private static final long serialVersionUID = 0L;
   public static Builder newBuilder(JQuickQueryOptionsProto prototype) {
     return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
   }
-  @Override
+  @java.lang.Override
   public Builder toBuilder() {
     return this == DEFAULT_INSTANCE
         ? new Builder() : new Builder().mergeFrom(this);
   }
 
-  @Override
+  @java.lang.Override
   protected Builder newBuilderForType(
-      BuilderParent parent) {
+      com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
     Builder builder = new Builder(parent);
     return builder;
   }
@@ -320,12 +320,12 @@ private static final long serialVersionUID = 0L;
       return JQuickPhysicalPlanProto.internal_static_com_github_paohaijiao_proto_JQuickQueryOptionsProto_descriptor;
     }
 
-    @Override
-    protected FieldAccessorTable
+    @java.lang.Override
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
         internalGetFieldAccessorTable() {
       return JQuickPhysicalPlanProto.internal_static_com_github_paohaijiao_proto_JQuickQueryOptionsProto_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
-              JQuickQueryOptionsProto.class, Builder.class);
+              JQuickQueryOptionsProto.class, JQuickQueryOptionsProto.Builder.class);
     }
 
     // Construct using com.github.paohaijiao.proto.JQuickQueryOptionsProto.newBuilder()
@@ -334,11 +334,11 @@ private static final long serialVersionUID = 0L;
     }
 
     private Builder(
-        BuilderParent parent) {
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
       super(parent);
 
     }
-    @Override
+    @java.lang.Override
     public Builder clear() {
       super.clear();
       bitField0_ = 0;
@@ -350,18 +350,18 @@ private static final long serialVersionUID = 0L;
       return this;
     }
 
-    @Override
+    @java.lang.Override
     public com.google.protobuf.Descriptors.Descriptor
         getDescriptorForType() {
       return JQuickPhysicalPlanProto.internal_static_com_github_paohaijiao_proto_JQuickQueryOptionsProto_descriptor;
     }
 
-    @Override
+    @java.lang.Override
     public JQuickQueryOptionsProto getDefaultInstanceForType() {
       return JQuickQueryOptionsProto.getDefaultInstance();
     }
 
-    @Override
+    @java.lang.Override
     public JQuickQueryOptionsProto build() {
       JQuickQueryOptionsProto result = buildPartial();
       if (!result.isInitialized()) {
@@ -370,7 +370,7 @@ private static final long serialVersionUID = 0L;
       return result;
     }
 
-    @Override
+    @java.lang.Override
     public JQuickQueryOptionsProto buildPartial() {
       JQuickQueryOptionsProto result = new JQuickQueryOptionsProto(this);
       if (bitField0_ != 0) { buildPartial0(result); }
@@ -397,39 +397,39 @@ private static final long serialVersionUID = 0L;
       }
     }
 
-    @Override
+    @java.lang.Override
     public Builder clone() {
       return super.clone();
     }
-    @Override
+    @java.lang.Override
     public Builder setField(
         com.google.protobuf.Descriptors.FieldDescriptor field,
-        Object value) {
+        java.lang.Object value) {
       return super.setField(field, value);
     }
-    @Override
+    @java.lang.Override
     public Builder clearField(
         com.google.protobuf.Descriptors.FieldDescriptor field) {
       return super.clearField(field);
     }
-    @Override
+    @java.lang.Override
     public Builder clearOneof(
         com.google.protobuf.Descriptors.OneofDescriptor oneof) {
       return super.clearOneof(oneof);
     }
-    @Override
+    @java.lang.Override
     public Builder setRepeatedField(
         com.google.protobuf.Descriptors.FieldDescriptor field,
-        int index, Object value) {
+        int index, java.lang.Object value) {
       return super.setRepeatedField(field, index, value);
     }
-    @Override
+    @java.lang.Override
     public Builder addRepeatedField(
         com.google.protobuf.Descriptors.FieldDescriptor field,
-        Object value) {
+        java.lang.Object value) {
       return super.addRepeatedField(field, value);
     }
-    @Override
+    @java.lang.Override
     public Builder mergeFrom(com.google.protobuf.Message other) {
       if (other instanceof JQuickQueryOptionsProto) {
         return mergeFrom((JQuickQueryOptionsProto)other);
@@ -461,18 +461,18 @@ private static final long serialVersionUID = 0L;
       return this;
     }
 
-    @Override
+    @java.lang.Override
     public final boolean isInitialized() {
       return true;
     }
 
-    @Override
+    @java.lang.Override
     public Builder mergeFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
       if (extensionRegistry == null) {
-        throw new NullPointerException();
+        throw new java.lang.NullPointerException();
       }
       try {
         boolean done = false;
@@ -529,7 +529,7 @@ private static final long serialVersionUID = 0L;
      * <code>int32 timeout_seconds = 1;</code>
      * @return The timeoutSeconds.
      */
-    @Override
+    @java.lang.Override
     public int getTimeoutSeconds() {
       return timeoutSeconds_;
     }
@@ -561,7 +561,7 @@ private static final long serialVersionUID = 0L;
      * <code>int32 max_result_rows = 2;</code>
      * @return The maxResultRows.
      */
-    @Override
+    @java.lang.Override
     public int getMaxResultRows() {
       return maxResultRows_;
     }
@@ -593,7 +593,7 @@ private static final long serialVersionUID = 0L;
      * <code>bool collect_metrics = 3;</code>
      * @return The collectMetrics.
      */
-    @Override
+    @java.lang.Override
     public boolean getCollectMetrics() {
       return collectMetrics_;
     }
@@ -629,7 +629,7 @@ private static final long serialVersionUID = 0L;
      * <code>int64 memory_limit_mb = 4;</code>
      * @return The memoryLimitMb.
      */
-    @Override
+    @java.lang.Override
     public long getMemoryLimitMb() {
       return memoryLimitMb_;
     }
@@ -673,7 +673,7 @@ private static final long serialVersionUID = 0L;
      * <code>bool use_memory_optimized = 5;</code>
      * @return The useMemoryOptimized.
      */
-    @Override
+    @java.lang.Override
     public boolean getUseMemoryOptimized() {
       return useMemoryOptimized_;
     }
@@ -707,13 +707,13 @@ private static final long serialVersionUID = 0L;
       onChanged();
       return this;
     }
-    @Override
+    @java.lang.Override
     public final Builder setUnknownFields(
         final com.google.protobuf.UnknownFieldSet unknownFields) {
       return super.setUnknownFields(unknownFields);
     }
 
-    @Override
+    @java.lang.Override
     public final Builder mergeUnknownFields(
         final com.google.protobuf.UnknownFieldSet unknownFields) {
       return super.mergeUnknownFields(unknownFields);
@@ -735,7 +735,7 @@ private static final long serialVersionUID = 0L;
 
   private static final com.google.protobuf.Parser<JQuickQueryOptionsProto>
       PARSER = new com.google.protobuf.AbstractParser<JQuickQueryOptionsProto>() {
-    @Override
+    @java.lang.Override
     public JQuickQueryOptionsProto parsePartialFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
@@ -759,12 +759,12 @@ private static final long serialVersionUID = 0L;
     return PARSER;
   }
 
-  @Override
+  @java.lang.Override
   public com.google.protobuf.Parser<JQuickQueryOptionsProto> getParserForType() {
     return PARSER;
   }
 
-  @Override
+  @java.lang.Override
   public JQuickQueryOptionsProto getDefaultInstanceForType() {
     return DEFAULT_INSTANCE;
   }
