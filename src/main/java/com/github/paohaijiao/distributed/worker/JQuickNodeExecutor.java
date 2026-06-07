@@ -678,15 +678,17 @@ public class JQuickNodeExecutor {
         if (v1 == null && v2 == null) return 0;
         if (v1 == null) return nullsFirst ? -1 : 1;
         if (v2 == null) return nullsFirst ? 1 : -1;
-        try {
+        if (v1 instanceof Number || v2 instanceof Number) {
             double d1 = Double.parseDouble(v1.toString());
             double d2 = Double.parseDouble(v2.toString());
             return Double.compare(d1, d2);
-        } catch (NumberFormatException e) {
-            e.printStackTrace();
+        }
+        if (v1 instanceof String || v2 instanceof String) {
+            String s1 = v1.toString();
+            String s2 = v2.toString();
+            return s1.compareTo(s2);
         }
         if (v1 instanceof Comparable && v2 instanceof Comparable) {
-            @SuppressWarnings("unchecked")
             int cmp = ((Comparable<Object>) v1).compareTo(v2);
             return cmp;
         }
