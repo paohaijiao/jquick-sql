@@ -272,7 +272,7 @@ public class JQuickWorker {
     /**
      * 内存分区内部类
      */
-    static class JQuickMemoryPartition {
+    public static class JQuickMemoryPartition {
 
         private final int index;
 
@@ -301,7 +301,7 @@ public class JQuickWorker {
             this.data = builder.build();
         }
 
-        JQuickDataSet getData() {
+        public JQuickDataSet getData() {
             return data;
         }
 
@@ -313,7 +313,7 @@ public class JQuickWorker {
          * 获取分区ID - 返回 String 类型
          * 格式: "{index}_{total}"，例如 "0_4" 表示第0个分区，共4个分区
          */
-        String getPartitionId() {
+        public String getPartitionId() {
             return index + "_" + total;
         }
 
