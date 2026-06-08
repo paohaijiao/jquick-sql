@@ -133,7 +133,11 @@ public class JQuickNodeExecutor {
             JQuickRow newRow = new JQuickRow();
             for (JQuickProjectPhysicalNode.SelectItem item : node.getSelectItems()) {
                 Object value = expressionEvaluator.evaluateExpression(row, item.getExpression());
-                String alias = item.getAlias() != null ? item.getAlias() : "col_" + projectedRows.size();
+                String col="";
+                if (item.getExpression() instanceof JQuickColumnRefExpression){
+                    col=((JQuickColumnRefExpression) item.getExpression()).getColumnName();
+                }
+                String alias = item.getAlias() != null ? item.getAlias() : col;
                 newRow.put(alias, value);
             }
             projectedRows.add(newRow);
