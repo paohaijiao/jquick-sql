@@ -1,11 +1,8 @@
-package com.github.paohaijiao.distribute.nodeExecutor;
+package com.github.paohaijiao.distribute.nodeExecutor.executeNode;
 
 import com.github.paohaijiao.datasource.JQuickDataSourceManager;
 import com.github.paohaijiao.distributed.worker.*;
 import com.github.paohaijiao.enums.JQuickBinaryOperator;
-import com.github.paohaijiao.enums.JQuickExchangeType;
-import com.github.paohaijiao.enums.JQuickJoinType;
-import com.github.paohaijiao.enums.JQuickPartitionStrategy;
 import com.github.paohaijiao.expression.JQuickExpression;
 import com.github.paohaijiao.expression.domain.JQuickBinaryExpression;
 import com.github.paohaijiao.expression.domain.JQuickColumnRefExpression;
@@ -24,7 +21,8 @@ import java.util.*;
 
 import static org.junit.Assert.*;
 
-public class JQuickProjectPhysicalNodeTest {
+public class JQuickFilterPhysicalNodeTest {
+
     private JQuickWorker worker;
 
     private JQuickNodeExecutor nodeExecutor;
@@ -96,6 +94,7 @@ public class JQuickProjectPhysicalNodeTest {
         JQuickDataSourceManager.registerTable("department", deptTable);
         JQuickDataSourceManager.registerTable("empty_table", JQuickDataSet.builder().build());
     }
+
     /**
      * 创建行的辅助方法
      */
@@ -106,50 +105,36 @@ public class JQuickProjectPhysicalNodeTest {
         }
         return row;
     }
-
     @Test
-    public void testExecuteProject() {
+    public void testExecuteFilter() {
+        // 创建 TableScan 作为输入
         JQuickTableScanPhysicalNode scanNode = new JQuickTableScanPhysicalNode("employee", null, null, null);
-        // 投影: name, salary, 计算 bonus (salary * 0.1)
-        List<JQuickProjectPhysicalNode.SelectItem> selectItems = Arrays.asList(
-                new JQuickProjectPhysicalNode.SelectItem(new JQuickColumnRefExpression("name"), null),
-                new JQuickProjectPhysicalNode.SelectItem(new JQuickColumnRefExpression("salary"), "salary"),
-                new JQuickProjectPhysicalNode.SelectItem(new JQuickBinaryExpression(new JQuickColumnRefExpression("salary"), new JQuickLiteralExpression(0.1), JQuickBinaryOperator.MULTIPLY), "bonus")
-        );
-        JQuickProjectPhysicalNode projectNode = new JQuickProjectPhysicalNode(selectItems, scanNode, false);
-        JQuickDataSet result = nodeExecutor.executeNode(projectNode, taskContext);
+        // 创建 Filter: department = "技术部"
+        JQuickExpression predicate = new JQuickBinaryExpression(new JQuickColumnRefExpression("department"), new JQuickLiteralExpression("技术部"), JQuickBinaryOperator.EQ);
+        JQuickFilterPhysicalNode filterNode = new JQuickFilterPhysicalNode(predicate, scanNode);
+        JQuickDataSet result = nodeExecutor.executeNode(filterNode, taskContext);
         result.printTable();
         assertNotNull(result);
-        assertEquals(5, result.size());
-        assertEquals(3, result.getColumnNames().size());
-        assertTrue(result.getColumnNames().contains("name"));
-        assertTrue(result.getColumnNames().contains("salary"));
-        assertTrue(result.getColumnNames().contains("bonus"));
+        assertEquals(2, result.size());
         for (JQuickRow row : result.getRows()) {
-            double salary = (Double) row.get("salary");
-            double bonus = (Double) row.get("bonus");
-            assertEquals(salary * 0.1, bonus, 0.001);
+            assertEquals("技术部", row.get("department"));
         }
     }
 
     @Test
-    public void testExecuteProject_WithDistinct() {
+    public void testExecuteFilter_WithAndCondition() {
         JQuickTableScanPhysicalNode scanNode = new JQuickTableScanPhysicalNode("employee", null, null, null);
-        List<JQuickProjectPhysicalNode.SelectItem> selectItems = Collections.singletonList(new JQuickProjectPhysicalNode.SelectItem(new JQuickColumnRefExpression("department"), "department"));
-        JQuickProjectPhysicalNode projectNode = new JQuickProjectPhysicalNode(selectItems, scanNode, true);
-        JQuickDataSet result = nodeExecutor.executeNode(projectNode, taskContext);
+        // 条件: department = "技术部" AND salary > 9000
+        JQuickExpression condition1 = new JQuickBinaryExpression(new JQuickColumnRefExpression("department"), new JQuickLiteralExpression("技术部"), JQuickBinaryOperator.EQ);
+        JQuickExpression condition2 = new JQuickBinaryExpression(new JQuickColumnRefExpression("salary"), new JQuickLiteralExpression(9000.0), JQuickBinaryOperator.GT);
+        JQuickExpression predicate = new JQuickBinaryExpression(condition1, condition2, JQuickBinaryOperator.AND);
+        JQuickFilterPhysicalNode filterNode = new JQuickFilterPhysicalNode(predicate, scanNode);
+        JQuickDataSet result = nodeExecutor.executeNode(filterNode, taskContext);
         result.printTable();
         assertNotNull(result);
-        // 去重后的部门: 技术部、市场部、销售部
-        assertEquals(3, result.size());
-        Set<String> departments = new HashSet<>();
-        for (JQuickRow row : result.getRows()) {
-            departments.add((String) row.get("department"));
-        }
-        assertEquals(3, departments.size());
-        assertTrue(departments.contains("技术部"));
-        assertTrue(departments.contains("市场部"));
-        assertTrue(departments.contains("销售部"));
+        // 只有李四符合条件（技术部，工资10000）
+        assertEquals(1, result.size());
+        assertEquals("李四", result.getRows().get(0).get("name"));
     }
 
 }

@@ -1,33 +1,14 @@
-/*
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
- * Copyright (c) [2025-2099] Martin (goudingcheng@gmail.com)
- */
-package com.github.paohaijiao.distribute.nodeExecutor;
+package com.github.paohaijiao.distribute.nodeExecutor.executeNode;
 
 import com.github.paohaijiao.datasource.JQuickDataSourceManager;
 import com.github.paohaijiao.distributed.worker.*;
 import com.github.paohaijiao.enums.JQuickBinaryOperator;
-import com.github.paohaijiao.enums.JQuickExchangeType;
-import com.github.paohaijiao.enums.JQuickJoinType;
-import com.github.paohaijiao.enums.JQuickPartitionStrategy;
-import com.github.paohaijiao.expression.JQuickExpression;
 import com.github.paohaijiao.expression.domain.JQuickBinaryExpression;
 import com.github.paohaijiao.expression.domain.JQuickColumnRefExpression;
 import com.github.paohaijiao.expression.domain.JQuickLiteralExpression;
 import com.github.paohaijiao.function.manager.JQuickMethodInvocationManager;
 import com.github.paohaijiao.physical.node.*;
-import com.github.paohaijiao.proto.*;
+import com.github.paohaijiao.proto.JQuickExecuteTaskRequest;
 import com.github.paohaijiao.statement.JQuickColumnMeta;
 import com.github.paohaijiao.statement.JQuickDataSet;
 import com.github.paohaijiao.statement.JQuickRow;
@@ -39,12 +20,7 @@ import java.util.*;
 
 import static org.junit.Assert.*;
 
-/**
- * JQuickNodeExecutor 单元测试
- * 测试各类物理计划节点的执行逻辑
- */
-public class JQuickTableScanPhysicalNodeTest {
-
+public class JQuickProjectPhysicalNodeTest {
     private JQuickWorker worker;
 
     private JQuickNodeExecutor nodeExecutor;
@@ -116,7 +92,6 @@ public class JQuickTableScanPhysicalNodeTest {
         JQuickDataSourceManager.registerTable("department", deptTable);
         JQuickDataSourceManager.registerTable("empty_table", JQuickDataSet.builder().build());
     }
-
     /**
      * 创建行的辅助方法
      */
@@ -129,57 +104,48 @@ public class JQuickTableScanPhysicalNodeTest {
     }
 
     @Test
-    public void testExecuteTableScan_WithAllColumns() {
-        JQuickTableScanPhysicalNode scanNode = new JQuickTableScanPhysicalNode("employee", "e", null, null);
-        JQuickDataSet result = nodeExecutor.executeNode(scanNode, taskContext);
-        result.printTable();
-        assertNotNull(result);
-        assertEquals(5, result.size());
-        assertTrue(result.getColumnNames().contains("id"));
-        assertTrue(result.getColumnNames().contains("name"));
-        assertTrue(result.getColumnNames().contains("age"));
-        assertTrue(result.getColumnNames().contains("salary"));
-    }
-
-    @Test
-    public void testExecuteTableScan_WithSelectedColumns() {
-        Set<String> requiredColumns = new HashSet<>(Arrays.asList("id", "name", "salary"));
-        JQuickTableScanPhysicalNode scanNode = new JQuickTableScanPhysicalNode("employee", "e", requiredColumns, null);
-        JQuickDataSet result = nodeExecutor.executeNode(scanNode, taskContext);
+    public void testExecuteProject() {
+        JQuickTableScanPhysicalNode scanNode = new JQuickTableScanPhysicalNode("employee", null, null, null);
+        // 投影: name, salary, 计算 bonus (salary * 0.1)
+        List<JQuickProjectPhysicalNode.SelectItem> selectItems = Arrays.asList(
+                new JQuickProjectPhysicalNode.SelectItem(new JQuickColumnRefExpression("name"), null),
+                new JQuickProjectPhysicalNode.SelectItem(new JQuickColumnRefExpression("salary"), "salary"),
+                new JQuickProjectPhysicalNode.SelectItem(new JQuickBinaryExpression(new JQuickColumnRefExpression("salary"), new JQuickLiteralExpression(0.1), JQuickBinaryOperator.MULTIPLY), "bonus")
+        );
+        JQuickProjectPhysicalNode projectNode = new JQuickProjectPhysicalNode(selectItems, scanNode, false);
+        JQuickDataSet result = nodeExecutor.executeNode(projectNode, taskContext);
         result.printTable();
         assertNotNull(result);
         assertEquals(5, result.size());
         assertEquals(3, result.getColumnNames().size());
-        assertTrue(result.getColumnNames().contains("id"));
         assertTrue(result.getColumnNames().contains("name"));
         assertTrue(result.getColumnNames().contains("salary"));
-        assertFalse(result.getColumnNames().contains("age"));
+        assertTrue(result.getColumnNames().contains("bonus"));
+        for (JQuickRow row : result.getRows()) {
+            double salary = (Double) row.get("salary");
+            double bonus = (Double) row.get("bonus");
+            assertEquals(salary * 0.1, bonus, 0.001);
+        }
     }
 
     @Test
-    public void testExecuteTableScan_WithFilterPredicate() {
-        JQuickExpression predicate = new JQuickBinaryExpression(new JQuickColumnRefExpression("age"), new JQuickLiteralExpression(25), JQuickBinaryOperator.GT);
-        JQuickTableScanPhysicalNode scanNode = new JQuickTableScanPhysicalNode("employee", null, null, predicate);
-        JQuickDataSet result = nodeExecutor.executeNode(scanNode, taskContext);
+    public void testExecuteProject_WithDistinct() {
+        JQuickTableScanPhysicalNode scanNode = new JQuickTableScanPhysicalNode("employee", null, null, null);
+        List<JQuickProjectPhysicalNode.SelectItem> selectItems = Collections.singletonList(new JQuickProjectPhysicalNode.SelectItem(new JQuickColumnRefExpression("department"), "department"));
+        JQuickProjectPhysicalNode projectNode = new JQuickProjectPhysicalNode(selectItems, scanNode, true);
+        JQuickDataSet result = nodeExecutor.executeNode(projectNode, taskContext);
         result.printTable();
         assertNotNull(result);
-        // 年龄 > 25 的有: 李四(30)、王五(28)、赵六(35)
+        // 去重后的部门: 技术部、市场部、销售部
         assertEquals(3, result.size());
+        Set<String> departments = new HashSet<>();
         for (JQuickRow row : result.getRows()) {
-            int age = (Integer) row.get("age");
-            assertTrue(age > 25);
+            departments.add((String) row.get("department"));
         }
+        assertEquals(3, departments.size());
+        assertTrue(departments.contains("技术部"));
+        assertTrue(departments.contains("市场部"));
+        assertTrue(departments.contains("销售部"));
     }
-    @Test
-    public void testExecuteTableScan_EmptyTable() {
-        JQuickTableScanPhysicalNode scanNode = new JQuickTableScanPhysicalNode("empty_table", null, null, null);
-        JQuickDataSet result = nodeExecutor.executeNode(scanNode, taskContext);
-        assertNotNull(result);
-        assertEquals(0, result.size());
-    }
-    @Test(expected = RuntimeException.class)
-    public void testExecuteTableScan_TableNotFound() {
-        JQuickTableScanPhysicalNode scanNode = new JQuickTableScanPhysicalNode("non_existent_table", null, null, null);
-        nodeExecutor.executeNode(scanNode, taskContext);
-    }
+
 }

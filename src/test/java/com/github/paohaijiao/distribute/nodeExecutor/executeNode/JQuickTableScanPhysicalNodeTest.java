@@ -1,18 +1,30 @@
-package com.github.paohaijiao.distribute.nodeExecutor;
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Copyright (c) [2025-2099] Martin (goudingcheng@gmail.com)
+ */
+package com.github.paohaijiao.distribute.nodeExecutor.executeNode;
 
 import com.github.paohaijiao.datasource.JQuickDataSourceManager;
 import com.github.paohaijiao.distributed.worker.*;
 import com.github.paohaijiao.enums.JQuickBinaryOperator;
-import com.github.paohaijiao.enums.JQuickExchangeType;
-import com.github.paohaijiao.enums.JQuickJoinType;
-import com.github.paohaijiao.enums.JQuickPartitionStrategy;
 import com.github.paohaijiao.expression.JQuickExpression;
 import com.github.paohaijiao.expression.domain.JQuickBinaryExpression;
 import com.github.paohaijiao.expression.domain.JQuickColumnRefExpression;
 import com.github.paohaijiao.expression.domain.JQuickLiteralExpression;
 import com.github.paohaijiao.function.manager.JQuickMethodInvocationManager;
 import com.github.paohaijiao.physical.node.*;
-import com.github.paohaijiao.proto.JQuickExecuteTaskRequest;
+import com.github.paohaijiao.proto.*;
 import com.github.paohaijiao.statement.JQuickColumnMeta;
 import com.github.paohaijiao.statement.JQuickDataSet;
 import com.github.paohaijiao.statement.JQuickRow;
@@ -24,7 +36,11 @@ import java.util.*;
 
 import static org.junit.Assert.*;
 
-public class JQuickFilterPhysicalNodeTest {
+/**
+ * JQuickNodeExecutor 单元测试
+ * 测试各类物理计划节点的执行逻辑
+ */
+public class JQuickTableScanPhysicalNodeTest {
 
     private JQuickWorker worker;
 
@@ -108,36 +124,59 @@ public class JQuickFilterPhysicalNodeTest {
         }
         return row;
     }
+
     @Test
-    public void testExecuteFilter() {
-        // 创建 TableScan 作为输入
-        JQuickTableScanPhysicalNode scanNode = new JQuickTableScanPhysicalNode("employee", null, null, null);
-        // 创建 Filter: department = "技术部"
-        JQuickExpression predicate = new JQuickBinaryExpression(new JQuickColumnRefExpression("department"), new JQuickLiteralExpression("技术部"), JQuickBinaryOperator.EQ);
-        JQuickFilterPhysicalNode filterNode = new JQuickFilterPhysicalNode(predicate, scanNode);
-        JQuickDataSet result = nodeExecutor.executeNode(filterNode, taskContext);
+    public void testExecuteTableScan_WithAllColumns() {
+        JQuickTableScanPhysicalNode scanNode = new JQuickTableScanPhysicalNode("employee", "e", null, null);
+        JQuickDataSet result = nodeExecutor.executeNode(scanNode, taskContext);
         result.printTable();
         assertNotNull(result);
-        assertEquals(2, result.size());
+        assertEquals(5, result.size());
+        assertTrue(result.getColumnNames().contains("id"));
+        assertTrue(result.getColumnNames().contains("name"));
+        assertTrue(result.getColumnNames().contains("age"));
+        assertTrue(result.getColumnNames().contains("salary"));
+    }
+
+    @Test
+    public void testExecuteTableScan_WithSelectedColumns() {
+        Set<String> requiredColumns = new HashSet<>(Arrays.asList("id", "name", "salary"));
+        JQuickTableScanPhysicalNode scanNode = new JQuickTableScanPhysicalNode("employee", "e", requiredColumns, null);
+        JQuickDataSet result = nodeExecutor.executeNode(scanNode, taskContext);
+        result.printTable();
+        assertNotNull(result);
+        assertEquals(5, result.size());
+        assertEquals(3, result.getColumnNames().size());
+        assertTrue(result.getColumnNames().contains("id"));
+        assertTrue(result.getColumnNames().contains("name"));
+        assertTrue(result.getColumnNames().contains("salary"));
+        assertFalse(result.getColumnNames().contains("age"));
+    }
+
+    @Test
+    public void testExecuteTableScan_WithFilterPredicate() {
+        JQuickExpression predicate = new JQuickBinaryExpression(new JQuickColumnRefExpression("age"), new JQuickLiteralExpression(25), JQuickBinaryOperator.GT);
+        JQuickTableScanPhysicalNode scanNode = new JQuickTableScanPhysicalNode("employee", null, null, predicate);
+        JQuickDataSet result = nodeExecutor.executeNode(scanNode, taskContext);
+        result.printTable();
+        assertNotNull(result);
+        // 年龄 > 25 的有: 李四(30)、王五(28)、赵六(35)
+        assertEquals(3, result.size());
         for (JQuickRow row : result.getRows()) {
-            assertEquals("技术部", row.get("department"));
+            int age = (Integer) row.get("age");
+            assertTrue(age > 25);
         }
     }
-
     @Test
-    public void testExecuteFilter_WithAndCondition() {
-        JQuickTableScanPhysicalNode scanNode = new JQuickTableScanPhysicalNode("employee", null, null, null);
-        // 条件: department = "技术部" AND salary > 9000
-        JQuickExpression condition1 = new JQuickBinaryExpression(new JQuickColumnRefExpression("department"), new JQuickLiteralExpression("技术部"), JQuickBinaryOperator.EQ);
-        JQuickExpression condition2 = new JQuickBinaryExpression(new JQuickColumnRefExpression("salary"), new JQuickLiteralExpression(9000.0), JQuickBinaryOperator.GT);
-        JQuickExpression predicate = new JQuickBinaryExpression(condition1, condition2, JQuickBinaryOperator.AND);
-        JQuickFilterPhysicalNode filterNode = new JQuickFilterPhysicalNode(predicate, scanNode);
-        JQuickDataSet result = nodeExecutor.executeNode(filterNode, taskContext);
-        result.printTable();
+    public void testExecuteTableScan_EmptyTable() {
+        JQuickTableScanPhysicalNode scanNode = new JQuickTableScanPhysicalNode("empty_table", null, null, null);
+        JQuickDataSet result = nodeExecutor.executeNode(scanNode, taskContext);
         assertNotNull(result);
-        // 只有李四符合条件（技术部，工资10000）
-        assertEquals(1, result.size());
-        assertEquals("李四", result.getRows().get(0).get("name"));
+        assertEquals(0, result.size());
     }
-
+    @Test(expected = RuntimeException.class)
+    public void testExecuteTableScan_TableNotFound() {
+        JQuickTableScanPhysicalNode scanNode = new JQuickTableScanPhysicalNode("non_existent_table", null, null, null);
+        nodeExecutor.executeNode(scanNode, taskContext);
+    }
 }
