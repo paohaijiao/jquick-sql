@@ -129,6 +129,7 @@ public class JQuickWorker {
             if (request.hasOutputPartition()) {
                 sendOutputPartition(result, request.getOutputPartition());
             }
+            result.printTable();
             // 构建响应
             return JQuickExecuteTaskResponse.newBuilder()
                     .setTaskId(taskId)
