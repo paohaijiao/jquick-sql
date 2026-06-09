@@ -282,7 +282,7 @@ public class JQuickWorker {
 
         private int chunkIndex;
 
-        JQuickMemoryPartition(int index, int total) {
+        public JQuickMemoryPartition(int index, int total) {
             this.index = index;
             this.total = total;
             this.data = JQuickDataSet.builder().build();
@@ -305,7 +305,7 @@ public class JQuickWorker {
             return data;
         }
 
-        void setData(JQuickDataSet data) {
+        public void setData(JQuickDataSet data) {
             this.data = data;
         }
 
