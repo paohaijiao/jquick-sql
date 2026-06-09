@@ -70,17 +70,25 @@ public class JQuickCoordinatorPartitionTest {
 
     // Worker 端口配置
     private static final int WORKER1_PORT = 19001;
+
     private static final int WORKER2_PORT = 19002;
+
     private static final int WORKER3_PORT = 19003;
+
     private static JConsole console;
+
     private static JQuickDataConverter dataConverter;
     // 测试数据
     private static JQuickDataSet employeeData;
+
     private static JQuickDataSet largeDataSet;
 
     private JQuickWorker worker1;
+
     private JQuickWorker worker2;
+
     private JQuickWorker worker3;
+
     private JQuickCoordinator coordinator;
 
     private List<JQuickCoordinator.WorkerEndpoint> endpoints;
@@ -224,7 +232,6 @@ public class JQuickCoordinatorPartitionTest {
         String queryId = "range_partition_" + System.currentTimeMillis();
         CompletableFuture<JQuickDataSet> future = coordinator.executeQuery(queryId, exchangeNode);
         JQuickDataSet result = future.get(60, TimeUnit.SECONDS);
-
         assertNotNull(result);
         console.info("Range 分区测试完成，结果行数: " + result.size());
     }
@@ -358,18 +365,10 @@ public class JQuickCoordinatorPartitionTest {
         List<JQuickExpression> groupKeys = new ArrayList<>();
         groupKeys.add(new JQuickColumnRefExpression("city"));
         List<JQuickHashAggregatePhysicalNode.AggregateFunction> aggregates = new ArrayList<>();
-        aggregates.add(new JQuickHashAggregatePhysicalNode.AggregateFunction(
-                "count", null, false, "emp_count"));
-        aggregates.add(new JQuickHashAggregatePhysicalNode.AggregateFunction(
-                "avg", new JQuickColumnRefExpression("salary"), false, "avg_salary"));
-
-        JQuickTableScanPhysicalNode scanNode = new JQuickTableScanPhysicalNode(
-                "employees", null, null, null);
-
-        JQuickHashAggregatePhysicalNode aggNode = new JQuickHashAggregatePhysicalNode(
-                groupKeys, aggregates, scanNode, null,
-                JQuickHashAggregatePhysicalNode.AggregateStage.FINAL);
-
+        aggregates.add(new JQuickHashAggregatePhysicalNode.AggregateFunction("count", null, false, "emp_count"));
+        aggregates.add(new JQuickHashAggregatePhysicalNode.AggregateFunction("avg", new JQuickColumnRefExpression("salary"), false, "avg_salary"));
+        JQuickTableScanPhysicalNode scanNode = new JQuickTableScanPhysicalNode("employees", null, null, null);
+        JQuickHashAggregatePhysicalNode aggNode = new JQuickHashAggregatePhysicalNode(groupKeys, aggregates, scanNode, null, JQuickHashAggregatePhysicalNode.AggregateStage.FINAL);
         // 执行查询
         String queryId = "parallel_" + System.currentTimeMillis();
         CompletableFuture<JQuickDataSet> future = coordinator.executeQuery(queryId, aggNode);
