@@ -226,41 +226,43 @@ public class JQuickPartitionManager {
     }
 
     /**
-     * 异步发送数据块（使用 WorkerEndpoint）
+     * 同步发送数据块（使用 WorkerEndpoint）
+     * 修改为同步方式，确保数据发送完成后再返回
      */
     private void sendChunkAsync(JQuickDataChunkProto chunk, WorkerEndpoint targetEndpoint, JQuickWorker worker) {
         String endpointKey = targetEndpoint.getWorkerId();
-        worker.getExecutor().submit(() -> {
-            try {
-                JQuickDataDistributionServiceGrpc.JQuickDataDistributionServiceStub stub = getDistributionStub(targetEndpoint, worker);
-                CompletableFuture<Void> future = new CompletableFuture<>();
-                stub.sendData(new StreamObserver<JQuickEmptyNodeProto>() {
-                    @Override
-                    public void onNext(JQuickEmptyNodeProto value) {
-                        // 接收确认
-                    }
+        try {
+            JQuickDataDistributionServiceGrpc.JQuickDataDistributionServiceStub stub = getDistributionStub(targetEndpoint, worker);
+            CompletableFuture<Void> future = new CompletableFuture<>();
+            StreamObserver<JQuickDataChunkProto> requestObserver = stub.sendData(new StreamObserver<JQuickEmptyNodeProto>() {
+                @Override
+                public void onNext(JQuickEmptyNodeProto value) {
+                    // 接收确认
+                }
 
-                    @Override
-                    public void onError(Throwable t) {
-                        console.error("Send data to worker failed: " + targetEndpoint.getWorkerId(), t);
-                        future.completeExceptionally(t);
-                    }
+                @Override
+                public void onError(Throwable t) {
+                    console.error("Send data to worker failed: " + targetEndpoint.getWorkerId(), t);
+                    future.completeExceptionally(t);
+                }
 
-                    @Override
-                    public void onCompleted() {
-                        console.info("Send data to worker completed: " + targetEndpoint.getWorkerId());
-                        future.complete(null);
-                    }
-                }).onNext(chunk);
+                @Override
+                public void onCompleted() {
+                    console.info("Send data to worker completed: " + targetEndpoint.getWorkerId());
+                    future.complete(null);
+                }
+            });
+            requestObserver.onNext(chunk);
+            requestObserver.onCompleted();  // 关键：必须调用 onCompleted 完成流
 
-                // 等待发送完成（带超时）
-                future.get(30, TimeUnit.SECONDS);
-                console.info("Sent partition " + chunk.getPartitionId() + " to worker " + targetEndpoint.getWorkerId());
+            // 同步等待发送完成（带超时）- 在当前线程等待，而不是异步提交
+            future.get(30, TimeUnit.SECONDS);
+            console.info("Sent partition " + chunk.getPartitionId() + " to worker " + targetEndpoint.getWorkerId());
 
-            } catch (Exception e) {
-                console.error("Failed to send chunk to worker: " + targetEndpoint.getWorkerId(), e);
-            }
-        });
+        } catch (Exception e) {
+            console.error("Failed to send chunk to worker: " + targetEndpoint.getWorkerId(), e);
+            throw new RuntimeException("Failed to send data to worker: " + targetEndpoint.getWorkerId(), e);
+        }
     }
 
     /**

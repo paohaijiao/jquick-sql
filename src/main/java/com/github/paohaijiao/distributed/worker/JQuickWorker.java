@@ -129,7 +129,7 @@ public class JQuickWorker {
             if (request.hasOutputPartition()) {
                 sendOutputPartition(result, request.getOutputPartition());
             }
-            result.printTable();
+
             // 构建响应
             return JQuickExecuteTaskResponse.newBuilder()
                     .setTaskId(taskId)
@@ -215,6 +215,7 @@ public class JQuickWorker {
 
     private void sendOutputPartition(JQuickDataSet result, JQuickMemoryPartitionProto outputPartition) {
         console.info("=== sendOutputPartition Debug ===");
+        result.printTable();
         console.info("Result rows: " + result.size());
         console.info("Output partition: " + outputPartition.getPartitionId());
         console.info("Partition index: " + outputPartition.getPartitionIndex());

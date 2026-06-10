@@ -49,7 +49,31 @@ public class JQuickNodeExecutor {
      */
     public JQuickDataSet executeFragment(JQuickFragmentProto fragment, JQuickWorker.JQuickTaskContext context) {
         JQuickPhysicalPlanNode rootNode = buildPhysicalNode(fragment.getPlan());
-        return executeNode(rootNode, context);
+        JQuickDataSet result = executeNode(rootNode, context);
+        
+        // 如果是 SINK Fragment，收集所有内存分区的数据
+        if (fragment.getType() == JQuickFragmentTypeProto.FRAGMENT_SINK) {
+            List<JQuickRow> allRows = new ArrayList<>();
+            List<JQuickColumnMeta> columns = null;
+            
+            for (JQuickWorker.JQuickMemoryPartition partition : worker.getMemoryPartitions().values()) {
+                JQuickDataSet data = partition.getData();
+                if (data != null && !data.isEmpty()) {
+                    if (columns == null && !data.getColumns().isEmpty()) {
+                        columns = data.getColumns();
+                    }
+                    allRows.addAll(data.getRows());
+                }
+            }
+            
+            // 如果内存分区有数据，合并后返回
+            if (!allRows.isEmpty() && columns != null) {
+                console.info("SINK Fragment collected " + allRows.size() + " rows from memory partitions");
+                return new JQuickDataSet(columns, allRows);
+            }
+        }
+        
+        return result;
     }
 
     /**

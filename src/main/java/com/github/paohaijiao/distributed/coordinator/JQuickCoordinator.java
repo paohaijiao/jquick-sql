@@ -167,18 +167,19 @@ public class JQuickCoordinator extends JQuickConvertService{
         QueryExecution execution = new QueryExecution(queryId, distributedPlan); //创建查询执行上下文
         activeQueries.put(queryId, execution);
         execution.setStatus(QueryExecution.QueryStatus.PLANNING);
-        CompletableFuture<JQuickDataSet> future = CompletableFuture.supplyAsync(() -> {//异步执行
-            try {
-                return doExecuteQuery(execution);
-            } catch (Exception e) {
-                execution.setStatus(QueryExecution.QueryStatus.FAILED);
-                execution.setErrorMessage(e.getMessage());
-                console.error(String.format("Query execution failed - queryId: %s", queryId), e);
-                throw new CompletionException(e);
-            } finally {
-                cleanupQuery(queryId);
-            }
-        }, executor);
+        // 修改为同步执行，去掉 CompletableFuture.supplyAsync 异步提交
+        CompletableFuture<JQuickDataSet> future = new CompletableFuture<>();
+        try {
+            JQuickDataSet result = doExecuteQuery(execution);
+            future.complete(result);
+        } catch (Exception e) {
+            execution.setStatus(QueryExecution.QueryStatus.FAILED);
+            execution.setErrorMessage(e.getMessage());
+            console.error(String.format("Query execution failed - queryId: %s", queryId), e);
+            future.completeExceptionally(e);
+        } finally {
+            cleanupQuery(queryId);
+        }
         return withTimeout(future, taskTimeoutMs * 10, TimeUnit.MILLISECONDS);
     }
 
@@ -255,23 +256,24 @@ public class JQuickCoordinator extends JQuickConvertService{
         execution.getTasks().put(taskId, taskExec);
         taskExec.setStatus(TaskExecution.TaskStatus.SCHEDULED);
         taskExec.setStartTime(System.currentTimeMillis());
+        
+        // 修改为同步执行，去掉 executor.submit() 异步提交
         CompletableFuture<JQuickExecuteTaskResponse> future = new CompletableFuture<>();
-        executor.submit(() -> {
-            try {
-                taskExec.setStatus(TaskExecution.TaskStatus.RUNNING);
-                JQuickExecuteTaskResponse response = executeTaskWithRetry(buildTaskRequest(execution.getQueryId(), taskId, fragment, taskIndex, totalTasks), taskExec, execution);
-                taskExec.setStatus(TaskExecution.TaskStatus.SUCCESS);
-                taskExec.setEndTime(System.currentTimeMillis());
-                future.complete(response);
-                console.info(String.format("Task completed - taskId: %s, worker: %s, duration: %dms", taskId, worker.getWorkerId(), taskExec.getExecutionTimeMs()));
-            } catch (Exception e) {
-                taskExec.setStatus(TaskExecution.TaskStatus.FAILED);
-                taskExec.setErrorMessage(e.getMessage());
-                taskExec.setEndTime(System.currentTimeMillis());
-                future.completeExceptionally(e);
-                console.warn( String.format("Task failed - taskId: %s, worker: %s", taskId, worker.getWorkerId()), e);
-            }
-        });
+        try {
+            taskExec.setStatus(TaskExecution.TaskStatus.RUNNING);
+            JQuickExecuteTaskResponse response = executeTaskWithRetry(buildTaskRequest(execution.getQueryId(), taskId, fragment, taskIndex, totalTasks), taskExec, execution);
+            taskExec.setStatus(TaskExecution.TaskStatus.SUCCESS);
+            taskExec.setEndTime(System.currentTimeMillis());
+            future.complete(response);
+            console.info(String.format("Task completed - taskId: %s, worker: %s, duration: %dms", taskId, worker.getWorkerId(), taskExec.getExecutionTimeMs()));
+        } catch (Exception e) {
+            taskExec.setStatus(TaskExecution.TaskStatus.FAILED);
+            taskExec.setErrorMessage(e.getMessage());
+            taskExec.setEndTime(System.currentTimeMillis());
+            future.completeExceptionally(e);
+            console.warn( String.format("Task failed - taskId: %s, worker: %s", taskId, worker.getWorkerId()), e);
+        }
+        
         return withTimeout(future, taskTimeoutMs, TimeUnit.MILLISECONDS);
     }
 
@@ -318,24 +320,23 @@ public class JQuickCoordinator extends JQuickConvertService{
      */
     public CompletableFuture<Void> executeQueryStream(String queryId, JQuickPhysicalPlanNode physicalPlan, StreamObserver<JQuickDataChunkProto> responseObserver) {
         console.info(String.format("Executing streaming query - queryId: %s", queryId));
+        // 修改为同步执行，去掉 executor.submit() 异步提交
         CompletableFuture<Void> future = new CompletableFuture<>();
-        executor.submit(() -> {
-            try {
-                // 切分计划
-                JQuickDistributedPlan distributedPlan = fragmenter.fragment(physicalPlan);
-                QueryExecution execution = new QueryExecution(queryId, distributedPlan);
-                activeQueries.put(queryId, execution);
-                // 执行根 Fragment 并流式返回
-                executeFragmentStream(distributedPlan.getRootFragment(), execution, responseObserver);
-                future.complete(null);
-                cleanupQuery(queryId);
-            } catch (Exception e) {
-                console.error(String.format("Streaming query failed - queryId: %s", queryId), e);
-                responseObserver.onError(e);
-                future.completeExceptionally(e);
-                cleanupQuery(queryId);
-            }
-        });
+        try {
+            // 切分计划
+            JQuickDistributedPlan distributedPlan = fragmenter.fragment(physicalPlan);
+            QueryExecution execution = new QueryExecution(queryId, distributedPlan);
+            activeQueries.put(queryId, execution);
+            // 执行根 Fragment 并流式返回
+            executeFragmentStream(distributedPlan.getRootFragment(), execution, responseObserver);
+            future.complete(null);
+            cleanupQuery(queryId);
+        } catch (Exception e) {
+            console.error(String.format("Streaming query failed - queryId: %s", queryId), e);
+            responseObserver.onError(e);
+            future.completeExceptionally(e);
+            cleanupQuery(queryId);
+        }
         return future;
     }
 
