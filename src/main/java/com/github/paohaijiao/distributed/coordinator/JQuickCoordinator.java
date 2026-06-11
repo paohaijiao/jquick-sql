@@ -195,11 +195,31 @@ public class JQuickCoordinator extends JQuickConvertService{
         List<JQuickFragment> sortedFragments = topologicalSort(allFragments);//按依赖关系排序（叶子节点先执行）
         console.info("Fragment execution order: " + sortedFragments.stream().map(f -> f.getFragmentId() + "(" + f.getType() + ")").collect(Collectors.joining(" -> ")));
         execution.setStatus(QueryExecution.QueryStatus.RUNNING);
-        Map<Long, CompletableFuture<List<JQuickDataSet>>> fragmentResults = new ConcurrentHashMap<>();// 执行每个 Fragment
+        Map<Long, CompletableFuture<List<JQuickDataSet>>> fragmentResults = new ConcurrentHashMap<>();
+        
+        // 按顺序执行 Fragment，确保子 Fragment 完成后再执行父 Fragment
+        // 拓扑排序已经保证了顺序：SOURCE -> INTERMEDIATE -> SINK
         for (JQuickFragment fragment : sortedFragments) {
+            console.info("Executing fragment sequentially - fragmentId: " + fragment.getFragmentId() + ", type: " + fragment.getType());
+            
+            // 等待所有子 Fragment 完成
+            for (JQuickFragment child : fragment.getChildren()) {
+                CompletableFuture<List<JQuickDataSet>> childFuture = fragmentResults.get(child.getFragmentId());
+                if (childFuture != null) {
+                    console.info("Waiting for child fragment " + child.getFragmentId() + " to complete");
+                    childFuture.join();
+                }
+            }
+            
+            // 执行当前 Fragment
             CompletableFuture<List<JQuickDataSet>> fragmentFuture = executeFragment(fragment, execution);
             fragmentResults.put(fragment.getFragmentId(), fragmentFuture);
+            
+            // 等待当前 Fragment 完成后再执行下一个
+            fragmentFuture.join();
+            console.info("Fragment " + fragment.getFragmentId() + " completed");
         }
+        
         CompletableFuture<List<JQuickDataSet>> rootFuture = fragmentResults.get(rootFragment.getFragmentId());//等待根 Fragment 完成并返回结果
         List<JQuickDataSet> rootResults = rootFuture.join();
         JQuickDataSet finalResult = mergeResults(rootResults);//合并结果

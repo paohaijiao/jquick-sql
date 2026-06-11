@@ -18,6 +18,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -109,6 +110,20 @@ public class JQuickWorker {
 
     public Map<Integer, JQuickDataDistributionServiceGrpc.JQuickDataDistributionServiceStub> getDistributionStubs() {
         return distributionStubs;
+    }
+
+    /**
+     * 获取所有通过 gRPC 接收到的分区ID
+     */
+    public Set<String> getAllReceivedPartitions() {
+        return distributionService.getAllCachedPartitions();
+    }
+
+    /**
+     * 获取指定分区的数据（通过 gRPC 接收的）
+     */
+    public JQuickDataSet getReceivedPartitionData(String partitionId) {
+        return distributionService.getPartitionData(partitionId);
     }
 
     /**

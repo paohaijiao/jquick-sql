@@ -51,26 +51,30 @@ public class JQuickNodeExecutor {
         JQuickPhysicalPlanNode rootNode = buildPhysicalNode(fragment.getPlan());
         JQuickDataSet result = executeNode(rootNode, context);
         
-        // 如果是 SINK Fragment，收集所有内存分区的数据
+        // 如果是 SINK Fragment，从 gRPC 接收的数据中收集结果
         if (fragment.getType() == JQuickFragmentTypeProto.FRAGMENT_SINK) {
             List<JQuickRow> allRows = new ArrayList<>();
             List<JQuickColumnMeta> columns = null;
             
-            for (JQuickWorker.JQuickMemoryPartition partition : worker.getMemoryPartitions().values()) {
-                JQuickDataSet data = partition.getData();
+            // 从 gRPC 接收的数据中收集（上游 Worker 通过 sendData 发送过来）
+            for (String partitionId : worker.getAllReceivedPartitions()) {
+                JQuickDataSet data = worker.getReceivedPartitionData(partitionId);
                 if (data != null && !data.isEmpty()) {
                     if (columns == null && !data.getColumns().isEmpty()) {
                         columns = data.getColumns();
                     }
                     allRows.addAll(data.getRows());
+                    console.info("SINK Fragment collected " + data.size() + " rows from partition " + partitionId);
                 }
             }
             
-            // 如果内存分区有数据，合并后返回
+            // 如果接收到数据，合并后返回
             if (!allRows.isEmpty() && columns != null) {
-                console.info("SINK Fragment collected " + allRows.size() + " rows from memory partitions");
+                console.info("SINK Fragment total collected " + allRows.size() + " rows from gRPC received data");
                 return new JQuickDataSet(columns, allRows);
             }
+            
+            console.warn("SINK Fragment received no data from gRPC!");
         }
         
         return result;
@@ -491,15 +495,45 @@ public class JQuickNodeExecutor {
     }
 
     /**
-     * 执行 Exchange - 数据分发
+     * 执行 Exchange - 数据分发或接收
      */
     private JQuickDataSet executeExchange(JQuickExchangePhysicalNode node, JQuickWorker.JQuickTaskContext context) {
-        JQuickDataSet input = executeNode(node.getChild(), context);//获取数据
         console.info("=== Exchange Debug ===");
-        console.info("Input data rows: " + input.size());
         console.info("Exchange type: " + node.getExchangeType());
         console.info("Target parallelism: " + node.getTargetParallelism());
         console.info("Partition strategy: " + node.getPartitionStrategy());
+        // RECEIVE Exchange: 从 gRPC 接收的数据中收集数据（由上游 Worker 发送过来）
+        if (node.getExchangeType() == JQuickExchangeType.RECEIVE) {
+            console.info("RECEIVE Exchange: collecting data from received partitions");
+            List<JQuickRow> allRows = new ArrayList<>();
+            List<JQuickColumnMeta> columns = null;
+            // 收集所有通过 gRPC 接收到的分区数据
+            for (String partitionId : worker.getAllReceivedPartitions()) {
+                JQuickDataSet partitionData = worker.getReceivedPartitionData(partitionId);
+                if (!partitionData.isEmpty()) {
+                    allRows.addAll(partitionData.getRows());
+                    if (columns == null) {
+                        columns = partitionData.getColumns();
+                    }
+                    console.info("Collected " + partitionData.size() + " rows from partition " + partitionId);
+                }
+            }
+            console.info("RECEIVE Exchange: total rows collected: " + allRows.size());
+            // 如果没有列信息，返回空数据集
+            if (allRows.isEmpty() || columns == null) {
+                console.warn("RECEIVE Exchange returned empty result!");
+                return JQuickDataSet.builder().build();
+            }
+            return new JQuickDataSet(columns, allRows);
+        }
+        
+        // SHUFFLE/BROADCAST/GATHER Exchange: 发送数据到其他 Worker
+        JQuickDataSet input = executeNode(node.getChild(), context);//获取数据
+        console.info("Input data rows: " + input.size());
+        if (input.isEmpty()) {
+            console.warn("Input data is empty, skipping send");
+            return JQuickDataSet.builder().build();
+        }
         List<JQuickWorker.JQuickMemoryPartition> partitions = partitionManager.partitionData(input, node, expressionEvaluator, node.getTargetParallelism());//进行分区
         console.info("Created " + partitions.size() + " partitions");
         for (int i = 0; i < partitions.size(); i++) {//获取分区数据信息
