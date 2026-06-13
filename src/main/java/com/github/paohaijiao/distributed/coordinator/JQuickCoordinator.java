@@ -363,6 +363,16 @@ public class JQuickCoordinator extends JQuickConvertService{
                     .build();
             builder.addInputPartitions(partitionProto);
         }
+        // 添加输出分区设置
+        if (fragment.getOutput() != null) {
+            JQuickMemoryPartitionProto outputPartition = JQuickMemoryPartitionProto.newBuilder()
+                    .setPartitionId(fragment.getOutput().getExchangeId())
+                    .setPartitionIndex(taskIndex)
+                    .setTotalPartitions(totalTasks)
+                    .build();
+            builder.setOutputPartition(outputPartition);
+            console.info("Setting output partition for fragment " + fragment.getFragmentId() + ": " + fragment.getOutput().getExchangeId());
+        }
         return builder.build();
     }
 
