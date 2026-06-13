@@ -50,14 +50,11 @@ public class JQuickNodeExecutor {
     public JQuickDataSet executeFragment(JQuickFragmentProto fragment, JQuickWorker.JQuickTaskContext context) {
         JQuickPhysicalPlanNode rootNode = buildPhysicalNode(fragment.getPlan());
         JQuickDataSet result = executeNode(rootNode, context);
-        
-        // 如果是 SINK Fragment，从 gRPC 接收的数据中收集结果
-        if (fragment.getType() == JQuickFragmentTypeProto.FRAGMENT_SINK) {
+        if (fragment.getType() == JQuickFragmentTypeProto.FRAGMENT_SINK) {// 如果是 SINK Fragment，从 gRPC 接收的数据中收集结果
+            console.info("执行片段的核心方法{},{}","executeFragment",new Date());
             List<JQuickRow> allRows = new ArrayList<>();
             List<JQuickColumnMeta> columns = null;
-            
-            // 从 gRPC 接收的数据中收集（上游 Worker 通过 sendData 发送过来）
-            for (String partitionId : worker.getAllReceivedPartitions()) {
+            for (String partitionId : worker.getAllReceivedPartitions()) {// 从 gRPC 接收的数据中收集（上游 Worker 通过 sendData 发送过来）
                 JQuickDataSet data = worker.getReceivedPartitionData(partitionId);
                 if (data != null && !data.isEmpty()) {
                     if (columns == null && !data.getColumns().isEmpty()) {

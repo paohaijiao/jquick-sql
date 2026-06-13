@@ -134,18 +134,13 @@ public class JQuickWorker {
         JQuickTaskContext context = new JQuickTaskContext(taskId, request);
         activeTasks.put(taskId, context);
         try {
-            // 接收输入分区数据
             for (JQuickMemoryPartitionProto inputPartition : request.getInputPartitionsList()) {
-                receivePartition(inputPartition);
+                receivePartition(inputPartition);// 接收输入分区数据
             }
-            // 执行物理计划片段
-            JQuickDataSet result = nodeExecutor.executeFragment(request.getFragment(), context);
-            // 输出结果分区
+            JQuickDataSet result = nodeExecutor.executeFragment(request.getFragment(), context);// 执行物理计划片段
             if (request.hasOutputPartition()) {
-                sendOutputPartition(result, request.getOutputPartition());
+                sendOutputPartition(result, request.getOutputPartition());// 输出结果分区
             }
-
-            // 构建响应
             return JQuickExecuteTaskResponse.newBuilder()
                     .setTaskId(taskId)
                     .setStatus(JQuickTaskStatusProto.TASK_SUCCESS)
