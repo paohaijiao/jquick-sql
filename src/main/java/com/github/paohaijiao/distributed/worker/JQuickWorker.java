@@ -80,8 +80,26 @@ public class JQuickWorker {
     public void setWorkerEndpoints(List<JQuickCoordinator.WorkerEndpoint> endpoints) {
         partitionManager.setWorkerEndpoints(endpoints);
     }
+    
     public String getWorkerId() {
         return workerId;
+    }
+    
+    /**
+     * 获取当前 Worker 的索引
+     * 从 workerId 中提取索引（例如 "worker-1" -> 0, "worker-2" -> 1）
+     */
+    public int getWorkerIndex() {
+        // 从 workerId 中提取数字部分
+        try {
+            String numStr = workerId.replaceAll("[^0-9]", "");
+            if (!numStr.isEmpty()) {
+                return Integer.parseInt(numStr) - 1;  // worker-1 -> 0, worker-2 -> 1
+            }
+        } catch (NumberFormatException e) {
+            // 忽略
+        }
+        return 0;  // 默认返回 0
     }
 
     public Map<String, JQuickMemoryPartition> getMemoryPartitions() {

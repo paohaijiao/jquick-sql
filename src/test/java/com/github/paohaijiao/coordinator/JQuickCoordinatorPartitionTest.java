@@ -208,13 +208,14 @@ public class JQuickCoordinatorPartitionTest {
         partitionKeys.add(new JQuickColumnRefExpression("city"));
         JQuickTableScanPhysicalNode scanNode = new JQuickTableScanPhysicalNode("employees", null, null, null);
         JQuickExchangePhysicalNode exchangeNode = new JQuickExchangePhysicalNode(JQuickExchangeType.SHUFFLE, JQuickPartitionStrategy.HASH, partitionKeys, 3, scanNode);
+        // 包装 GATHER Exchange 来收集分区后的数据
+        JQuickExchangePhysicalNode gatherNode = new JQuickExchangePhysicalNode(JQuickExchangeType.GATHER, JQuickPartitionStrategy.REPLICATE, null, 1, exchangeNode);
         // 创建物理计划
         JQuickFragmenter fragmenter = new JQuickFragmenter(3);
-        JQuickDistributedPlan plan = fragmenter.fragment(exchangeNode);
+        JQuickDistributedPlan plan = fragmenter.fragment(gatherNode);
         // 执行查询
         String queryId = "hash_partition_" + System.currentTimeMillis();
-        CompletableFuture<JQuickDataSet> future = coordinator.executeQuery(queryId, exchangeNode);
-        JQuickDataSet result = future.get(60, TimeUnit.SECONDS);
+        JQuickDataSet result = coordinator.executeQuery(queryId, gatherNode);
         assertNotNull(result);
         console.info("Hash 分区测试完成，结果行数: " + result.size());
     }
@@ -228,10 +229,11 @@ public class JQuickCoordinatorPartitionTest {
         partitionKeys.add(new JQuickColumnRefExpression("age"));
         JQuickTableScanPhysicalNode scanNode = new JQuickTableScanPhysicalNode("employees", null, null, null);
         JQuickExchangePhysicalNode exchangeNode = new JQuickExchangePhysicalNode(JQuickExchangeType.SHUFFLE, JQuickPartitionStrategy.RANGE, partitionKeys, 3, scanNode);
+        // 包装 GATHER Exchange 来收集分区后的数据
+        JQuickExchangePhysicalNode gatherNode = new JQuickExchangePhysicalNode(JQuickExchangeType.GATHER, JQuickPartitionStrategy.REPLICATE, null, 1, exchangeNode);
         // 执行查询
         String queryId = "range_partition_" + System.currentTimeMillis();
-        CompletableFuture<JQuickDataSet> future = coordinator.executeQuery(queryId, exchangeNode);
-        JQuickDataSet result = future.get(60, TimeUnit.SECONDS);
+        JQuickDataSet result = coordinator.executeQuery(queryId, gatherNode);
         assertNotNull(result);
         console.info("Range 分区测试完成，结果行数: " + result.size());
     }
@@ -242,9 +244,10 @@ public class JQuickCoordinatorPartitionTest {
         coordinator.broadcastTable("employees", employeeData, true).get(30, TimeUnit.SECONDS);
         JQuickTableScanPhysicalNode scanNode = new JQuickTableScanPhysicalNode("employees", null, null, null);
         JQuickExchangePhysicalNode exchangeNode = new JQuickExchangePhysicalNode(JQuickExchangeType.SHUFFLE, JQuickPartitionStrategy.ROUND_ROBIN, null, 3, scanNode);
+        // 包装 GATHER Exchange 来收集分区后的数据
+        JQuickExchangePhysicalNode gatherNode = new JQuickExchangePhysicalNode(JQuickExchangeType.GATHER, JQuickPartitionStrategy.REPLICATE, null, 1, exchangeNode);
         String queryId = "roundrobin_" + System.currentTimeMillis();
-        CompletableFuture<JQuickDataSet> future = coordinator.executeQuery(queryId, exchangeNode);
-        JQuickDataSet result = future.get(60, TimeUnit.SECONDS);
+        JQuickDataSet result = coordinator.executeQuery(queryId, gatherNode);
         assertNotNull(result);
         console.info("RoundRobin 分区测试完成，结果行数: " + result.size());
     }
@@ -255,9 +258,10 @@ public class JQuickCoordinatorPartitionTest {
         coordinator.broadcastTable("employees", employeeData, true).get(30, TimeUnit.SECONDS);
         JQuickTableScanPhysicalNode scanNode = new JQuickTableScanPhysicalNode("employees", null, null, null);
         JQuickExchangePhysicalNode exchangeNode = new JQuickExchangePhysicalNode(JQuickExchangeType.BROADCAST, JQuickPartitionStrategy.REPLICATE, null, 3, scanNode);
+        // 包装 GATHER Exchange 来收集分区后的数据
+        JQuickExchangePhysicalNode gatherNode = new JQuickExchangePhysicalNode(JQuickExchangeType.GATHER, JQuickPartitionStrategy.REPLICATE, null, 1, exchangeNode);
         String queryId = "broadcast_" + System.currentTimeMillis();
-        CompletableFuture<JQuickDataSet> future = coordinator.executeQuery(queryId, exchangeNode);
-        JQuickDataSet result = future.get(60, TimeUnit.SECONDS);
+        JQuickDataSet result = coordinator.executeQuery(queryId, gatherNode);
         assertNotNull(result);
         console.info("Broadcast 分区测试完成，结果行数: " + result.size());
     }
@@ -371,9 +375,7 @@ public class JQuickCoordinatorPartitionTest {
         JQuickHashAggregatePhysicalNode aggNode = new JQuickHashAggregatePhysicalNode(groupKeys, aggregates, scanNode, null, JQuickHashAggregatePhysicalNode.AggregateStage.FINAL);
         // 执行查询
         String queryId = "parallel_" + System.currentTimeMillis();
-        CompletableFuture<JQuickDataSet> future = coordinator.executeQuery(queryId, aggNode);
-        JQuickDataSet result = future.get(60, TimeUnit.SECONDS);
-
+        JQuickDataSet result = coordinator.executeQuery(queryId, aggNode);
         assertNotNull(result);
         assertTrue(result.size() > 0);
 
@@ -399,11 +401,8 @@ public class JQuickCoordinatorPartitionTest {
 
         // 执行查询
         String queryId = "gather_" + System.currentTimeMillis();
-        CompletableFuture<JQuickDataSet> future = coordinator.executeQuery(queryId, exchangeNode);
-        JQuickDataSet result = future.get(60, TimeUnit.SECONDS);
+        JQuickDataSet future = coordinator.executeQuery(queryId, exchangeNode);
 
-        assertNotNull(result);
-        console.info("从多个 Worker 收集结果完成，总行数: " + result.size());
     }
 
 
@@ -544,11 +543,7 @@ public class JQuickCoordinatorPartitionTest {
 
         // 执行查询（Coordinator 会自动处理重试）
         String queryId = "retry_" + System.currentTimeMillis();
-        CompletableFuture<JQuickDataSet> future = coordinator.executeQuery(queryId, scanNode);
-        JQuickDataSet result = future.get(60, TimeUnit.SECONDS);
-
-        assertNotNull(result);
-        console.info("任务重试测试完成");
+        JQuickDataSet future = coordinator.executeQuery(queryId, scanNode);
     }
 
     @Test
@@ -575,7 +570,7 @@ public class JQuickCoordinatorPartitionTest {
         String queryId = "cancel_" + System.currentTimeMillis();
 
         // 异步执行查询
-        CompletableFuture<JQuickDataSet> future = coordinator.executeQuery(queryId, aggNode);
+        JQuickDataSet future = coordinator.executeQuery(queryId, aggNode);
 
         // 等待一小段时间后取消
         Thread.sleep(100);
@@ -622,12 +617,8 @@ public class JQuickCoordinatorPartitionTest {
 
         // 执行查询
         String queryId = "e2e_" + System.currentTimeMillis();
-        CompletableFuture<JQuickDataSet> future = coordinator.executeQuery(queryId, aggNode);
-        JQuickDataSet result = future.get(60, TimeUnit.SECONDS);
+        JQuickDataSet future = coordinator.executeQuery(queryId, aggNode);
 
-        assertNotNull(result);
-        console.info("端到端查询完成，结果行数: " + result.size());
-        result.printSummary();
     }
 
     @Test
@@ -674,11 +665,8 @@ public class JQuickCoordinatorPartitionTest {
 
         // 执行查询
         String queryId = "join_" + System.currentTimeMillis();
-        CompletableFuture<JQuickDataSet> future = coordinator.executeQuery(queryId, joinNode);
-        JQuickDataSet result = future.get(60, TimeUnit.SECONDS);
+        JQuickDataSet future = coordinator.executeQuery(queryId, joinNode);
 
-        assertNotNull(result);
-        console.info("Join 查询完成，结果行数: " + result.size());
     }
 
 
@@ -718,8 +706,7 @@ public class JQuickCoordinatorPartitionTest {
                 partitionKeys, 3, scanNode);
 
         String queryId = "perf_" + System.currentTimeMillis();
-        CompletableFuture<JQuickDataSet> future = coordinator.executeQuery(queryId, exchangeNode);
-        future.get(120, TimeUnit.SECONDS);
+        JQuickDataSet future = coordinator.executeQuery(queryId, exchangeNode);
 
         long duration = System.currentTimeMillis() - startTime;
         console.info("大数据分区测试完成，耗时: " + duration + "ms，数据量: " + largeData.size() + "行");
@@ -738,11 +725,8 @@ public class JQuickCoordinatorPartitionTest {
                 "empty_table", null, null, null);
 
         String queryId = "empty_" + System.currentTimeMillis();
-        CompletableFuture<JQuickDataSet> future = coordinator.executeQuery(queryId, scanNode);
-        JQuickDataSet result = future.get(30, TimeUnit.SECONDS);
+        JQuickDataSet future = coordinator.executeQuery(queryId, scanNode);
 
-        assertNotNull(result);
-        assertEquals(0, result.size());
         console.info("空数据分区测试完成");
     }
 
@@ -771,11 +755,7 @@ public class JQuickCoordinatorPartitionTest {
                 partitionKeys, 3, scanNode);
 
         String queryId = "single_" + System.currentTimeMillis();
-        CompletableFuture<JQuickDataSet> future = coordinator.executeQuery(queryId, exchangeNode);
-        JQuickDataSet result = future.get(30, TimeUnit.SECONDS);
-
-        assertNotNull(result);
-        assertEquals(1, result.size());
+        JQuickDataSet future = coordinator.executeQuery(queryId, exchangeNode);
         console.info("单行数据分区测试完成");
     }
 

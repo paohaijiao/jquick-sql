@@ -82,10 +82,6 @@ public class JQuickCoordinator extends JQuickConvertService{
 
     private final Map<String, QueryExecution> activeQueries;
 
-    private final ExecutorService executor;
-
-    private final ScheduledExecutorService scheduler;
-
     // 配置
     private final long taskTimeoutMs;
 
@@ -115,8 +111,6 @@ public class JQuickCoordinator extends JQuickConvertService{
         this.workerChannels = new ConcurrentHashMap<>();
         this.workerStubs = new ConcurrentHashMap<>();
         this.activeQueries = new ConcurrentHashMap<>();
-        this.executor = Executors.newCachedThreadPool();
-        this.scheduler = Executors.newScheduledThreadPool(2);
         this.taskTimeoutMs = taskTimeoutMs;
         this.maxRetries = maxRetries;
         this.batchSize = batchSize;
@@ -125,7 +119,7 @@ public class JQuickCoordinator extends JQuickConvertService{
             workerIdMap.put(worker.getWorkerId(), worker);
             workerIndexMap.put(i, worker);
         }
-        startHealthCheck();
+        console.info("Coordinator initialized - no executor threads, all operations will be synchronous");
     }
 
     /**
@@ -141,135 +135,92 @@ public class JQuickCoordinator extends JQuickConvertService{
         return new JQuickCoordinator(coordinatorId, endpoints);
     }
 
-    /**
-     * 启动健康检查
-     */
-    private void startHealthCheck() {
-        scheduler.scheduleAtFixedRate(() -> {
-            if (!running) return;
-            for (WorkerEndpoint worker : workers) {
-                if (System.currentTimeMillis() - worker.getLastHeartbeat() > 60000) {
-                    if (worker.isHealthy()) {
-                        worker.setHealthy(false);
-                        console.warn(String.format("Worker %s marked as unhealthy", worker.getWorkerId()));
-                    }
-                }
-            }
-        }, 30, 30, TimeUnit.SECONDS);
-    }
 
     /**
      * 设置带超时的查询执行
      */
-    public CompletableFuture<JQuickDataSet> executeQuery(String queryId, JQuickPhysicalPlanNode physicalPlan) {
-        console.info("Executing query - queryId: " + queryId);
+    public JQuickDataSet executeQuery(String queryId, JQuickPhysicalPlanNode physicalPlan) {
+        console.info("Executing query synchronously - queryId: " + queryId);
         JQuickDistributedPlan distributedPlan = fragmenter.fragment(physicalPlan);//切分物理计划为分布式片段
         QueryExecution execution = new QueryExecution(queryId, distributedPlan); //创建查询执行上下文
         activeQueries.put(queryId, execution);
         execution.setStatus(QueryExecution.QueryStatus.PLANNING);
-        // 修改为同步执行，去掉 CompletableFuture.supplyAsync 异步提交
-        CompletableFuture<JQuickDataSet> future = new CompletableFuture<>();
         try {
-            JQuickDataSet result = doExecuteQuery(execution);
-            future.complete(result);
+            return doExecuteQuery(execution);
         } catch (Exception e) {
             execution.setStatus(QueryExecution.QueryStatus.FAILED);
             execution.setErrorMessage(e.getMessage());
             console.error(String.format("Query execution failed - queryId: %s", queryId), e);
-            future.completeExceptionally(e);
+            throw new RuntimeException("Query execution failed", e);
         } finally {
             cleanupQuery(queryId);
         }
-        return withTimeout(future, taskTimeoutMs * 10, TimeUnit.MILLISECONDS);
     }
 
     /**
-     * 实际执行查询
+     * 实际执行查询（同步版本）
      */
-    private JQuickDataSet doExecuteQuery(QueryExecution execution) {
-        console.info("Executing doExecuteQuery - doExecuteQuery: " + execution.getQueryId());
+    private JQuickDataSet doExecuteQuery(QueryExecution execution) throws Exception {
+        console.info("Executing doExecuteQuery synchronously - queryId: " + execution.getQueryId());
         JQuickDistributedPlan plan = execution.getDistributedPlan();
         JQuickFragment rootFragment = plan.getRootFragment();
         execution.setStatus(QueryExecution.QueryStatus.SCHEDULING);
-        List<JQuickFragment> allFragments = collectAllFragments(rootFragment);//遍历所有 Fragment，调度执行
-        List<JQuickFragment> sortedFragments = topologicalSort(allFragments);//按依赖关系排序（叶子节点先执行）
+        List<JQuickFragment> allFragments = collectAllFragments(rootFragment); //遍历所有 Fragment，调度执行
+        List<JQuickFragment> sortedFragments = topologicalSort(allFragments); //按依赖关系排序（叶子节点先执行）
         console.info("Fragment execution order: " + sortedFragments.stream().map(f -> f.getFragmentId() + "(" + f.getType() + ")").collect(Collectors.joining(" -> ")));
         execution.setStatus(QueryExecution.QueryStatus.RUNNING);
-        Map<Long, CompletableFuture<List<JQuickDataSet>>> fragmentResults = new ConcurrentHashMap<>();
+        Map<Long, List<JQuickDataSet>> fragmentResults = new HashMap<>();
         
         // 按顺序执行 Fragment，确保子 Fragment 完成后再执行父 Fragment
         // 拓扑排序已经保证了顺序：SOURCE -> INTERMEDIATE -> SINK
         for (JQuickFragment fragment : sortedFragments) {
-            console.info("Executing fragment sequentially - fragmentId: " + fragment.getFragmentId() + ", type: " + fragment.getType());
+            console.info("Executing fragment synchronously - fragmentId: " + fragment.getFragmentId() + ", type: " + fragment.getType());
             
-            // 等待所有子 Fragment 完成
-            for (JQuickFragment child : fragment.getChildren()) {
-                CompletableFuture<List<JQuickDataSet>> childFuture = fragmentResults.get(child.getFragmentId());
-                if (childFuture != null) {
-                    console.info("Waiting for child fragment " + child.getFragmentId() + " to complete");
-                    childFuture.join();
-                }
-            }
+            // 执行当前 Fragment（同步执行）
+            List<JQuickDataSet> fragmentResult = executeFragment(fragment, execution);
+            fragmentResults.put(fragment.getFragmentId(), fragmentResult);
             
-            // 执行当前 Fragment
-            CompletableFuture<List<JQuickDataSet>> fragmentFuture = executeFragment(fragment, execution);
-            fragmentResults.put(fragment.getFragmentId(), fragmentFuture);
-            
-            // 等待当前 Fragment 完成后再执行下一个
-            fragmentFuture.join();
             console.info("Fragment " + fragment.getFragmentId() + " completed");
         }
         
-        CompletableFuture<List<JQuickDataSet>> rootFuture = fragmentResults.get(rootFragment.getFragmentId());//等待根 Fragment 完成并返回结果
-        List<JQuickDataSet> rootResults = rootFuture.join();
-        JQuickDataSet finalResult = mergeResults(rootResults);//合并结果
+        List<JQuickDataSet> rootResults = fragmentResults.get(rootFragment.getFragmentId()); //获取根 Fragment 结果
+        JQuickDataSet finalResult = mergeResults(rootResults); //合并结果
         finalResult.printSummary();
         console.info("Executing finalResult : " + execution.getQueryId());
         execution.setStatus(QueryExecution.QueryStatus.COMPLETED);
-        execution.getResultFuture().complete(finalResult);
         console.info(String.format("Query completed - queryId: %s, duration: %dms, resultRows: %d", execution.getQueryId(), execution.getExecutionTimeMs(), finalResult.size()));
         return finalResult;
     }
 
     /**
-     * 执行单个 Fragment
+     * 执行单个 Fragment（同步版本）
      */
-    private CompletableFuture<List<JQuickDataSet>> executeFragment(JQuickFragment fragment, QueryExecution execution) {
+    private List<JQuickDataSet> executeFragment(JQuickFragment fragment, QueryExecution execution) throws Exception {
         JQuickFragmentType fragmentType = fragment.getType();
         int parallelism = fragment.getParallelism();
-        console.info(String.format("Executing fragment - fragmentId: %d, type: %s, parallelism: %d", fragment.getFragmentId(), fragmentType, parallelism));
-        List<CompletableFuture<JQuickExecuteTaskResponse>> taskFutures = new ArrayList<>();
-        for (int taskIndex = 0; taskIndex < parallelism; taskIndex++) {// 为每个并行度创建任务
-            final int idx = taskIndex;
-            CompletableFuture<JQuickExecuteTaskResponse> taskFuture = scheduleTask(fragment, idx, parallelism, execution);
-            taskFutures.add(taskFuture);
+        console.info(String.format("Executing fragment synchronously - fragmentId: %d, type: %s, parallelism: %d", fragment.getFragmentId(), fragmentType, parallelism));
+        List<JQuickDataSet> results = new ArrayList<>();
+        
+        for (int taskIndex = 0; taskIndex < parallelism; taskIndex++) { // 为每个并行度创建任务
+            // 同步执行任务
+            JQuickExecuteTaskResponse response = scheduleTask(fragment, taskIndex, parallelism, execution);
+            if (response.getStatus() == JQuickTaskStatusProto.TASK_SUCCESS) {
+                JQuickDataSet data = dataConverter.convertFromProto(response.getResultData());
+                if (!data.isEmpty()) {
+                    results.add(data);
+                }
+            } else {
+                console.warn(String.format("Task failed - fragmentId: %d, error: %s", fragment.getFragmentId(), response.getErrorMessage()));
+            }
         }
-        // 等待所有任务完成并收集结果
-        return CompletableFuture.allOf(taskFutures.toArray(new CompletableFuture[0])).thenApply(v -> {
-                    List<JQuickDataSet> results = new ArrayList<>();
-                    for (CompletableFuture<JQuickExecuteTaskResponse> future : taskFutures) {
-                        try {
-                            JQuickExecuteTaskResponse response = future.join();
-                            if (response.getStatus() == JQuickTaskStatusProto.TASK_SUCCESS) {
-                                JQuickDataSet data = dataConverter.convertFromProto(response.getResultData());
-                                if (!data.isEmpty()) {
-                                    results.add(data);
-                                }
-                            } else {
-                                console.warn(String.format("Task failed - fragmentId: %d, error: %s", fragment.getFragmentId(), response.getErrorMessage()));
-                            }
-                        } catch (Exception e) {
-                            console.warn(String.format("Task execution error - fragmentId: %d", fragment.getFragmentId()), e);
-                        }
-                    }
-                    return results;
-                });
+        
+        return results;
     }
 
     /**
-     * 调度单个任务到 Worker（修复超时问题）
+     * 调度单个任务到 Worker（同步版本）
      */
-    private CompletableFuture<JQuickExecuteTaskResponse> scheduleTask(JQuickFragment fragment, int taskIndex, int totalTasks, QueryExecution execution) {
+    private JQuickExecuteTaskResponse scheduleTask(JQuickFragment fragment, int taskIndex, int totalTasks, QueryExecution execution) throws Exception {
         String taskId = String.format("%s_%d_%d", execution.getQueryId(), fragment.getFragmentId(), taskIndex);
         WorkerEndpoint worker = selectWorker(taskIndex, totalTasks);
         TaskExecution taskExec = new TaskExecution(fragment.getFragmentId(), taskIndex, totalTasks, worker);
@@ -277,24 +228,20 @@ public class JQuickCoordinator extends JQuickConvertService{
         taskExec.setStatus(TaskExecution.TaskStatus.SCHEDULED);
         taskExec.setStartTime(System.currentTimeMillis());
         
-        // 修改为同步执行，去掉 executor.submit() 异步提交
-        CompletableFuture<JQuickExecuteTaskResponse> future = new CompletableFuture<>();
         try {
             taskExec.setStatus(TaskExecution.TaskStatus.RUNNING);
             JQuickExecuteTaskResponse response = executeTaskWithRetry(buildTaskRequest(execution.getQueryId(), taskId, fragment, taskIndex, totalTasks), taskExec, execution);
             taskExec.setStatus(TaskExecution.TaskStatus.SUCCESS);
             taskExec.setEndTime(System.currentTimeMillis());
-            future.complete(response);
             console.info(String.format("Task completed - taskId: %s, worker: %s, duration: %dms", taskId, worker.getWorkerId(), taskExec.getExecutionTimeMs()));
+            return response;
         } catch (Exception e) {
             taskExec.setStatus(TaskExecution.TaskStatus.FAILED);
             taskExec.setErrorMessage(e.getMessage());
             taskExec.setEndTime(System.currentTimeMillis());
-            future.completeExceptionally(e);
-            console.warn( String.format("Task failed - taskId: %s, worker: %s", taskId, worker.getWorkerId()), e);
+            console.warn(String.format("Task failed - taskId: %s, worker: %s", taskId, worker.getWorkerId()), e);
+            throw e;
         }
-        
-        return withTimeout(future, taskTimeoutMs, TimeUnit.MILLISECONDS);
     }
 
     /**
@@ -336,12 +283,10 @@ public class JQuickCoordinator extends JQuickConvertService{
     }
 
     /**
-     * 流式执行查询（适用于大数据量结果）
+     * 流式执行查询（适用于大数据量结果，同步版本）
      */
-    public CompletableFuture<Void> executeQueryStream(String queryId, JQuickPhysicalPlanNode physicalPlan, StreamObserver<JQuickDataChunkProto> responseObserver) {
-        console.info(String.format("Executing streaming query - queryId: %s", queryId));
-        // 修改为同步执行，去掉 executor.submit() 异步提交
-        CompletableFuture<Void> future = new CompletableFuture<>();
+    public void executeQueryStream(String queryId, JQuickPhysicalPlanNode physicalPlan, StreamObserver<JQuickDataChunkProto> responseObserver) {
+        console.info(String.format("Executing streaming query synchronously - queryId: %s", queryId));
         try {
             // 切分计划
             JQuickDistributedPlan distributedPlan = fragmenter.fragment(physicalPlan);
@@ -349,23 +294,21 @@ public class JQuickCoordinator extends JQuickConvertService{
             activeQueries.put(queryId, execution);
             // 执行根 Fragment 并流式返回
             executeFragmentStream(distributedPlan.getRootFragment(), execution, responseObserver);
-            future.complete(null);
             cleanupQuery(queryId);
         } catch (Exception e) {
             console.error(String.format("Streaming query failed - queryId: %s", queryId), e);
             responseObserver.onError(e);
-            future.completeExceptionally(e);
             cleanupQuery(queryId);
         }
-        return future;
     }
 
     /**
-     * 流式执行 Fragment
+     * 流式执行 Fragment（同步版本）
      */
-    private void executeFragmentStream(JQuickFragment fragment, QueryExecution execution, StreamObserver<JQuickDataChunkProto> responseObserver) {
+    private void executeFragmentStream(JQuickFragment fragment, QueryExecution execution, StreamObserver<JQuickDataChunkProto> responseObserver) throws InterruptedException, ExecutionException {
         int parallelism = fragment.getParallelism();
         List<CompletableFuture<Void>> streamFutures = new ArrayList<>();
+        
         for (int taskIndex = 0; taskIndex < parallelism; taskIndex++) {
             final int idx = taskIndex;
             CompletableFuture<Void> streamFuture = new CompletableFuture<>();
@@ -394,8 +337,10 @@ public class JQuickCoordinator extends JQuickConvertService{
                 }
             });
         }
-        // 等待所有流完成
-        CompletableFuture.allOf(streamFutures.toArray(new CompletableFuture[0])).join();
+        
+        // 同步等待所有流式任务完成
+        CompletableFuture.allOf(streamFutures.toArray(new CompletableFuture[0])).get();
+        console.info("All stream tasks completed");
     }
 
     /**
@@ -749,21 +694,6 @@ public class JQuickCoordinator extends JQuickConvertService{
         for (String queryId : new ArrayList<>(activeQueries.keySet())) {
             cancelQuery(queryId, "Coordinator shutting down");
         }
-        // 关闭线程池
-        executor.shutdown();
-        scheduler.shutdown();
-        try {
-            if (!executor.awaitTermination(30, TimeUnit.SECONDS)) {
-                executor.shutdownNow();
-            }
-            if (!scheduler.awaitTermination(10, TimeUnit.SECONDS)) {
-                scheduler.shutdownNow();
-            }
-        } catch (InterruptedException e) {
-            executor.shutdownNow();
-            scheduler.shutdownNow();
-            Thread.currentThread().interrupt();
-        }
         // 关闭所有 gRPC 连接
         for (ManagedChannel channel : workerChannels.values()) {
             channel.shutdown();
@@ -792,29 +722,7 @@ public class JQuickCoordinator extends JQuickConvertService{
         }
     }
 
-    /**
-     * 带超时的 CompletableFuture 包装（Java 8 兼容）
-     */
-    private <T> CompletableFuture<T> withTimeout(CompletableFuture<T> future, long timeout, TimeUnit unit) {
-        CompletableFuture<T> timeoutFuture = new CompletableFuture<>();
-        ScheduledFuture<?> timeoutTask = scheduler.schedule(() -> {
-            if (!future.isDone()) {
-                TimeoutException timeoutEx = new TimeoutException(String.format("Task timeout after %d %s", timeout, unit.toString().toLowerCase()));
-                timeoutFuture.completeExceptionally(timeoutEx);
-                future.cancel(true);
-            }
-        }, timeout, unit);
-        future.whenComplete((result, error) -> {
-            timeoutTask.cancel(true);
-            if (error != null) {
-                timeoutFuture.completeExceptionally(error);
-            } else {
-                timeoutFuture.complete(result);
-            }
-        });
 
-        return timeoutFuture;
-    }
     /**
      * 广播表数据到所有 Worker
      */

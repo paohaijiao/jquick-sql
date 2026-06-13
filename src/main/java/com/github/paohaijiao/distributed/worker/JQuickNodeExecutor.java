@@ -499,6 +499,16 @@ public class JQuickNodeExecutor {
         console.info("Exchange type: " + node.getExchangeType());
         console.info("Target parallelism: " + node.getTargetParallelism());
         console.info("Partition strategy: " + node.getPartitionStrategy());
+        
+        // GATHER Exchange: 收集数据（直接返回子节点的数据）
+        if (node.getExchangeType() == JQuickExchangeType.GATHER) {
+            console.info("GATHER Exchange: collecting data from child node");
+            // 直接执行子节点并返回结果
+            JQuickDataSet childData = executeNode(node.getChild(), context);
+            console.info("GATHER Exchange: collected " + childData.size() + " rows from child node");
+            return childData;
+        }
+        
         // RECEIVE Exchange: 从 gRPC 接收的数据中收集数据（由上游 Worker 发送过来）
         if (node.getExchangeType() == JQuickExchangeType.RECEIVE) {
             console.info("RECEIVE Exchange: collecting data from received partitions");
@@ -507,7 +517,7 @@ public class JQuickNodeExecutor {
             // 收集所有通过 gRPC 接收到的分区数据
             for (String partitionId : worker.getAllReceivedPartitions()) {
                 JQuickDataSet partitionData = worker.getReceivedPartitionData(partitionId);
-                if (!partitionData.isEmpty()) {
+                if (partitionData != null && !partitionData.isEmpty()) {
                     allRows.addAll(partitionData.getRows());
                     if (columns == null) {
                         columns = partitionData.getColumns();
@@ -524,7 +534,7 @@ public class JQuickNodeExecutor {
             return new JQuickDataSet(columns, allRows);
         }
         
-        // SHUFFLE/BROADCAST/GATHER Exchange: 发送数据到其他 Worker
+        // SHUFFLE/BROADCAST Exchange: 发送数据到其他 Worker
         JQuickDataSet input = executeNode(node.getChild(), context);//获取数据
         console.info("Input data rows: " + input.size());
         if (input.isEmpty()) {
@@ -537,11 +547,38 @@ public class JQuickNodeExecutor {
             JQuickWorker.JQuickMemoryPartition partition = partitions.get(i);
             console.info("Partition " + i + ": " + partition.getData().size() + " rows");
         }
+        
+        // 发送数据到其他 Worker，同时保留当前 Worker 应该接收的数据
+        List<JQuickRow> localRows = new ArrayList<>();
+        List<JQuickColumnMeta> columns = null;
+        int currentWorkerIndex = worker.getWorkerIndex();
+        console.info("Current worker index: " + currentWorkerIndex);
+        
         for (JQuickWorker.JQuickMemoryPartition partition : partitions) {
-            partitionManager.sendToWorker(partition, node.getTargetParallelism(), node.getExchangeType(), worker);
-            console.info("Sent partition " + partition.getIndex() + " to worker");//发送数据到下游节点
+            int targetWorkerId = partition.getIndex() % node.getTargetParallelism();
+            console.info("Partition " + partition.getIndex() + " target worker: " + targetWorkerId);
+            
+            if (targetWorkerId == currentWorkerIndex) {
+                // 当前 Worker 应该接收这个分区的数据，保留在本地
+                localRows.addAll(partition.getData().getRows());
+                if (columns == null) {
+                    columns = partition.getData().getColumns();
+                }
+                console.info("Partition " + partition.getIndex() + " kept locally, rows: " + partition.getData().size());
+            } else {
+                // 发送到其他 Worker
+                partitionManager.sendToWorker(partition, node.getTargetParallelism(), node.getExchangeType(), worker);
+                console.info("Sent partition " + partition.getIndex() + " to worker " + targetWorkerId);
+            }
         }
-
+        
+        // 返回当前 Worker 应该接收的数据
+        if (!localRows.isEmpty() && columns != null) {
+            console.info("SHUFFLE Exchange: returning " + localRows.size() + " rows for current worker");
+            return new JQuickDataSet(columns, localRows);
+        }
+        
+        console.info("SHUFFLE Exchange: no data for current worker, returning empty");
         return JQuickDataSet.builder().build();
     }
     /**
