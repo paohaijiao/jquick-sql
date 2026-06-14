@@ -145,6 +145,13 @@ public class JQuickWorker {
     }
 
     /**
+     * 清理接收到的数据缓存
+     */
+    public void clearReceivedDataCache() {
+        distributionService.clearAllCachedPartitions();
+    }
+
+    /**
      * 执行任务（实现 gRPC 服务方法）
      */
     public JQuickExecuteTaskResponse executeTask(JQuickExecuteTaskRequest request) {

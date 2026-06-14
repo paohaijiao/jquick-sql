@@ -158,6 +158,26 @@ public class JQuickCoordinator extends JQuickConvertService{
     }
 
     /**
+     * 使用已切分好的计划执行查询
+     */
+    public JQuickDataSet executeQueryWithPlan(String queryId, JQuickDistributedPlan distributedPlan) {
+        console.info("Executing query with pre-built plan - queryId: " + queryId);
+        QueryExecution execution = new QueryExecution(queryId, distributedPlan);
+        activeQueries.put(queryId, execution);
+        execution.setStatus(QueryExecution.QueryStatus.PLANNING);
+        try {
+            return doExecuteQuery(execution);
+        } catch (Exception e) {
+            execution.setStatus(QueryExecution.QueryStatus.FAILED);
+            execution.setErrorMessage(e.getMessage());
+            console.error(String.format("Query execution failed - queryId: %s", queryId), e);
+            throw new RuntimeException("Query execution failed", e);
+        } finally {
+            cleanupQuery(queryId);
+        }
+    }
+
+    /**
      * 实际执行查询（同步版本）
      */
     private JQuickDataSet doExecuteQuery(QueryExecution execution) throws Exception {

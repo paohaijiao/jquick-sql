@@ -513,21 +513,30 @@ public class JQuickNodeExecutor {
             console.info("GATHER Exchange: collecting data from gRPC received partitions");
             List<JQuickRow> allRows = new ArrayList<>();
             List<JQuickColumnMeta> columns = null;
+            // 使用 Set 去重
+            Set<String> rowHashes = new HashSet<>();
             // 收集所有通过 gRPC 接收到的分区数据
             for (String partitionId : worker.getAllReceivedPartitions()) {
                 JQuickDataSet partitionData = worker.getReceivedPartitionData(partitionId);
                 if (partitionData != null && !partitionData.isEmpty()) {
-                    allRows.addAll(partitionData.getRows());
+                    for (JQuickRow row : partitionData.getRows()) {
+                        // 生成行的哈希值用于去重
+                        String rowHash = row.toString();
+                        if (!rowHashes.contains(rowHash)) {
+                            rowHashes.add(rowHash);
+                            allRows.add(row);
+                        }
+                    }
                     if (columns == null) {
                         columns = partitionData.getColumns();
                     }
-                    console.info("GATHER collected " + partitionData.size() + " rows from partition " + partitionId);
+                    console.info("GATHER collected " + partitionData.size() + " rows from partition " + partitionId + ", total unique: " + allRows.size());
                 }
             }
             
             // 如果从 gRPC 收到了数据，返回合并后的结果
             if (!allRows.isEmpty() && columns != null) {
-                console.info("GATHER Exchange: returning " + allRows.size() + " rows from gRPC");
+                console.info("GATHER Exchange: returning " + allRows.size() + " unique rows from gRPC");
                 return new JQuickDataSet(columns, allRows);
             }
             

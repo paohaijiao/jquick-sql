@@ -324,6 +324,16 @@ public class JQuickDataDistributionServiceImpl extends JQuickDataDistributionSer
     }
 
     /**
+     * 清理所有分区缓存
+     */
+    public void clearAllCachedPartitions() {
+        receivedDataCache.clear();
+        receiveCompletionFutures.clear();
+        lastAccessTime.clear();
+        console.info("Cleared all partition caches");
+    }
+
+    /**
      * 关闭服务，清理资源
      */
     public void shutdown() {

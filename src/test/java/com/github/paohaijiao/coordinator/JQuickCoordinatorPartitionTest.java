@@ -170,6 +170,10 @@ public class JQuickCoordinatorPartitionTest {
         worker2.start();
         worker3.start();
         Thread.sleep(1000);
+        // 清理 Worker 的数据缓存
+        worker1.clearReceivedDataCache();
+        worker2.clearReceivedDataCache();
+        worker3.clearReceivedDataCache();
         endpoints = new ArrayList<>();
         endpoints.add(new JQuickCoordinator.WorkerEndpoint("worker-1", "localhost", WORKER1_PORT, 0));
         endpoints.add(new JQuickCoordinator.WorkerEndpoint("worker-2", "localhost", WORKER2_PORT, 1));
@@ -202,6 +206,10 @@ public class JQuickCoordinatorPartitionTest {
     @Test
     public void testHashPartition() throws Exception {
         console.info("=== 测试 Hash 分区 ===");
+        // 在测试开始时清理缓存，确保每次执行都是干净的
+        worker1.clearReceivedDataCache();
+        worker2.clearReceivedDataCache();
+        worker3.clearReceivedDataCache();
         // 注册表到 Coordinator
         coordinator.broadcastTable("employees", employeeData, true).get(30, TimeUnit.SECONDS);
         // 创建 Hash 分区 Exchange 节点
@@ -214,9 +222,9 @@ public class JQuickCoordinatorPartitionTest {
         // 创建物理计划
         JQuickFragmenter fragmenter = new JQuickFragmenter(3);
         JQuickDistributedPlan plan = fragmenter.fragment(gatherNode);
-        // 执行查询
+        // 执行查询（使用创建好的计划，而不是让 Coordinator 重新切分）
         String queryId = "hash_partition_" + System.currentTimeMillis();
-        JQuickDataSet result = coordinator.executeQuery(queryId, gatherNode);
+        JQuickDataSet result = coordinator.executeQueryWithPlan(queryId, plan);
         result.printTable();
         assertEquals(10l, result.size());
         assertNotNull(result);
