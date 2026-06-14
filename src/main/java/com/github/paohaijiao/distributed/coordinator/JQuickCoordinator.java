@@ -200,7 +200,6 @@ public class JQuickCoordinator extends JQuickConvertService{
         int parallelism = fragment.getParallelism();
         console.info(String.format("Executing fragment synchronously - fragmentId: %d, type: %s, parallelism: %d", fragment.getFragmentId(), fragmentType, parallelism));
         List<JQuickDataSet> results = new ArrayList<>();
-        
         for (int taskIndex = 0; taskIndex < parallelism; taskIndex++) { // 为每个并行度创建任务
             // 同步执行任务
             JQuickExecuteTaskResponse response = scheduleTask(fragment, taskIndex, parallelism, execution);
@@ -357,7 +356,7 @@ public class JQuickCoordinator extends JQuickConvertService{
                 .setMemoryLimitBytes(1024 * 1024 * 1024);
         for (JQuickExchangeNode input : fragment.getInputs()) {
             JQuickMemoryPartitionProto partitionProto = JQuickMemoryPartitionProto.newBuilder()
-                    .setPartitionId(input.getExchangeId())
+                    .setPartitionId(input.getExchangeId() + "_" + taskIndex) // 添加 taskIndex 确保唯一性
                     .setPartitionIndex(taskIndex)
                     .setTotalPartitions(totalTasks)
                     .build();
@@ -366,12 +365,12 @@ public class JQuickCoordinator extends JQuickConvertService{
         // 添加输出分区设置
         if (fragment.getOutput() != null) {
             JQuickMemoryPartitionProto outputPartition = JQuickMemoryPartitionProto.newBuilder()
-                    .setPartitionId(fragment.getOutput().getExchangeId())
+                    .setPartitionId(fragment.getOutput().getExchangeId() + "_" + taskIndex) // 添加 taskIndex 确保唯一性
                     .setPartitionIndex(taskIndex)
                     .setTotalPartitions(totalTasks)
                     .build();
             builder.setOutputPartition(outputPartition);
-            console.info("Setting output partition for fragment " + fragment.getFragmentId() + ": " + fragment.getOutput().getExchangeId());
+            console.info("Setting output partition for fragment " + fragment.getFragmentId() + ": " + fragment.getOutput().getExchangeId() + "_" + taskIndex);
         }
         return builder.build();
     }

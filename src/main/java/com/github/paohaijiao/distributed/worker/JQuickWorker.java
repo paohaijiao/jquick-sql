@@ -249,6 +249,7 @@ public class JQuickWorker {
         console.info("Partition index: " + outputPartition.getPartitionIndex());
         console.info("Total partitions: " + outputPartition.getTotalPartitions());
         JQuickMemoryPartition partition = new JQuickMemoryPartition(outputPartition.getPartitionIndex(), outputPartition.getTotalPartitions());
+        partition.setPartitionId(outputPartition.getPartitionId()); // 设置正确的 partition ID
         partition.setData(result);
         partitionManager.sendToWorker(partition, 1, JQuickExchangeType.GATHER, this);
     }
@@ -308,6 +309,8 @@ public class JQuickWorker {
 
         private final int total;
 
+        private String partitionId;
+
         private JQuickDataSet data;
 
         private int chunkIndex;
@@ -317,6 +320,10 @@ public class JQuickWorker {
             this.total = total;
             this.data = JQuickDataSet.builder().build();
             this.chunkIndex = 0;
+        }
+
+        public void setPartitionId(String partitionId) {
+            this.partitionId = partitionId;
         }
 
         void addRow(JQuickRow row) {
@@ -340,11 +347,11 @@ public class JQuickWorker {
         }
 
         /**
-         * 获取分区ID - 返回 String 类型
+         * 获取分区ID - 如果设置了 partitionId 则返回，否则返回默认格式
          * 格式: "{index}_{total}"，例如 "0_4" 表示第0个分区，共4个分区
          */
         public String getPartitionId() {
-            return index + "_" + total;
+            return partitionId != null ? partitionId : (index + "_" + total);
         }
 
         int getIndex() {

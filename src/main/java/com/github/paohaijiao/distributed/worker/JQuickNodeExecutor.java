@@ -577,9 +577,7 @@ public class JQuickNodeExecutor {
             console.info("Partition " + i + ": " + partition.getData().size() + " rows");
         }
         
-        // 发送数据到其他 Worker，同时保留当前 Worker 应该接收的数据
-        List<JQuickRow> localRows = new ArrayList<>();
-        List<JQuickColumnMeta> columns = null;
+        // 发送所有分区数据到目标 Worker（包括当前 Worker）
         int currentWorkerIndex = worker.getWorkerIndex();
         console.info("Current worker index: " + currentWorkerIndex);
         
@@ -587,27 +585,13 @@ public class JQuickNodeExecutor {
             int targetWorkerId = partition.getIndex() % node.getTargetParallelism();
             console.info("Partition " + partition.getIndex() + " target worker: " + targetWorkerId);
             
-            if (targetWorkerId == currentWorkerIndex) {
-                // 当前 Worker 应该接收这个分区的数据，保留在本地
-                localRows.addAll(partition.getData().getRows());
-                if (columns == null) {
-                    columns = partition.getData().getColumns();
-                }
-                console.info("Partition " + partition.getIndex() + " kept locally, rows: " + partition.getData().size());
-            } else {
-                // 发送到其他 Worker
-                partitionManager.sendToWorker(partition, node.getTargetParallelism(), node.getExchangeType(), worker);
-                console.info("Sent partition " + partition.getIndex() + " to worker " + targetWorkerId);
-            }
+            // 发送所有分区到目标 Worker（包括当前 Worker）
+            partitionManager.sendToWorker(partition, node.getTargetParallelism(), node.getExchangeType(), worker);
+            console.info("Sent partition " + partition.getIndex() + " to worker " + targetWorkerId);
         }
         
-        // 返回当前 Worker 应该接收的数据
-        if (!localRows.isEmpty() && columns != null) {
-            console.info("SHUFFLE Exchange: returning " + localRows.size() + " rows for current worker");
-            return new JQuickDataSet(columns, localRows);
-        }
-        
-        console.info("SHUFFLE Exchange: no data for current worker, returning empty");
+        // SHUFFLE Exchange 不返回数据，所有数据都通过 gRPC 发送
+        console.info("SHUFFLE Exchange: all partitions sent via gRPC, returning empty");
         return JQuickDataSet.builder().build();
     }
     /**

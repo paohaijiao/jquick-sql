@@ -53,6 +53,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.Assert.*;
+import static org.junit.Assert.assertNotNull;
 
 /**
  * JQuickCoordinator 数据分区发送和接收单元测试
@@ -216,6 +217,8 @@ public class JQuickCoordinatorPartitionTest {
         // 执行查询
         String queryId = "hash_partition_" + System.currentTimeMillis();
         JQuickDataSet result = coordinator.executeQuery(queryId, gatherNode);
+        result.printTable();
+        assertEquals(10l, result.size());
         assertNotNull(result);
         console.info("Hash 分区测试完成，结果行数: " + result.size());
     }
@@ -234,6 +237,7 @@ public class JQuickCoordinatorPartitionTest {
         // 执行查询
         String queryId = "range_partition_" + System.currentTimeMillis();
         JQuickDataSet result = coordinator.executeQuery(queryId, gatherNode);
+        result.printTable();
         assertNotNull(result);
         console.info("Range 分区测试完成，结果行数: " + result.size());
     }
