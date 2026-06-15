@@ -539,7 +539,6 @@ public class JQuickNodeExecutor {
             console.info("GATHER Exchange: collected " + childData.size() + " rows from child node");
             return childData;
         }
-        
         // RECEIVE Exchange: 从 gRPC 接收的数据中收集数据（由上游 Worker 发送过来）
         if (node.getExchangeType() == JQuickExchangeType.RECEIVE) {
             console.info("RECEIVE Exchange: collecting data from received partitions");
@@ -564,7 +563,6 @@ public class JQuickNodeExecutor {
             }
             return new JQuickDataSet(columns, allRows);
         }
-        
         // SHUFFLE/BROADCAST Exchange: 发送数据到其他 Worker
         JQuickDataSet input = executeNode(node.getChild(), context);//获取数据
         console.info("Input data rows: " + input.size());
@@ -578,20 +576,16 @@ public class JQuickNodeExecutor {
             JQuickWorker.JQuickMemoryPartition partition = partitions.get(i);
             console.info("Partition " + i + ": " + partition.getData().size() + " rows");
         }
-        
         // 发送所有分区数据到目标 Worker（包括当前 Worker）
         int currentWorkerIndex = worker.getWorkerIndex();
         console.info("Current worker index: " + currentWorkerIndex);
-        
         for (JQuickWorker.JQuickMemoryPartition partition : partitions) {
             int targetWorkerId = partition.getIndex() % node.getTargetParallelism();
             console.info("Partition " + partition.getIndex() + " target worker: " + targetWorkerId);
-            
             // 发送所有分区到目标 Worker（包括当前 Worker）
             partitionManager.sendToWorker(partition, node.getTargetParallelism(), node.getExchangeType(), worker);
             console.info("Sent partition " + partition.getIndex() + " to worker " + targetWorkerId);
         }
-        
         // SHUFFLE Exchange 不返回数据，所有数据都通过 gRPC 发送
         console.info("SHUFFLE Exchange: all partitions sent via gRPC, returning empty");
         return JQuickDataSet.builder().build();
