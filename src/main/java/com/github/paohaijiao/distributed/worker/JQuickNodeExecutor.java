@@ -507,20 +507,16 @@ public class JQuickNodeExecutor {
         console.info("Exchange type: " + node.getExchangeType());
         console.info("Target parallelism: " + node.getTargetParallelism());
         console.info("Partition strategy: " + node.getPartitionStrategy());
-        
         // GATHER Exchange: 收集数据（从 gRPC 接收的数据中收集）
         if (node.getExchangeType() == JQuickExchangeType.GATHER) {
             console.info("GATHER Exchange: collecting data from gRPC received partitions");
             List<JQuickRow> allRows = new ArrayList<>();
             List<JQuickColumnMeta> columns = null;
-            // 使用 Set 去重
             Set<String> rowHashes = new HashSet<>();
-            // 收集所有通过 gRPC 接收到的分区数据
             for (String partitionId : worker.getAllReceivedPartitions()) {
                 JQuickDataSet partitionData = worker.getReceivedPartitionData(partitionId);
                 if (partitionData != null && !partitionData.isEmpty()) {
                     for (JQuickRow row : partitionData.getRows()) {
-                        // 生成行的哈希值用于去重
                         String rowHash = row.toString();
                         if (!rowHashes.contains(rowHash)) {
                             rowHashes.add(rowHash);
@@ -533,13 +529,10 @@ public class JQuickNodeExecutor {
                     console.info("GATHER collected " + partitionData.size() + " rows from partition " + partitionId + ", total unique: " + allRows.size());
                 }
             }
-            
-            // 如果从 gRPC 收到了数据，返回合并后的结果
             if (!allRows.isEmpty() && columns != null) {
                 console.info("GATHER Exchange: returning " + allRows.size() + " unique rows from gRPC");
                 return new JQuickDataSet(columns, allRows);
             }
-            
             // 如果没有从 gRPC 收到数据，尝试直接执行子节点（本地测试场景）
             console.info("GATHER Exchange: no data from gRPC, trying child node");
             JQuickDataSet childData = executeNode(node.getChild(), context);
