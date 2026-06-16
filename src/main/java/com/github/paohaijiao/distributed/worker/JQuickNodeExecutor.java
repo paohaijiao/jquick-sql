@@ -447,7 +447,6 @@ public class JQuickNodeExecutor {
             default:
                 resultRows = new ArrayList<>(leftData.getRows());
         }
-
         return new JQuickDataSet(leftData.getColumns(), resultRows);
     }
 
@@ -463,7 +462,6 @@ public class JQuickNodeExecutor {
             }
             rows.add(row);
         }
-        //从 Values 节点构建列元数据
         List<JQuickColumnMeta> columnMetas = new ArrayList<>();
         for (int i = 0; i < node.getColumnNames().size(); i++) {
             Class<?> type = i < node.getColumnTypes().size() ? node.getColumnTypes().get(i) : Object.class;
