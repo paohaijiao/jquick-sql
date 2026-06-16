@@ -190,19 +190,16 @@ public class JQuickCoordinator extends JQuickConvertService{
         console.info("Fragment execution order: " + sortedFragments.stream().map(f -> f.getFragmentId() + "(" + f.getType() + ")").collect(Collectors.joining(" -> ")));
         execution.setStatus(QueryExecution.QueryStatus.RUNNING);
         Map<Long, List<JQuickDataSet>> fragmentResults = new HashMap<>();
-        
         // 按顺序执行 Fragment，确保子 Fragment 完成后再执行父 Fragment
         // 拓扑排序已经保证了顺序：SOURCE -> INTERMEDIATE -> SINK
         for (JQuickFragment fragment : sortedFragments) {
             console.info("Executing fragment synchronously - fragmentId: " + fragment.getFragmentId() + ", type: " + fragment.getType());
-            
             // 执行当前 Fragment（同步执行）
             List<JQuickDataSet> fragmentResult = executeFragment(fragment, execution);
             fragmentResults.put(fragment.getFragmentId(), fragmentResult);
             
             console.info("Fragment " + fragment.getFragmentId() + " completed");
         }
-        
         List<JQuickDataSet> rootResults = fragmentResults.get(rootFragment.getFragmentId()); //获取根 Fragment 结果
         JQuickDataSet finalResult = mergeResults(rootResults); //合并结果
         finalResult.printSummary();
