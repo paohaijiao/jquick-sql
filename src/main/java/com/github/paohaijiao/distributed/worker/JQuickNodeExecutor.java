@@ -134,15 +134,17 @@ public class JQuickNodeExecutor {
         Set<String> requiredColumns = node.getRequiredColumns();
         JQuickDataSet data;
         if (node.getPartitionInfo() != null) {
-            data = readFromMemoryPartition(tableName, requiredColumns);
+            data = readFromMemoryPartition(tableName);
         } else {
-            data = readFromDataSource(tableName, requiredColumns);
+            data = readFromDataSource(tableName);
         }
         if (node.getFilterPredicate() != null) {
             data = applyFilter(data, node.getFilterPredicate());
         }
-        // 根据任务索引进行数据分片，避免并行任务重复读取数据
-        int taskIndex = context.getRequest().getTaskIndex();
+        if (requiredColumns != null && !requiredColumns.isEmpty()) {
+            data= data.select(requiredColumns.toArray(new String[0]));
+        }
+        int taskIndex = context.getRequest().getTaskIndex();// 根据任务索引进行数据分片，避免并行任务重复读取数据
         int totalTasks = context.getRequest().getTotalTasks();
         if (totalTasks > 1) {
             List<JQuickRow> shardedRows = new ArrayList<>();
@@ -810,7 +812,7 @@ public class JQuickNodeExecutor {
         return v1.toString().compareTo(v2.toString());
     }
 
-    private JQuickDataSet readFromDataSource(String tableName, Set<String> columns) {
+    private JQuickDataSet readFromDataSource(String tableName) {
         if (tableName == null) {
             return JQuickDataSet.builder().build();
         }
@@ -818,23 +820,18 @@ public class JQuickNodeExecutor {
         if (tableData == null) {
             return JQuickDataSet.builder().build();
         }
-        if (columns != null && !columns.isEmpty()) {
-            return tableData.select(columns.toArray(new String[0]));
-        }
+
 
         return tableData;
     }
 
-    private JQuickDataSet readFromMemoryPartition(String partitionId, Set<String> columns) {
+    private JQuickDataSet readFromMemoryPartition(String partitionId) {
         JQuickWorker.JQuickMemoryPartition partition = worker.getMemoryPartitions().get(partitionId);
         if (partition == null) {
             return JQuickDataSet.builder().build();
         }
         JQuickDataSet data = partition.getData();
-        if (columns == null || columns.isEmpty()) {
-            return data;
-        }
-        return data.select(columns.toArray(new String[0]));
+        return data;
     }
 
     private String generateColumnName(JQuickExpression expr) {

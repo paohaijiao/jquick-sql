@@ -1,5 +1,6 @@
 package com.github.paohaijiao.distribute.nodeExecutor.executeNode;
 
+import com.github.andrewoma.dexx.collection.Sets;
 import com.github.paohaijiao.datasource.JQuickDataSourceManager;
 import com.github.paohaijiao.distributed.worker.*;
 import com.github.paohaijiao.enums.JQuickBinaryOperator;
@@ -18,9 +19,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 import static org.junit.Assert.*;
 
@@ -154,6 +153,26 @@ public class JQuickNodeExecutorComprehensiveTest {
     public void testExecuteTableScan_WithFilter() {
         JQuickExpression filterPredicate = new JQuickBinaryExpression(new JQuickColumnRefExpression("department"), new JQuickLiteralExpression("技术部"), JQuickBinaryOperator.EQ);
         JQuickTableScanPhysicalNode scanNode = new JQuickTableScanPhysicalNode("employee", null, null, filterPredicate);
+        JQuickDataSet result = nodeExecutor.executeNode(scanNode, taskContext);
+        result.printTable();
+        assertNotNull("结果不应为 null", result);
+        assertEquals("技术部应该有 2 条数据", 2, result.size());
+    }
+    /**
+     * 测试 executeTableScan - 带过滤条件的表扫描
+     * <p>
+     * 目的：验证能够在表扫描时应用过滤条件
+     * 预期：只返回满足条件的数据
+     */
+    @Test
+    public void testExecuteTableScan_WithRequireColumn() {
+        JQuickExpression filterPredicate = new JQuickBinaryExpression(new JQuickColumnRefExpression("department"), new JQuickLiteralExpression("技术部"), JQuickBinaryOperator.EQ);
+        Set<String> columns= new HashSet<>();
+        columns.add("id");
+        columns.add("name");
+        columns.add("age");
+        columns.add("department");
+        JQuickTableScanPhysicalNode scanNode = new JQuickTableScanPhysicalNode("employee", null, columns, filterPredicate);
         JQuickDataSet result = nodeExecutor.executeNode(scanNode, taskContext);
         result.printTable();
         assertNotNull("结果不应为 null", result);
