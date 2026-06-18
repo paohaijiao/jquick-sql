@@ -52,7 +52,9 @@ public class JQuickProjectPhysicalNode extends JQuickAbstractPhysicalNode {
             return new SelectItem(expression.clone(), alias);
         }
     }
-
+    public JQuickProjectPhysicalNode(List<SelectItem> selectItems, JQuickPhysicalPlanNode child) {
+      this(selectItems,child,false);
+    }
     public JQuickProjectPhysicalNode(List<SelectItem> selectItems, JQuickPhysicalPlanNode child, boolean distinct) {
         super(child);
         this.selectItems = new ArrayList<>(selectItems);

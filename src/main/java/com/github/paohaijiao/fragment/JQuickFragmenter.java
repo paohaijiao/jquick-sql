@@ -105,6 +105,11 @@ public class JQuickFragmenter {
         if (node.getChildren().isEmpty()) {
             return false;
         }
+        // SetOperation 不创建新的 Fragment，它应该和子节点在同一个 Fragment 中执行
+        // 这样可以避免数据被重复处理
+        if (node instanceof JQuickSetOperationPhysicalNode) {
+            return false;
+        }
         if (node instanceof JQuickExchangePhysicalNode) {
             JQuickPhysicalPlanNode child = node.getChildren().get(0);
             if (child instanceof JQuickTableScanPhysicalNode) {

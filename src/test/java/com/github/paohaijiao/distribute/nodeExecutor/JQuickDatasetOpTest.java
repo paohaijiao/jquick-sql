@@ -275,7 +275,7 @@ public class JQuickDatasetOpTest {
         JQuickProjectNode rightQuery = createProjectWithFilter("users", "status", "pending", "id", "name");
         JQuickSetOperationNode unionNode = new JQuickSetOperationNode(JQuickSQLOperationType.UNION, leftQuery, rightQuery);
         // 执行查询（使用创建好的计划，而不是让 Coordinator 重新切分）
-        JQuickFragmenter fragmenter = new JQuickFragmenter(3);
+        JQuickFragmenter fragmenter = new JQuickFragmenter(1);
         JQuickPhysicalPlanNode physicalPlan = generator.generate(unionNode);
         JQuickDistributedPlan plan = fragmenter.fragment(physicalPlan);
         // 打印Fragment结构

@@ -133,8 +133,6 @@ public class JQuickNodeExecutor {
         String tableName = node.getTableName();
         Set<String> requiredColumns = node.getRequiredColumns();
         JQuickDataSet data;
-        // 优先从数据源读取数据（通过 JQuickDataSourceManager 注册）
-        // 只有当 partitionInfo 不为 null 时才从内存分区读取（通过 broadcastTable）
         if (node.getPartitionInfo() != null) {
             data = readFromMemoryPartition(tableName, requiredColumns);
         } else {
@@ -872,7 +870,6 @@ public class JQuickNodeExecutor {
 
     private JQuickPhysicalPlanNode buildPhysicalNode(JQuickPhysicalPlanNodeProto proto) {
         if (proto == null) return null;
-
         switch (proto.getNodeCase()) {
             case TABLE_SCAN:
                 JQuickTableScanNodeProto scanProto = proto.getTableScan();
