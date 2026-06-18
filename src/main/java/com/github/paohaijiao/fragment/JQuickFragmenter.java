@@ -123,8 +123,10 @@ public class JQuickFragmenter {
         if (node instanceof JQuickNestedLoopJoinPhysicalNode) {
             return true;
         }
+        // Filter 和 Project 不创建新的 Fragment，它们应该和子节点在同一个 Fragment 中执行
+        // 这样可以避免数据被重复处理
         if (node instanceof JQuickFilterPhysicalNode || node instanceof JQuickProjectPhysicalNode) {
-            return true;
+            return false;
         }
         if (node instanceof JQuickHashAggregatePhysicalNode) {
             JQuickHashAggregatePhysicalNode agg = (JQuickHashAggregatePhysicalNode) node;

@@ -15,8 +15,10 @@
  */
 package com.github.paohaijiao.distribute.nodeExecutor;
 
+import com.github.paohaijiao.console.JConsole;
 import com.github.paohaijiao.datasource.JQuickDataSourceManager;
 import com.github.paohaijiao.distributed.JQuickDistributedPlan;
+import com.github.paohaijiao.distributed.coordinator.JQuickCoordinator;
 import com.github.paohaijiao.distributed.worker.*;
 import com.github.paohaijiao.enums.JQuickBinaryOperator;
 import com.github.paohaijiao.enums.JQuickSQLOperationType;
@@ -41,6 +43,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -62,39 +65,70 @@ public class JQuickDatasetOpTest {
     private static final String TABLE_TABLE3 = "table3";
     private static final String TABLE_TABLE4 = "table4";
 
+    // Worker 端口配置
+    private static final int WORKER1_PORT = 19001;
+
+    private static final int WORKER2_PORT = 19002;
+
+    private static final int WORKER3_PORT = 19003;
+
+    private static JConsole console;
+
+    private static JQuickDataConverter dataConverter;
+    // 测试数据
+    private static JQuickDataSet employeeData;
+
+    private static JQuickDataSet largeDataSet;
+
+    private JQuickWorker worker1;
+
+    private JQuickWorker worker2;
+
+    private JQuickWorker worker3;
+
+    private JQuickCoordinator coordinator;
     private JQuickPhysicalPlanGenerator generator;
 
-    private JQuickFragmenter fragmenter;
 
-    private JQuickFragmenter verboseFragmenter;
-
-
-    private JQuickNodeExecutor nodeExecutor;
-
-    private JQuickWorker testWorker;
-
-    private JQuickDataConverter dataConverter;
-
-    private JQuickExpressionEvaluator expressionEvaluator;
-
-    private JQuickPartitionManager partitionManager;
+    private List<JQuickCoordinator.WorkerEndpoint> endpoints;
+    private List<JQuickWorker> workers;
 
     @Before
-    public void setUp() {
-        generator = new JQuickPhysicalPlanGenerator();
-        fragmenter = new JQuickFragmenter(4);
-        verboseFragmenter = new JQuickFragmenter(8);
-        generator = new JQuickPhysicalPlanGenerator();
-        fragmenter = new JQuickFragmenter(4);
-        testWorker = new JQuickWorker("test-worker", 0);
-        JQuickMethodInvocationManager functionManager = JQuickMethodInvocationManager.getInstance();
-        expressionEvaluator = new JQuickExpressionEvaluator(functionManager);
-        partitionManager = new JQuickPartitionManager();
+    public void setUp() throws IOException, InterruptedException {
+        console = JConsole.initConsoleEnvironment();
         dataConverter = new JQuickDataConverter();
-        nodeExecutor = new JQuickNodeExecutor(testWorker, expressionEvaluator, partitionManager, dataConverter);
-
-        // 注册测试数据
+        console.info("测试环境初始化完成");
+        generator = new JQuickPhysicalPlanGenerator();
+        // 清理数据源
+        JQuickDataSourceManager.clearAll();
+        // 注册测试数据到数据源管理器（替代 broadcastTable）
         registerTestData();
+        console.info("测试数据已注册到数据源管理器");
+        // 创建 Worker 列表
+        workers = new ArrayList<>();
+        worker1 = new JQuickWorker("worker-1", WORKER1_PORT);
+        worker2 = new JQuickWorker("worker-2", WORKER2_PORT);
+        worker3 = new JQuickWorker("worker-3", WORKER3_PORT);
+        workers.add(worker1);
+        workers.add(worker2);
+        workers.add(worker3);
+        worker1.start();
+        worker2.start();
+        worker3.start();
+        Thread.sleep(1000);
+        // 清理 Worker 的数据缓存
+        worker1.clearReceivedDataCache();
+        worker2.clearReceivedDataCache();
+        worker3.clearReceivedDataCache();
+        endpoints = new ArrayList<>();
+        endpoints.add(new JQuickCoordinator.WorkerEndpoint("worker-1", "localhost", WORKER1_PORT, 0));
+        endpoints.add(new JQuickCoordinator.WorkerEndpoint("worker-2", "localhost", WORKER2_PORT, 1));
+        endpoints.add(new JQuickCoordinator.WorkerEndpoint("worker-3", "localhost", WORKER3_PORT, 2));
+        coordinator = new JQuickCoordinator("coordinator-1", endpoints, 30000, 3, 1000);
+        for (JQuickWorker worker : workers) {
+            worker.setWorkerEndpoints(endpoints);
+        }
+        console.info("测试环境启动完成");
     }
     @After
     public void tearDown() {
@@ -228,13 +262,6 @@ public class JQuickDatasetOpTest {
         return createProject(filter, columns);
     }
     /**
-     * 直接执行物理节点（用于测试）
-     */
-    private JQuickDataSet executeNode(JQuickPhysicalPlanNode node) {
-        JQuickWorker.JQuickTaskContext context = testWorker.new JQuickTaskContext("test-task", JQuickExecuteTaskRequest.newBuilder().setTaskId("test").setQueryId("test-query").build());
-        return nodeExecutor.executeNode(node, context);
-    }
-    /**
      * 测试1：UNION 操作
      *
      * SQL示例：
@@ -247,8 +274,14 @@ public class JQuickDatasetOpTest {
         JQuickProjectNode leftQuery = createProjectWithFilter("users", "status", "active", "id", "name");
         JQuickProjectNode rightQuery = createProjectWithFilter("users", "status", "pending", "id", "name");
         JQuickSetOperationNode unionNode = new JQuickSetOperationNode(JQuickSQLOperationType.UNION, leftQuery, rightQuery);
+        // 执行查询（使用创建好的计划，而不是让 Coordinator 重新切分）
+        JQuickFragmenter fragmenter = new JQuickFragmenter(3);
         JQuickPhysicalPlanNode physicalPlan = generator.generate(unionNode);
-        JQuickDataSet result = executeNode(physicalPlan);
+        JQuickDistributedPlan plan = fragmenter.fragment(physicalPlan);
+        // 打印Fragment结构
+        fragmenter.printFragments(plan);
+        String queryId = "hash_partition_" + System.currentTimeMillis();
+        JQuickDataSet result = coordinator.executeQueryWithPlan(queryId, plan);
         result.printTable();
         System.out.println("=== UNION操作测试通过 ===");
         System.out.println("物理计划结构: SetOperation(UNION) -> Project, Project");
@@ -275,8 +308,11 @@ public class JQuickDatasetOpTest {
         JQuickProjectNode rightQueryModified = new JQuickProjectNode(rightQuery.getSelectItems(), newRightFilter, rightQuery.isDistinct());
         JQuickSetOperationNode unionAllNode = new JQuickSetOperationNode(JQuickSQLOperationType.UNION_ALL, leftQueryModified, rightQueryModified);
         JQuickPhysicalPlanNode physicalPlan = generator.generate(unionAllNode);
-        JQuickDistributedPlan distributedPlan= fragmenter.fragment(physicalPlan);
-        JQuickDataSet result = executeNode(physicalPlan);
+        // 执行查询（使用创建好的计划，而不是让 Coordinator 重新切分）
+        JQuickFragmenter fragmenter = new JQuickFragmenter(3);
+        JQuickDistributedPlan plan = fragmenter.fragment(physicalPlan);
+        String queryId = "hash_partition_" + System.currentTimeMillis();
+        JQuickDataSet result = coordinator.executeQueryWithPlan(queryId, plan);
         result.printTable();
         System.out.println(physicalPlan);
     }
@@ -294,10 +330,11 @@ public class JQuickDatasetOpTest {
         JQuickProjectNode rightQuery = createProject(createTableScan("orders_2024"), "product_id");
         JQuickSetOperationNode intersectNode = new JQuickSetOperationNode(JQuickSQLOperationType.INTERSECT, leftQuery, rightQuery);
         JQuickPhysicalPlanNode physicalPlan = generator.generate(intersectNode);
-        JQuickSetOperationPhysicalNode setOpNode = (JQuickSetOperationPhysicalNode) physicalPlan;
-        JQuickDistributedPlan distributedPlan= fragmenter.fragment(setOpNode);
-        fragmenter.printFragments(distributedPlan);
-        JQuickDataSet result = executeNode(physicalPlan);
+        // 执行查询（使用创建好的计划，而不是让 Coordinator 重新切分）
+        JQuickFragmenter fragmenter = new JQuickFragmenter(3);
+        JQuickDistributedPlan plan = fragmenter.fragment(physicalPlan);
+        String queryId = "hash_partition_" + System.currentTimeMillis();
+        JQuickDataSet result = coordinator.executeQueryWithPlan(queryId, plan);
         result.printTable();
         System.out.println(physicalPlan);
     }
@@ -319,9 +356,10 @@ public class JQuickDatasetOpTest {
         JQuickSetOperationNode innerUnion2 = new JQuickSetOperationNode(JQuickSQLOperationType.UNION, table3, table4);
         JQuickSetOperationNode outerIntersect = new JQuickSetOperationNode(JQuickSQLOperationType.INTERSECT, innerUnion, innerUnion2);
         JQuickPhysicalPlanNode physicalPlan = generator.generate(outerIntersect);
-        JQuickDistributedPlan distributedPlan= fragmenter.fragment(physicalPlan);
-        fragmenter.printFragments(distributedPlan);
-        JQuickDataSet result = executeNode(physicalPlan);
+        JQuickFragmenter fragmenter = new JQuickFragmenter(3);
+        JQuickDistributedPlan plan = fragmenter.fragment(physicalPlan);
+        String queryId = "hash_partition_" + System.currentTimeMillis();
+        JQuickDataSet result = coordinator.executeQueryWithPlan(queryId, plan);
         result.printTable();
     }
 

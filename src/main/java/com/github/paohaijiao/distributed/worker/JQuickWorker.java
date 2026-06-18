@@ -438,5 +438,9 @@ public class JQuickWorker {
         public long getMemoryUsedBytes() {
             return memoryUsed;
         }
+
+        public JQuickExecuteTaskRequest getRequest() {
+            return request;
+        }
     }
 }

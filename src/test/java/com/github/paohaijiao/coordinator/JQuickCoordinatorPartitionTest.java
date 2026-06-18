@@ -158,6 +158,9 @@ public class JQuickCoordinatorPartitionTest {
     public void setUp() throws IOException, InterruptedException {
         // 清理数据源
         JQuickDataSourceManager.clearAll();
+        // 注册测试数据到数据源管理器（替代 broadcastTable）
+        JQuickDataSourceManager.registerTable("employees", employeeData);
+        console.info("测试数据已注册到数据源管理器");
         // 创建 Worker 列表
         workers = new ArrayList<>();
         worker1 = new JQuickWorker("worker-1", WORKER1_PORT);
@@ -210,8 +213,6 @@ public class JQuickCoordinatorPartitionTest {
         worker1.clearReceivedDataCache();
         worker2.clearReceivedDataCache();
         worker3.clearReceivedDataCache();
-        // 注册表到 Coordinator
-        coordinator.broadcastTable("employees", employeeData, true).get(30, TimeUnit.SECONDS);
         // 创建 Hash 分区 Exchange 节点
         List<JQuickExpression> partitionKeys = new ArrayList<>();
         partitionKeys.add(new JQuickColumnRefExpression("city"));
@@ -234,7 +235,6 @@ public class JQuickCoordinatorPartitionTest {
     @Test
     public void testRangePartition() throws Exception {
         console.info("=== 测试 Range 分区 ===");
-        coordinator.broadcastTable("employees", employeeData, true).get(30, TimeUnit.SECONDS);
         // 创建 Range 分区 Exchange 节点（按 age 范围分区）
         List<JQuickExpression> partitionKeys = new ArrayList<>();
         partitionKeys.add(new JQuickColumnRefExpression("age"));
@@ -253,7 +253,6 @@ public class JQuickCoordinatorPartitionTest {
     @Test
     public void testRoundRobinPartition() throws Exception {
         console.info("=== 测试 RoundRobin 分区 ===");
-        coordinator.broadcastTable("employees", employeeData, true).get(30, TimeUnit.SECONDS);
         JQuickTableScanPhysicalNode scanNode = new JQuickTableScanPhysicalNode("employees", null, null, null);
         JQuickExchangePhysicalNode exchangeNode = new JQuickExchangePhysicalNode(JQuickExchangeType.SHUFFLE, JQuickPartitionStrategy.ROUND_ROBIN, null, 3, scanNode);
         // 包装 GATHER Exchange 来收集分区后的数据
@@ -267,7 +266,6 @@ public class JQuickCoordinatorPartitionTest {
     @Test
     public void testBroadcastPartition() throws Exception {
         console.info("=== 测试 Broadcast 分区 ===");
-        coordinator.broadcastTable("employees", employeeData, true).get(30, TimeUnit.SECONDS);
         JQuickTableScanPhysicalNode scanNode = new JQuickTableScanPhysicalNode("employees", null, null, null);
         JQuickExchangePhysicalNode exchangeNode = new JQuickExchangePhysicalNode(JQuickExchangeType.BROADCAST, JQuickPartitionStrategy.REPLICATE, null, 3, scanNode);
         // 包装 GATHER Exchange 来收集分区后的数据

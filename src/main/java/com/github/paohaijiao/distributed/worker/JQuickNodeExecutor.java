@@ -133,14 +133,28 @@ public class JQuickNodeExecutor {
         String tableName = node.getTableName();
         Set<String> requiredColumns = node.getRequiredColumns();
         JQuickDataSet data;
-        boolean useMemoryDist = true;
-        if (node.getPartitionInfo() != null && useMemoryDist) {
+        // 优先从数据源读取数据（通过 JQuickDataSourceManager 注册）
+        // 只有当 partitionInfo 不为 null 时才从内存分区读取（通过 broadcastTable）
+        if (node.getPartitionInfo() != null) {
             data = readFromMemoryPartition(tableName, requiredColumns);
         } else {
             data = readFromDataSource(tableName, requiredColumns);
         }
         if (node.getFilterPredicate() != null) {
             data = applyFilter(data, node.getFilterPredicate());
+        }
+        // 根据任务索引进行数据分片，避免并行任务重复读取数据
+        int taskIndex = context.getRequest().getTaskIndex();
+        int totalTasks = context.getRequest().getTotalTasks();
+        if (totalTasks > 1) {
+            List<JQuickRow> shardedRows = new ArrayList<>();
+            List<JQuickRow> allRows = data.getRows();
+            for (int i = 0; i < allRows.size(); i++) {
+                if (i % totalTasks == taskIndex) {
+                    shardedRows.add(allRows.get(i));
+                }
+            }
+            data = new JQuickDataSet(data.getColumns(), shardedRows);
         }
         context.addProcessedRows(data.size());
         return data;
