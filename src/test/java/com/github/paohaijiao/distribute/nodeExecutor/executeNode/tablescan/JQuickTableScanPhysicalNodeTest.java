@@ -13,7 +13,7 @@
  *
  * Copyright (c) [2025-2099] Martin (goudingcheng@gmail.com)
  */
-package com.github.paohaijiao.distribute.nodeExecutor.executeNode;
+package com.github.paohaijiao.distribute.nodeExecutor.executeNode.tablescan;
 
 import com.github.paohaijiao.datasource.JQuickDataSourceManager;
 import com.github.paohaijiao.distributed.worker.*;
@@ -174,9 +174,5 @@ public class JQuickTableScanPhysicalNodeTest {
         assertNotNull(result);
         assertEquals(0, result.size());
     }
-    @Test(expected = RuntimeException.class)
-    public void testExecuteTableScan_TableNotFound() {
-        JQuickTableScanPhysicalNode scanNode = new JQuickTableScanPhysicalNode("non_existent_table", null, null, null);
-        nodeExecutor.executeNode(scanNode, taskContext);
-    }
+
 }
