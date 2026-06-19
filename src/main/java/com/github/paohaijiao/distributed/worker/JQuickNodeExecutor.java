@@ -50,15 +50,11 @@ public class JQuickNodeExecutor {
     public JQuickDataSet executeFragment(JQuickFragmentProto fragment, JQuickWorker.JQuickTaskContext context) {
         JQuickPhysicalPlanNode rootNode = buildPhysicalNode(fragment.getPlan());
         JQuickDataSet result = executeNode(rootNode, context);
-        
-        // 如果执行结果已经有数据，直接返回
-        if (!result.isEmpty()) {
+        if (!result.isEmpty()) {// 如果执行结果已经有数据，直接返回
             console.info("executeFragment: returning " + result.size() + " rows from executeNode");
             return result;
         }
-        
-        // 如果是 SINK Fragment，尝试从 gRPC 接收的数据中收集结果
-        if (fragment.getType() == JQuickFragmentTypeProto.FRAGMENT_SINK) {
+        if (fragment.getType() == JQuickFragmentTypeProto.FRAGMENT_SINK) {// 如果是 SINK Fragment，尝试从 gRPC 接收的数据中收集结果
             console.info("executeFragment: SINK Fragment, trying to collect from gRPC");
             List<JQuickRow> allRows = new ArrayList<>();
             List<JQuickColumnMeta> columns = null;
@@ -72,13 +68,10 @@ public class JQuickNodeExecutor {
                     console.info("SINK Fragment collected " + data.size() + " rows from partition " + partitionId);
                 }
             }
-            
-            // 如果接收到数据，合并后返回
-            if (!allRows.isEmpty() && columns != null) {
+            if (!allRows.isEmpty() && columns != null) { // 如果接收到数据，合并后返回
                 console.info("SINK Fragment total collected " + allRows.size() + " rows from gRPC received data");
                 return new JQuickDataSet(columns, allRows);
             }
-            
             console.warn("SINK Fragment received no data from gRPC!");
         }
         
