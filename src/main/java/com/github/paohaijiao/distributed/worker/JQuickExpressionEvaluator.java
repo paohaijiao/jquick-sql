@@ -121,6 +121,36 @@ public class JQuickExpressionEvaluator {
             JQuickBinaryExpression binary = (JQuickBinaryExpression) expr;
             Object left = evaluateExpression(row, binary.getLeft());
             Object right = evaluateExpression(row, binary.getRight());
+            
+            // 如果是比较操作，且两个操作数都是相同的列引用（不带前缀），
+            // 尝试分别解析到左右表的值
+            if ((binary.getOperator() == com.github.paohaijiao.enums.JQuickBinaryOperator.EQ ||
+                 binary.getOperator() == com.github.paohaijiao.enums.JQuickBinaryOperator.NE ||
+                 binary.getOperator() == com.github.paohaijiao.enums.JQuickBinaryOperator.LT ||
+                 binary.getOperator() == com.github.paohaijiao.enums.JQuickBinaryOperator.LE ||
+                 binary.getOperator() == com.github.paohaijiao.enums.JQuickBinaryOperator.GT ||
+                 binary.getOperator() == com.github.paohaijiao.enums.JQuickBinaryOperator.GE) &&
+                binary.getLeft() instanceof JQuickColumnRefExpression &&
+                binary.getRight() instanceof JQuickColumnRefExpression) {
+                
+                String leftCol = ((JQuickColumnRefExpression) binary.getLeft()).getColumnName();
+                String rightCol = ((JQuickColumnRefExpression) binary.getRight()).getColumnName();
+                
+                // 如果两个列名相同且不带前缀，尝试分别解析到左右表的值
+                if (leftCol.equals(rightCol) && !leftCol.contains(".")) {
+                    Object leftVal = row.get("left." + leftCol);
+                    Object rightVal = row.get("right." + rightCol);
+                    
+                    // 如果左右表都有这个列，则使用左右表的值进行比较
+                    if (leftVal != null || row.containsKey("left." + leftCol)) {
+                        left = leftVal;
+                    }
+                    if (rightVal != null || row.containsKey("right." + rightCol)) {
+                        right = rightVal;
+                    }
+                }
+            }
+            
             return applyBinaryOperator(left, right, binary.getOperator());
         } else if (expr instanceof JQuickUnaryExpression) {
             JQuickUnaryExpression unary = (JQuickUnaryExpression) expr;
