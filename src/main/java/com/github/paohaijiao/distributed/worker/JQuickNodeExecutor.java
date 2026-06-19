@@ -95,17 +95,18 @@ public class JQuickNodeExecutor {
             return executeHashJoin((JQuickHashJoinPhysicalNode) node, context);
         } else if (node instanceof JQuickNestedLoopJoinPhysicalNode) {
             return executeNestedLoopJoin((JQuickNestedLoopJoinPhysicalNode) node, context);
+        }else if (node instanceof JQuickTopNPhysicalNode) {//keep the high priority for the JQuickSortPhysicalNode
+            return executeTopN((JQuickTopNPhysicalNode) node, context);
         } else if (node instanceof JQuickSortPhysicalNode) {
             return executeSort((JQuickSortPhysicalNode) node, context);
         } else if (node instanceof JQuickLimitPhysicalNode) {
             return executeLimit((JQuickLimitPhysicalNode) node, context);
-        }else if (node instanceof JQuickHashAggregatePhysicalNode) {
+        }
+        else if (node instanceof JQuickHashAggregatePhysicalNode) {
             return executeHashAggregate((JQuickHashAggregatePhysicalNode) node, context);
         } else if (node instanceof JQuickExchangePhysicalNode) {
             return executeExchange((JQuickExchangePhysicalNode) node, context);
-        } else if (node instanceof JQuickTopNPhysicalNode) {
-            return executeTopN((JQuickTopNPhysicalNode) node, context);
-        } else if (node instanceof JQuickWindowPhysicalNode) {
+        }  else if (node instanceof JQuickWindowPhysicalNode) {
             return executeWindow((JQuickWindowPhysicalNode) node, context);
         } else if (node instanceof JQuickSetOperationPhysicalNode) {
             return executeSetOperation((JQuickSetOperationPhysicalNode) node, context);
