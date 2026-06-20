@@ -125,18 +125,24 @@ public class JQuickNodeExecutor {
      */
     private JQuickDataSet executeTableScan(JQuickTableScanPhysicalNode node, JQuickWorker.JQuickTaskContext context) {
         String tableName = node.getTableName();
+        console.info("executeTableScan - tableName: " + tableName + ", partitionInfo: " + (node.getPartitionInfo() != null ? "exists" : "null"));
         Set<String> requiredColumns = node.getRequiredColumns();
         JQuickDataSet data;
         if (node.getPartitionInfo() != null) {
+            console.info("Reading from memory partition: " + tableName);
             data = readFromMemoryPartition(tableName);
         } else {
+            console.info("Reading from data source: " + tableName);
             data = readFromDataSource(tableName);
         }
+        console.info("Table data loaded - rows: " + data.size() + ", columns: " + data.getColumns().size());
         if (node.getFilterPredicate() != null) {
             data = applyFilter(data, node.getFilterPredicate());
+            console.info("After filter - rows: " + data.size());
         }
         if (requiredColumns != null && !requiredColumns.isEmpty()) {
             data= data.select(requiredColumns.toArray(new String[0]));
+            console.info("After projection - columns: " + data.getColumns().size());
         }
         int taskIndex = context.getRequest().getTaskIndex();// 根据任务索引进行数据分片，避免并行任务重复读取数据
         int totalTasks = context.getRequest().getTotalTasks();
@@ -149,6 +155,7 @@ public class JQuickNodeExecutor {
                 }
             }
             data = new JQuickDataSet(data.getColumns(), shardedRows);
+            console.info("After sharding - rows: " + data.size() + " (taskIndex=" + taskIndex + ", totalTasks=" + totalTasks + ")");
         }
         context.addProcessedRows(data.size());
         return data;
@@ -1135,14 +1142,16 @@ public class JQuickNodeExecutor {
 
     private JQuickDataSet readFromDataSource(String tableName) {
         if (tableName == null) {
+            console.warn("readFromDataSource - tableName is null");
             return JQuickDataSet.builder().build();
         }
         JQuickDataSet tableData = JQuickDataSourceManager.getTable(tableName);
         if (tableData == null) {
+            console.warn("readFromDataSource - table not found: " + tableName);
+            console.info("Available tables: " + JQuickDataSourceManager.getTableNames());
             return JQuickDataSet.builder().build();
         }
-
-
+        console.info("readFromDataSource - table found: " + tableName + ", rows: " + tableData.size());
         return tableData;
     }
 

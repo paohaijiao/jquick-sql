@@ -84,6 +84,10 @@ public class JQuickWorker {
     public String getWorkerId() {
         return workerId;
     }
+
+    public int getPort() {
+        return port;
+    }
     
     /**
      * 获取当前 Worker 的索引
@@ -378,15 +382,15 @@ public class JQuickWorker {
             return chunkIndex;
         }
 
-        void setChunkIndex(int chunkIndex) {
+        public void setChunkIndex(int chunkIndex) {
             this.chunkIndex = chunkIndex;
         }
 
-        boolean isLast() {
+        public boolean isLast() {
             return chunkIndex == total - 1;
         }
 
-        long getDataSize() {
+        public long getDataSize() {
             long size = 0;
             for (JQuickRow row : data.getRows()) {
                 for (Object value : row.values()) {
@@ -450,6 +454,10 @@ public class JQuickWorker {
 
         public JQuickExecuteTaskRequest getRequest() {
             return request;
+        }
+
+        public String getTaskId() {
+            return taskId;
         }
     }
 }

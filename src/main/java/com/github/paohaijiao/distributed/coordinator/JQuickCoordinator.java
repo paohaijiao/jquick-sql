@@ -130,7 +130,7 @@ public class JQuickCoordinator extends JQuickConvertService{
         List<WorkerEndpoint> endpoints = new ArrayList<>();
         for (int i = 0; i < workers.size(); i++) {
             JQuickWorker worker = workers.get(i);
-            endpoints.add(new WorkerEndpoint(worker.getWorkerId(), "localhost", DEFAULT_WORKER_PORT + i, i));
+            endpoints.add(new WorkerEndpoint(worker.getWorkerId(), "localhost", worker.getPort(), i));
         }
         return new JQuickCoordinator(coordinatorId, endpoints);
     }
