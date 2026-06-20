@@ -634,26 +634,42 @@ public class JQuickNodeExecutor {
      */
     private JQuickDataSet executeRecursiveUnion(JQuickRecursiveUnionPhysicalNode node, JQuickWorker.JQuickTaskContext context) {
         JQuickDataSet result = executeNode(node.getInitialPlan(), context);
-        Set<JQuickRow> seenRows = new HashSet<>(result.getRows());
-        JQuickDataSet workingSet = result;
+        Set<String> seenRowKeys = new HashSet<>();
+        for (JQuickRow row : result.getRows()) {
+            seenRowKeys.add(createRowKey(row));
+        }
+        List<JQuickRow> workingRows = new ArrayList<>(result.getRows());
         int depth = 0;
-        while (depth < node.getMaxRecursionDepth() && !workingSet.isEmpty()) {
+        while (depth < node.getMaxRecursionDepth() && !workingRows.isEmpty()) {
             JQuickDataSet newRows = executeNode(node.getRecursivePlan(), context);
-            List<JQuickRow> filteredRows = newRows.getRows().stream().filter(row -> !seenRows.contains(row)).collect(Collectors.toList());
-            if (filteredRows.isEmpty()) break;
-            if (node.isUnionAll()) {
-                List<JQuickRow> allRows = new ArrayList<>(result.getRows());
-                allRows.addAll(filteredRows);
-                result = new JQuickDataSet(result.getColumns(), allRows);
-            } else {
-                seenRows.addAll(filteredRows);
-                result = new JQuickDataSet(result.getColumns(), new ArrayList<>(seenRows));
+            List<JQuickRow> filteredRows = new ArrayList<>();
+            for (JQuickRow row : newRows.getRows()) {
+                String rowKey = createRowKey(row);
+                if (!seenRowKeys.contains(rowKey)) {
+                    filteredRows.add(row);
+                    seenRowKeys.add(rowKey);
+                }
             }
-            workingSet = new JQuickDataSet(result.getColumns(), filteredRows);
+            if (filteredRows.isEmpty()) break;
+            List<JQuickRow> allRows = new ArrayList<>(result.getRows());
+            allRows.addAll(filteredRows);
+            result = new JQuickDataSet(result.getColumns(), allRows);
+            workingRows = filteredRows;
             depth++;
         }
 
         return result;
+    }
+
+    /**
+     * 创建行的唯一键（基于内容）
+     */
+    private String createRowKey(JQuickRow row) {
+        StringBuilder sb = new StringBuilder();
+        for (Map.Entry<String, Object> entry : row.entrySet()) {
+            sb.append(entry.getKey()).append("=").append(entry.getValue()).append(";");
+        }
+        return sb.toString();
     }
 
     /**
