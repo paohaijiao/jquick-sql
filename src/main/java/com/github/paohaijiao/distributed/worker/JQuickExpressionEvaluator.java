@@ -121,7 +121,6 @@ public class JQuickExpressionEvaluator {
             JQuickBinaryExpression binary = (JQuickBinaryExpression) expr;
             Object left = evaluateExpression(row, binary.getLeft());
             Object right = evaluateExpression(row, binary.getRight());
-            
             // 如果是比较操作，且两个操作数都是相同的列引用（不带前缀），
             // 尝试分别解析到左右表的值
             if ((binary.getOperator() == com.github.paohaijiao.enums.JQuickBinaryOperator.EQ ||

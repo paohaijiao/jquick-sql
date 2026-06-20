@@ -101,14 +101,14 @@ public class JQuickNodeExecutor {
             return executeSort((JQuickSortPhysicalNode) node, context);
         } else if (node instanceof JQuickLimitPhysicalNode) {
             return executeLimit((JQuickLimitPhysicalNode) node, context);
+        }  else if (node instanceof JQuickWindowPhysicalNode) {
+            return executeWindow((JQuickWindowPhysicalNode) node, context);
         }
         else if (node instanceof JQuickHashAggregatePhysicalNode) {
             return executeHashAggregate((JQuickHashAggregatePhysicalNode) node, context);
         } else if (node instanceof JQuickExchangePhysicalNode) {
             return executeExchange((JQuickExchangePhysicalNode) node, context);
-        }  else if (node instanceof JQuickWindowPhysicalNode) {
-            return executeWindow((JQuickWindowPhysicalNode) node, context);
-        } else if (node instanceof JQuickSetOperationPhysicalNode) {
+        }else if (node instanceof JQuickSetOperationPhysicalNode) {
             return executeSetOperation((JQuickSetOperationPhysicalNode) node, context);
         } else if (node instanceof JQuickValuesPhysicalNode) {
             return executeValues((JQuickValuesPhysicalNode) node, context);
@@ -892,32 +892,192 @@ public class JQuickNodeExecutor {
 
     private Object evaluateWindowFunction(JQuickDataSet data, JQuickRow currentRow, JQuickWindowPhysicalNode.WindowFunction wf) {
         String funcName = wf.getFunctionName().toLowerCase();
-        List<JQuickRow> windowRows = data.getRows();
-        int currentIdx = windowRows.indexOf(currentRow);
+        List<JQuickRow> allRows = data.getRows();
+        int currentIdx = allRows.indexOf(currentRow);
+        
+        // 获取窗口规范
+        JQuickWindowPhysicalNode.WindowSpec windowSpec = wf.getWindowSpec();
+        List<JQuickRow> windowRows;
+        
+        if (windowSpec != null && windowSpec.getPartitionKeys() != null && !windowSpec.getPartitionKeys().isEmpty()) {
+            // 按分区键分组
+            windowRows = getPartitionRows(allRows, currentRow, windowSpec);
+        } else {
+            windowRows = allRows;
+        }
+        
+        // 如果有排序键，先对窗口内的行进行排序
+        if (windowSpec != null && windowSpec.getOrderKeys() != null && !windowSpec.getOrderKeys().isEmpty()) {
+            windowRows = sortWindowRows(windowRows, windowSpec);
+        }
+        
+        // 找到当前行在窗口中的位置
+        int windowIdx = windowRows.indexOf(currentRow);
+        
+        // 排名函数
         switch (funcName) {
             case "row_number":
-                return (long) (currentIdx + 1);
+                return (long) (windowIdx + 1);
             case "rank":
-                return (long) (currentIdx + 1);
+                // 计算排名（考虑跳跃）
+                Object currentOrderValue = getOrderValue(windowRows.get(windowIdx), windowSpec);
+                int rank = 1;
+                for (int i = 0; i < windowIdx; i++) {
+                    Object prevValue = getOrderValue(windowRows.get(i), windowSpec);
+                    if (!Objects.equals(currentOrderValue, prevValue)) {
+                        rank = i + 2;
+                    }
+                }
+                return (long) rank;
             case "dense_rank":
-                return (long) (currentIdx + 1);
+                // 计算密集排名（无跳跃）
+                Object denseCurrentValue = getOrderValue(windowRows.get(windowIdx), windowSpec);
+                int denseRank = 1;
+                for (int i = 0; i < windowIdx; i++) {
+                    Object prevValue = getOrderValue(windowRows.get(i), windowSpec);
+                    if (!Objects.equals(denseCurrentValue, prevValue)) {
+                        denseRank++;
+                    }
+                }
+                return (long) denseRank;
             case "lead":
-                if (currentIdx + 1 < windowRows.size()) {
-                    return expressionEvaluator.evaluateExpression(windowRows.get(currentIdx + 1), wf.getArgument());
+                if (windowIdx + 1 < windowRows.size()) {
+                    return expressionEvaluator.evaluateExpression(windowRows.get(windowIdx + 1), wf.getArgument());
                 }
                 return null;
             case "lag":
-                if (currentIdx - 1 >= 0) {
-                    return expressionEvaluator.evaluateExpression(windowRows.get(currentIdx - 1), wf.getArgument());
+                if (windowIdx - 1 >= 0) {
+                    return expressionEvaluator.evaluateExpression(windowRows.get(windowIdx - 1), wf.getArgument());
                 }
                 return null;
+            // 聚合函数
+            case "count":
+                return (long) windowRows.size();
+            case "sum":
+                if (wf.getArgument() == null) {
+                    return null;
+                }
+                double sum = 0;
+                for (JQuickRow row : windowRows) {
+                    Object val = expressionEvaluator.evaluateExpression(row, wf.getArgument());
+                    if (val instanceof Number) {
+                        sum += ((Number) val).doubleValue();
+                    }
+                }
+                return sum;
+            case "avg":
+                if (wf.getArgument() == null) {
+                    return null;
+                }
+                double total = 0;
+                int count = 0;
+                for (JQuickRow row : windowRows) {
+                    Object val = expressionEvaluator.evaluateExpression(row, wf.getArgument());
+                    if (val instanceof Number) {
+                        total += ((Number) val).doubleValue();
+                        count++;
+                    }
+                }
+                return count > 0 ? total / count : null;
+            case "max":
+                if (wf.getArgument() == null) {
+                    return null;
+                }
+                Double maxVal = null;
+                for (JQuickRow row : windowRows) {
+                    Object val = expressionEvaluator.evaluateExpression(row, wf.getArgument());
+                    if (val instanceof Number) {
+                        double num = ((Number) val).doubleValue();
+                        if (maxVal == null || num > maxVal) {
+                            maxVal = num;
+                        }
+                    }
+                }
+                return maxVal;
+            case "min":
+                if (wf.getArgument() == null) {
+                    return null;
+                }
+                Double minVal = null;
+                for (JQuickRow row : windowRows) {
+                    Object val = expressionEvaluator.evaluateExpression(row, wf.getArgument());
+                    if (val instanceof Number) {
+                        double num = ((Number) val).doubleValue();
+                        if (minVal == null || num < minVal) {
+                            minVal = num;
+                        }
+                    }
+                }
+                return minVal;
             default:
+                // 其他函数，尝试通过 expressionEvaluator 调用
                 List<Object> args = new ArrayList<>();
                 if (wf.getArgument() != null) {
                     args.add(expressionEvaluator.evaluateExpression(currentRow, wf.getArgument()));
                 }
                 return expressionEvaluator.evaluateFunction(funcName, args);
         }
+    }
+    
+    /**
+     * 获取当前行所在分区的所有行
+     */
+    private List<JQuickRow> getPartitionRows(List<JQuickRow> allRows, JQuickRow currentRow, JQuickWindowPhysicalNode.WindowSpec windowSpec) {
+        List<JQuickRow> partitionRows = new ArrayList<>();
+        for (JQuickRow row : allRows) {
+            if (isSamePartition(currentRow, row, windowSpec.getPartitionKeys())) {
+                partitionRows.add(row);
+            }
+        }
+        return partitionRows;
+    }
+    
+    /**
+     * 判断两行是否在同一个分区
+     */
+    private boolean isSamePartition(JQuickRow row1, JQuickRow row2, List<JQuickExpression> partitionKeys) {
+        for (JQuickExpression key : partitionKeys) {
+            if (!(key instanceof JQuickColumnRefExpression)) {
+                continue;
+            }
+            String columnName = ((JQuickColumnRefExpression) key).getColumnName();
+            Object val1 = row1.get(columnName);
+            Object val2 = row2.get(columnName);
+            if (!Objects.equals(val1, val2)) {
+                return false;
+            }
+        }
+        return true;
+    }
+    
+    /**
+     * 对窗口内的行进行排序
+     */
+    private List<JQuickRow> sortWindowRows(List<JQuickRow> rows, JQuickWindowPhysicalNode.WindowSpec windowSpec) {
+        List<JQuickRow> sortedRows = new ArrayList<>(rows);
+        sortedRows.sort((row1, row2) -> {
+            for (JQuickSortPhysicalNode.OrderByItem orderItem : windowSpec.getOrderKeys()) {
+                Object v1 = row1.get(orderItem.getColumnName());
+                Object v2 = row2.get(orderItem.getColumnName());
+                int cmp = compareValues(v1, v2, orderItem.isNullsFirst());
+                if (cmp != 0) {
+                    return orderItem.isAscending() ? cmp : -cmp;
+                }
+            }
+            return 0;
+        });
+        return sortedRows;
+    }
+    
+    /**
+     * 获取用于排序的值
+     */
+    private Object getOrderValue(JQuickRow row, JQuickWindowPhysicalNode.WindowSpec windowSpec) {
+        if (windowSpec == null || windowSpec.getOrderKeys() == null || windowSpec.getOrderKeys().isEmpty()) {
+            return null;
+        }
+        // 返回第一个排序键的值
+        return row.get(windowSpec.getOrderKeys().get(0).getColumnName());
     }
 
     private JQuickRow joinRows(JQuickRow leftRow, JQuickRow rightRow, com.github.paohaijiao.enums.JQuickJoinType joinType, boolean leftIsBuild) {
