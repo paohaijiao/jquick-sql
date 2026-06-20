@@ -335,8 +335,17 @@ public class JQuickWorker {
 
         void addRow(JQuickRow row) {
             JQuickDataSet.Builder builder = JQuickDataSet.builder();
-            for (JQuickColumnMeta col : data.getColumns()) {
-                builder.addColumn(col.getName(), col.getType(), col.getSource());
+            if (data.getColumns().isEmpty()) {
+                for (Map.Entry<String, Object> entry : row.entrySet()) {
+                    String colName = entry.getKey();
+                    Object value = entry.getValue();
+                    Class<?> colType = value != null ? value.getClass() : Object.class;
+                    builder.addColumn(colName, colType, null);
+                }
+            } else {
+                for (JQuickColumnMeta col : data.getColumns()) {
+                    builder.addColumn(col.getName(), col.getType(), col.getSource());
+                }
             }
             builder.addRow(row);
             for (JQuickRow existingRow : data.getRows()) {
@@ -361,7 +370,7 @@ public class JQuickWorker {
             return partitionId != null ? partitionId : (index + "_" + total);
         }
 
-        int getIndex() {
+        public int getIndex() {
             return index;
         }
 

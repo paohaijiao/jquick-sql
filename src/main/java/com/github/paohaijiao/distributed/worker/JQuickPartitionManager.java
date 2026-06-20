@@ -253,9 +253,7 @@ public class JQuickPartitionManager {
                 }
             });
             requestObserver.onNext(chunk);
-            requestObserver.onCompleted();  // 关键：必须调用 onCompleted 完成流
-
-            // 同步等待发送完成（带超时）- 在当前线程等待，而不是异步提交
+            requestObserver.onCompleted();
             future.get(30, TimeUnit.SECONDS);
             console.info("Sent partition " + chunk.getPartitionId() + " to worker " + targetEndpoint.getWorkerId());
 
