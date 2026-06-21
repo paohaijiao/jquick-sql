@@ -14,7 +14,6 @@
  * Copyright (c) [2025-2099] Martin (goudingcheng@gmail.com)
  */
 package com.github.paohaijiao.context;
-import com.github.paohaijiao.config.JQuickConfiguration;
 import com.github.paohaijiao.logic.JQuickLogicalPlanNode;
 import com.github.paohaijiao.logic.domain.JQuickLimitNode;
 import com.github.paohaijiao.logic.domain.JQuickProjectNode;
@@ -43,9 +42,6 @@ public class JQuickExecutionContext {
     private final String executionId;
 
     private JQuickExecutionContext parent;
-
-    private JQuickConfiguration configuration;
-
 
     private long queryTimeout = 30000;
 

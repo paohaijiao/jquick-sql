@@ -151,19 +151,6 @@ public class JQuickNodeExecutor {
             data= data.select(requiredColumns.toArray(new String[0]));
             console.info("After projection - columns: " + data.getColumns().size());
         }
-        int taskIndex = context.getRequest().getTaskIndex();// 根据任务索引进行数据分片，避免并行任务重复读取数据
-        int totalTasks = context.getRequest().getTotalTasks();
-        if (totalTasks > 1) {
-            List<JQuickRow> shardedRows = new ArrayList<>();
-            List<JQuickRow> allRows = data.getRows();
-            for (int i = 0; i < allRows.size(); i++) {
-                if (i % totalTasks == taskIndex) {
-                    shardedRows.add(allRows.get(i));
-                }
-            }
-            data = new JQuickDataSet(data.getColumns(), shardedRows);
-            console.info("After sharding - rows: " + data.size() + " (taskIndex=" + taskIndex + ", totalTasks=" + totalTasks + ")");
-        }
         context.addProcessedRows(data.size());
         return data;
     }

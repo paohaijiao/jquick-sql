@@ -16,6 +16,7 @@
 package com.github.paohaijiao.coordinator;
 
 
+import com.github.paohaijiao.config.JQuickSqlConfig;
 import com.github.paohaijiao.console.JConsole;
 import com.github.paohaijiao.datasource.JQuickDataSourceManager;
 import com.github.paohaijiao.distributed.JQuickDistributedPlan;
@@ -181,7 +182,9 @@ public class JQuickCoordinatorPartitionTest {
         endpoints.add(new JQuickCoordinator.WorkerEndpoint("worker-1", "localhost", WORKER1_PORT, 0));
         endpoints.add(new JQuickCoordinator.WorkerEndpoint("worker-2", "localhost", WORKER2_PORT, 1));
         endpoints.add(new JQuickCoordinator.WorkerEndpoint("worker-3", "localhost", WORKER3_PORT, 2));
-        coordinator = new JQuickCoordinator("coordinator-1", endpoints, 30000, 3, 1000);
+        JQuickSqlConfig config=new JQuickSqlConfig();
+        config.setWorkers(endpoints);
+        coordinator = new JQuickCoordinator(config);
         for (JQuickWorker worker : workers) {
             worker.setWorkerEndpoints(endpoints);
         }

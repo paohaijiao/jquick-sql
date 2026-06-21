@@ -15,11 +15,13 @@
  */
 package com.github.paohaijiao.distributed.coordinator;
 
+import com.github.paohaijiao.config.JQuickSqlConfig;
 import com.github.paohaijiao.console.JConsole;
 import com.github.paohaijiao.datasource.JQuickDataSourceManager;
 import com.github.paohaijiao.distributed.JQuickDistributedPlan;
 import com.github.paohaijiao.distributed.worker.JQuickDataConverter;
 import com.github.paohaijiao.enums.JQuickFragmentType;
+import com.github.paohaijiao.exception.JAssert;
 import com.github.paohaijiao.fragment.JQuickFragment;
 import com.github.paohaijiao.fragment.JQuickFragmenter;
 import com.github.paohaijiao.physical.JQuickPhysicalPlanNode;
@@ -27,8 +29,11 @@ import com.github.paohaijiao.physical.domain.JQuickPhysicalColumn;
 import com.github.paohaijiao.physical.domain.JQuickPhysicalStats;
 import com.github.paohaijiao.physical.node.*;
 import com.github.paohaijiao.proto.*;
+import com.github.paohaijiao.statement.JQuickColumnMeta;
 import com.github.paohaijiao.statement.JQuickDataSet;
 import com.github.paohaijiao.statement.JQuickRow;
+import com.github.paohaijiao.uid.JQuickSnowflakeIdGenerator;
+import com.github.paohaijiao.uid.JQuickUuidGenerator;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.stub.StreamObserver;
@@ -84,38 +89,28 @@ public class JQuickCoordinator extends JQuickConvertService{
 
     private final Map<String, QueryExecution> activeQueries;
 
-    // 配置
-    private final long taskTimeoutMs;
 
     private final int maxRetries;
 
-    private final int batchSize;
+    private boolean running=false;
 
-    private volatile boolean running = true;
-
-    /**
-     * 构造函数 - 使用 Worker 列表
-     */
-    public JQuickCoordinator(String coordinatorId, List<WorkerEndpoint> workers) {
-        this(coordinatorId, workers, DEFAULT_TASK_TIMEOUT_MS, DEFAULT_MAX_RETRIES, DEFAULT_BATCH_SIZE);
-    }
 
     /**
      * 构造函数 - 完整参数
      */
-    public JQuickCoordinator(String coordinatorId, List<WorkerEndpoint> workers, long taskTimeoutMs, int maxRetries, int batchSize) {
-        this.coordinatorId = coordinatorId;
-        this.fragmenter = new JQuickFragmenter();
+    public JQuickCoordinator(JQuickSqlConfig config) {
+        JAssert.notNull(config, "config required not null ");
+        JAssert.notEmptyCol(config.getWorkers(), "workers required not empty ");
+        this.fragmenter = new JQuickFragmenter(config.getDefaultParallelism());
+        this.coordinatorId = JQuickUuidGenerator.standardUuid();
         this.dataConverter = new JQuickDataConverter();
-        this.workers = new ArrayList<>(workers);
+        this.workers = new ArrayList<>(config.getWorkers());
         this.workerIdMap = new ConcurrentHashMap<>();
         this.workerIndexMap = new ConcurrentHashMap<>();
         this.workerChannels = new ConcurrentHashMap<>();
         this.workerStubs = new ConcurrentHashMap<>();
         this.activeQueries = new ConcurrentHashMap<>();
-        this.taskTimeoutMs = taskTimeoutMs;
-        this.maxRetries = maxRetries;
-        this.batchSize = batchSize;
+        this.maxRetries = config.getMaxTaskRetries();
         for (int i = 0; i < workers.size(); i++) {
             WorkerEndpoint worker = workers.get(i);
             workerIdMap.put(worker.getWorkerId(), worker);
@@ -185,9 +180,11 @@ public class JQuickCoordinator extends JQuickConvertService{
             // 执行当前 Fragment（同步执行）
             List<JQuickDataSet> fragmentResult = executeFragment(fragment, execution);
             // 使用 execution 存储 fragment results，以便后续 fragment 可以通过 getFragmentResult 获取
-            execution.addFragmentResult(fragment.getFragmentId(), fragmentResult);
-            console.info("Fragment " + fragment.getFragmentId() + " completed, result rows: " + (fragmentResult != null ? fragmentResult.stream().mapToInt(JQuickDataSet::size).sum() : 0));
-        }
+            if(JQuickFragmentType.SINK.equals(fragment.getType())){
+                execution.addFragmentResult(fragment.getFragmentId(), fragmentResult);
+                console.info("Fragment " + fragment.getFragmentId() + " completed, result rows: " + (fragmentResult != null ? fragmentResult.stream().mapToInt(JQuickDataSet::size).sum() : 0));
+            }
+     }
         List<JQuickDataSet> rootResults = execution.getFragmentResult(rootFragment.getFragmentId()); //获取根 Fragment 结果
         JQuickDataSet finalResult = mergeResults(rootResults); //合并结果
         finalResult.printSummary();
@@ -301,19 +298,42 @@ public class JQuickCoordinator extends JQuickConvertService{
                 .setFragment(fragmentProto)
                 .setMemoryLimitBytes(1024 * 1024 * 1024);
         console.info("buildTaskRequest - Fragment " + fragment.getFragmentId() + " has " + fragment.getInputs().size() + " input exchanges, " + fragment.getChildren().size() + " children");
-        if(null!=fragment&&JQuickFragmentType.SOURCE.equals(fragment.getType())&&null!=fragment.getPlan()){
-            if(fragment.getPlan() instanceof JQuickTableScanPhysicalNode){
-                JQuickTableScanPhysicalNode jQuickPhysicalPlanNode=(JQuickTableScanPhysicalNode)fragment.getPlan();
-                JQuickDataSet dataSet= JQuickDataSourceManager.getTable(jQuickPhysicalPlanNode.getTableName());
+        if (null != fragment && JQuickFragmentType.SOURCE.equals(fragment.getType()) && null != fragment.getPlan()) {
+            if (fragment.getPlan() instanceof JQuickTableScanPhysicalNode) {
+                JQuickTableScanPhysicalNode tableScanNode = (JQuickTableScanPhysicalNode) fragment.getPlan();
+                JQuickDataSet fullDataSet = JQuickDataSourceManager.getTable(tableScanNode.getTableName());
+                JQuickDataSet partitionedData = partitionDataForTask(fullDataSet, taskIndex, totalTasks);
+                console.info("buildTaskRequest - SOURCE TableScan partitioned: fullRows=" + fullDataSet.size() + ", taskIndex=" + taskIndex + ", totalTasks=" + totalTasks + ", partitionedRows=" + partitionedData.size());
                 JQuickMemoryPartitionProto inputPartition = JQuickMemoryPartitionProto.newBuilder()
                         .setPartitionId(fragment.getOutput().getExchangeId() + "_" + taskIndex)
                         .setPartitionIndex(taskIndex)
                         .setTotalPartitions(totalTasks)
-                        .setData(dataConverter.convertToProto(dataSet))
+                        .setData(dataConverter.convertToProto(partitionedData))
                         .build();
                 builder.addInputPartitions(inputPartition);
             }
         }
+        
+//        for (JQuickFragment child : fragment.getChildren()) {
+//            if (child.getOutput() != null) {
+//                List<JQuickDataSet> childResults = execution.getFragmentResult(child.getFragmentId());
+//                console.info("buildTaskRequest - Child fragment " + child.getFragmentId() + " has " + (childResults != null ? childResults.size() : 0) + " result partitions");
+//                if (childResults != null && taskIndex < childResults.size()) {
+//                    JQuickDataSet childResult = childResults.get(taskIndex);
+//                    JQuickMemoryPartitionProto inputPartition = JQuickMemoryPartitionProto.newBuilder()
+//                            .setPartitionId(child.getOutput().getExchangeId() + "_" + taskIndex)
+//                            .setPartitionIndex(taskIndex)
+//                            .setTotalPartitions(totalTasks)
+//                            .setData(dataConverter.convertToProto(childResult))
+//                            .build();
+//                    builder.addInputPartitions(inputPartition);
+//                    console.info("Added input data from child " + child.getFragmentId() + " for fragment " + fragment.getFragmentId() + ", rows: " + childResult.size());
+//                } else {
+//                    console.warn("buildTaskRequest - No results for child fragment: " + child.getFragmentId() + " or index out of range");
+//                }
+//            }
+//        }
+        
         // 设置输出分区
         if (fragment.getOutput() != null) {
             JQuickMemoryPartitionProto outputPartition = JQuickMemoryPartitionProto.newBuilder()
@@ -325,6 +345,27 @@ public class JQuickCoordinator extends JQuickConvertService{
             console.info("Setting output partition for fragment " + fragment.getFragmentId() + ": " + fragment.getOutput().getExchangeId() + "_" + taskIndex);
         }
         return builder.build();
+    }
+    
+    /**
+     * 为特定任务分区数据
+     * 使用 ROUND_ROBIN 策略：taskIndex 0 获取 0,totalTasks,2*totalTasks... 的行
+     */
+    private JQuickDataSet partitionDataForTask(JQuickDataSet dataSet, int taskIndex, int totalTasks) {
+        if (dataSet == null || dataSet.isEmpty()) {
+            return JQuickDataSet.builder().build();
+        }
+        JQuickDataSet.Builder resultBuilder = JQuickDataSet.builder();
+        for (JQuickColumnMeta col : dataSet.getColumns()) {
+            resultBuilder.addColumn(col.getName(), col.getType(), col.getSource());
+        }
+        int rowIndex = taskIndex;
+        while (rowIndex < dataSet.getRows().size()) {
+            resultBuilder.addRow(dataSet.getRows().get(rowIndex));
+            rowIndex += totalTasks;
+        }
+        console.info("partitionDataForTask - taskIndex=" + taskIndex + ", totalTasks=" + totalTasks + ", originalSize=" + dataSet.getRows().size() + ", partitionedSize=" + resultBuilder.build().getRows().size());
+        return resultBuilder.build();
     }
 
     /**

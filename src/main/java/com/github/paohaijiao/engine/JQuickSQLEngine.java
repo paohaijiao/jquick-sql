@@ -19,7 +19,7 @@ import com.github.paohaijiao.ast.JQuickQueryNode;
 import com.github.paohaijiao.ast2logic.JQuickASTToLogicalPlanVisitor;
 import com.github.paohaijiao.cleanup.JQuickCleanup;
 import com.github.paohaijiao.collector.JQuickResultCollector;
-import com.github.paohaijiao.config.JQuickConfiguration;
+import com.github.paohaijiao.config.JQuickSqlConfig;
 import com.github.paohaijiao.console.JConsole;
 import com.github.paohaijiao.context.JQuickExecutionContext;
 import com.github.paohaijiao.distributed.JQuickDistributedPlan;
@@ -313,8 +313,8 @@ public class JQuickSQLEngine {
     /**
      * 加载默认配置
      */
-    private JQuickConfiguration loadDefaultConfiguration() {
-        JQuickConfiguration config = new JQuickConfiguration();
+    private JQuickSqlConfig loadDefaultConfiguration() {
+        JQuickSqlConfig config = new JQuickSqlConfig();
         // 设置默认值
         config.setDefaultParallelism(Runtime.getRuntime().availableProcessors());
         config.setMaxTaskRetries(3);
@@ -354,7 +354,7 @@ public class JQuickSQLEngine {
     /**
      * 应用配置属性
      */
-    private void applyProperties(JQuickConfiguration config, Properties props) {
+    private void applyProperties(JQuickSqlConfig config, Properties props) {
         if (props.containsKey("jquick.parallelism.default")) {
             config.setDefaultParallelism(Integer.parseInt(props.getProperty("jquick.parallelism.default")));
         }

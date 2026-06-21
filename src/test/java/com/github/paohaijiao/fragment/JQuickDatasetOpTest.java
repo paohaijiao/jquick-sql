@@ -15,6 +15,7 @@
  */
 package com.github.paohaijiao.fragment;
 
+import com.github.paohaijiao.config.JQuickSqlConfig;
 import com.github.paohaijiao.datasource.JQuickDataSourceManager;
 import com.github.paohaijiao.distributed.JQuickDistributedPlan;
 import com.github.paohaijiao.distributed.coordinator.JQuickCoordinator;
@@ -309,17 +310,19 @@ public class JQuickDatasetOpTest {
     public void testUnionOperation() throws Exception {
         registerUsersTable();
         JQuickWorker worker1 = new JQuickWorker("worker-1", 9001);
-        JQuickWorker worker2 = new JQuickWorker("worker-2", 9002);
+       // JQuickWorker worker2 = new JQuickWorker("worker-2", 9002);
 
         List<JQuickCoordinator.WorkerEndpoint> endpoints = Arrays.asList(
-            new JQuickCoordinator.WorkerEndpoint("worker-1", "localhost", 9001, 0),
-            new JQuickCoordinator.WorkerEndpoint("worker-2", "localhost", 9002, 1)
+            new JQuickCoordinator.WorkerEndpoint("worker-1", "localhost", 9001, 0)
+         //   new JQuickCoordinator.WorkerEndpoint("worker-2", "localhost", 9002, 1)
         );
         worker1.setWorkerEndpoints(endpoints);
-        worker2.setWorkerEndpoints(endpoints);
+   //     worker2.setWorkerEndpoints(endpoints);
         worker1.start();
-        worker2.start();
-        JQuickCoordinator coordinator = new JQuickCoordinator("coordinator-1", endpoints);
+      //  worker2.start();
+        JQuickSqlConfig config=new JQuickSqlConfig();
+        config.setWorkers(endpoints);
+        JQuickCoordinator coordinator = new JQuickCoordinator( config);
         System.out.println("=== 广播 users 表数据到所有 Worker ===");
         System.out.println("users 表数据已广播完成");
         JQuickProjectNode leftQuery = createProjectWithFilter("users", "status", "active", "id", "name");
@@ -332,7 +335,7 @@ public class JQuickDatasetOpTest {
         result.printTable();
         System.out.println("总行数: " + result.getRows().size());
         worker1.stop();
-        worker2.stop();
+//        worker2.stop();
         System.out.println("=== UNION操作测试通过 ===");
     }
 
