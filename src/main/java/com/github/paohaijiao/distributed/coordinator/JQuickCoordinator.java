@@ -32,6 +32,7 @@ import com.github.paohaijiao.statement.JQuickRow;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.stub.StreamObserver;
+import lombok.Data;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -660,7 +661,43 @@ public class JQuickCoordinator extends JQuickConvertService{
         }
         console.info("JQuickCoordinator shutdown complete");
     }
+    public JQuickRegisterWorkerResponse registerWorker(JQuickRegisterWorkerRequest request) {
+        String workerId = request.getWorkerId();
+        console.info("Worker registering: " + workerId + " from " + request.getHost() + ":" + request.getPort());
+        WorkerEndpoint existing = workerIdMap.get(workerId);
+        if (existing != null) {
+            existing.setHealthy(true);
+            existing.updateHeartbeat();
+        } else {
+            WorkerEndpoint newWorker = new WorkerEndpoint(workerId, request.getHost(), request.getPort(), workers.size());
+            addWorker(newWorker);
+        }
+        List<JQuickWorkerEndpointProto> allEndpoints = workers.stream()
+                .map(this::toEndpointProto)
+                .collect(Collectors.toList());
+        JQuickRegisterWorkerResponse response = JQuickRegisterWorkerResponse.newBuilder()
+                .setSuccess(true)
+                .setMessage("Worker registered successfully")
+                .setCoordinatorId(coordinatorId)
+                .addAllAllWorkers(allEndpoints)
+                .build();
+        console.info("Worker registered: " + workerId + ", total workers: " + workers.size());
+        return response;
+    }
 
+    /**
+     * 将 WorkerEndpoint 转换为 Proto
+     */
+    private JQuickWorkerEndpointProto toEndpointProto(WorkerEndpoint endpoint) {
+        return JQuickWorkerEndpointProto.newBuilder()
+                .setWorkerId(endpoint.getWorkerId())
+                .setHost(endpoint.getHost())
+                .setPort(endpoint.getPort())
+                .setIndex(endpoint.getIndex())
+                .setHealthy(endpoint.isHealthy())
+                .setLastHeartbeat(endpoint.getLastHeartbeat())
+                .build();
+    }
     /**
      * 打印执行统计信息
      */
@@ -685,6 +722,7 @@ public class JQuickCoordinator extends JQuickConvertService{
      * Worker 节点端点信息（轻量级，仅包含连接信息）
      * 注意：这不是 Worker 实现，而是对远程 Worker 的引用
      */
+    @Data
     public static class WorkerEndpoint {
 
         private final String workerId;

@@ -308,20 +308,19 @@ public class JQuickDatasetOpTest {
     @Test
     public void testUnionOperation() throws Exception {
         registerUsersTable();
-
-        // 验证数据已注册
-        JQuickDataSet usersData = JQuickDataSourceManager.getTable("users");
         JQuickWorker worker1 = new JQuickWorker("worker-1", 9001);
         JQuickWorker worker2 = new JQuickWorker("worker-2", 9002);
-        worker1.start();
-        worker2.start();
+
         List<JQuickCoordinator.WorkerEndpoint> endpoints = Arrays.asList(
             new JQuickCoordinator.WorkerEndpoint("worker-1", "localhost", 9001, 0),
             new JQuickCoordinator.WorkerEndpoint("worker-2", "localhost", 9002, 1)
         );
+        worker1.setWorkerEndpoints(endpoints);
+        worker2.setWorkerEndpoints(endpoints);
+        worker1.start();
+        worker2.start();
         JQuickCoordinator coordinator = new JQuickCoordinator("coordinator-1", endpoints);
         System.out.println("=== 广播 users 表数据到所有 Worker ===");
-     //   coordinator.broadcastTable("users", usersData, true).join();
         System.out.println("users 表数据已广播完成");
         JQuickProjectNode leftQuery = createProjectWithFilter("users", "status", "active", "id", "name");
         JQuickProjectNode rightQuery = createProjectWithFilter("users", "status", "pending", "id", "name");

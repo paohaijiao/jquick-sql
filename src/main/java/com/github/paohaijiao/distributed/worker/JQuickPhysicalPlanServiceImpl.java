@@ -296,4 +296,5 @@ public class JQuickPhysicalPlanServiceImpl extends JQuickPhysicalPlanServiceGrpc
             responseObserver.onCompleted();
         }
     }
+
 }

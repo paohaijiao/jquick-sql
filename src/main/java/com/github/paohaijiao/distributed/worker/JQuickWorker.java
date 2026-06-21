@@ -10,6 +10,7 @@ import com.github.paohaijiao.statement.JQuickColumnMeta;
 import com.github.paohaijiao.statement.JQuickDataSet;
 import com.github.paohaijiao.statement.JQuickRow;
 import io.grpc.ManagedChannel;
+import io.grpc.ManagedChannelBuilder;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
 import io.grpc.stub.StreamObserver;
@@ -22,6 +23,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.stream.Collectors;
 
 /**
  * Worker 节点 - 执行物理计划片段
@@ -63,6 +65,10 @@ public class JQuickWorker {
 
     private volatile int endpointVersion = 0;
 
+    private String coordinatorHost;
+
+    private int coordinatorPort;
+
 
 
     public JQuickWorker(String workerId, int port) {
@@ -79,7 +85,47 @@ public class JQuickWorker {
         this.dataConverter = new JQuickDataConverter();
         this.nodeExecutor = new JQuickNodeExecutor(this, expressionEvaluator, partitionManager, dataConverter);
     }
-    
+    /**
+     * 向 Coordinator 注册并获取所有 Worker 端点
+     */
+    public JQuickRegisterWorkerResponse registerWithCoordinator(String host, int port) {
+        if (coordinatorHost == null || coordinatorPort == 0) {
+            console.warn("Coordinator address not set, skipping registration");
+            return null;
+        }
+        console.info("Registering with coordinator at " + coordinatorHost + ":" + coordinatorPort);
+        try {
+            ManagedChannel channel = ManagedChannelBuilder.forAddress(coordinatorHost, coordinatorPort).usePlaintext().build();
+            JQuickPhysicalPlanServiceGrpc.JQuickPhysicalPlanServiceBlockingStub stub = JQuickPhysicalPlanServiceGrpc.newBlockingStub(channel);
+            JQuickRegisterWorkerRequest request = JQuickRegisterWorkerRequest.newBuilder()
+                    .setWorkerId(workerId)
+                    .setHost(getLocalHostAddress())
+                    .setPort(port)
+                    .setMaxParallelism(Runtime.getRuntime().availableProcessors())
+                    .setAvailableMemoryBytes(Runtime.getRuntime().maxMemory())
+                    .putAttributes("worker_type", "executor")
+                    .putAttributes("start_time", String.valueOf(System.currentTimeMillis()))
+                    .build();
+            JQuickRegisterWorkerResponse response = stub.registerWorker(request);
+            channel.shutdown();
+            if (response.getSuccess()) {
+                List<JQuickCoordinator.WorkerEndpoint> endpoints = response.getAllWorkersList().stream()
+                        .map(p -> new JQuickCoordinator.WorkerEndpoint(p.getWorkerId(), p.getHost(), p.getPort(), p.getIndex()))
+                        .collect(Collectors.toList());
+                partitionManager.setWorkerEndpoints(endpoints);
+                console.info("Registered with coordinator, got " + endpoints.size() + " worker endpoints");
+                for (JQuickCoordinator.WorkerEndpoint ep : endpoints) {
+                    console.info("  Worker: " + ep.getWorkerId() + " -> " + ep.getHost() + ":" + ep.getPort());
+                }
+            } else {
+                console.warn("Registration failed: " + response.getMessage());
+            }
+            return response;
+        } catch (Exception e) {
+            console.error("Failed to register with coordinator", e);
+            return null;
+        }
+    }
     public String getWorkerId() {
         return workerId;
     }
@@ -100,7 +146,33 @@ public class JQuickWorker {
     public void setEndpointVersion(int version) {
         this.endpointVersion = version;
     }
+    /**
+     * 更新 Worker 端点列表（由 Coordinator 推送）
+     */
+    public void updateWorkerEndpoints(List<JQuickWorkerEndpointProto> endpoints) {
+        List<JQuickCoordinator.WorkerEndpoint> workerEndpoints = endpoints.stream()
+                .map(p -> new JQuickCoordinator.WorkerEndpoint(
+                        p.getWorkerId(),
+                        p.getHost(),
+                        p.getPort(),
+                        p.getIndex()
+                ))
+                .collect(Collectors.toList());
 
+        partitionManager.setWorkerEndpoints(workerEndpoints);
+        console.info("Updated worker endpoints, now have " + workerEndpoints.size() + " workers");
+    }
+
+    /**
+     * 获取本地主机地址
+     */
+    private String getLocalHostAddress() {
+        try {
+            return java.net.InetAddress.getLocalHost().getHostAddress();
+        } catch (Exception e) {
+            return "localhost";
+        }
+    }
     /**
      * 获取心跳间隔（毫秒）
      */
@@ -378,8 +450,6 @@ public class JQuickWorker {
         console.info("Worker leaving: " + request.getWorkerId() + 
                      ", reason: " + request.getReason() + 
                      ", ongoing tasks: " + request.getOngoingTaskIdsList());
-        // 标记该 Worker 为不健康
-        // 实际实现中需要更新 partitionManager 中的端点状态
     }
 
     /**
