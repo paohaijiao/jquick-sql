@@ -19,7 +19,6 @@ import com.github.paohaijiao.console.JConsole;
 import com.github.paohaijiao.datasource.JQuickDataSourceManager;
 import com.github.paohaijiao.distributed.JQuickDistributedPlan;
 import com.github.paohaijiao.distributed.worker.JQuickDataConverter;
-import com.github.paohaijiao.distributed.worker.JQuickWorker;
 import com.github.paohaijiao.enums.JQuickFragmentType;
 import com.github.paohaijiao.fragment.JQuickFragment;
 import com.github.paohaijiao.fragment.JQuickFragmenter;

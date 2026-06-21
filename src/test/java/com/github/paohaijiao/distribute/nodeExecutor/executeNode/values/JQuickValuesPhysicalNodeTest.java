@@ -5,7 +5,6 @@ import com.github.paohaijiao.distributed.worker.*;
 import com.github.paohaijiao.function.manager.JQuickMethodInvocationManager;
 import com.github.paohaijiao.physical.node.JQuickValuesPhysicalNode;
 import com.github.paohaijiao.proto.JQuickExecuteTaskRequest;
-import com.github.paohaijiao.statement.JQuickColumnMeta;
 import com.github.paohaijiao.statement.JQuickDataSet;
 import com.github.paohaijiao.statement.JQuickRow;
 import org.junit.After;

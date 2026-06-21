@@ -7,7 +7,6 @@ import com.github.paohaijiao.expression.domain.JQuickBinaryExpression;
 import com.github.paohaijiao.expression.domain.JQuickColumnRefExpression;
 import com.github.paohaijiao.expression.domain.JQuickLiteralExpression;
 import com.github.paohaijiao.function.manager.JQuickMethodInvocationManager;
-import com.github.paohaijiao.physical.node.JQuickFilterPhysicalNode;
 import com.github.paohaijiao.physical.node.JQuickHashAggregatePhysicalNode;
 import com.github.paohaijiao.physical.node.JQuickSortPhysicalNode;
 import com.github.paohaijiao.physical.node.JQuickTableScanPhysicalNode;

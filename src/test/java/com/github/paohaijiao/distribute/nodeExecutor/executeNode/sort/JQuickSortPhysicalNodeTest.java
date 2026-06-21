@@ -2,10 +2,6 @@ package com.github.paohaijiao.distribute.nodeExecutor.executeNode.sort;
 
 import com.github.paohaijiao.datasource.JQuickDataSourceManager;
 import com.github.paohaijiao.distributed.worker.*;
-import com.github.paohaijiao.expression.JQuickExpression;
-import com.github.paohaijiao.expression.domain.JQuickBinaryExpression;
-import com.github.paohaijiao.expression.domain.JQuickColumnRefExpression;
-import com.github.paohaijiao.expression.domain.JQuickLiteralExpression;
 import com.github.paohaijiao.function.manager.JQuickMethodInvocationManager;
 import com.github.paohaijiao.physical.node.JQuickSortPhysicalNode;
 import com.github.paohaijiao.physical.node.JQuickTableScanPhysicalNode;
