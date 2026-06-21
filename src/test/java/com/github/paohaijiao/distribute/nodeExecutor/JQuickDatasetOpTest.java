@@ -127,7 +127,7 @@ public class JQuickDatasetOpTest {
         coordinator = new JQuickCoordinator("coordinator-1", endpoints, 30000, 3, 1000);
         for (JQuickWorker worker : workers) {
             worker.setWorkerEndpoints(endpoints);
-        }
+     }
         console.info("测试环境启动完成");
     }
     @After

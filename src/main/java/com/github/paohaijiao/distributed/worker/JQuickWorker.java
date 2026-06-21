@@ -61,6 +61,8 @@ public class JQuickWorker {
 
     private JQuickDataDistributionServiceImpl distributionService;
 
+    private volatile int endpointVersion = 0;
+
 
 
     public JQuickWorker(String workerId, int port) {
@@ -77,9 +79,6 @@ public class JQuickWorker {
         this.dataConverter = new JQuickDataConverter();
         this.nodeExecutor = new JQuickNodeExecutor(this, expressionEvaluator, partitionManager, dataConverter);
     }
-    public void setWorkerEndpoints(List<JQuickCoordinator.WorkerEndpoint> endpoints) {
-        partitionManager.setWorkerEndpoints(endpoints);
-    }
     
     public String getWorkerId() {
         return workerId;
@@ -88,7 +87,26 @@ public class JQuickWorker {
     public int getPort() {
         return port;
     }
-    
+    /**
+     * 获取端点版本号
+     */
+    public int getEndpointVersion() {
+        return endpointVersion;
+    }
+
+    /**
+     * 设置端点版本号
+     */
+    public void setEndpointVersion(int version) {
+        this.endpointVersion = version;
+    }
+
+    /**
+     * 获取心跳间隔（毫秒）
+     */
+    public long getHeartbeatInterval() {
+        return 5000; // 默认 5 秒
+    }
     /**
      * 获取当前 Worker 的索引
      * 从 workerId 中提取索引（例如 "worker-1" -> 0, "worker-2" -> 1）

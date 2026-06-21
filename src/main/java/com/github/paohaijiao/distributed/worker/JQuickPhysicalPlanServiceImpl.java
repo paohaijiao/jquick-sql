@@ -17,8 +17,12 @@ package com.github.paohaijiao.distributed.worker;
 
 
 import com.github.paohaijiao.console.JConsole;
+import com.github.paohaijiao.distributed.coordinator.JQuickCoordinator;
 import com.github.paohaijiao.proto.*;
 import io.grpc.stub.StreamObserver;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * 物理计划服务实现类

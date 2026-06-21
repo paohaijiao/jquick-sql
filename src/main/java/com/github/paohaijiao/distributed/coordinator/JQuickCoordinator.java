@@ -324,6 +324,14 @@ public class JQuickCoordinator extends JQuickConvertService{
             builder.setOutputPartition(outputPartition);
             console.info("Setting output partition for fragment " + fragment.getFragmentId() + ": " + fragment.getOutput().getExchangeId() + "_" + taskIndex);
         }
+        for (WorkerEndpoint endpoint : workers) {
+//            builder.addWorkerEndpoints(JQuickWorkerEndpointProto.newBuilder()
+//                    .setWorkerId(endpoint.getWorkerId())
+//                    .setHost(endpoint.getHost())
+//                    .setPort(endpoint.getPort())
+//                    .setIndex(endpoint.getIndex())
+//                    .build());
+        }
         return builder.build();
     }
 

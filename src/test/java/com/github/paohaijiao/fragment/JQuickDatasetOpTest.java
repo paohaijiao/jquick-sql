@@ -18,6 +18,7 @@ package com.github.paohaijiao.fragment;
 import com.github.paohaijiao.datasource.JQuickDataSourceManager;
 import com.github.paohaijiao.distributed.JQuickDistributedPlan;
 import com.github.paohaijiao.distributed.coordinator.JQuickCoordinator;
+import com.github.paohaijiao.distributed.worker.JQuickPartitionManager;
 import com.github.paohaijiao.distributed.worker.JQuickWorker;
 import com.github.paohaijiao.enums.JQuickBinaryOperator;
 import com.github.paohaijiao.enums.JQuickSQLOperationType;

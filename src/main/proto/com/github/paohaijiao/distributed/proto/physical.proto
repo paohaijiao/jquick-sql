@@ -1,0 +1,786 @@
+syntax = "proto3";
+
+package com.github.paohaijiao.proto;
+option java_package = "com.github.paohaijiao.proto";
+option java_multiple_files = true;
+option java_outer_classname = "JQuickPhysicalPlanProto";
+
+import "google/protobuf/any.proto";
+import "google/protobuf/timestamp.proto";
+
+message JQuickWorkerEndpointProto {
+  string worker_id = 1;
+  string host = 2;
+  int32 port = 3;
+  int32 index = 4;
+  bool healthy = 5;
+  int64 last_heartbeat = 6;
+}
+
+// 注册 Worker 请求
+message JQuickRegisterWorkerRequest {
+  string worker_id = 1;
+  string host = 2;
+  int32 port = 3;
+  int32 max_parallelism = 4;
+  int64 available_memory_bytes = 5;
+  map<string, string> attributes = 6;  // 额外属性
+}
+
+// 注册 Worker 响应
+message JQuickRegisterWorkerResponse {
+  bool success = 1;
+  string message = 2;
+  string coordinator_id = 3;
+  repeated JQuickWorkerEndpointProto all_workers = 4;  // 所有已注册的 Worker
+  JQuickWorkerEndpointProto assigned_endpoint = 5;     // 当前 Worker 的端点信息
+}
+
+// 更新 Worker 端点请求（Coordinator -> Worker）
+message JQuickUpdateWorkerEndpointsRequest {
+  repeated JQuickWorkerEndpointProto endpoints = 1;
+  int64 timestamp = 2;  // 更新时间戳
+}
+
+// 更新 Worker 端点响应
+message JQuickUpdateWorkerEndpointsResponse {
+  bool success = 1;
+  string message = 2;
+  int32 endpoint_count = 3;
+}
+
+// 获取 Worker 端点请求
+message JQuickGetWorkerEndpointsRequest {
+  string worker_id = 1;
+  bool include_self = 2;  // 是否包含自身
+}
+
+// 获取 Worker 端点响应
+message JQuickGetWorkerEndpointsResponse {
+  bool success = 1;
+  repeated JQuickWorkerEndpointProto endpoints = 2;
+  int32 version = 3;  // 版本号，用于增量更新
+}
+
+// Worker 离开通知
+message JQuickWorkerLeaveRequest {
+  string worker_id = 1;
+  string reason = 2;
+  repeated string ongoing_task_ids = 3;  // 正在执行的任务ID
+}
+
+message JQuickWorkerLeaveResponse {
+  bool success = 1;
+  string message = 2;
+}
+// 心跳请求（扩展）
+message JQuickHeartbeatRequest {
+  string worker_id = 1;
+  int64 timestamp = 2;
+  int32 current_tasks = 3;
+  double cpu_usage = 4;
+  double memory_usage = 5;
+  int64 memory_available = 6;
+  repeated string completed_task_ids = 7;
+  map<string, int64> partition_memory_usage = 8;  // 分区内存使用情况
+
+  // === 新增：Worker 端点相关 ===
+  JQuickWorkerEndpointProto self_endpoint = 9;      // 当前 Worker 的端点信息
+  int32 known_endpoint_version = 10;                // 当前已知的端点版本号
+  bool request_full_endpoint_list = 11;             // 是否请求完整的端点列表
+  repeated string active_partition_ids = 12;        // 当前活跃的分区ID列表
+}
+
+// 心跳响应（扩展）
+message JQuickHeartbeatResponse {
+  bool healthy = 1;
+  string message = 2;
+  repeated JQuickTaskAssignmentProto new_assignments = 3;
+  repeated string cancel_task_ids = 4;
+  map<string, int64> memory_adjustments = 5;  // 内存调整建议
+
+  // === 新增：Worker 端点相关 ===
+  repeated JQuickWorkerEndpointProto all_workers = 6;    // 所有 Worker 端点列表
+  int32 endpoint_version = 7;                            // 端点版本号
+  bool endpoint_updated = 8;                             // 端点是否有更新
+  JQuickWorkerEndpointProto self_endpoint = 9;           // 当前 Worker 的端点信息（确认）
+  repeated string worker_leave_notifications = 10;       // 离开的 Worker ID 列表
+}
+
+// ============================================================================
+// 基础数据类型定义
+// ============================================================================
+
+message JQuickColumnMetaProto {
+  string name = 1;
+  string type_name = 2;
+  string source = 3;
+}
+
+message JQuickRowProto {
+  map<string, google.protobuf.Any> data = 1;
+}
+
+message JQuickDataSetProto {
+  repeated JQuickColumnMetaProto columns = 1;
+  repeated JQuickRowProto rows = 2;
+  int64 total_rows = 3;
+}
+
+message JQuickColumnStatsProto {
+  int64 distinct_count = 1;
+  bytes min_value = 2;
+  bytes max_value = 3;
+  double null_fraction = 4;
+}
+
+message JQuickPhysicalStatsProto {
+  int64 estimated_row_count = 1;
+  int64 estimated_data_size = 2;
+  map<string, JQuickColumnStatsProto> column_stats = 3;
+}
+
+message JQuickPhysicalColumnProto {
+  string name = 1;
+  string type_name = 2;
+  string source_table = 3;
+  bool nullable = 4;
+}
+
+// ============================================================================
+// 内存分发相关定义
+// ============================================================================
+
+// 分区策略
+enum JQuickPartitionStrategyProto {
+  PARTITION_HASH = 0;        // 哈希分区
+  PARTITION_RANGE = 1;       // 范围分区
+  PARTITION_ROUND_ROBIN = 2; // 轮询分区
+  PARTITION_BROADCAST = 3;   // 广播（所有Worker）
+  PARTITION_FORWARD = 4;     // 转发到特定Worker
+  PARTITION_CUSTOM = 5;      // 自定义分区
+}
+
+// 内存数据分区
+message JQuickMemoryPartitionProto {
+  string partition_id = 1;
+  int32 partition_index = 2;
+  int32 total_partitions = 3;
+  string target_worker_id = 4;      // 目标Worker ID
+  string target_host = 5;            // 目标Worker主机
+  int32 target_port = 6;             // 目标Worker端口
+
+  // 内存数据（直接传输，不经过外部存储）
+  JQuickDataSetProto data = 7;
+
+  // 分区键信息（用于路由）
+  repeated string partition_key_names = 8;
+  bytes partition_key_hash = 9;       // 哈希值范围
+
+  // 流式传输标记
+  bool is_streaming = 10;
+  int64 estimated_size = 11;
+}
+
+// 数据流描述
+message JQuickDataStreamProto {
+  string stream_id = 1;
+  string source_worker_id = 2;
+  string target_worker_id = 3;
+  JQuickPartitionStrategyProto partition_strategy = 4;
+  repeated JQuickExpressionProto partition_keys = 5;
+  int32 buffer_size = 6;              // 内存缓冲区大小（行数）
+  int32 batch_size = 7;               // 批量发送大小
+  bool is_pipeline = 8;               // 是否流水线执行
+}
+
+// 内存表分区信息
+message JQuickTablePartitionInfoProto {
+  string table_name = 1;
+  string partition_column = 2;
+  JQuickPartitionStrategyProto strategy = 3;
+  int32 partition_count = 4;
+  repeated JQuickMemoryPartitionProto partitions = 5;
+
+  // 内存分布信息
+  map<string, string> worker_partition_map = 6;  // Worker ID -> Partition IDs
+  bool is_memory_resident = 7;                    // 是否常驻内存
+}
+
+// ============================================================================
+// 表达式定义
+// ============================================================================
+
+enum JQuickExpressionTypeProto {
+  EXPR_COLUMN_REF = 0;
+  EXPR_LITERAL = 1;
+  EXPR_FUNCTION = 2;
+  EXPR_BINARY_OPERATOR = 3;
+  EXPR_UNARY_OPERATOR = 4;
+  EXPR_CASE_WHEN = 5;
+  EXPR_SUBQUERY = 6;
+  EXPR_IN = 7;
+  EXPR_BETWEEN = 8;
+  EXPR_IS_NULL = 9;
+}
+
+enum JQuickBinaryOperatorProto {
+  OP_EQ = 0; OP_NE = 1; OP_LT = 2; OP_LTE = 3;
+  OP_GT = 4; OP_GTE = 5; OP_AND = 6; OP_OR = 7;
+  OP_LIKE = 8; OP_IN = 9; OP_NOT_IN = 10;
+  OP_PLUS = 11; OP_MINUS = 12; OP_MULTIPLY = 13;
+  OP_DIVIDE = 14; OP_MOD = 15;
+}
+
+message JQuickExpressionProto {
+  JQuickExpressionTypeProto type = 1;
+  string value = 2;
+  repeated JQuickExpressionProto children = 3;
+  map<string, string> attributes = 4;
+  JQuickBinaryOperatorProto binary_operator = 5;
+  string function_name = 6;
+  repeated JQuickExpressionProto arguments = 7;
+}
+
+// ============================================================================
+// 物理节点算子定义
+// ============================================================================
+
+// 基础物理节点
+message JQuickPhysicalPlanNodeProto {
+  string node_id = 1;
+  string node_type = 2;
+  int32 node_index = 3;
+  JQuickPhysicalStatsProto stats = 4;
+  repeated JQuickPhysicalColumnProto output_schema = 5;
+  repeated string child_node_ids = 6;
+
+  oneof node {
+    JQuickTableScanNodeProto table_scan = 10;
+    JQuickFilterNodeProto filter = 11;
+    JQuickProjectNodeProto project = 12;
+    JQuickHashJoinNodeProto hash_join = 13;
+    JQuickNestedLoopJoinNodeProto nested_loop_join = 14;
+    JQuickHashAggregateNodeProto hash_aggregate = 15;
+    JQuickSortNodeProto sort = 16;
+    JQuickLimitNodeProto limit = 17;
+    JQuickExchangeNodeProto exchange = 18;
+    JQuickValuesNodeProto values = 19;
+    JQuickEmptyNodeProto empty = 20;
+    JQuickWindowNodeProto window = 21;
+    JQuickSetOperationNodeProto set_operation = 22;
+    JQuickTopNNodeProto top_n = 23;
+    JQuickRecursiveUnionNodeProto recursive_union = 24;
+    JQuickMemoryShuffleNodeProto memory_shuffle = 25;  // 新增：内存数据重分布
+  }
+}
+
+// TableScan 节点（支持内存分区）
+message JQuickTableScanNodeProto {
+  string table_name = 1;
+  string alias = 2;
+  repeated string required_columns = 3;
+  JQuickExpressionProto filter_predicate = 4;
+  JQuickTablePartitionInfoProto partition_info = 5;
+
+  // 内存分发相关
+  bool use_memory_distribution = 6;
+  repeated string assigned_worker_ids = 7;      // 负责此Scan的Worker ID列表
+  bool stream_to_downstream = 8;                 // 是否流式传输到下游
+}
+
+// Filter 节点
+message JQuickFilterNodeProto {
+  JQuickExpressionProto predicate = 1;
+}
+
+// Project 节点
+message JQuickProjectNodeProto {
+  repeated SelectItemProto select_items = 1;
+  bool distinct = 2;
+
+  message SelectItemProto {
+    JQuickExpressionProto expression = 1;
+    string alias = 2;
+  }
+}
+
+// Join 类型
+enum JQuickJoinTypeProto {
+  JOIN_INNER = 0; JOIN_LEFT = 1; JOIN_RIGHT = 2;
+  JOIN_FULL = 3; JOIN_CROSS = 4; JOIN_SEMI = 5; JOIN_ANTI = 6;
+}
+
+enum JQuickBuildSideProto { BUILD_SIDE_LEFT = 0; BUILD_SIDE_RIGHT = 1; }
+
+enum JQuickJoinDistributionProto {
+  JOIN_DIST_LOCAL = 0;           // 本地连接（数据已经在同一节点）
+  JOIN_DIST_SHUFFLE = 1;         // 动态Shuffle重分布
+  JOIN_DIST_BROADCAST = 2;       // 广播小表到所有节点
+  JOIN_DIST_PARTITIONED = 3;     // 基于分区键连接
+}
+
+// HashJoin 节点
+message JQuickHashJoinNodeProto {
+  JQuickJoinTypeProto join_type = 1;
+  JQuickExpressionProto condition = 2;
+  repeated JoinKeyPairProto join_keys = 3;
+  JQuickBuildSideProto build_side = 4;
+  JQuickJoinDistributionProto distribution = 5;
+  JQuickMemoryPartitionProto build_partition = 6;   // Build侧的内存分区
+  JQuickMemoryPartitionProto probe_partition = 7;   // Probe侧的内存分区
+
+  message JoinKeyPairProto {
+    JQuickExpressionProto left_key = 1;
+    JQuickExpressionProto right_key = 2;
+  }
+}
+
+// NestedLoopJoin 节点
+message JQuickNestedLoopJoinNodeProto {
+  JQuickJoinTypeProto join_type = 1;
+  JQuickExpressionProto condition = 2;
+}
+
+// 聚合阶段
+enum JQuickAggregateStageProto {
+  AGG_PARTIAL = 0; AGG_FINAL = 1; AGG_SINGLE = 2;
+}
+
+// HashAggregate 节点
+message JQuickHashAggregateNodeProto {
+  repeated JQuickExpressionProto group_keys = 1;
+  repeated AggregateFunctionProto aggregates = 2;
+  JQuickExpressionProto having_condition = 3;
+  JQuickAggregateStageProto stage = 4;
+  repeated GroupingSetProto grouping_sets = 5;
+  bool use_memory_partial_agg = 6;  // 是否使用内存部分聚合
+
+  message AggregateFunctionProto {
+    string function_name = 1;
+    JQuickExpressionProto argument = 2;
+    bool distinct = 3;
+    string alias = 4;
+    bool is_count_star = 5;
+    string separator = 6;
+    JQuickAggregateStageProto internal_stage = 7;
+  }
+
+  message GroupingSetProto {
+    repeated JQuickExpressionProto keys = 1;
+    GroupingSetType type = 2;
+    enum GroupingSetType { GS_SIMPLE = 0; GS_ROLLUP = 1; GS_CUBE = 2; }
+  }
+}
+
+// Sort 节点
+message JQuickSortNodeProto {
+  repeated OrderByItemProto order_by_items = 1;
+  bool use_memory_sort = 2;         // 使用内存排序
+  int64 memory_limit_bytes = 3;     // 内存限制
+
+  message OrderByItemProto {
+    string column_name = 1;
+    bool ascending = 2;
+    bool nulls_first = 3;
+  }
+}
+
+// Limit 节点
+message JQuickLimitNodeProto {
+  int32 limit = 1;
+  int32 offset = 2;
+}
+
+// Exchange 类型
+enum JQuickExchangeTypeProto {
+  EX_SHUFFLE = 0;      // 全量Shuffle（所有数据重分布）
+  EX_BROADCAST = 1;    // 广播（发送到所有Worker）
+  EX_GATHER = 2;       // 汇聚（发送到单个Worker）
+  EX_REPARTITION = 3;  // 重分区
+  EX_PIPELINE = 4;     // 流水线传输
+}
+
+// Exchange 节点（数据交换）
+message JQuickExchangeNodeProto {
+  string exchange_id = 1;
+  JQuickExchangeTypeProto exchange_type = 2;
+  JQuickPartitionStrategyProto partition_strategy = 3;
+  repeated JQuickExpressionProto partition_keys = 4;
+  int32 parallelism = 5;
+
+  // 内存分发配置
+  int32 buffer_capacity = 6;        // 内存缓冲区容量（行数）
+  int32 batch_size = 7;             // 批量发送大小
+  bool compression = 8;             // 是否压缩
+  int32 timeout_ms = 9;             // 超时时间
+}
+
+// 内存Shuffle节点（新增）- 专门用于内存中的数据重分布
+message JQuickMemoryShuffleNodeProto {
+  string shuffle_id = 1;
+  JQuickPartitionStrategyProto partition_strategy = 2;
+  repeated JQuickExpressionProto partition_keys = 3;
+  int32 output_partitions = 4;
+
+  // 内存管理
+  int32 memory_buffer_size_mb = 5;   // 内存缓冲区大小（MB）
+  bool spill_to_disk = 6;            // 是否允许溢写到磁盘（仅当内存不足）
+  int32 spill_threshold = 7;         // 溢写阈值（百分比）
+
+  // 目标Worker映射
+  map<int32, string> partition_worker_map = 8;  // 分区索引 -> Worker ID
+}
+
+// Values 节点
+message JQuickValuesNodeProto {
+  repeated JQuickRowProto rows = 1;
+  repeated string column_names = 2;
+  repeated string column_types = 3;
+}
+
+// Empty 节点
+message JQuickEmptyNodeProto {}
+
+// Window 节点
+message JQuickWindowNodeProto {
+  repeated WindowFunctionProto window_functions = 1;
+
+  message WindowFunctionProto {
+    string function_name = 1;
+    JQuickExpressionProto argument = 2;
+    WindowSpecProto window_spec = 3;
+    string alias = 4;
+  }
+
+  message WindowSpecProto {
+    repeated JQuickExpressionProto partition_keys = 1;
+    repeated JQuickSortNodeProto.OrderByItemProto order_keys = 2;
+    WindowFrameProto frame = 3;
+  }
+
+  message WindowFrameProto {
+    FrameType frame_type = 1;
+    BoundaryType start_type = 2;
+    JQuickExpressionProto start_offset = 3;
+    BoundaryType end_type = 4;
+    JQuickExpressionProto end_offset = 5;
+
+    enum FrameType { FRAME_ROWS = 0; FRAME_RANGE = 1; }
+    enum BoundaryType {
+      BOUND_UNBOUNDED_PRECEDING = 0; BOUND_PRECEDING = 1;
+      BOUND_CURRENT_ROW = 2; BOUND_FOLLOWING = 3;
+      BOUND_UNBOUNDED_FOLLOWING = 4;
+    }
+  }
+}
+
+// SetOperation 类型
+enum JQuickSQLOperationTypeProto { SET_UNION = 0; SET_UNION_ALL = 1; SET_INTERSECT = 2; SET_EXCEPT = 3; }
+
+message JQuickSetOperationNodeProto {
+  JQuickSQLOperationTypeProto operation_type = 1;
+  bool distinct = 2;
+}
+
+message JQuickTopNNodeProto {
+  repeated JQuickSortNodeProto.OrderByItemProto order_by_items = 1;
+  int32 limit = 2;
+  int32 offset = 3;
+}
+
+message JQuickRecursiveUnionNodeProto {
+  string cte_name = 1;
+  repeated string column_names = 2;
+  bool union_all = 3;
+  int32 max_recursion_depth = 4;
+}
+
+// ============================================================================
+// Fragment 相关定义（分布式执行单元）
+// ============================================================================
+
+enum JQuickFragmentTypeProto { FRAGMENT_SOURCE = 0; FRAGMENT_INTERMEDIATE = 1; FRAGMENT_SINK = 2; }
+
+message JQuickFragmentProto {
+  int64 fragment_id = 1;
+  JQuickFragmentTypeProto type = 2;
+  JQuickPhysicalPlanNodeProto plan = 3;
+  repeated int64 child_fragment_ids = 4;
+  JQuickExchangeNodeProto output_exchange = 5;
+  repeated JQuickExchangeNodeProto input_exchanges = 6;
+  int32 parallelism = 7;
+  string assigned_worker_id = 8;
+
+  // 内存分发配置
+  JQuickMemoryPartitionProto input_partition = 9;
+  JQuickMemoryPartitionProto output_partition = 10;
+  repeated JQuickDataStreamProto data_streams = 11;  // 数据流描述
+}
+
+message JQuickDistributedPlanProto {
+  string plan_id = 1;
+  JQuickFragmentProto root_fragment = 2;
+  int32 default_parallelism = 3;
+  map<int64, JQuickFragmentProto> fragments = 4;
+  int64 created_at = 5;
+  string query_id = 6;
+
+  // 内存资源规划
+  int64 total_memory_bytes = 7;
+  map<string, int64> worker_memory_quota = 8;  // Worker ID -> 内存配额
+}
+
+// ============================================================================
+// 任务执行相关定义
+// ============================================================================
+
+enum JQuickTaskStatusProto {
+  TASK_PENDING = 0; TASK_RUNNING = 1; TASK_SUCCESS = 2;
+  TASK_FAILED = 3; TASK_CANCELLED = 4;
+}
+
+// 执行任务请求
+message JQuickExecuteTaskRequest {
+  string task_id = 1;
+  string query_id = 2;
+  JQuickFragmentProto fragment = 3;
+  int32 task_index = 4;
+  int32 total_tasks = 5;
+  map<string, string> session_parameters = 6;
+
+  // 内存分发配置
+  repeated JQuickMemoryPartitionProto input_partitions = 7;
+  JQuickMemoryPartitionProto output_partition = 8;
+  int64 memory_limit_bytes = 9;  // 任务内存限制
+}
+
+// 执行任务响应
+message JQuickExecuteTaskResponse {
+  string task_id = 1;
+  JQuickTaskStatusProto status = 2;
+  string error_message = 3;
+  JQuickDataSetProto result_data = 4;
+  JQuickPhysicalStatsProto execution_stats = 5;
+  int64 processed_rows = 6;
+  int64 execution_time_ms = 7;
+  int64 memory_used_bytes = 8;  // 实际使用的内存
+  map<string, string> task_metrics = 9;
+}
+
+// 数据块（流式传输）- 内存中的批次数据
+message JQuickDataChunkProto {
+  string task_id = 1;
+  string query_id = 2;
+  int64 chunk_index = 3;
+  bool is_last = 4;
+  JQuickDataSetProto data = 5;
+  string partition_id = 6;              // 所属分区
+  int64 compressed_size = 7;
+  int64 original_size = 8;
+
+  // 内存管理
+  bool is_compressed = 9;
+  int64 sequence_id = 10;
+}
+
+// ============================================================================
+// Worker 管理相关定义
+// ============================================================================
+
+message JQuickWorkerInfoProto {
+  string worker_id = 1;
+  string host = 2;
+  int32 port = 3;
+  int32 max_parallelism = 4;
+  int32 current_tasks = 5;
+  double cpu_usage = 6;
+  double memory_usage = 7;
+  int64 available_memory_bytes = 8;   // 可用内存（字节）
+  int64 used_memory_bytes = 9;        // 已用内存
+  bool healthy = 10;
+  int64 last_heartbeat = 11;
+  repeated string local_partition_ids = 12;  // 本地内存中的分区ID
+}
+
+
+// 任务分配
+message JQuickTaskAssignmentProto {
+  string task_id = 1;
+  JQuickFragmentProto fragment = 2;
+  JQuickMemoryPartitionProto assigned_partition = 3;
+  int32 priority = 4;
+  int64 memory_limit = 5;
+}
+
+// Worker 间数据拉取（直接内存传输）
+message JQuickFetchDataRequest {
+  string source_worker_id = 1;
+  string target_worker_id = 2;
+  string partition_id = 3;
+  int32 chunk_index = 4;
+  int32 chunk_size = 5;
+  repeated string required_columns = 6;
+  JQuickExpressionProto filter = 7;
+  bool streaming = 8;  // 是否流式传输
+}
+
+message JQuickFetchDataResponse {
+  string partition_id = 1;
+  int32 chunk_index = 2;
+  bool is_last = 3;
+  JQuickDataSetProto data = 4;  // 直接传输内存数据
+  int64 data_size_bytes = 5;
+  bool from_memory = 6;          // 是否来自内存
+}
+
+// ============================================================================
+// 查询执行服务相关定义
+// ============================================================================
+
+message JQuickSubmitQueryRequest {
+  string query_id = 1;
+  string sql = 2;
+  map<string, string> parameters = 3;
+  int32 default_parallelism = 4;
+  JQuickQueryOptionsProto options = 5;
+}
+
+message JQuickQueryOptionsProto {
+  int32 timeout_seconds = 1;
+  int32 max_result_rows = 2;
+  bool collect_metrics = 3;
+  int64 memory_limit_mb = 4;     // 内存限制（MB）
+  bool use_memory_optimized = 5;  // 使用内存优化
+}
+
+message JQuickSubmitQueryResponse {
+  string query_id = 1;
+  bool accepted = 2;
+  string message = 3;
+  JQuickDistributedPlanProto plan = 4;
+}
+
+enum JQuickQueryStateProto {
+  QUERY_PENDING = 0; QUERY_PLANNING = 1; QUERY_SCHEDULING = 2;
+  QUERY_RUNNING = 3; QUERY_SUCCEEDED = 4; QUERY_FAILED = 5; QUERY_CANCELLED = 6;
+}
+
+message JQuickQueryStatusRequest {
+  string query_id = 1;
+  bool include_details = 2;
+}
+
+message JQuickQueryStatusResponse {
+  string query_id = 1;
+  JQuickQueryStateProto state = 2;
+  string error_message = 3;
+  int64 rows_processed = 4;
+  int64 rows_produced = 5;
+  int64 execution_time_ms = 6;
+  double progress_percentage = 7;
+  int64 memory_used_bytes = 8;    // 内存使用情况
+  map<string, string> task_status = 9;
+  JQuickExecutionMetricsProto metrics = 10;
+}
+
+message JQuickExecutionMetricsProto {
+  int64 total_tasks = 1;
+  int64 completed_tasks = 2;
+  int64 failed_tasks = 3;
+  int64 running_tasks = 4;
+  int64 data_shuffled_bytes = 5;
+  int64 cpu_time_ms = 6;
+  int64 peak_memory_bytes = 7;     // 峰值内存
+  map<string, double> operator_metrics = 8;
+}
+
+message JQuickCancelQueryRequest {
+  string query_id = 1;
+  string reason = 2;
+}
+
+message JQuickCancelQueryResponse {
+  string query_id = 1;
+  bool success = 2;
+  string message = 3;
+}
+
+message JQuickGetResultRequest {
+  string query_id = 1;
+  int32 max_rows = 2;
+  int32 offset = 3;
+  bool fetch_continuously = 4;
+}
+message RegisterTableRequest {
+  string table_name = 1;
+  JQuickDataSetProto data = 2;
+  bool overwrite = 3;  // 是否覆盖已存在的表
+}
+
+message RegisterTableResponse {
+  bool success = 1;
+  string message = 2;
+  int64 row_count = 3;
+}
+message RegisterTablesResponse {
+  bool success = 1;
+  int32 registered_count = 2;
+  repeated string failed_tables = 3;
+}
+message DropTableRequest {
+  string table_name = 1;
+}
+
+message DropTableResponse {
+  bool success = 1;
+  string message = 2;
+}
+// ============================================================================
+// gRPC 服务定义
+// ============================================================================
+service JQuickTableService {
+  // 注册表数据到 Worker
+  rpc RegisterTable(RegisterTableRequest) returns (RegisterTableResponse);
+
+  // 批量注册表
+  rpc RegisterTables(stream RegisterTableRequest) returns (RegisterTablesResponse);
+
+  // 删除表
+  rpc DropTable(DropTableRequest) returns (DropTableResponse);
+}
+// 物理计划服务（Worker 端）
+service JQuickPhysicalPlanService {
+  rpc ExecuteTask(JQuickExecuteTaskRequest) returns (JQuickExecuteTaskResponse);
+  rpc ExecuteTaskStream(JQuickExecuteTaskRequest) returns (stream JQuickDataChunkProto);
+  rpc CancelTask(JQuickCancelQueryRequest) returns (JQuickCancelQueryResponse);
+  
+  rpc Heartbeat(JQuickHeartbeatRequest) returns (JQuickHeartbeatResponse);
+  rpc RegisterWorker(JQuickRegisterWorkerRequest) returns (JQuickRegisterWorkerResponse);
+  rpc UpdateWorkerEndpoints(JQuickUpdateWorkerEndpointsRequest) returns (JQuickUpdateWorkerEndpointsResponse);
+  rpc GetWorkerEndpoints(JQuickGetWorkerEndpointsRequest) returns (JQuickGetWorkerEndpointsResponse);
+  rpc WorkerLeave(JQuickWorkerLeaveRequest) returns (JQuickWorkerLeaveResponse);
+
+}
+
+// 数据分发服务（Worker 间直接通信）
+service JQuickDataDistributionService {
+  rpc SendData(stream JQuickDataChunkProto) returns (JQuickEmptyNodeProto);
+  rpc ReceiveData(JQuickFetchDataRequest) returns (stream JQuickFetchDataResponse);
+  rpc BroadcastData(stream JQuickDataChunkProto) returns (JQuickBroadcastResponse);
+}
+
+message JQuickBroadcastResponse {
+  bool success = 1;
+  int32 success_count = 2;
+  repeated string failed_workers = 3;
+}
+
+// 协调器服务（客户端端）
+service JQuickCoordinatorService {
+  rpc SubmitQuery(JQuickSubmitQueryRequest) returns (JQuickSubmitQueryResponse);
+  rpc GetQueryStatus(JQuickQueryStatusRequest) returns (JQuickQueryStatusResponse);
+  rpc CancelQuery(JQuickCancelQueryRequest) returns (JQuickCancelQueryResponse);
+  rpc GetQueryResult(JQuickGetResultRequest) returns (stream JQuickDataChunkProto);
+  rpc Heartbeat(JQuickHeartbeatRequest) returns (JQuickHeartbeatResponse);
+}
