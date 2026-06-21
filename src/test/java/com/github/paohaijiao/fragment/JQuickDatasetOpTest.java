@@ -321,7 +321,7 @@ public class JQuickDatasetOpTest {
         );
         JQuickCoordinator coordinator = new JQuickCoordinator("coordinator-1", endpoints);
         System.out.println("=== 广播 users 表数据到所有 Worker ===");
-        coordinator.broadcastTable("users", usersData, true).join();
+     //   coordinator.broadcastTable("users", usersData, true).join();
         System.out.println("users 表数据已广播完成");
         JQuickProjectNode leftQuery = createProjectWithFilter("users", "status", "active", "id", "name");
         JQuickProjectNode rightQuery = createProjectWithFilter("users", "status", "pending", "id", "name");

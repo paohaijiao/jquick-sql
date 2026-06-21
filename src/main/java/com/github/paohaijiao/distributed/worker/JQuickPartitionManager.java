@@ -87,6 +87,13 @@ public class JQuickPartitionManager {
     }
 
     /**
+     * 获取所有 Worker 端点
+     */
+    public java.util.Collection<WorkerEndpoint> getWorkerEndpoints() {
+        return workerEndpoints.values();
+    }
+
+    /**
      * 数据分区逻辑
      */
     public List<JQuickWorker.JQuickMemoryPartition> partitionData(JQuickDataSet data, JQuickExchangePhysicalNode node, JQuickExpressionEvaluator expressionEvaluator, int targetParallelism) {

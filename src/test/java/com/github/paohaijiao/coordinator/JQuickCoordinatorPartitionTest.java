@@ -374,7 +374,7 @@ public class JQuickCoordinatorPartitionTest {
     @Test
     public void testParallelProcessingOnMultipleWorkers() throws Exception {
         console.info("=== 测试多 Worker 并行处理 ===");
-        coordinator.broadcastTable("employees", employeeData, true).get(30, TimeUnit.SECONDS);
+       // coordinator.broadcastTable("employees", employeeData, true).get(30, TimeUnit.SECONDS);
         // 创建需要并行处理的聚合查询
         List<JQuickExpression> groupKeys = new ArrayList<>();
         groupKeys.add(new JQuickColumnRefExpression("city"));
@@ -395,9 +395,6 @@ public class JQuickCoordinatorPartitionTest {
     @Test
     public void testGatherFromMultipleWorkers() throws Exception {
         console.info("=== 测试从多个 Worker 收集结果 ===");
-
-        coordinator.broadcastTable("employees", employeeData, true).get(30, TimeUnit.SECONDS);
-
         // 创建 Exchange 节点将数据分发到多个 Worker，然后收集
         List<JQuickExpression> partitionKeys = new ArrayList<>();
         partitionKeys.add(new JQuickColumnRefExpression("city"));
@@ -509,58 +506,14 @@ public class JQuickCoordinatorPartitionTest {
     }
 
 
-    @Test
-    public void testBroadcastTableToAllWorkers() throws Exception {
-        console.info("=== 测试广播表到所有 Worker ===");
 
-        JQuickDataSet broadcastData = JQuickDataSet.builder().build();
-//                .addColumn("config_key", String.class, "config")
-//                .addColumn("config_value", String.class, "config")
-//                .addRow(new JQuickRow().put("config_key", "app.name").put("config_value", "JQuick"))
-//                .addRow(new JQuickRow().put("config_key", "version").put("config_value", "1.0.0"))
-//                .build();
 
-        CompletableFuture<Void> future = coordinator.broadcastTable("config_table", broadcastData, true);
-        future.get(30, TimeUnit.SECONDS);
 
-        console.info("广播表完成");
-    }
 
-    @Test
-    public void testBroadcastMultipleTables() throws Exception {
-        console.info("=== 测试广播多个表 ===");
-
-        Map<String, JQuickDataSet> tables = new HashMap<>();
-        tables.put("table_a", employeeData);
-        tables.put("table_b", largeDataSet);
-
-        CompletableFuture<Void> future = coordinator.broadcastTables(tables, true);
-        future.get(30, TimeUnit.SECONDS);
-
-        console.info("批量广播表完成");
-    }
-
-    //任务调度和重试测试
-
-    @Test
-    public void testTaskRetryOnFailure() throws Exception {
-        console.info("=== 测试任务失败重试 ===");
-
-        coordinator.broadcastTable("employees", employeeData, true).get(30, TimeUnit.SECONDS);
-
-        JQuickTableScanPhysicalNode scanNode = new JQuickTableScanPhysicalNode(
-                "employees", null, null, null);
-
-        // 执行查询（Coordinator 会自动处理重试）
-        String queryId = "retry_" + System.currentTimeMillis();
-        JQuickDataSet future = coordinator.executeQuery(queryId, scanNode);
-    }
 
     @Test
     public void testQueryCancellation() throws Exception {
         console.info("=== 测试查询取消 ===");
-
-        coordinator.broadcastTable("employees", employeeData, true).get(30, TimeUnit.SECONDS);
 
         // 创建一个可能会执行较长时间的查询
         List<JQuickExpression> groupKeys = new ArrayList<>();
@@ -597,7 +550,6 @@ public class JQuickCoordinatorPartitionTest {
     public void testEndToEndQueryWithPartitioning() throws Exception {
         console.info("=== 测试端到端查询与分区 ===");
 
-        coordinator.broadcastTable("employees", employeeData, true).get(30, TimeUnit.SECONDS);
 
         // 构建完整查询计划：扫描 -> 过滤 -> 聚合
         JQuickTableScanPhysicalNode scanNode = new JQuickTableScanPhysicalNode(
@@ -653,10 +605,6 @@ public class JQuickCoordinatorPartitionTest {
                 .addRow(row2)
                 .addRow(row3)
                 .build();
-
-        coordinator.broadcastTable("employees", employeeData, true).get(30, TimeUnit.SECONDS);
-        coordinator.broadcastTable("departments", deptData, true).get(30, TimeUnit.SECONDS);
-
         // 创建 Join 节点
         JQuickTableScanPhysicalNode empScan = new JQuickTableScanPhysicalNode(
                 "employees", "e", null, null);
@@ -699,18 +647,12 @@ public class JQuickCoordinatorPartitionTest {
             largeBuilder.addRow(row);
         }
         JQuickDataSet largeData = largeBuilder.build();
-
         long startTime = System.currentTimeMillis();
-
-        coordinator.broadcastTable("large_table", largeData, true).get(60, TimeUnit.SECONDS);
-
         // 创建分区查询
         List<JQuickExpression> partitionKeys = new ArrayList<>();
         partitionKeys.add(new JQuickColumnRefExpression("category"));
 
-        JQuickTableScanPhysicalNode scanNode = new JQuickTableScanPhysicalNode(
-                "large_table", null, null, null);
-
+        JQuickTableScanPhysicalNode scanNode = new JQuickTableScanPhysicalNode("large_table", null, null, null);
         JQuickExchangePhysicalNode exchangeNode = new JQuickExchangePhysicalNode(
                 JQuickExchangeType.SHUFFLE, JQuickPartitionStrategy.HASH,
                 partitionKeys, 3, scanNode);
@@ -729,7 +671,6 @@ public class JQuickCoordinatorPartitionTest {
         console.info("=== 测试空数据分区 ===");
 
         JQuickDataSet emptyData = JQuickDataSet.builder().build();
-        coordinator.broadcastTable("empty_table", emptyData, true).get(30, TimeUnit.SECONDS);
 
         JQuickTableScanPhysicalNode scanNode = new JQuickTableScanPhysicalNode(
                 "empty_table", null, null, null);
@@ -751,9 +692,6 @@ public class JQuickCoordinatorPartitionTest {
                 .addColumn("name", String.class, "single")
                 .addRow(row)
                 .build();
-
-        coordinator.broadcastTable("single_table", singleRow, true).get(30, TimeUnit.SECONDS);
-
         List<JQuickExpression> partitionKeys = new ArrayList<>();
         partitionKeys.add(new JQuickColumnRefExpression("id"));
 

@@ -323,14 +323,6 @@ public class JQuickCoordinator extends JQuickConvertService{
             builder.setOutputPartition(outputPartition);
             console.info("Setting output partition for fragment " + fragment.getFragmentId() + ": " + fragment.getOutput().getExchangeId() + "_" + taskIndex);
         }
-        for (WorkerEndpoint endpoint : workers) {
-//            builder.addWorkerEndpoints(JQuickWorkerEndpointProto.newBuilder()
-//                    .setWorkerId(endpoint.getWorkerId())
-//                    .setHost(endpoint.getHost())
-//                    .setPort(endpoint.getPort())
-//                    .setIndex(endpoint.getIndex())
-//                    .build());
-        }
         return builder.build();
     }
 
@@ -688,84 +680,6 @@ public class JQuickCoordinator extends JQuickConvertService{
             console.info("  Successful Tasks: " + successTasks);
             console.info("  Failed Tasks: " + failedTasks);
         }
-    }
-
-
-    /**
-     * 广播表数据到所有 Worker
-     */
-    public CompletableFuture<Void> broadcastTable(String tableName, JQuickDataSet data, boolean overwrite) {
-        List<CompletableFuture<Void>> futures = new ArrayList<>();
-        for (WorkerEndpoint worker : workers) {
-            CompletableFuture<Void> future = sendTableToWorker(worker, tableName, data, overwrite);
-            futures.add(future);
-        }
-        return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
-    }
-
-    /**
-     * 发送表数据到指定 Worker
-     */
-    private CompletableFuture<Void> sendTableToWorker(WorkerEndpoint worker, String tableName, JQuickDataSet data, boolean overwrite) {
-        CompletableFuture<Void> future = new CompletableFuture<>();
-        try {
-            JQuickTableServiceGrpc.JQuickTableServiceStub stub = getTableServiceStub(worker);
-            RegisterTableRequest request = RegisterTableRequest.newBuilder()
-                    .setTableName(tableName)
-                    .setData(dataConverter.convertToProto(data))
-                    .setOverwrite(overwrite)
-                    .build();
-            stub.registerTable(request, new StreamObserver<RegisterTableResponse>() {
-                @Override
-                public void onNext(RegisterTableResponse response) {
-                    if (response.getSuccess()) {
-                        console.info(String.format("Table registered on worker %s - table: %s, rows: %d", worker.getWorkerId(), tableName, response.getRowCount()));
-                    } else {
-                        console.warn(String.format("Table registration failed on worker %s - table: %s, message: %s", worker.getWorkerId(), tableName, response.getMessage()));
-                    }
-                }
-
-                @Override
-                public void onError(Throwable t) {
-                    console.error(String.format("Failed to send table to worker %s", worker.getWorkerId()), t);
-                    future.completeExceptionally(t);
-                }
-
-                @Override
-                public void onCompleted() {
-                    future.complete(null);
-                }
-            });
-
-        } catch (Exception e) {
-            future.completeExceptionally(e);
-        }
-
-        return future;
-    }
-
-    /**
-     * 获取 TableService Stub
-     */
-    private JQuickTableServiceGrpc.JQuickTableServiceStub getTableServiceStub(WorkerEndpoint worker) {
-        ManagedChannel channel = workerChannels.computeIfAbsent(worker.getWorkerId(), k ->
-                ManagedChannelBuilder.forAddress(worker.getHost(), worker.getPort())
-                        .usePlaintext()
-                        .build()
-        );
-        return JQuickTableServiceGrpc.newStub(channel);
-    }
-
-    /**
-     * 批量广播多个表
-     */
-    public CompletableFuture<Void> broadcastTables(Map<String, JQuickDataSet> tables, boolean overwrite) {
-        List<CompletableFuture<Void>> futures = new ArrayList<>();
-        for (Map.Entry<String, JQuickDataSet> entry : tables.entrySet()) {
-            CompletableFuture<Void> future = broadcastTable(entry.getKey(), entry.getValue(), overwrite);
-            futures.add(future);
-        }
-        return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
     }
     /**
      * Worker 节点端点信息（轻量级，仅包含连接信息）

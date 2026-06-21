@@ -2,6 +2,7 @@ package com.github.paohaijiao.distributed.worker;
 
 import com.github.paohaijiao.console.JConsole;
 import com.github.paohaijiao.datasource.JQuickDataSourceManager;
+import com.github.paohaijiao.distributed.coordinator.JQuickCoordinator;
 import com.github.paohaijiao.enums.JQuickExchangeType;
 import com.github.paohaijiao.function.manager.JQuickMethodInvocationManager;
 import com.github.paohaijiao.proto.*;
@@ -149,6 +150,9 @@ public class JQuickWorker {
 
     public Map<Integer, JQuickDataDistributionServiceGrpc.JQuickDataDistributionServiceStub> getDistributionStubs() {
         return distributionStubs;
+    }
+    public void setWorkerEndpoints(List<JQuickCoordinator.WorkerEndpoint> endpoints) {
+        partitionManager.setWorkerEndpoints(endpoints);
     }
 
     /**
@@ -326,6 +330,56 @@ public class JQuickWorker {
     }
     public void registerTableLocally(String tableName, JQuickDataSet data) {
         JQuickDataSourceManager.registerTable(tableName, data);
+    }
+
+    /**
+     * 更新心跳状态
+     */
+    public void updateHeartbeat(JQuickHeartbeatRequest request) {
+        // 更新心跳时间戳
+        console.info("Heartbeat updated for worker: " + request.getWorkerId() + 
+                     ", timestamp: " + request.getTimestamp() + 
+                     ", currentTasks: " + request.getCurrentTasks());
+    }
+
+    /**
+     * 注册 Worker（用于 Coordinator 端）
+     */
+    public void registerWorker(JQuickRegisterWorkerRequest request) {
+        console.info("Registering worker: " + request.getWorkerId() + 
+                     " at " + request.getHost() + ":" + request.getPort());
+        // Worker 端不需要实现此方法，由 Coordinator 实现
+    }
+
+    /**
+     * 获取所有 Worker 端点
+     */
+    public List<JQuickWorkerEndpointProto> getAllWorkerEndpoints() {
+        List<JQuickWorkerEndpointProto> endpoints = new ArrayList<>();
+        // 返回当前已知的所有 Worker 端点
+        for (JQuickCoordinator.WorkerEndpoint endpoint : partitionManager.getWorkerEndpoints()) {
+            JQuickWorkerEndpointProto proto = JQuickWorkerEndpointProto.newBuilder()
+                    .setWorkerId(endpoint.getWorkerId())
+                    .setHost(endpoint.getHost())
+                    .setPort(endpoint.getPort())
+                    .setIndex(endpoint.getIndex())
+                    .setHealthy(endpoint.isHealthy())
+                    .setLastHeartbeat(endpoint.getLastHeartbeat())
+                    .build();
+            endpoints.add(proto);
+        }
+        return endpoints;
+    }
+
+    /**
+     * 处理 Worker 离开
+     */
+    public void handleWorkerLeave(JQuickWorkerLeaveRequest request) {
+        console.info("Worker leaving: " + request.getWorkerId() + 
+                     ", reason: " + request.getReason() + 
+                     ", ongoing tasks: " + request.getOngoingTaskIdsList());
+        // 标记该 Worker 为不健康
+        // 实际实现中需要更新 partitionManager 中的端点状态
     }
 
     /**
