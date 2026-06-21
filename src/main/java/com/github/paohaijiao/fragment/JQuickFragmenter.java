@@ -105,11 +105,6 @@ public class JQuickFragmenter {
         if (node.getChildren().isEmpty()) {
             return false;
         }
-        // SetOperation 不创建新的 Fragment，它应该和子节点在同一个 Fragment 中执行
-        // 这样可以避免数据被重复处理
-        if (node instanceof JQuickSetOperationPhysicalNode) {
-            return false;
-        }
         if (node instanceof JQuickExchangePhysicalNode) {
             JQuickPhysicalPlanNode child = node.getChildren().get(0);
             if (child instanceof JQuickTableScanPhysicalNode) {
@@ -128,8 +123,6 @@ public class JQuickFragmenter {
         if (node instanceof JQuickNestedLoopJoinPhysicalNode) {
             return true;
         }
-        // Filter 和 Project 不创建新的 Fragment，它们应该和子节点在同一个 Fragment 中执行
-        // 这样可以避免数据被重复处理
         if (node instanceof JQuickFilterPhysicalNode || node instanceof JQuickProjectPhysicalNode) {
             return false;
         }
@@ -314,6 +307,9 @@ public class JQuickFragmenter {
         }
         if (!fragment.getInputs().isEmpty()) {
             System.out.println(indent + "│   Inputs: " + fragment.getInputs().size());
+            for (JQuickExchangeNode input : fragment.getInputs()) {
+                System.out.println(indent + "│     - " + input.getExchangeId());
+            }
         }
         List<JQuickFragment> children = fragment.getChildren();
         if (!children.isEmpty()) {

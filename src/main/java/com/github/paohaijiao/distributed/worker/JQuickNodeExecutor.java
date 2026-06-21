@@ -128,13 +128,20 @@ public class JQuickNodeExecutor {
         console.info("executeTableScan - tableName: " + tableName + ", partitionInfo: " + (node.getPartitionInfo() != null ? "exists" : "null"));
         Set<String> requiredColumns = node.getRequiredColumns();
         JQuickDataSet data;
-        if (node.getPartitionInfo() != null) {
+        
+        // 首先检查 input partitions 是否有数据（分布式场景）
+        JQuickExecuteTaskRequest request = context.getRequest();
+        if (request.getInputPartitionsCount() > 0) {
+            console.info("Reading from input partitions (distributed mode)");
+            data = readFromInputPartitions(tableName, request);
+        } else if (node.getPartitionInfo() != null) {
             console.info("Reading from memory partition: " + tableName);
             data = readFromMemoryPartition(tableName);
         } else {
             console.info("Reading from data source: " + tableName);
             data = readFromDataSource(tableName);
         }
+        
         console.info("Table data loaded - rows: " + data.size() + ", columns: " + data.getColumns().size());
         if (node.getFilterPredicate() != null) {
             data = applyFilter(data, node.getFilterPredicate());
@@ -159,6 +166,22 @@ public class JQuickNodeExecutor {
         }
         context.addProcessedRows(data.size());
         return data;
+    }
+    
+    /**
+     * 从 input partitions 读取数据（分布式场景）
+     */
+    private JQuickDataSet readFromInputPartitions(String tableName, JQuickExecuteTaskRequest request) {
+        for (JQuickMemoryPartitionProto partition : request.getInputPartitionsList()) {
+            console.info("readFromInputPartitions - checking partition: " + partition.getPartitionId() + ", hasData: " + partition.hasData());
+            if (partition.hasData()) {
+                JQuickDataSet partitionData = dataConverter.convertFromProto(partition.getData());
+                console.info("readFromInputPartitions - found data in partition: " + partition.getPartitionId() + ", rows: " + partitionData.size());
+                return partitionData;
+            }
+        }
+        console.warn("readFromInputPartitions - no data found for table: " + tableName);
+        return JQuickDataSet.builder().build();
     }
 
     /**

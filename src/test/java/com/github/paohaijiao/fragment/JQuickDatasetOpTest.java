@@ -306,12 +306,10 @@ public class JQuickDatasetOpTest {
      */
     @Test
     public void testUnionOperation() throws Exception {
-        // 注册测试数据（users 表）
         registerUsersTable();
 
         // 验证数据已注册
         JQuickDataSet usersData = JQuickDataSourceManager.getTable("users");
-        usersData.printTable();
         JQuickWorker worker1 = new JQuickWorker("worker-1", 9001);
         JQuickWorker worker2 = new JQuickWorker("worker-2", 9002);
         worker1.start();
@@ -327,23 +325,14 @@ public class JQuickDatasetOpTest {
         JQuickProjectNode leftQuery = createProjectWithFilter("users", "status", "active", "id", "name");
         JQuickProjectNode rightQuery = createProjectWithFilter("users", "status", "pending", "id", "name");
         JQuickSetOperationNode unionNode = new JQuickSetOperationNode(JQuickSQLOperationType.UNION, leftQuery, rightQuery);
-
-        // 生成物理计划
         JQuickPhysicalPlanNode physicalPlan = generator.generate(unionNode);
-
-        // 使用 Coordinator 执行查询
         System.out.println("=== UNION 操作测试（基于 JQuickCoordinator）===");
         JQuickDataSet result = coordinator.executeQuery("query-union-001", physicalPlan);
-
-        // 验证结果
         System.out.println("\n=== 执行结果 ===");
         result.printTable();
         System.out.println("总行数: " + result.getRows().size());
-
-        // 停止 Worker
         worker1.stop();
         worker2.stop();
-
         System.out.println("=== UNION操作测试通过 ===");
     }
 
@@ -433,8 +422,6 @@ public class JQuickDatasetOpTest {
         fragmenter.printFragments(distributedPlan);
         System.out.println(physicalPlan);
     }
-
-    // ==================== 基于分区的测试用例 ====================
 
     /**
      * 测试1：HASH 分区策略
