@@ -323,8 +323,6 @@ public class JQuickDatasetOpTest {
         JQuickSqlConfig config=new JQuickSqlConfig();
         config.setWorkers(endpoints);
         JQuickCoordinator coordinator = new JQuickCoordinator( config);
-        System.out.println("=== 广播 users 表数据到所有 Worker ===");
-        System.out.println("users 表数据已广播完成");
         JQuickProjectNode leftQuery = createProjectWithFilter("users", "status", "active", "id", "name");
         JQuickProjectNode rightQuery = createProjectWithFilter("users", "status", "pending", "id", "name");
         JQuickSetOperationNode unionNode = new JQuickSetOperationNode(JQuickSQLOperationType.UNION, leftQuery, rightQuery);

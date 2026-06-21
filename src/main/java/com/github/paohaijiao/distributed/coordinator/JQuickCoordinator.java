@@ -177,14 +177,20 @@ public class JQuickCoordinator extends JQuickConvertService{
         // 拓扑排序已经保证了顺序：SOURCE -> INTERMEDIATE -> SINK
         for (JQuickFragment fragment : sortedFragments) {
             console.info("Executing fragment synchronously - fragmentId: " + fragment.getFragmentId() + ", type: " + fragment.getType());
-            // 执行当前 Fragment（同步执行）
-            List<JQuickDataSet> fragmentResult = executeFragment(fragment, execution);
-            // 使用 execution 存储 fragment results，以便后续 fragment 可以通过 getFragmentResult 获取
-            if(JQuickFragmentType.SINK.equals(fragment.getType())){
-                execution.addFragmentResult(fragment.getFragmentId(), fragmentResult);
-                console.info("Fragment " + fragment.getFragmentId() + " completed, result rows: " + (fragmentResult != null ? fragmentResult.stream().mapToInt(JQuickDataSet::size).sum() : 0));
+            if(JQuickFragmentType.SOURCE.equals(fragment.getType())){
+                console.info("Executing fragment SOURCE ");
             }
-     }
+            if(JQuickFragmentType.INTERMEDIATE.equals(fragment.getType())){
+                console.info("Executing fragment INTERMEDIATE ");
+            }
+            if(JQuickFragmentType.SINK.equals(fragment.getType())){
+                console.info("Executing fragment SINK ");
+            }
+            List<JQuickDataSet> fragmentResult = executeFragment(fragment, execution);
+
+            execution.addFragmentResult(fragment.getFragmentId(), fragmentResult);
+            console.info("Fragment " + fragment.getFragmentId() + " completed, result rows: " + (fragmentResult != null ? fragmentResult.stream().mapToInt(JQuickDataSet::size).sum() : 0));
+        }
         List<JQuickDataSet> rootResults = execution.getFragmentResult(rootFragment.getFragmentId()); //获取根 Fragment 结果
         JQuickDataSet finalResult = mergeResults(rootResults); //合并结果
         finalResult.printSummary();
@@ -298,6 +304,8 @@ public class JQuickCoordinator extends JQuickConvertService{
                 .setFragment(fragmentProto)
                 .setMemoryLimitBytes(1024 * 1024 * 1024);
         console.info("buildTaskRequest - Fragment " + fragment.getFragmentId() + " has " + fragment.getInputs().size() + " input exchanges, " + fragment.getChildren().size() + " children");
+        
+        // 处理 SOURCE Fragment - 从数据源获取数据
         if (null != fragment && JQuickFragmentType.SOURCE.equals(fragment.getType()) && null != fragment.getPlan()) {
             if (fragment.getPlan() instanceof JQuickTableScanPhysicalNode) {
                 JQuickTableScanPhysicalNode tableScanNode = (JQuickTableScanPhysicalNode) fragment.getPlan();
@@ -313,26 +321,45 @@ public class JQuickCoordinator extends JQuickConvertService{
                 builder.addInputPartitions(inputPartition);
             }
         }
+        if (null != fragment && JQuickFragmentType.INTERMEDIATE.equals(fragment.getType())) {
+            console.info("buildTaskRequest - INTERMEDIATE Fragment: processing " + fragment.getChildren().size() + " child fragments");
+            for (JQuickFragment childFragment : fragment.getChildren()) {
+                List<JQuickDataSet> childResults = execution.getFragmentResult(childFragment.getFragmentId());
+                if (childResults != null && !childResults.isEmpty()) {
+                    JQuickDataSet mergedChildData = mergeResults(childResults);
+                    console.info("buildTaskRequest - INTERMEDIATE Fragment: got " + mergedChildData.size() + " rows from child fragment " + childFragment.getFragmentId());
+                    JQuickMemoryPartitionProto inputPartition = JQuickMemoryPartitionProto.newBuilder()
+                            .setPartitionId(childFragment.getOutput().getExchangeId() + "_" + taskIndex)
+                            .setPartitionIndex(taskIndex)
+                            .setTotalPartitions(totalTasks)
+                            .setData(dataConverter.convertToProto(mergedChildData))
+                            .build();
+                    builder.addInputPartitions(inputPartition);
+                }
+            }
+        }
         
-//        for (JQuickFragment child : fragment.getChildren()) {
-//            if (child.getOutput() != null) {
-//                List<JQuickDataSet> childResults = execution.getFragmentResult(child.getFragmentId());
-//                console.info("buildTaskRequest - Child fragment " + child.getFragmentId() + " has " + (childResults != null ? childResults.size() : 0) + " result partitions");
-//                if (childResults != null && taskIndex < childResults.size()) {
-//                    JQuickDataSet childResult = childResults.get(taskIndex);
-//                    JQuickMemoryPartitionProto inputPartition = JQuickMemoryPartitionProto.newBuilder()
-//                            .setPartitionId(child.getOutput().getExchangeId() + "_" + taskIndex)
-//                            .setPartitionIndex(taskIndex)
-//                            .setTotalPartitions(totalTasks)
-//                            .setData(dataConverter.convertToProto(childResult))
-//                            .build();
-//                    builder.addInputPartitions(inputPartition);
-//                    console.info("Added input data from child " + child.getFragmentId() + " for fragment " + fragment.getFragmentId() + ", rows: " + childResult.size());
-//                } else {
-//                    console.warn("buildTaskRequest - No results for child fragment: " + child.getFragmentId() + " or index out of range");
-//                }
-//            }
-//        }
+        if (null != fragment && JQuickFragmentType.SINK.equals(fragment.getType())) {
+            console.info("buildTaskRequest - SINK Fragment: processing " + fragment.getChildren().size() + " child fragments");
+            // 获取所有子 Fragment 的结果
+            for (JQuickFragment childFragment : fragment.getChildren()) {
+                List<JQuickDataSet> childResults = execution.getFragmentResult(childFragment.getFragmentId());
+                if (childResults != null && !childResults.isEmpty()) {
+                    // 合并子 Fragment 的所有结果
+                    JQuickDataSet mergedChildData = mergeResults(childResults);
+                    console.info("buildTaskRequest - SINK Fragment: got " + mergedChildData.size() + " rows from child fragment " + childFragment.getFragmentId());
+                    
+                    // 将子 Fragment 的数据作为输入分区
+                    JQuickMemoryPartitionProto inputPartition = JQuickMemoryPartitionProto.newBuilder()
+                            .setPartitionId(childFragment.getOutput().getExchangeId() + "_" + taskIndex)
+                            .setPartitionIndex(taskIndex)
+                            .setTotalPartitions(totalTasks)
+                            .setData(dataConverter.convertToProto(mergedChildData))
+                            .build();
+                    builder.addInputPartitions(inputPartition);
+                }
+            }
+        }
         
         // 设置输出分区
         if (fragment.getOutput() != null) {

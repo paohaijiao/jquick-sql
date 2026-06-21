@@ -602,28 +602,101 @@ public class JQuickNodeExecutor {
         List<JQuickRow> resultRows;
         switch (node.getOperationType()) {
             case UNION:
-                Set<JQuickRow> unionSet = new HashSet<>(leftData.getRows());
-                unionSet.addAll(rightData.getRows());
-                resultRows = new ArrayList<>(unionSet);
+                // 使用基于内容的比较实现去重
+                resultRows = unionWithContentComparison(leftData.getRows(), rightData.getRows());
                 break;
             case UNION_ALL:
                 resultRows = new ArrayList<>(leftData.getRows());
                 resultRows.addAll(rightData.getRows());
                 break;
             case INTERSECT:
-                Set<JQuickRow> intersectSet = new HashSet<>(leftData.getRows());
-                intersectSet.retainAll(new HashSet<>(rightData.getRows()));
-                resultRows = new ArrayList<>(intersectSet);
+                // 使用基于内容的比较实现交集
+                resultRows = intersectWithContentComparison(leftData.getRows(), rightData.getRows());
                 break;
             case EXCEPT:
-                Set<JQuickRow> exceptSet = new HashSet<>(leftData.getRows());
-                exceptSet.removeAll(new HashSet<>(rightData.getRows()));
-                resultRows = new ArrayList<>(exceptSet);
+                // 使用基于内容的比较实现差集
+                resultRows = exceptWithContentComparison(leftData.getRows(), rightData.getRows());
                 break;
             default:
                 resultRows = new ArrayList<>(leftData.getRows());
         }
         return new JQuickDataSet(leftData.getColumns(), resultRows);
+    }
+    
+    /**
+     * 使用基于内容的比较实现 UNION
+     */
+    private List<JQuickRow> unionWithContentComparison(List<JQuickRow> leftRows, List<JQuickRow> rightRows) {
+        List<JQuickRow> result = new ArrayList<>();
+        Set<String> seen = new HashSet<>();
+        for (JQuickRow row : leftRows) {
+            String key = generateRowKey(row);
+            if (!seen.contains(key)) {
+                seen.add(key);
+                result.add(row);
+            }
+        }
+        for (JQuickRow row : rightRows) {
+            String key = generateRowKey(row);
+            if (!seen.contains(key)) {
+                seen.add(key);
+                result.add(row);
+            }
+        }
+        return result;
+    }
+    
+    /**
+     * 使用基于内容的比较实现 INTERSECT
+     */
+    private List<JQuickRow> intersectWithContentComparison(List<JQuickRow> leftRows, List<JQuickRow> rightRows) {
+        Set<String> rightKeys = new HashSet<>();
+        for (JQuickRow row : rightRows) {
+            rightKeys.add(generateRowKey(row));
+        }
+        List<JQuickRow> result = new ArrayList<>();
+        for (JQuickRow row : leftRows) {
+            String key = generateRowKey(row);
+            if (rightKeys.contains(key)) {
+                result.add(row);
+            }
+        }
+        return result;
+    }
+    
+    /**
+     * 使用基于内容的比较实现 EXCEPT
+     */
+    private List<JQuickRow> exceptWithContentComparison(List<JQuickRow> leftRows, List<JQuickRow> rightRows) {
+        Set<String> rightKeys = new HashSet<>();
+        for (JQuickRow row : rightRows) {
+            rightKeys.add(generateRowKey(row));
+        }
+        List<JQuickRow> result = new ArrayList<>();
+        for (JQuickRow row : leftRows) {
+            String key = generateRowKey(row);
+            if (!rightKeys.contains(key)) {
+                result.add(row);
+            }
+        }
+        return result;
+    }
+    
+    /**
+     * 生成行的内容键（用于基于内容的比较）
+     */
+    private String generateRowKey(JQuickRow row) {
+        StringBuilder key = new StringBuilder();
+        // 按键排序以确保一致的顺序
+        List<String> keys = new ArrayList<>(row.keySet());
+        Collections.sort(keys);
+        for (String k : keys) {
+            if (key.length() > 0) {
+                key.append("|");
+            }
+            key.append(k).append("=").append(String.valueOf(row.get(k)));
+        }
+        return key.toString();
     }
 
     /**

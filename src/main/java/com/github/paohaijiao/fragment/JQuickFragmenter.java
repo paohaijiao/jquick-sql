@@ -133,6 +133,9 @@ public class JQuickFragmenter {
             }
             return !agg.getGroupKeys().isEmpty();
         }
+        if (node instanceof JQuickSetOperationPhysicalNode) {
+            return true;
+        }
         return false;
     }
 
@@ -219,6 +222,11 @@ public class JQuickFragmenter {
             console.info("Creating output exchange for Filter node");
             return new JQuickExchangeNode(exchangeId, JQuickExchangeType.GATHER, JQuickPartitionStrategy.REPLICATE, (List<JQuickExpression>) null, 1);
         }
+
+        if (node instanceof JQuickSetOperationPhysicalNode) {
+            return new JQuickExchangeNode(exchangeId, JQuickExchangeType.GATHER, JQuickPartitionStrategy.REPLICATE, (List<JQuickExpression>) null, 1);
+        }
+
         return new JQuickExchangeNode(exchangeId, JQuickExchangeType.BROADCAST, JQuickPartitionStrategy.REPLICATE, (List<JQuickExpression>) null, defaultParallelism);
     }
 
