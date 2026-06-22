@@ -23,4 +23,28 @@ public interface JQuickSetOperationNodeProtoOrBuilder extends
    * @return The distinct.
    */
   boolean getDistinct();
+
+  /**
+   * <code>repeated .com.github.paohaijiao.proto.JQuickPhysicalPlanNodeProto children = 3;</code>
+   */
+  java.util.List<com.github.paohaijiao.proto.JQuickPhysicalPlanNodeProto> 
+      getChildrenList();
+  /**
+   * <code>repeated .com.github.paohaijiao.proto.JQuickPhysicalPlanNodeProto children = 3;</code>
+   */
+  com.github.paohaijiao.proto.JQuickPhysicalPlanNodeProto getChildren(int index);
+  /**
+   * <code>repeated .com.github.paohaijiao.proto.JQuickPhysicalPlanNodeProto children = 3;</code>
+   */
+  int getChildrenCount();
+  /**
+   * <code>repeated .com.github.paohaijiao.proto.JQuickPhysicalPlanNodeProto children = 3;</code>
+   */
+  java.util.List<? extends com.github.paohaijiao.proto.JQuickPhysicalPlanNodeProtoOrBuilder> 
+      getChildrenOrBuilderList();
+  /**
+   * <code>repeated .com.github.paohaijiao.proto.JQuickPhysicalPlanNodeProto children = 3;</code>
+   */
+  com.github.paohaijiao.proto.JQuickPhysicalPlanNodeProtoOrBuilder getChildrenOrBuilder(
+      int index);
 }

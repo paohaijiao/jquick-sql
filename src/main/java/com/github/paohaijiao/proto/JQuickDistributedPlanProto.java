@@ -34,7 +34,7 @@ private static final long serialVersionUID = 0L;
   }
   public static final com.google.protobuf.Descriptors.Descriptor
       getDescriptor() {
-    return com.github.paohaijiao.proto.JQuickPhysicalPlanProto.internal_static_com_github_paohaijiao_proto_JQuickDistributedPlanProto_descriptor;
+    return JQuickPhysicalPlanProto.internal_static_com_github_paohaijiao_proto_JQuickDistributedPlanProto_descriptor;
   }
 
   @SuppressWarnings({"rawtypes"})
@@ -54,9 +54,9 @@ private static final long serialVersionUID = 0L;
   @java.lang.Override
   protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internalGetFieldAccessorTable() {
-    return com.github.paohaijiao.proto.JQuickPhysicalPlanProto.internal_static_com_github_paohaijiao_proto_JQuickDistributedPlanProto_fieldAccessorTable
+    return JQuickPhysicalPlanProto.internal_static_com_github_paohaijiao_proto_JQuickDistributedPlanProto_fieldAccessorTable
         .ensureFieldAccessorsInitialized(
-            com.github.paohaijiao.proto.JQuickDistributedPlanProto.class, com.github.paohaijiao.proto.JQuickDistributedPlanProto.Builder.class);
+            JQuickDistributedPlanProto.class, JQuickDistributedPlanProto.Builder.class);
   }
 
   public static final int PLAN_ID_FIELD_NUMBER = 1;
@@ -99,7 +99,7 @@ private static final long serialVersionUID = 0L;
   }
 
   public static final int ROOT_FRAGMENT_FIELD_NUMBER = 2;
-  private com.github.paohaijiao.proto.JQuickFragmentProto rootFragment_;
+  private JQuickFragmentProto rootFragment_;
   /**
    * <code>.com.github.paohaijiao.proto.JQuickFragmentProto root_fragment = 2;</code>
    * @return Whether the rootFragment field is set.
@@ -113,15 +113,15 @@ private static final long serialVersionUID = 0L;
    * @return The rootFragment.
    */
   @java.lang.Override
-  public com.github.paohaijiao.proto.JQuickFragmentProto getRootFragment() {
-    return rootFragment_ == null ? com.github.paohaijiao.proto.JQuickFragmentProto.getDefaultInstance() : rootFragment_;
+  public JQuickFragmentProto getRootFragment() {
+    return rootFragment_ == null ? JQuickFragmentProto.getDefaultInstance() : rootFragment_;
   }
   /**
    * <code>.com.github.paohaijiao.proto.JQuickFragmentProto root_fragment = 2;</code>
    */
   @java.lang.Override
-  public com.github.paohaijiao.proto.JQuickFragmentProtoOrBuilder getRootFragmentOrBuilder() {
-    return rootFragment_ == null ? com.github.paohaijiao.proto.JQuickFragmentProto.getDefaultInstance() : rootFragment_;
+  public JQuickFragmentProtoOrBuilder getRootFragmentOrBuilder() {
+    return rootFragment_ == null ? JQuickFragmentProto.getDefaultInstance() : rootFragment_;
   }
 
   public static final int DEFAULT_PARALLELISM_FIELD_NUMBER = 3;
@@ -138,19 +138,19 @@ private static final long serialVersionUID = 0L;
   public static final int FRAGMENTS_FIELD_NUMBER = 4;
   private static final class FragmentsDefaultEntryHolder {
     static final com.google.protobuf.MapEntry<
-        java.lang.Long, com.github.paohaijiao.proto.JQuickFragmentProto> defaultEntry =
+        java.lang.Long, JQuickFragmentProto> defaultEntry =
             com.google.protobuf.MapEntry
-            .<java.lang.Long, com.github.paohaijiao.proto.JQuickFragmentProto>newDefaultInstance(
-                com.github.paohaijiao.proto.JQuickPhysicalPlanProto.internal_static_com_github_paohaijiao_proto_JQuickDistributedPlanProto_FragmentsEntry_descriptor, 
+            .<java.lang.Long, JQuickFragmentProto>newDefaultInstance(
+                JQuickPhysicalPlanProto.internal_static_com_github_paohaijiao_proto_JQuickDistributedPlanProto_FragmentsEntry_descriptor,
                 com.google.protobuf.WireFormat.FieldType.INT64,
                 0L,
                 com.google.protobuf.WireFormat.FieldType.MESSAGE,
-                com.github.paohaijiao.proto.JQuickFragmentProto.getDefaultInstance());
+                JQuickFragmentProto.getDefaultInstance());
   }
   @SuppressWarnings("serial")
   private com.google.protobuf.MapField<
-      java.lang.Long, com.github.paohaijiao.proto.JQuickFragmentProto> fragments_;
-  private com.google.protobuf.MapField<java.lang.Long, com.github.paohaijiao.proto.JQuickFragmentProto>
+      java.lang.Long, JQuickFragmentProto> fragments_;
+  private com.google.protobuf.MapField<java.lang.Long, JQuickFragmentProto>
   internalGetFragments() {
     if (fragments_ == null) {
       return com.google.protobuf.MapField.emptyMapField(
@@ -175,14 +175,14 @@ private static final long serialVersionUID = 0L;
    */
   @java.lang.Override
   @java.lang.Deprecated
-  public java.util.Map<java.lang.Long, com.github.paohaijiao.proto.JQuickFragmentProto> getFragments() {
+  public java.util.Map<java.lang.Long, JQuickFragmentProto> getFragments() {
     return getFragmentsMap();
   }
   /**
    * <code>map&lt;int64, .com.github.paohaijiao.proto.JQuickFragmentProto&gt; fragments = 4;</code>
    */
   @java.lang.Override
-  public java.util.Map<java.lang.Long, com.github.paohaijiao.proto.JQuickFragmentProto> getFragmentsMap() {
+  public java.util.Map<java.lang.Long, JQuickFragmentProto> getFragmentsMap() {
     return internalGetFragments().getMap();
   }
   /**
@@ -190,12 +190,12 @@ private static final long serialVersionUID = 0L;
    */
   @java.lang.Override
   public /* nullable */
-com.github.paohaijiao.proto.JQuickFragmentProto getFragmentsOrDefault(
+JQuickFragmentProto getFragmentsOrDefault(
       long key,
       /* nullable */
-com.github.paohaijiao.proto.JQuickFragmentProto defaultValue) {
+JQuickFragmentProto defaultValue) {
     
-    java.util.Map<java.lang.Long, com.github.paohaijiao.proto.JQuickFragmentProto> map =
+    java.util.Map<java.lang.Long, JQuickFragmentProto> map =
         internalGetFragments().getMap();
     return map.containsKey(key) ? map.get(key) : defaultValue;
   }
@@ -203,10 +203,10 @@ com.github.paohaijiao.proto.JQuickFragmentProto defaultValue) {
    * <code>map&lt;int64, .com.github.paohaijiao.proto.JQuickFragmentProto&gt; fragments = 4;</code>
    */
   @java.lang.Override
-  public com.github.paohaijiao.proto.JQuickFragmentProto getFragmentsOrThrow(
+  public JQuickFragmentProto getFragmentsOrThrow(
       long key) {
     
-    java.util.Map<java.lang.Long, com.github.paohaijiao.proto.JQuickFragmentProto> map =
+    java.util.Map<java.lang.Long, JQuickFragmentProto> map =
         internalGetFragments().getMap();
     if (!map.containsKey(key)) {
       throw new java.lang.IllegalArgumentException();
@@ -285,7 +285,7 @@ com.github.paohaijiao.proto.JQuickFragmentProto defaultValue) {
         java.lang.String, java.lang.Long> defaultEntry =
             com.google.protobuf.MapEntry
             .<java.lang.String, java.lang.Long>newDefaultInstance(
-                com.github.paohaijiao.proto.JQuickPhysicalPlanProto.internal_static_com_github_paohaijiao_proto_JQuickDistributedPlanProto_WorkerMemoryQuotaEntry_descriptor, 
+                JQuickPhysicalPlanProto.internal_static_com_github_paohaijiao_proto_JQuickDistributedPlanProto_WorkerMemoryQuotaEntry_descriptor,
                 com.google.protobuf.WireFormat.FieldType.STRING,
                 "",
                 com.google.protobuf.WireFormat.FieldType.INT64,
@@ -436,9 +436,9 @@ com.github.paohaijiao.proto.JQuickFragmentProto defaultValue) {
       size += com.google.protobuf.CodedOutputStream
         .computeInt32Size(3, defaultParallelism_);
     }
-    for (java.util.Map.Entry<java.lang.Long, com.github.paohaijiao.proto.JQuickFragmentProto> entry
+    for (java.util.Map.Entry<java.lang.Long, JQuickFragmentProto> entry
          : internalGetFragments().getMap().entrySet()) {
-      com.google.protobuf.MapEntry<java.lang.Long, com.github.paohaijiao.proto.JQuickFragmentProto>
+      com.google.protobuf.MapEntry<java.lang.Long, JQuickFragmentProto>
       fragments__ = FragmentsDefaultEntryHolder.defaultEntry.newBuilderForType()
           .setKey(entry.getKey())
           .setValue(entry.getValue())
@@ -477,10 +477,10 @@ com.github.paohaijiao.proto.JQuickFragmentProto defaultValue) {
     if (obj == this) {
      return true;
     }
-    if (!(obj instanceof com.github.paohaijiao.proto.JQuickDistributedPlanProto)) {
+    if (!(obj instanceof JQuickDistributedPlanProto)) {
       return super.equals(obj);
     }
-    com.github.paohaijiao.proto.JQuickDistributedPlanProto other = (com.github.paohaijiao.proto.JQuickDistributedPlanProto) obj;
+    JQuickDistributedPlanProto other = (JQuickDistributedPlanProto) obj;
 
     if (!getPlanId()
         .equals(other.getPlanId())) return false;
@@ -541,69 +541,69 @@ com.github.paohaijiao.proto.JQuickFragmentProto defaultValue) {
     return hash;
   }
 
-  public static com.github.paohaijiao.proto.JQuickDistributedPlanProto parseFrom(
+  public static JQuickDistributedPlanProto parseFrom(
       java.nio.ByteBuffer data)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data);
   }
-  public static com.github.paohaijiao.proto.JQuickDistributedPlanProto parseFrom(
+  public static JQuickDistributedPlanProto parseFrom(
       java.nio.ByteBuffer data,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data, extensionRegistry);
   }
-  public static com.github.paohaijiao.proto.JQuickDistributedPlanProto parseFrom(
+  public static JQuickDistributedPlanProto parseFrom(
       com.google.protobuf.ByteString data)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data);
   }
-  public static com.github.paohaijiao.proto.JQuickDistributedPlanProto parseFrom(
+  public static JQuickDistributedPlanProto parseFrom(
       com.google.protobuf.ByteString data,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data, extensionRegistry);
   }
-  public static com.github.paohaijiao.proto.JQuickDistributedPlanProto parseFrom(byte[] data)
+  public static JQuickDistributedPlanProto parseFrom(byte[] data)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data);
   }
-  public static com.github.paohaijiao.proto.JQuickDistributedPlanProto parseFrom(
+  public static JQuickDistributedPlanProto parseFrom(
       byte[] data,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data, extensionRegistry);
   }
-  public static com.github.paohaijiao.proto.JQuickDistributedPlanProto parseFrom(java.io.InputStream input)
+  public static JQuickDistributedPlanProto parseFrom(java.io.InputStream input)
       throws java.io.IOException {
     return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input);
   }
-  public static com.github.paohaijiao.proto.JQuickDistributedPlanProto parseFrom(
+  public static JQuickDistributedPlanProto parseFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
     return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input, extensionRegistry);
   }
-  public static com.github.paohaijiao.proto.JQuickDistributedPlanProto parseDelimitedFrom(java.io.InputStream input)
+  public static JQuickDistributedPlanProto parseDelimitedFrom(java.io.InputStream input)
       throws java.io.IOException {
     return com.google.protobuf.GeneratedMessageV3
         .parseDelimitedWithIOException(PARSER, input);
   }
-  public static com.github.paohaijiao.proto.JQuickDistributedPlanProto parseDelimitedFrom(
+  public static JQuickDistributedPlanProto parseDelimitedFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
     return com.google.protobuf.GeneratedMessageV3
         .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
   }
-  public static com.github.paohaijiao.proto.JQuickDistributedPlanProto parseFrom(
+  public static JQuickDistributedPlanProto parseFrom(
       com.google.protobuf.CodedInputStream input)
       throws java.io.IOException {
     return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input);
   }
-  public static com.github.paohaijiao.proto.JQuickDistributedPlanProto parseFrom(
+  public static JQuickDistributedPlanProto parseFrom(
       com.google.protobuf.CodedInputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
@@ -616,7 +616,7 @@ com.github.paohaijiao.proto.JQuickFragmentProto defaultValue) {
   public static Builder newBuilder() {
     return DEFAULT_INSTANCE.toBuilder();
   }
-  public static Builder newBuilder(com.github.paohaijiao.proto.JQuickDistributedPlanProto prototype) {
+  public static Builder newBuilder(JQuickDistributedPlanProto prototype) {
     return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
   }
   @java.lang.Override
@@ -637,10 +637,10 @@ com.github.paohaijiao.proto.JQuickFragmentProto defaultValue) {
   public static final class Builder extends
       com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
       // @@protoc_insertion_point(builder_implements:com.github.paohaijiao.proto.JQuickDistributedPlanProto)
-      com.github.paohaijiao.proto.JQuickDistributedPlanProtoOrBuilder {
+      JQuickDistributedPlanProtoOrBuilder {
     public static final com.google.protobuf.Descriptors.Descriptor
         getDescriptor() {
-      return com.github.paohaijiao.proto.JQuickPhysicalPlanProto.internal_static_com_github_paohaijiao_proto_JQuickDistributedPlanProto_descriptor;
+      return JQuickPhysicalPlanProto.internal_static_com_github_paohaijiao_proto_JQuickDistributedPlanProto_descriptor;
     }
 
     @SuppressWarnings({"rawtypes"})
@@ -672,9 +672,9 @@ com.github.paohaijiao.proto.JQuickFragmentProto defaultValue) {
     @java.lang.Override
     protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
         internalGetFieldAccessorTable() {
-      return com.github.paohaijiao.proto.JQuickPhysicalPlanProto.internal_static_com_github_paohaijiao_proto_JQuickDistributedPlanProto_fieldAccessorTable
+      return JQuickPhysicalPlanProto.internal_static_com_github_paohaijiao_proto_JQuickDistributedPlanProto_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
-              com.github.paohaijiao.proto.JQuickDistributedPlanProto.class, com.github.paohaijiao.proto.JQuickDistributedPlanProto.Builder.class);
+              JQuickDistributedPlanProto.class, JQuickDistributedPlanProto.Builder.class);
     }
 
     // Construct using com.github.paohaijiao.proto.JQuickDistributedPlanProto.newBuilder()
@@ -709,17 +709,17 @@ com.github.paohaijiao.proto.JQuickFragmentProto defaultValue) {
     @java.lang.Override
     public com.google.protobuf.Descriptors.Descriptor
         getDescriptorForType() {
-      return com.github.paohaijiao.proto.JQuickPhysicalPlanProto.internal_static_com_github_paohaijiao_proto_JQuickDistributedPlanProto_descriptor;
+      return JQuickPhysicalPlanProto.internal_static_com_github_paohaijiao_proto_JQuickDistributedPlanProto_descriptor;
     }
 
     @java.lang.Override
-    public com.github.paohaijiao.proto.JQuickDistributedPlanProto getDefaultInstanceForType() {
-      return com.github.paohaijiao.proto.JQuickDistributedPlanProto.getDefaultInstance();
+    public JQuickDistributedPlanProto getDefaultInstanceForType() {
+      return JQuickDistributedPlanProto.getDefaultInstance();
     }
 
     @java.lang.Override
-    public com.github.paohaijiao.proto.JQuickDistributedPlanProto build() {
-      com.github.paohaijiao.proto.JQuickDistributedPlanProto result = buildPartial();
+    public JQuickDistributedPlanProto build() {
+      JQuickDistributedPlanProto result = buildPartial();
       if (!result.isInitialized()) {
         throw newUninitializedMessageException(result);
       }
@@ -727,14 +727,14 @@ com.github.paohaijiao.proto.JQuickFragmentProto defaultValue) {
     }
 
     @java.lang.Override
-    public com.github.paohaijiao.proto.JQuickDistributedPlanProto buildPartial() {
-      com.github.paohaijiao.proto.JQuickDistributedPlanProto result = new com.github.paohaijiao.proto.JQuickDistributedPlanProto(this);
+    public JQuickDistributedPlanProto buildPartial() {
+      JQuickDistributedPlanProto result = new JQuickDistributedPlanProto(this);
       if (bitField0_ != 0) { buildPartial0(result); }
       onBuilt();
       return result;
     }
 
-    private void buildPartial0(com.github.paohaijiao.proto.JQuickDistributedPlanProto result) {
+    private void buildPartial0(JQuickDistributedPlanProto result) {
       int from_bitField0_ = bitField0_;
       if (((from_bitField0_ & 0x00000001) != 0)) {
         result.planId_ = planId_;
@@ -800,16 +800,16 @@ com.github.paohaijiao.proto.JQuickFragmentProto defaultValue) {
     }
     @java.lang.Override
     public Builder mergeFrom(com.google.protobuf.Message other) {
-      if (other instanceof com.github.paohaijiao.proto.JQuickDistributedPlanProto) {
-        return mergeFrom((com.github.paohaijiao.proto.JQuickDistributedPlanProto)other);
+      if (other instanceof JQuickDistributedPlanProto) {
+        return mergeFrom((JQuickDistributedPlanProto)other);
       } else {
         super.mergeFrom(other);
         return this;
       }
     }
 
-    public Builder mergeFrom(com.github.paohaijiao.proto.JQuickDistributedPlanProto other) {
-      if (other == com.github.paohaijiao.proto.JQuickDistributedPlanProto.getDefaultInstance()) return this;
+    public Builder mergeFrom(JQuickDistributedPlanProto other) {
+      if (other == JQuickDistributedPlanProto.getDefaultInstance()) return this;
       if (!other.getPlanId().isEmpty()) {
         planId_ = other.planId_;
         bitField0_ |= 0x00000001;
@@ -882,7 +882,7 @@ com.github.paohaijiao.proto.JQuickFragmentProto defaultValue) {
               break;
             } // case 24
             case 34: {
-              com.google.protobuf.MapEntry<java.lang.Long, com.github.paohaijiao.proto.JQuickFragmentProto>
+              com.google.protobuf.MapEntry<java.lang.Long, JQuickFragmentProto>
               fragments__ = input.readMessage(
                   FragmentsDefaultEntryHolder.defaultEntry.getParserForType(), extensionRegistry);
               internalGetMutableFragments().getMutableMap().put(
@@ -1003,9 +1003,9 @@ com.github.paohaijiao.proto.JQuickFragmentProto defaultValue) {
       return this;
     }
 
-    private com.github.paohaijiao.proto.JQuickFragmentProto rootFragment_;
+    private JQuickFragmentProto rootFragment_;
     private com.google.protobuf.SingleFieldBuilderV3<
-        com.github.paohaijiao.proto.JQuickFragmentProto, com.github.paohaijiao.proto.JQuickFragmentProto.Builder, com.github.paohaijiao.proto.JQuickFragmentProtoOrBuilder> rootFragmentBuilder_;
+        JQuickFragmentProto, JQuickFragmentProto.Builder, JQuickFragmentProtoOrBuilder> rootFragmentBuilder_;
     /**
      * <code>.com.github.paohaijiao.proto.JQuickFragmentProto root_fragment = 2;</code>
      * @return Whether the rootFragment field is set.
@@ -1017,9 +1017,9 @@ com.github.paohaijiao.proto.JQuickFragmentProto defaultValue) {
      * <code>.com.github.paohaijiao.proto.JQuickFragmentProto root_fragment = 2;</code>
      * @return The rootFragment.
      */
-    public com.github.paohaijiao.proto.JQuickFragmentProto getRootFragment() {
+    public JQuickFragmentProto getRootFragment() {
       if (rootFragmentBuilder_ == null) {
-        return rootFragment_ == null ? com.github.paohaijiao.proto.JQuickFragmentProto.getDefaultInstance() : rootFragment_;
+        return rootFragment_ == null ? JQuickFragmentProto.getDefaultInstance() : rootFragment_;
       } else {
         return rootFragmentBuilder_.getMessage();
       }
@@ -1027,7 +1027,7 @@ com.github.paohaijiao.proto.JQuickFragmentProto defaultValue) {
     /**
      * <code>.com.github.paohaijiao.proto.JQuickFragmentProto root_fragment = 2;</code>
      */
-    public Builder setRootFragment(com.github.paohaijiao.proto.JQuickFragmentProto value) {
+    public Builder setRootFragment(JQuickFragmentProto value) {
       if (rootFragmentBuilder_ == null) {
         if (value == null) {
           throw new NullPointerException();
@@ -1044,7 +1044,7 @@ com.github.paohaijiao.proto.JQuickFragmentProto defaultValue) {
      * <code>.com.github.paohaijiao.proto.JQuickFragmentProto root_fragment = 2;</code>
      */
     public Builder setRootFragment(
-        com.github.paohaijiao.proto.JQuickFragmentProto.Builder builderForValue) {
+        JQuickFragmentProto.Builder builderForValue) {
       if (rootFragmentBuilder_ == null) {
         rootFragment_ = builderForValue.build();
       } else {
@@ -1057,11 +1057,11 @@ com.github.paohaijiao.proto.JQuickFragmentProto defaultValue) {
     /**
      * <code>.com.github.paohaijiao.proto.JQuickFragmentProto root_fragment = 2;</code>
      */
-    public Builder mergeRootFragment(com.github.paohaijiao.proto.JQuickFragmentProto value) {
+    public Builder mergeRootFragment(JQuickFragmentProto value) {
       if (rootFragmentBuilder_ == null) {
         if (((bitField0_ & 0x00000002) != 0) &&
           rootFragment_ != null &&
-          rootFragment_ != com.github.paohaijiao.proto.JQuickFragmentProto.getDefaultInstance()) {
+          rootFragment_ != JQuickFragmentProto.getDefaultInstance()) {
           getRootFragmentBuilder().mergeFrom(value);
         } else {
           rootFragment_ = value;
@@ -1089,7 +1089,7 @@ com.github.paohaijiao.proto.JQuickFragmentProto defaultValue) {
     /**
      * <code>.com.github.paohaijiao.proto.JQuickFragmentProto root_fragment = 2;</code>
      */
-    public com.github.paohaijiao.proto.JQuickFragmentProto.Builder getRootFragmentBuilder() {
+    public JQuickFragmentProto.Builder getRootFragmentBuilder() {
       bitField0_ |= 0x00000002;
       onChanged();
       return getRootFragmentFieldBuilder().getBuilder();
@@ -1097,23 +1097,23 @@ com.github.paohaijiao.proto.JQuickFragmentProto defaultValue) {
     /**
      * <code>.com.github.paohaijiao.proto.JQuickFragmentProto root_fragment = 2;</code>
      */
-    public com.github.paohaijiao.proto.JQuickFragmentProtoOrBuilder getRootFragmentOrBuilder() {
+    public JQuickFragmentProtoOrBuilder getRootFragmentOrBuilder() {
       if (rootFragmentBuilder_ != null) {
         return rootFragmentBuilder_.getMessageOrBuilder();
       } else {
         return rootFragment_ == null ?
-            com.github.paohaijiao.proto.JQuickFragmentProto.getDefaultInstance() : rootFragment_;
+            JQuickFragmentProto.getDefaultInstance() : rootFragment_;
       }
     }
     /**
      * <code>.com.github.paohaijiao.proto.JQuickFragmentProto root_fragment = 2;</code>
      */
     private com.google.protobuf.SingleFieldBuilderV3<
-        com.github.paohaijiao.proto.JQuickFragmentProto, com.github.paohaijiao.proto.JQuickFragmentProto.Builder, com.github.paohaijiao.proto.JQuickFragmentProtoOrBuilder> 
+        JQuickFragmentProto, JQuickFragmentProto.Builder, JQuickFragmentProtoOrBuilder>
         getRootFragmentFieldBuilder() {
       if (rootFragmentBuilder_ == null) {
         rootFragmentBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
-            com.github.paohaijiao.proto.JQuickFragmentProto, com.github.paohaijiao.proto.JQuickFragmentProto.Builder, com.github.paohaijiao.proto.JQuickFragmentProtoOrBuilder>(
+            JQuickFragmentProto, JQuickFragmentProto.Builder, JQuickFragmentProtoOrBuilder>(
                 getRootFragment(),
                 getParentForChildren(),
                 isClean());
@@ -1155,8 +1155,8 @@ com.github.paohaijiao.proto.JQuickFragmentProto defaultValue) {
     }
 
     private com.google.protobuf.MapField<
-        java.lang.Long, com.github.paohaijiao.proto.JQuickFragmentProto> fragments_;
-    private com.google.protobuf.MapField<java.lang.Long, com.github.paohaijiao.proto.JQuickFragmentProto>
+        java.lang.Long, JQuickFragmentProto> fragments_;
+    private com.google.protobuf.MapField<java.lang.Long, JQuickFragmentProto>
         internalGetFragments() {
       if (fragments_ == null) {
         return com.google.protobuf.MapField.emptyMapField(
@@ -1164,7 +1164,7 @@ com.github.paohaijiao.proto.JQuickFragmentProto defaultValue) {
       }
       return fragments_;
     }
-    private com.google.protobuf.MapField<java.lang.Long, com.github.paohaijiao.proto.JQuickFragmentProto>
+    private com.google.protobuf.MapField<java.lang.Long, JQuickFragmentProto>
         internalGetMutableFragments() {
       if (fragments_ == null) {
         fragments_ = com.google.protobuf.MapField.newMapField(
@@ -1194,14 +1194,14 @@ com.github.paohaijiao.proto.JQuickFragmentProto defaultValue) {
      */
     @java.lang.Override
     @java.lang.Deprecated
-    public java.util.Map<java.lang.Long, com.github.paohaijiao.proto.JQuickFragmentProto> getFragments() {
+    public java.util.Map<java.lang.Long, JQuickFragmentProto> getFragments() {
       return getFragmentsMap();
     }
     /**
      * <code>map&lt;int64, .com.github.paohaijiao.proto.JQuickFragmentProto&gt; fragments = 4;</code>
      */
     @java.lang.Override
-    public java.util.Map<java.lang.Long, com.github.paohaijiao.proto.JQuickFragmentProto> getFragmentsMap() {
+    public java.util.Map<java.lang.Long, JQuickFragmentProto> getFragmentsMap() {
       return internalGetFragments().getMap();
     }
     /**
@@ -1209,12 +1209,12 @@ com.github.paohaijiao.proto.JQuickFragmentProto defaultValue) {
      */
     @java.lang.Override
     public /* nullable */
-com.github.paohaijiao.proto.JQuickFragmentProto getFragmentsOrDefault(
+JQuickFragmentProto getFragmentsOrDefault(
         long key,
         /* nullable */
-com.github.paohaijiao.proto.JQuickFragmentProto defaultValue) {
+JQuickFragmentProto defaultValue) {
       
-      java.util.Map<java.lang.Long, com.github.paohaijiao.proto.JQuickFragmentProto> map =
+      java.util.Map<java.lang.Long, JQuickFragmentProto> map =
           internalGetFragments().getMap();
       return map.containsKey(key) ? map.get(key) : defaultValue;
     }
@@ -1222,10 +1222,10 @@ com.github.paohaijiao.proto.JQuickFragmentProto defaultValue) {
      * <code>map&lt;int64, .com.github.paohaijiao.proto.JQuickFragmentProto&gt; fragments = 4;</code>
      */
     @java.lang.Override
-    public com.github.paohaijiao.proto.JQuickFragmentProto getFragmentsOrThrow(
+    public JQuickFragmentProto getFragmentsOrThrow(
         long key) {
       
-      java.util.Map<java.lang.Long, com.github.paohaijiao.proto.JQuickFragmentProto> map =
+      java.util.Map<java.lang.Long, JQuickFragmentProto> map =
           internalGetFragments().getMap();
       if (!map.containsKey(key)) {
         throw new java.lang.IllegalArgumentException();
@@ -1252,7 +1252,7 @@ com.github.paohaijiao.proto.JQuickFragmentProto defaultValue) {
      * Use alternate mutation accessors instead.
      */
     @java.lang.Deprecated
-    public java.util.Map<java.lang.Long, com.github.paohaijiao.proto.JQuickFragmentProto>
+    public java.util.Map<java.lang.Long, JQuickFragmentProto>
         getMutableFragments() {
       bitField0_ |= 0x00000008;
       return internalGetMutableFragments().getMutableMap();
@@ -1262,7 +1262,7 @@ com.github.paohaijiao.proto.JQuickFragmentProto defaultValue) {
      */
     public Builder putFragments(
         long key,
-        com.github.paohaijiao.proto.JQuickFragmentProto value) {
+        JQuickFragmentProto value) {
       
       if (value == null) { throw new NullPointerException("map value"); }
       internalGetMutableFragments().getMutableMap()
@@ -1274,7 +1274,7 @@ com.github.paohaijiao.proto.JQuickFragmentProto defaultValue) {
      * <code>map&lt;int64, .com.github.paohaijiao.proto.JQuickFragmentProto&gt; fragments = 4;</code>
      */
     public Builder putAllFragments(
-        java.util.Map<java.lang.Long, com.github.paohaijiao.proto.JQuickFragmentProto> values) {
+        java.util.Map<java.lang.Long, JQuickFragmentProto> values) {
       internalGetMutableFragments().getMutableMap()
           .putAll(values);
       bitField0_ |= 0x00000008;
@@ -1598,12 +1598,12 @@ com.github.paohaijiao.proto.JQuickFragmentProto defaultValue) {
   }
 
   // @@protoc_insertion_point(class_scope:com.github.paohaijiao.proto.JQuickDistributedPlanProto)
-  private static final com.github.paohaijiao.proto.JQuickDistributedPlanProto DEFAULT_INSTANCE;
+  private static final JQuickDistributedPlanProto DEFAULT_INSTANCE;
   static {
-    DEFAULT_INSTANCE = new com.github.paohaijiao.proto.JQuickDistributedPlanProto();
+    DEFAULT_INSTANCE = new JQuickDistributedPlanProto();
   }
 
-  public static com.github.paohaijiao.proto.JQuickDistributedPlanProto getDefaultInstance() {
+  public static JQuickDistributedPlanProto getDefaultInstance() {
     return DEFAULT_INSTANCE;
   }
 
@@ -1639,7 +1639,7 @@ com.github.paohaijiao.proto.JQuickFragmentProto defaultValue) {
   }
 
   @java.lang.Override
-  public com.github.paohaijiao.proto.JQuickDistributedPlanProto getDefaultInstanceForType() {
+  public JQuickDistributedPlanProto getDefaultInstanceForType() {
     return DEFAULT_INSTANCE;
   }
 

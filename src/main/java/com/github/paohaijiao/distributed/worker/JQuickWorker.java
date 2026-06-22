@@ -4,6 +4,7 @@ import com.github.paohaijiao.console.JConsole;
 import com.github.paohaijiao.datasource.JQuickDataSourceManager;
 import com.github.paohaijiao.distributed.coordinator.JQuickCoordinator;
 import com.github.paohaijiao.enums.JQuickExchangeType;
+import com.github.paohaijiao.enums.JQuickFragmentType;
 import com.github.paohaijiao.function.manager.JQuickMethodInvocationManager;
 import com.github.paohaijiao.proto.*;
 import com.github.paohaijiao.statement.JQuickColumnMeta;
@@ -258,6 +259,16 @@ public class JQuickWorker {
         try {
             for (JQuickMemoryPartitionProto inputPartition : request.getInputPartitionsList()) {
                 receivePartition(inputPartition);// 接收输入分区数据
+            }
+            JQuickFragmentTypeProto type=request.getFragment().getType();
+            if (JQuickFragmentType.SOURCE.equals(type)) {
+               console.info("SOURCE");
+            }
+            if (JQuickFragmentType.INTERMEDIATE.equals(request.getFragment().getType())) {
+                console.info("INTERMEDIATE");
+            }
+            if (JQuickFragmentType.SINK.equals(request.getFragment().getType())) {
+                console.info("SINK");
             }
             JQuickDataSet result = nodeExecutor.executeFragment(request.getFragment(), context);// 执行物理计划片段
             if (request.hasOutputPartition()) {

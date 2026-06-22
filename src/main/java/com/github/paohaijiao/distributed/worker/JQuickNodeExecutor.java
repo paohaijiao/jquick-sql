@@ -5,6 +5,7 @@ import com.github.paohaijiao.datasource.JQuickDataSourceManager;
 import com.github.paohaijiao.enums.JQuickBinaryOperator;
 import com.github.paohaijiao.enums.JQuickExchangeType;
 import com.github.paohaijiao.enums.JQuickPartitionStrategy;
+import com.github.paohaijiao.enums.JQuickSQLOperationType;
 import com.github.paohaijiao.expression.JQuickExpression;
 import com.github.paohaijiao.expression.domain.JQuickBinaryExpression;
 import com.github.paohaijiao.expression.domain.JQuickColumnRefExpression;
@@ -597,8 +598,29 @@ public class JQuickNodeExecutor {
      * 执行 Set Operation
      */
     private JQuickDataSet executeSetOperation(JQuickSetOperationPhysicalNode node, JQuickWorker.JQuickTaskContext context) {
-        JQuickDataSet leftData = executeNode(node.getLeft(), context);
-        JQuickDataSet rightData = executeNode(node.getRight(), context);
+        JQuickDataSet leftData;
+        JQuickDataSet rightData;
+        
+        // 如果 children 为空（分布式场景），从 inputPartitions 读取数据
+        if (node.getLeft() == null || node.getRight() == null) {
+            JQuickExecuteTaskRequest request = context.getRequest();
+            List<JQuickDataSet> datasets = readFromInputPartitionsForSetOperation(request);
+            if (datasets.size() >= 2) {
+                leftData = datasets.get(0);
+                rightData = datasets.get(1);
+            } else if (datasets.size() == 1) {
+                // 同一个数据集作为左右
+                leftData = datasets.get(0);
+                rightData = datasets.get(0);
+            } else {
+                leftData = JQuickDataSet.builder().build();
+                rightData = JQuickDataSet.builder().build();
+            }
+        } else {
+            leftData = executeNode(node.getLeft(), context);
+            rightData = executeNode(node.getRight(), context);
+        }
+        
         List<JQuickRow> resultRows;
         switch (node.getOperationType()) {
             case UNION:
@@ -621,6 +643,23 @@ public class JQuickNodeExecutor {
                 resultRows = new ArrayList<>(leftData.getRows());
         }
         return new JQuickDataSet(leftData.getColumns(), resultRows);
+    }
+    
+    /**
+     * 从 input partitions 读取数据用于 Set Operation（分布式场景）
+     * 返回多个数据集，分别对应左右操作数
+     */
+    private List<JQuickDataSet> readFromInputPartitionsForSetOperation(JQuickExecuteTaskRequest request) {
+        List<JQuickDataSet> datasets = new ArrayList<>();
+        for (JQuickMemoryPartitionProto partition : request.getInputPartitionsList()) {
+            if (partition.hasData()) {
+                JQuickDataSet partitionData = dataConverter.convertFromProto(partition.getData());
+                if (!partitionData.isEmpty()) {
+                    datasets.add(partitionData);
+                }
+            }
+        }
+        return datasets;
     }
     
     /**
@@ -1303,10 +1342,38 @@ public class JQuickNodeExecutor {
             case LIMIT:
                 JQuickLimitNodeProto limitProto = proto.getLimit();
                 return new JQuickLimitPhysicalNode(limitProto.getLimit(), limitProto.getOffset(), null);
+            case SET_OPERATION:
+                JQuickSetOperationNodeProto setOpProto = proto.getSetOperation();
+                JQuickSQLOperationType opType = convertSetOperationType(setOpProto.getOperationType());
+                List<JQuickPhysicalPlanNode> children = new ArrayList<>();
+                for (JQuickPhysicalPlanNodeProto childProto : setOpProto.getChildrenList()) {
+                    children.add(buildPhysicalNode(childProto));
+                }
+                return new JQuickSetOperationPhysicalNode(opType, 
+                        children.size() > 0 ? children.get(0) : null, 
+                        children.size() > 1 ? children.get(1) : null);
             case EMPTY:
                 return JQuickEmptyPhysicalNode.INSTANCE;
             default:
                 return null;
+        }
+    }
+    
+    /**
+     * 转换 Set Operation 类型
+     */
+    private JQuickSQLOperationType convertSetOperationType(JQuickSQLOperationTypeProto proto) {
+        switch (proto) {
+            case SET_UNION:
+                return JQuickSQLOperationType.UNION;
+            case SET_UNION_ALL:
+                return JQuickSQLOperationType.UNION_ALL;
+            case SET_INTERSECT:
+                return JQuickSQLOperationType.INTERSECT;
+            case SET_EXCEPT:
+                return JQuickSQLOperationType.EXCEPT;
+            default:
+                return JQuickSQLOperationType.UNION;
         }
     }
 

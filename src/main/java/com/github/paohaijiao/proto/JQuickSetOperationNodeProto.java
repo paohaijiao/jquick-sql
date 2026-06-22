@@ -17,6 +17,7 @@ private static final long serialVersionUID = 0L;
   }
   private JQuickSetOperationNodeProto() {
     operationType_ = 0;
+    children_ = java.util.Collections.emptyList();
   }
 
   @java.lang.Override
@@ -73,6 +74,47 @@ private static final long serialVersionUID = 0L;
     return distinct_;
   }
 
+  public static final int CHILDREN_FIELD_NUMBER = 3;
+  @SuppressWarnings("serial")
+  private java.util.List<com.github.paohaijiao.proto.JQuickPhysicalPlanNodeProto> children_;
+  /**
+   * <code>repeated .com.github.paohaijiao.proto.JQuickPhysicalPlanNodeProto children = 3;</code>
+   */
+  @java.lang.Override
+  public java.util.List<com.github.paohaijiao.proto.JQuickPhysicalPlanNodeProto> getChildrenList() {
+    return children_;
+  }
+  /**
+   * <code>repeated .com.github.paohaijiao.proto.JQuickPhysicalPlanNodeProto children = 3;</code>
+   */
+  @java.lang.Override
+  public java.util.List<? extends com.github.paohaijiao.proto.JQuickPhysicalPlanNodeProtoOrBuilder> 
+      getChildrenOrBuilderList() {
+    return children_;
+  }
+  /**
+   * <code>repeated .com.github.paohaijiao.proto.JQuickPhysicalPlanNodeProto children = 3;</code>
+   */
+  @java.lang.Override
+  public int getChildrenCount() {
+    return children_.size();
+  }
+  /**
+   * <code>repeated .com.github.paohaijiao.proto.JQuickPhysicalPlanNodeProto children = 3;</code>
+   */
+  @java.lang.Override
+  public com.github.paohaijiao.proto.JQuickPhysicalPlanNodeProto getChildren(int index) {
+    return children_.get(index);
+  }
+  /**
+   * <code>repeated .com.github.paohaijiao.proto.JQuickPhysicalPlanNodeProto children = 3;</code>
+   */
+  @java.lang.Override
+  public com.github.paohaijiao.proto.JQuickPhysicalPlanNodeProtoOrBuilder getChildrenOrBuilder(
+      int index) {
+    return children_.get(index);
+  }
+
   private byte memoizedIsInitialized = -1;
   @java.lang.Override
   public final boolean isInitialized() {
@@ -93,6 +135,9 @@ private static final long serialVersionUID = 0L;
     if (distinct_ != false) {
       output.writeBool(2, distinct_);
     }
+    for (int i = 0; i < children_.size(); i++) {
+      output.writeMessage(3, children_.get(i));
+    }
     getUnknownFields().writeTo(output);
   }
 
@@ -109,6 +154,10 @@ private static final long serialVersionUID = 0L;
     if (distinct_ != false) {
       size += com.google.protobuf.CodedOutputStream
         .computeBoolSize(2, distinct_);
+    }
+    for (int i = 0; i < children_.size(); i++) {
+      size += com.google.protobuf.CodedOutputStream
+        .computeMessageSize(3, children_.get(i));
     }
     size += getUnknownFields().getSerializedSize();
     memoizedSize = size;
@@ -128,6 +177,8 @@ private static final long serialVersionUID = 0L;
     if (operationType_ != other.operationType_) return false;
     if (getDistinct()
         != other.getDistinct()) return false;
+    if (!getChildrenList()
+        .equals(other.getChildrenList())) return false;
     if (!getUnknownFields().equals(other.getUnknownFields())) return false;
     return true;
   }
@@ -144,6 +195,10 @@ private static final long serialVersionUID = 0L;
     hash = (37 * hash) + DISTINCT_FIELD_NUMBER;
     hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
         getDistinct());
+    if (getChildrenCount() > 0) {
+      hash = (37 * hash) + CHILDREN_FIELD_NUMBER;
+      hash = (53 * hash) + getChildrenList().hashCode();
+    }
     hash = (29 * hash) + getUnknownFields().hashCode();
     memoizedHashCode = hash;
     return hash;
@@ -275,6 +330,13 @@ private static final long serialVersionUID = 0L;
       bitField0_ = 0;
       operationType_ = 0;
       distinct_ = false;
+      if (childrenBuilder_ == null) {
+        children_ = java.util.Collections.emptyList();
+      } else {
+        children_ = null;
+        childrenBuilder_.clear();
+      }
+      bitField0_ = (bitField0_ & ~0x00000004);
       return this;
     }
 
@@ -301,9 +363,22 @@ private static final long serialVersionUID = 0L;
     @java.lang.Override
     public com.github.paohaijiao.proto.JQuickSetOperationNodeProto buildPartial() {
       com.github.paohaijiao.proto.JQuickSetOperationNodeProto result = new com.github.paohaijiao.proto.JQuickSetOperationNodeProto(this);
+      buildPartialRepeatedFields(result);
       if (bitField0_ != 0) { buildPartial0(result); }
       onBuilt();
       return result;
+    }
+
+    private void buildPartialRepeatedFields(com.github.paohaijiao.proto.JQuickSetOperationNodeProto result) {
+      if (childrenBuilder_ == null) {
+        if (((bitField0_ & 0x00000004) != 0)) {
+          children_ = java.util.Collections.unmodifiableList(children_);
+          bitField0_ = (bitField0_ & ~0x00000004);
+        }
+        result.children_ = children_;
+      } else {
+        result.children_ = childrenBuilder_.build();
+      }
     }
 
     private void buildPartial0(com.github.paohaijiao.proto.JQuickSetOperationNodeProto result) {
@@ -366,6 +441,32 @@ private static final long serialVersionUID = 0L;
       if (other.getDistinct() != false) {
         setDistinct(other.getDistinct());
       }
+      if (childrenBuilder_ == null) {
+        if (!other.children_.isEmpty()) {
+          if (children_.isEmpty()) {
+            children_ = other.children_;
+            bitField0_ = (bitField0_ & ~0x00000004);
+          } else {
+            ensureChildrenIsMutable();
+            children_.addAll(other.children_);
+          }
+          onChanged();
+        }
+      } else {
+        if (!other.children_.isEmpty()) {
+          if (childrenBuilder_.isEmpty()) {
+            childrenBuilder_.dispose();
+            childrenBuilder_ = null;
+            children_ = other.children_;
+            bitField0_ = (bitField0_ & ~0x00000004);
+            childrenBuilder_ = 
+              com.google.protobuf.GeneratedMessageV3.alwaysUseFieldBuilders ?
+                 getChildrenFieldBuilder() : null;
+          } else {
+            childrenBuilder_.addAllMessages(other.children_);
+          }
+        }
+      }
       this.mergeUnknownFields(other.getUnknownFields());
       onChanged();
       return this;
@@ -402,6 +503,19 @@ private static final long serialVersionUID = 0L;
               bitField0_ |= 0x00000002;
               break;
             } // case 16
+            case 26: {
+              com.github.paohaijiao.proto.JQuickPhysicalPlanNodeProto m =
+                  input.readMessage(
+                      com.github.paohaijiao.proto.JQuickPhysicalPlanNodeProto.parser(),
+                      extensionRegistry);
+              if (childrenBuilder_ == null) {
+                ensureChildrenIsMutable();
+                children_.add(m);
+              } else {
+                childrenBuilder_.addMessage(m);
+              }
+              break;
+            } // case 26
             default: {
               if (!super.parseUnknownField(input, extensionRegistry, tag)) {
                 done = true; // was an endgroup tag
@@ -502,6 +616,246 @@ private static final long serialVersionUID = 0L;
       distinct_ = false;
       onChanged();
       return this;
+    }
+
+    private java.util.List<com.github.paohaijiao.proto.JQuickPhysicalPlanNodeProto> children_ =
+      java.util.Collections.emptyList();
+    private void ensureChildrenIsMutable() {
+      if (!((bitField0_ & 0x00000004) != 0)) {
+        children_ = new java.util.ArrayList<com.github.paohaijiao.proto.JQuickPhysicalPlanNodeProto>(children_);
+        bitField0_ |= 0x00000004;
+       }
+    }
+
+    private com.google.protobuf.RepeatedFieldBuilderV3<
+        com.github.paohaijiao.proto.JQuickPhysicalPlanNodeProto, com.github.paohaijiao.proto.JQuickPhysicalPlanNodeProto.Builder, com.github.paohaijiao.proto.JQuickPhysicalPlanNodeProtoOrBuilder> childrenBuilder_;
+
+    /**
+     * <code>repeated .com.github.paohaijiao.proto.JQuickPhysicalPlanNodeProto children = 3;</code>
+     */
+    public java.util.List<com.github.paohaijiao.proto.JQuickPhysicalPlanNodeProto> getChildrenList() {
+      if (childrenBuilder_ == null) {
+        return java.util.Collections.unmodifiableList(children_);
+      } else {
+        return childrenBuilder_.getMessageList();
+      }
+    }
+    /**
+     * <code>repeated .com.github.paohaijiao.proto.JQuickPhysicalPlanNodeProto children = 3;</code>
+     */
+    public int getChildrenCount() {
+      if (childrenBuilder_ == null) {
+        return children_.size();
+      } else {
+        return childrenBuilder_.getCount();
+      }
+    }
+    /**
+     * <code>repeated .com.github.paohaijiao.proto.JQuickPhysicalPlanNodeProto children = 3;</code>
+     */
+    public com.github.paohaijiao.proto.JQuickPhysicalPlanNodeProto getChildren(int index) {
+      if (childrenBuilder_ == null) {
+        return children_.get(index);
+      } else {
+        return childrenBuilder_.getMessage(index);
+      }
+    }
+    /**
+     * <code>repeated .com.github.paohaijiao.proto.JQuickPhysicalPlanNodeProto children = 3;</code>
+     */
+    public Builder setChildren(
+        int index, com.github.paohaijiao.proto.JQuickPhysicalPlanNodeProto value) {
+      if (childrenBuilder_ == null) {
+        if (value == null) {
+          throw new NullPointerException();
+        }
+        ensureChildrenIsMutable();
+        children_.set(index, value);
+        onChanged();
+      } else {
+        childrenBuilder_.setMessage(index, value);
+      }
+      return this;
+    }
+    /**
+     * <code>repeated .com.github.paohaijiao.proto.JQuickPhysicalPlanNodeProto children = 3;</code>
+     */
+    public Builder setChildren(
+        int index, com.github.paohaijiao.proto.JQuickPhysicalPlanNodeProto.Builder builderForValue) {
+      if (childrenBuilder_ == null) {
+        ensureChildrenIsMutable();
+        children_.set(index, builderForValue.build());
+        onChanged();
+      } else {
+        childrenBuilder_.setMessage(index, builderForValue.build());
+      }
+      return this;
+    }
+    /**
+     * <code>repeated .com.github.paohaijiao.proto.JQuickPhysicalPlanNodeProto children = 3;</code>
+     */
+    public Builder addChildren(com.github.paohaijiao.proto.JQuickPhysicalPlanNodeProto value) {
+      if (childrenBuilder_ == null) {
+        if (value == null) {
+          throw new NullPointerException();
+        }
+        ensureChildrenIsMutable();
+        children_.add(value);
+        onChanged();
+      } else {
+        childrenBuilder_.addMessage(value);
+      }
+      return this;
+    }
+    /**
+     * <code>repeated .com.github.paohaijiao.proto.JQuickPhysicalPlanNodeProto children = 3;</code>
+     */
+    public Builder addChildren(
+        int index, com.github.paohaijiao.proto.JQuickPhysicalPlanNodeProto value) {
+      if (childrenBuilder_ == null) {
+        if (value == null) {
+          throw new NullPointerException();
+        }
+        ensureChildrenIsMutable();
+        children_.add(index, value);
+        onChanged();
+      } else {
+        childrenBuilder_.addMessage(index, value);
+      }
+      return this;
+    }
+    /**
+     * <code>repeated .com.github.paohaijiao.proto.JQuickPhysicalPlanNodeProto children = 3;</code>
+     */
+    public Builder addChildren(
+        com.github.paohaijiao.proto.JQuickPhysicalPlanNodeProto.Builder builderForValue) {
+      if (childrenBuilder_ == null) {
+        ensureChildrenIsMutable();
+        children_.add(builderForValue.build());
+        onChanged();
+      } else {
+        childrenBuilder_.addMessage(builderForValue.build());
+      }
+      return this;
+    }
+    /**
+     * <code>repeated .com.github.paohaijiao.proto.JQuickPhysicalPlanNodeProto children = 3;</code>
+     */
+    public Builder addChildren(
+        int index, com.github.paohaijiao.proto.JQuickPhysicalPlanNodeProto.Builder builderForValue) {
+      if (childrenBuilder_ == null) {
+        ensureChildrenIsMutable();
+        children_.add(index, builderForValue.build());
+        onChanged();
+      } else {
+        childrenBuilder_.addMessage(index, builderForValue.build());
+      }
+      return this;
+    }
+    /**
+     * <code>repeated .com.github.paohaijiao.proto.JQuickPhysicalPlanNodeProto children = 3;</code>
+     */
+    public Builder addAllChildren(
+        java.lang.Iterable<? extends com.github.paohaijiao.proto.JQuickPhysicalPlanNodeProto> values) {
+      if (childrenBuilder_ == null) {
+        ensureChildrenIsMutable();
+        com.google.protobuf.AbstractMessageLite.Builder.addAll(
+            values, children_);
+        onChanged();
+      } else {
+        childrenBuilder_.addAllMessages(values);
+      }
+      return this;
+    }
+    /**
+     * <code>repeated .com.github.paohaijiao.proto.JQuickPhysicalPlanNodeProto children = 3;</code>
+     */
+    public Builder clearChildren() {
+      if (childrenBuilder_ == null) {
+        children_ = java.util.Collections.emptyList();
+        bitField0_ = (bitField0_ & ~0x00000004);
+        onChanged();
+      } else {
+        childrenBuilder_.clear();
+      }
+      return this;
+    }
+    /**
+     * <code>repeated .com.github.paohaijiao.proto.JQuickPhysicalPlanNodeProto children = 3;</code>
+     */
+    public Builder removeChildren(int index) {
+      if (childrenBuilder_ == null) {
+        ensureChildrenIsMutable();
+        children_.remove(index);
+        onChanged();
+      } else {
+        childrenBuilder_.remove(index);
+      }
+      return this;
+    }
+    /**
+     * <code>repeated .com.github.paohaijiao.proto.JQuickPhysicalPlanNodeProto children = 3;</code>
+     */
+    public com.github.paohaijiao.proto.JQuickPhysicalPlanNodeProto.Builder getChildrenBuilder(
+        int index) {
+      return getChildrenFieldBuilder().getBuilder(index);
+    }
+    /**
+     * <code>repeated .com.github.paohaijiao.proto.JQuickPhysicalPlanNodeProto children = 3;</code>
+     */
+    public com.github.paohaijiao.proto.JQuickPhysicalPlanNodeProtoOrBuilder getChildrenOrBuilder(
+        int index) {
+      if (childrenBuilder_ == null) {
+        return children_.get(index);  } else {
+        return childrenBuilder_.getMessageOrBuilder(index);
+      }
+    }
+    /**
+     * <code>repeated .com.github.paohaijiao.proto.JQuickPhysicalPlanNodeProto children = 3;</code>
+     */
+    public java.util.List<? extends com.github.paohaijiao.proto.JQuickPhysicalPlanNodeProtoOrBuilder> 
+         getChildrenOrBuilderList() {
+      if (childrenBuilder_ != null) {
+        return childrenBuilder_.getMessageOrBuilderList();
+      } else {
+        return java.util.Collections.unmodifiableList(children_);
+      }
+    }
+    /**
+     * <code>repeated .com.github.paohaijiao.proto.JQuickPhysicalPlanNodeProto children = 3;</code>
+     */
+    public com.github.paohaijiao.proto.JQuickPhysicalPlanNodeProto.Builder addChildrenBuilder() {
+      return getChildrenFieldBuilder().addBuilder(
+          com.github.paohaijiao.proto.JQuickPhysicalPlanNodeProto.getDefaultInstance());
+    }
+    /**
+     * <code>repeated .com.github.paohaijiao.proto.JQuickPhysicalPlanNodeProto children = 3;</code>
+     */
+    public com.github.paohaijiao.proto.JQuickPhysicalPlanNodeProto.Builder addChildrenBuilder(
+        int index) {
+      return getChildrenFieldBuilder().addBuilder(
+          index, com.github.paohaijiao.proto.JQuickPhysicalPlanNodeProto.getDefaultInstance());
+    }
+    /**
+     * <code>repeated .com.github.paohaijiao.proto.JQuickPhysicalPlanNodeProto children = 3;</code>
+     */
+    public java.util.List<com.github.paohaijiao.proto.JQuickPhysicalPlanNodeProto.Builder> 
+         getChildrenBuilderList() {
+      return getChildrenFieldBuilder().getBuilderList();
+    }
+    private com.google.protobuf.RepeatedFieldBuilderV3<
+        com.github.paohaijiao.proto.JQuickPhysicalPlanNodeProto, com.github.paohaijiao.proto.JQuickPhysicalPlanNodeProto.Builder, com.github.paohaijiao.proto.JQuickPhysicalPlanNodeProtoOrBuilder> 
+        getChildrenFieldBuilder() {
+      if (childrenBuilder_ == null) {
+        childrenBuilder_ = new com.google.protobuf.RepeatedFieldBuilderV3<
+            com.github.paohaijiao.proto.JQuickPhysicalPlanNodeProto, com.github.paohaijiao.proto.JQuickPhysicalPlanNodeProto.Builder, com.github.paohaijiao.proto.JQuickPhysicalPlanNodeProtoOrBuilder>(
+                children_,
+                ((bitField0_ & 0x00000004) != 0),
+                getParentForChildren(),
+                isClean());
+        children_ = null;
+      }
+      return childrenBuilder_;
     }
     @java.lang.Override
     public final Builder setUnknownFields(
