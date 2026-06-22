@@ -333,7 +333,6 @@ public class JQuickDatasetOpTest {
         result.printTable();
         System.out.println("总行数: " + result.getRows().size());
         worker1.stop();
-//        worker2.stop();
         System.out.println("=== UNION操作测试通过 ===");
     }
 
