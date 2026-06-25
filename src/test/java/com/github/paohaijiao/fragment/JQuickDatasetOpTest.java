@@ -311,7 +311,6 @@ public class JQuickDatasetOpTest {
         registerUsersTable();
         JQuickWorker worker1 = new JQuickWorker("worker-1", 9001);
        // JQuickWorker worker2 = new JQuickWorker("worker-2", 9002);
-
         List<JQuickCoordinator.WorkerEndpoint> endpoints = Arrays.asList(
             new JQuickCoordinator.WorkerEndpoint("worker-1", "localhost", 9001, 0)
          //   new JQuickCoordinator.WorkerEndpoint("worker-2", "localhost", 9002, 1)
@@ -327,7 +326,6 @@ public class JQuickDatasetOpTest {
         JQuickProjectNode rightQuery = createProjectWithFilter("users", "status", "pending", "id", "name");
         JQuickSetOperationNode unionNode = new JQuickSetOperationNode(JQuickSQLOperationType.UNION, leftQuery, rightQuery);
         JQuickPhysicalPlanNode physicalPlan = generator.generate(unionNode);
-        System.out.println("=== UNION 操作测试（基于 JQuickCoordinator）===");
         JQuickDataSet result = coordinator.executeQuery("query-union-001", physicalPlan);
         System.out.println("\n=== 执行结果 ===");
         result.printTable();
