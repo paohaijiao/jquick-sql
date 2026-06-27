@@ -138,7 +138,7 @@
                     <!-- proto 文件目录 -->
                     <protoSourceRoot>${project.basedir}/src/main/proto</protoSourceRoot>
                     <!-- 输出目录 -->
-                    <outputDirectory>${project.build.directory}/generated-sources/protobuf/java</outputDirectory>
+                    <outputDirectory>${project.basedir}/src/main/java</outputDirectory>
                     <!-- 清理输出目录 -->
                     <clearOutputDirectory>false</clearOutputDirectory>
                 </configuration>
