@@ -165,8 +165,7 @@
                         </goals>
                         <configuration>
                             <sources>
-                                <source>${project.build.directory}/generated-sources/protobuf/java</source>
-                                <source>${project.build.directory}/generated-sources/protobuf/grpc-java</source>
+                                <!-- 已移除，因为 protobuf-maven-plugin 直接输出到 src/main/java -->
                             </sources>
                         </configuration>
                     </execution>
