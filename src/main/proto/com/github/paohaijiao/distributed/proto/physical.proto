@@ -253,7 +253,7 @@ message JQuickPhysicalPlanNodeProto {
   int32 node_index = 3;
   JQuickPhysicalStatsProto stats = 4;
   repeated JQuickPhysicalColumnProto output_schema = 5;
-  repeated JQuickPhysicalPlanNodeProto children = 6;  // 修改：使用完整的子节点
+  repeated string child_node_ids = 6;
 
   oneof node {
     JQuickTableScanNodeProto table_scan = 10;

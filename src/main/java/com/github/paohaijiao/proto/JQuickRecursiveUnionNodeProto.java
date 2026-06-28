@@ -34,15 +34,15 @@ private static final long serialVersionUID = 0L;
   }
   public static final com.google.protobuf.Descriptors.Descriptor
       getDescriptor() {
-    return JQuickPhysicalPlanProto.internal_static_com_github_paohaijiao_proto_JQuickRecursiveUnionNodeProto_descriptor;
+    return com.github.paohaijiao.proto.JQuickPhysicalPlanProto.internal_static_com_github_paohaijiao_proto_JQuickRecursiveUnionNodeProto_descriptor;
   }
 
   @java.lang.Override
   protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internalGetFieldAccessorTable() {
-    return JQuickPhysicalPlanProto.internal_static_com_github_paohaijiao_proto_JQuickRecursiveUnionNodeProto_fieldAccessorTable
+    return com.github.paohaijiao.proto.JQuickPhysicalPlanProto.internal_static_com_github_paohaijiao_proto_JQuickRecursiveUnionNodeProto_fieldAccessorTable
         .ensureFieldAccessorsInitialized(
-            JQuickRecursiveUnionNodeProto.class, JQuickRecursiveUnionNodeProto.Builder.class);
+            com.github.paohaijiao.proto.JQuickRecursiveUnionNodeProto.class, com.github.paohaijiao.proto.JQuickRecursiveUnionNodeProto.Builder.class);
   }
 
   public static final int CTE_NAME_FIELD_NUMBER = 1;
@@ -206,10 +206,10 @@ private static final long serialVersionUID = 0L;
     if (obj == this) {
      return true;
     }
-    if (!(obj instanceof JQuickRecursiveUnionNodeProto)) {
+    if (!(obj instanceof com.github.paohaijiao.proto.JQuickRecursiveUnionNodeProto)) {
       return super.equals(obj);
     }
-    JQuickRecursiveUnionNodeProto other = (JQuickRecursiveUnionNodeProto) obj;
+    com.github.paohaijiao.proto.JQuickRecursiveUnionNodeProto other = (com.github.paohaijiao.proto.JQuickRecursiveUnionNodeProto) obj;
 
     if (!getCteName()
         .equals(other.getCteName())) return false;
@@ -246,69 +246,69 @@ private static final long serialVersionUID = 0L;
     return hash;
   }
 
-  public static JQuickRecursiveUnionNodeProto parseFrom(
+  public static com.github.paohaijiao.proto.JQuickRecursiveUnionNodeProto parseFrom(
       java.nio.ByteBuffer data)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data);
   }
-  public static JQuickRecursiveUnionNodeProto parseFrom(
+  public static com.github.paohaijiao.proto.JQuickRecursiveUnionNodeProto parseFrom(
       java.nio.ByteBuffer data,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data, extensionRegistry);
   }
-  public static JQuickRecursiveUnionNodeProto parseFrom(
+  public static com.github.paohaijiao.proto.JQuickRecursiveUnionNodeProto parseFrom(
       com.google.protobuf.ByteString data)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data);
   }
-  public static JQuickRecursiveUnionNodeProto parseFrom(
+  public static com.github.paohaijiao.proto.JQuickRecursiveUnionNodeProto parseFrom(
       com.google.protobuf.ByteString data,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data, extensionRegistry);
   }
-  public static JQuickRecursiveUnionNodeProto parseFrom(byte[] data)
+  public static com.github.paohaijiao.proto.JQuickRecursiveUnionNodeProto parseFrom(byte[] data)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data);
   }
-  public static JQuickRecursiveUnionNodeProto parseFrom(
+  public static com.github.paohaijiao.proto.JQuickRecursiveUnionNodeProto parseFrom(
       byte[] data,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data, extensionRegistry);
   }
-  public static JQuickRecursiveUnionNodeProto parseFrom(java.io.InputStream input)
+  public static com.github.paohaijiao.proto.JQuickRecursiveUnionNodeProto parseFrom(java.io.InputStream input)
       throws java.io.IOException {
     return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input);
   }
-  public static JQuickRecursiveUnionNodeProto parseFrom(
+  public static com.github.paohaijiao.proto.JQuickRecursiveUnionNodeProto parseFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
     return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input, extensionRegistry);
   }
-  public static JQuickRecursiveUnionNodeProto parseDelimitedFrom(java.io.InputStream input)
+  public static com.github.paohaijiao.proto.JQuickRecursiveUnionNodeProto parseDelimitedFrom(java.io.InputStream input)
       throws java.io.IOException {
     return com.google.protobuf.GeneratedMessageV3
         .parseDelimitedWithIOException(PARSER, input);
   }
-  public static JQuickRecursiveUnionNodeProto parseDelimitedFrom(
+  public static com.github.paohaijiao.proto.JQuickRecursiveUnionNodeProto parseDelimitedFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
     return com.google.protobuf.GeneratedMessageV3
         .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
   }
-  public static JQuickRecursiveUnionNodeProto parseFrom(
+  public static com.github.paohaijiao.proto.JQuickRecursiveUnionNodeProto parseFrom(
       com.google.protobuf.CodedInputStream input)
       throws java.io.IOException {
     return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input);
   }
-  public static JQuickRecursiveUnionNodeProto parseFrom(
+  public static com.github.paohaijiao.proto.JQuickRecursiveUnionNodeProto parseFrom(
       com.google.protobuf.CodedInputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
@@ -321,7 +321,7 @@ private static final long serialVersionUID = 0L;
   public static Builder newBuilder() {
     return DEFAULT_INSTANCE.toBuilder();
   }
-  public static Builder newBuilder(JQuickRecursiveUnionNodeProto prototype) {
+  public static Builder newBuilder(com.github.paohaijiao.proto.JQuickRecursiveUnionNodeProto prototype) {
     return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
   }
   @java.lang.Override
@@ -342,18 +342,18 @@ private static final long serialVersionUID = 0L;
   public static final class Builder extends
       com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
       // @@protoc_insertion_point(builder_implements:com.github.paohaijiao.proto.JQuickRecursiveUnionNodeProto)
-      JQuickRecursiveUnionNodeProtoOrBuilder {
+      com.github.paohaijiao.proto.JQuickRecursiveUnionNodeProtoOrBuilder {
     public static final com.google.protobuf.Descriptors.Descriptor
         getDescriptor() {
-      return JQuickPhysicalPlanProto.internal_static_com_github_paohaijiao_proto_JQuickRecursiveUnionNodeProto_descriptor;
+      return com.github.paohaijiao.proto.JQuickPhysicalPlanProto.internal_static_com_github_paohaijiao_proto_JQuickRecursiveUnionNodeProto_descriptor;
     }
 
     @java.lang.Override
     protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
         internalGetFieldAccessorTable() {
-      return JQuickPhysicalPlanProto.internal_static_com_github_paohaijiao_proto_JQuickRecursiveUnionNodeProto_fieldAccessorTable
+      return com.github.paohaijiao.proto.JQuickPhysicalPlanProto.internal_static_com_github_paohaijiao_proto_JQuickRecursiveUnionNodeProto_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
-              JQuickRecursiveUnionNodeProto.class, JQuickRecursiveUnionNodeProto.Builder.class);
+              com.github.paohaijiao.proto.JQuickRecursiveUnionNodeProto.class, com.github.paohaijiao.proto.JQuickRecursiveUnionNodeProto.Builder.class);
     }
 
     // Construct using com.github.paohaijiao.proto.JQuickRecursiveUnionNodeProto.newBuilder()
@@ -381,17 +381,17 @@ private static final long serialVersionUID = 0L;
     @java.lang.Override
     public com.google.protobuf.Descriptors.Descriptor
         getDescriptorForType() {
-      return JQuickPhysicalPlanProto.internal_static_com_github_paohaijiao_proto_JQuickRecursiveUnionNodeProto_descriptor;
+      return com.github.paohaijiao.proto.JQuickPhysicalPlanProto.internal_static_com_github_paohaijiao_proto_JQuickRecursiveUnionNodeProto_descriptor;
     }
 
     @java.lang.Override
-    public JQuickRecursiveUnionNodeProto getDefaultInstanceForType() {
-      return JQuickRecursiveUnionNodeProto.getDefaultInstance();
+    public com.github.paohaijiao.proto.JQuickRecursiveUnionNodeProto getDefaultInstanceForType() {
+      return com.github.paohaijiao.proto.JQuickRecursiveUnionNodeProto.getDefaultInstance();
     }
 
     @java.lang.Override
-    public JQuickRecursiveUnionNodeProto build() {
-      JQuickRecursiveUnionNodeProto result = buildPartial();
+    public com.github.paohaijiao.proto.JQuickRecursiveUnionNodeProto build() {
+      com.github.paohaijiao.proto.JQuickRecursiveUnionNodeProto result = buildPartial();
       if (!result.isInitialized()) {
         throw newUninitializedMessageException(result);
       }
@@ -399,15 +399,15 @@ private static final long serialVersionUID = 0L;
     }
 
     @java.lang.Override
-    public JQuickRecursiveUnionNodeProto buildPartial() {
-      JQuickRecursiveUnionNodeProto result = new JQuickRecursiveUnionNodeProto(this);
+    public com.github.paohaijiao.proto.JQuickRecursiveUnionNodeProto buildPartial() {
+      com.github.paohaijiao.proto.JQuickRecursiveUnionNodeProto result = new com.github.paohaijiao.proto.JQuickRecursiveUnionNodeProto(this);
       buildPartialRepeatedFields(result);
       if (bitField0_ != 0) { buildPartial0(result); }
       onBuilt();
       return result;
     }
 
-    private void buildPartialRepeatedFields(JQuickRecursiveUnionNodeProto result) {
+    private void buildPartialRepeatedFields(com.github.paohaijiao.proto.JQuickRecursiveUnionNodeProto result) {
       if (((bitField0_ & 0x00000002) != 0)) {
         columnNames_ = columnNames_.getUnmodifiableView();
         bitField0_ = (bitField0_ & ~0x00000002);
@@ -415,7 +415,7 @@ private static final long serialVersionUID = 0L;
       result.columnNames_ = columnNames_;
     }
 
-    private void buildPartial0(JQuickRecursiveUnionNodeProto result) {
+    private void buildPartial0(com.github.paohaijiao.proto.JQuickRecursiveUnionNodeProto result) {
       int from_bitField0_ = bitField0_;
       if (((from_bitField0_ & 0x00000001) != 0)) {
         result.cteName_ = cteName_;
@@ -462,16 +462,16 @@ private static final long serialVersionUID = 0L;
     }
     @java.lang.Override
     public Builder mergeFrom(com.google.protobuf.Message other) {
-      if (other instanceof JQuickRecursiveUnionNodeProto) {
-        return mergeFrom((JQuickRecursiveUnionNodeProto)other);
+      if (other instanceof com.github.paohaijiao.proto.JQuickRecursiveUnionNodeProto) {
+        return mergeFrom((com.github.paohaijiao.proto.JQuickRecursiveUnionNodeProto)other);
       } else {
         super.mergeFrom(other);
         return this;
       }
     }
 
-    public Builder mergeFrom(JQuickRecursiveUnionNodeProto other) {
-      if (other == JQuickRecursiveUnionNodeProto.getDefaultInstance()) return this;
+    public Builder mergeFrom(com.github.paohaijiao.proto.JQuickRecursiveUnionNodeProto other) {
+      if (other == com.github.paohaijiao.proto.JQuickRecursiveUnionNodeProto.getDefaultInstance()) return this;
       if (!other.getCteName().isEmpty()) {
         cteName_ = other.cteName_;
         bitField0_ |= 0x00000001;
@@ -813,12 +813,12 @@ private static final long serialVersionUID = 0L;
   }
 
   // @@protoc_insertion_point(class_scope:com.github.paohaijiao.proto.JQuickRecursiveUnionNodeProto)
-  private static final JQuickRecursiveUnionNodeProto DEFAULT_INSTANCE;
+  private static final com.github.paohaijiao.proto.JQuickRecursiveUnionNodeProto DEFAULT_INSTANCE;
   static {
-    DEFAULT_INSTANCE = new JQuickRecursiveUnionNodeProto();
+    DEFAULT_INSTANCE = new com.github.paohaijiao.proto.JQuickRecursiveUnionNodeProto();
   }
 
-  public static JQuickRecursiveUnionNodeProto getDefaultInstance() {
+  public static com.github.paohaijiao.proto.JQuickRecursiveUnionNodeProto getDefaultInstance() {
     return DEFAULT_INSTANCE;
   }
 
@@ -854,7 +854,7 @@ private static final long serialVersionUID = 0L;
   }
 
   @java.lang.Override
-  public JQuickRecursiveUnionNodeProto getDefaultInstanceForType() {
+  public com.github.paohaijiao.proto.JQuickRecursiveUnionNodeProto getDefaultInstanceForType() {
     return DEFAULT_INSTANCE;
   }
 

@@ -105,35 +105,44 @@ public class JQuickFragmenter {
         if (node.getChildren().isEmpty()) {
             return false;
         }
-        if (node instanceof JQuickExchangePhysicalNode) {
-            JQuickPhysicalPlanNode child = node.getChildren().get(0);
-            if (child instanceof JQuickTableScanPhysicalNode) {
-                return false;  // TableScan 应该和 Exchange 在同一个 Fragment
-            }
+        // 数据源节点：必须创建 Fragment
+        if (node instanceof JQuickTableScanPhysicalNode || node instanceof JQuickValuesPhysicalNode) {
             return true;
         }
-        if (node instanceof JQuickHashJoinPhysicalNode) {
-            JQuickHashJoinPhysicalNode join = (JQuickHashJoinPhysicalNode) node;
-            if (join.getDistribution() == JQuickHashJoinPhysicalNode.JoinDistribution.BROADCAST_HASH) {
-                return false;
-            }
+        // 数据交换节点：必须创建 Fragment
+        if (node instanceof JQuickExchangePhysicalNode) {
+            return true;
+        }
+        // 集合操作节点：必须创建 Fragment
+        if (node instanceof JQuickSetOperationPhysicalNode) {
+            return true;
+        }
+        if (node instanceof JQuickHashJoinPhysicalNode || node instanceof JQuickNestedLoopJoinPhysicalNode) {
             return true;
         }
 
-        if (node instanceof JQuickNestedLoopJoinPhysicalNode) {
+        //聚合操作节点：必须创建 Fragment
+        if (node instanceof JQuickHashAggregatePhysicalNode) {
             return true;
         }
+
+        // 排序/TopN 节点：必须创建 Fragment
+        if (node instanceof JQuickSortPhysicalNode || node instanceof JQuickTopNPhysicalNode) {
+            return true;
+        }
+
+        //窗口函数节点：必须创建 Fragment
+        if (node instanceof JQuickWindowPhysicalNode) {
+            return true;
+        }
+
+        //  限制节点：必须创建 Fragment
+        if (node instanceof JQuickLimitPhysicalNode) {
+            return true;
+        }
+
+        //  过滤和投影节点：创建 Fragment（保证语义）
         if (node instanceof JQuickFilterPhysicalNode || node instanceof JQuickProjectPhysicalNode) {
-            return false;
-        }
-        if (node instanceof JQuickHashAggregatePhysicalNode) {
-            JQuickHashAggregatePhysicalNode agg = (JQuickHashAggregatePhysicalNode) node;
-            if (agg.getStage() == JQuickHashAggregatePhysicalNode.AggregateStage.FINAL) {
-                return false;
-            }
-            return !agg.getGroupKeys().isEmpty();
-        }
-        if (node instanceof JQuickSetOperationPhysicalNode) {
             return true;
         }
         return false;
