@@ -2,6 +2,7 @@ package com.github.paohaijiao.distributed.worker;
 
 import com.github.paohaijiao.console.JConsole;
 import com.github.paohaijiao.datasource.JQuickDataSourceManager;
+import com.github.paohaijiao.distributed.proto.JQuickprotoService;
 import com.github.paohaijiao.enums.JQuickBinaryOperator;
 import com.github.paohaijiao.enums.JQuickExchangeType;
 import com.github.paohaijiao.enums.JQuickPartitionStrategy;
@@ -37,12 +38,15 @@ public class JQuickNodeExecutor {
 
     private final JQuickDataConverter dataConverter;
 
+    private final JQuickprotoService jQuickprotoService;
+
 
     public JQuickNodeExecutor(JQuickWorker worker, JQuickExpressionEvaluator expressionEvaluator, JQuickPartitionManager partitionManager, JQuickDataConverter dataConverter) {
         this.worker = worker;
         this.expressionEvaluator = expressionEvaluator;
         this.partitionManager = partitionManager;
         this.dataConverter = dataConverter;
+        this.jQuickprotoService = new JQuickprotoService();
     }
 
     /**
@@ -1322,29 +1326,29 @@ public class JQuickNodeExecutor {
             case TABLE_SCAN:
                 JQuickTableScanNodeProto scanProto = proto.getTableScan();
                 JQuickTableScanPhysicalNode scanNode = new JQuickTableScanPhysicalNode(scanProto.getTableName(), scanProto.getAlias(), new HashSet<>(scanProto.getRequiredColumnsList()),
-                        scanProto.hasFilterPredicate()?buildExpression(scanProto.getFilterPredicate()):null);
+                        scanProto.hasFilterPredicate()?jQuickprotoService.buildExpression(scanProto.getFilterPredicate()):null);
                 return scanNode;
             case FILTER:
-                return new JQuickFilterPhysicalNode(buildExpression(proto.getFilter().getPredicate()), null);
+                return new JQuickFilterPhysicalNode(jQuickprotoService.buildExpression(proto.getFilter().getPredicate()), null);
             case PROJECT:
                 JQuickProjectNodeProto projectProto = proto.getProject();
                 List<JQuickProjectPhysicalNode.SelectItem> selectItems = new ArrayList<>();
                 for (JQuickProjectNodeProto.SelectItemProto itemProto : projectProto.getSelectItemsList()) {
-                    selectItems.add(new JQuickProjectPhysicalNode.SelectItem(buildExpression(itemProto.getExpression()), itemProto.getAlias()));
+                    selectItems.add(new JQuickProjectPhysicalNode.SelectItem(jQuickprotoService.buildExpression(itemProto.getExpression()), itemProto.getAlias()));
                 }
                 return new JQuickProjectPhysicalNode(selectItems, null, projectProto.getDistinct());
             case HASH_JOIN:
                 JQuickHashJoinNodeProto joinProto = proto.getHashJoin();
-                return new JQuickHashJoinPhysicalNode(convertJoinType(joinProto.getJoinType()), null, null, buildExpression(joinProto.getCondition()), new ArrayList<>(), joinProto.getBuildSide() == JQuickBuildSideProto.BUILD_SIDE_LEFT ? JQuickHashJoinPhysicalNode.BuildSide.LEFT : JQuickHashJoinPhysicalNode.BuildSide.RIGHT, JQuickHashJoinPhysicalNode.JoinDistribution.LOCAL);
+                return new JQuickHashJoinPhysicalNode(jQuickprotoService.convertJoinType(joinProto.getJoinType()), null, null, jQuickprotoService.buildExpression(joinProto.getCondition()), new ArrayList<>(), joinProto.getBuildSide() == JQuickBuildSideProto.BUILD_SIDE_LEFT ? JQuickHashJoinPhysicalNode.BuildSide.LEFT : JQuickHashJoinPhysicalNode.BuildSide.RIGHT, JQuickHashJoinPhysicalNode.JoinDistribution.LOCAL);
             case EXCHANGE:
                 JQuickExchangeNodeProto exchangeProto = proto.getExchange();
-                return new JQuickExchangePhysicalNode(convertExchangeType(exchangeProto.getExchangeType()), convertPartitionStrategy(exchangeProto.getPartitionStrategy()), new ArrayList<>(), exchangeProto.getParallelism(), null);
+                return new JQuickExchangePhysicalNode(jQuickprotoService.convertExchangeType(exchangeProto.getExchangeType()), jQuickprotoService.convertPartitionStrategy(exchangeProto.getPartitionStrategy()), new ArrayList<>(), exchangeProto.getParallelism(), null);
             case LIMIT:
                 JQuickLimitNodeProto limitProto = proto.getLimit();
                 return new JQuickLimitPhysicalNode(limitProto.getLimit(), limitProto.getOffset(), null);
             case SET_OPERATION:
                 JQuickSetOperationNodeProto setOpProto = proto.getSetOperation();
-                JQuickSQLOperationType opType = convertSetOperationType(setOpProto.getOperationType());
+                JQuickSQLOperationType opType = jQuickprotoService.convertSetOperationType(setOpProto.getOperationType());
                 List<JQuickPhysicalPlanNode> children = new ArrayList<>();
                 for (JQuickPhysicalPlanNodeProto childProto : setOpProto.getChildrenList()) {
                     children.add(buildPhysicalNode(childProto));
@@ -1358,148 +1362,6 @@ public class JQuickNodeExecutor {
                 return null;
         }
     }
-    
-    /**
-     * 转换 Set Operation 类型
-     */
-    private JQuickSQLOperationType convertSetOperationType(JQuickSQLOperationTypeProto proto) {
-        switch (proto) {
-            case SET_UNION:
-                return JQuickSQLOperationType.UNION;
-            case SET_UNION_ALL:
-                return JQuickSQLOperationType.UNION_ALL;
-            case SET_INTERSECT:
-                return JQuickSQLOperationType.INTERSECT;
-            case SET_EXCEPT:
-                return JQuickSQLOperationType.EXCEPT;
-            default:
-                return JQuickSQLOperationType.UNION;
-        }
-    }
-
-    private JQuickExpression buildExpression(JQuickExpressionProto proto) {
-        if (proto == null) return null;
-        switch (proto.getType()) {
-            case EXPR_COLUMN_REF:
-                return new JQuickColumnRefExpression(proto.getValue());
-            case EXPR_LITERAL:
-                return new JQuickLiteralExpression(proto.getValue());
-            case EXPR_BINARY_OPERATOR:
-                List<JQuickExpression> children = new ArrayList<>();
-                for (JQuickExpressionProto child : proto.getChildrenList()) {
-                    children.add(buildExpression(child));
-                }
-                if (children.size() >= 2) {
-                    return new JQuickBinaryExpression(children.get(0), children.get(1), convertBinaryOperator(proto.getBinaryOperator()));
-                }
-                return null;
-            default:
-                return null;
-        }
-    }
-
-    private com.github.paohaijiao.enums.JQuickJoinType convertJoinType(JQuickJoinTypeProto proto) {
-        switch (proto) {
-            case JOIN_INNER:
-                return com.github.paohaijiao.enums.JQuickJoinType.INNER;
-            case JOIN_LEFT:
-                return com.github.paohaijiao.enums.JQuickJoinType.LEFT;
-            case JOIN_RIGHT:
-                return com.github.paohaijiao.enums.JQuickJoinType.RIGHT;
-            case JOIN_FULL:
-                return com.github.paohaijiao.enums.JQuickJoinType.FULL;
-            default:
-                return com.github.paohaijiao.enums.JQuickJoinType.INNER;
-        }
-    }
-
-    private JQuickExchangeType convertExchangeType(JQuickExchangeTypeProto proto) {
-        switch (proto) {
-            case EX_SHUFFLE:
-                return JQuickExchangeType.SHUFFLE;
-            case EX_BROADCAST:
-                return JQuickExchangeType.BROADCAST;
-            case EX_GATHER:
-                return JQuickExchangeType.GATHER;
-            default:
-                return JQuickExchangeType.SHUFFLE;
-        }
-    }
-
-    /**
-     * 将 Proto 分区策略转换为内部枚举
-     */
-    private JQuickPartitionStrategy convertPartitionStrategy(JQuickPartitionStrategyProto proto) {
-        switch (proto) {
-            case PARTITION_HASH:
-                return JQuickPartitionStrategy.HASH;
-            case PARTITION_RANGE:
-                return JQuickPartitionStrategy.RANGE;
-            case PARTITION_ROUND_ROBIN:
-                return JQuickPartitionStrategy.ROUND_ROBIN;
-            case PARTITION_BROADCAST:
-                return JQuickPartitionStrategy.REPLICATE;
-            case PARTITION_FORWARD:
-            default:
-                return JQuickPartitionStrategy.HASH;
-        }
-    }
-
-    /**
-     * 将内部枚举分区策略转换为 Proto
-     */
-    private JQuickPartitionStrategyProto toProtoPartitionStrategy(JQuickPartitionStrategy strategy) {
-        switch (strategy) {
-            case HASH:
-                return JQuickPartitionStrategyProto.PARTITION_HASH;
-            case RANGE:
-                return JQuickPartitionStrategyProto.PARTITION_RANGE;
-            case ROUND_ROBIN:
-                return JQuickPartitionStrategyProto.PARTITION_ROUND_ROBIN;
-            case BUCKET:
-                return JQuickPartitionStrategyProto.PARTITION_HASH;  // BUCKET 使用 HASH 类型传输
-            case REPLICATE:
-                return JQuickPartitionStrategyProto.PARTITION_BROADCAST;
-            default:
-                return JQuickPartitionStrategyProto.PARTITION_HASH;
-        }
-    }
-
-    private JQuickBinaryOperator convertBinaryOperator(JQuickBinaryOperatorProto proto) {
-        switch (proto) {
-            case OP_EQ:
-                return JQuickBinaryOperator.EQ;
-            case OP_NE:
-                return JQuickBinaryOperator.NE;
-            case OP_LT:
-                return JQuickBinaryOperator.LT;
-            case OP_LTE:
-                return JQuickBinaryOperator.LE;
-            case OP_GT:
-                return JQuickBinaryOperator.GT;
-            case OP_GTE:
-                return JQuickBinaryOperator.GE;
-            case OP_AND:
-                return JQuickBinaryOperator.AND;
-            case OP_OR:
-                return JQuickBinaryOperator.OR;
-            case OP_LIKE:
-                return JQuickBinaryOperator.LIKE;
-            case OP_PLUS:
-                return JQuickBinaryOperator.PLUS;
-            case OP_MINUS:
-                return JQuickBinaryOperator.MINUS;
-            case OP_MULTIPLY:
-                return JQuickBinaryOperator.MULTIPLY;
-            case OP_DIVIDE:
-                return JQuickBinaryOperator.DIVIDE;
-            case OP_MOD:
-                return JQuickBinaryOperator.MODULO;
-            default:
-                return JQuickBinaryOperator.EQ;
-        }
-    }
-
     /**
      * 提取表别名
      */
@@ -1513,4 +1375,7 @@ public class JQuickNodeExecutor {
         }
         return null;
     }
+
+
+
 }

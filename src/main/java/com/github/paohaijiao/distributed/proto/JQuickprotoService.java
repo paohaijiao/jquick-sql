@@ -1,5 +1,9 @@
-package com.github.paohaijiao.distributed.coordinator;
+package com.github.paohaijiao.distributed.proto;
 
+import com.github.paohaijiao.enums.JQuickBinaryOperator;
+import com.github.paohaijiao.enums.JQuickExchangeType;
+import com.github.paohaijiao.enums.JQuickPartitionStrategy;
+import com.github.paohaijiao.enums.JQuickSQLOperationType;
 import com.github.paohaijiao.expression.JQuickExpression;
 import com.github.paohaijiao.expression.domain.*;
 import com.github.paohaijiao.physical.JQuickPhysicalPlanNode;
@@ -10,15 +14,16 @@ import com.github.paohaijiao.physical.domain.JQuickTablePartitionInfo;
 import com.github.paohaijiao.physical.node.*;
 import com.github.paohaijiao.proto.*;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-public class JQuickConvertService {
+public class JQuickprotoService {
     /**
      * 转换物理列为 Proto
      */
-    protected JQuickPhysicalColumnProto convertPhysicalColumnToProto(JQuickPhysicalColumn col) {
+    public JQuickPhysicalColumnProto convertPhysicalColumnToProto(JQuickPhysicalColumn col) {
         return JQuickPhysicalColumnProto.newBuilder()
                 .setName(col.getName())
                 .setTypeName(col.getType().getName())
@@ -30,7 +35,7 @@ public class JQuickConvertService {
     /**
      * 转换统计信息为 Proto
      */
-    protected JQuickPhysicalStatsProto convertStatsToProto(JQuickPhysicalStats stats) {
+    public JQuickPhysicalStatsProto convertStatsToProto(JQuickPhysicalStats stats) {
         JQuickPhysicalStatsProto.Builder builder = JQuickPhysicalStatsProto.newBuilder()
                 .setEstimatedRowCount(stats.getEstimatedRowCount())
                 .setEstimatedDataSize(stats.getEstimatedDataSize());
@@ -48,7 +53,7 @@ public class JQuickConvertService {
     /**
      * 转换 TableScan 节点
      */
-    protected JQuickTableScanNodeProto convertTableScanToProto(JQuickTableScanPhysicalNode node) {
+    public JQuickTableScanNodeProto convertTableScanToProto(JQuickTableScanPhysicalNode node) {
         JQuickTableScanNodeProto.Builder builder = JQuickTableScanNodeProto.newBuilder().setTableName(node.getTableName()).setAlias(node.getAlias() != null ? node.getAlias() : "");
         if (node.getRequiredColumns() != null) {
             builder.addAllRequiredColumns(node.getRequiredColumns());
@@ -65,14 +70,14 @@ public class JQuickConvertService {
     /**
      * 转换 Filter 节点
      */
-    protected JQuickFilterNodeProto convertFilterToProto(JQuickFilterPhysicalNode node) {
+    public JQuickFilterNodeProto convertFilterToProto(JQuickFilterPhysicalNode node) {
         return JQuickFilterNodeProto.newBuilder().setPredicate(convertExpressionToProto(node.getPredicate())).build();
     }
 
     /**
      * 转换 Project 节点
      */
-    protected JQuickProjectNodeProto convertProjectToProto(JQuickProjectPhysicalNode node) {
+    public JQuickProjectNodeProto convertProjectToProto(JQuickProjectPhysicalNode node) {
         JQuickProjectNodeProto.Builder builder = JQuickProjectNodeProto.newBuilder().setDistinct(node.isDistinct());
         for (JQuickProjectPhysicalNode.SelectItem item : node.getSelectItems()) {
             JQuickProjectNodeProto.SelectItemProto.Builder itemBuilder = JQuickProjectNodeProto.SelectItemProto.newBuilder().setExpression(convertExpressionToProto(item.getExpression()));
@@ -87,13 +92,13 @@ public class JQuickConvertService {
     /**
      * 转换 HashJoin 节点
      */
-    protected JQuickHashJoinNodeProto convertHashJoinToProto(JQuickHashJoinPhysicalNode node) {
+    public JQuickHashJoinNodeProto convertHashJoinToProto(JQuickHashJoinPhysicalNode node) {
         JQuickHashJoinNodeProto.Builder builder = JQuickHashJoinNodeProto.newBuilder().setJoinType(convertJoinTypeToProto(node.getJoinType())).setBuildSide(convertBuildSideToProto(node.getBuildSide())).setDistribution(convertJoinDistributionToProto(node.getDistribution()));
         if (node.getCondition() != null) {
             builder.setCondition(convertExpressionToProto(node.getCondition()));
         }
         for (JQuickHashJoinPhysicalNode.JoinKeyPair keyPair : node.getJoinKeys()) {
-                    builder.addJoinKeys(JQuickHashJoinNodeProto.JoinKeyPairProto.newBuilder()
+            builder.addJoinKeys(JQuickHashJoinNodeProto.JoinKeyPairProto.newBuilder()
                     .setLeftKey(convertExpressionToProto(keyPair.getLeftKey()))
                     .setRightKey(convertExpressionToProto(keyPair.getRightKey()))
                     .build());
@@ -104,7 +109,7 @@ public class JQuickConvertService {
     /**
      * 转换 NestedLoopJoin 节点
      */
-    protected JQuickNestedLoopJoinNodeProto convertNestedLoopJoinToProto(JQuickNestedLoopJoinPhysicalNode node) {
+    public JQuickNestedLoopJoinNodeProto convertNestedLoopJoinToProto(JQuickNestedLoopJoinPhysicalNode node) {
         JQuickNestedLoopJoinNodeProto.Builder builder = JQuickNestedLoopJoinNodeProto.newBuilder().setJoinType(convertJoinTypeToProto(node.getJoinType()));
         if (node.getCondition() != null) {
             builder.setCondition(convertExpressionToProto(node.getCondition()));
@@ -115,18 +120,18 @@ public class JQuickConvertService {
     /**
      * 转换 HashAggregate 节点
      */
-    protected JQuickHashAggregateNodeProto convertHashAggregateToProto(JQuickHashAggregatePhysicalNode node) {
+    public JQuickHashAggregateNodeProto convertHashAggregateToProto(JQuickHashAggregatePhysicalNode node) {
         JQuickHashAggregateNodeProto.Builder builder = JQuickHashAggregateNodeProto.newBuilder().setStage(convertAggregateStageToProto(node.getStage()));
         for (JQuickExpression groupKey : node.getGroupKeys()) {
             builder.addGroupKeys(convertExpressionToProto(groupKey));
         }
         for (JQuickHashAggregatePhysicalNode.AggregateFunction agg : node.getAggregates()) {
             JQuickHashAggregateNodeProto.AggregateFunctionProto.Builder aggBuilder = JQuickHashAggregateNodeProto.AggregateFunctionProto.newBuilder()
-                            .setFunctionName(agg.getFunctionName())
-                            .setDistinct(agg.isDistinct())
-                            .setAlias(agg.getAlias())
-                            .setIsCountStar(agg.isCountStar())
-                            .setInternalStage(convertAggregateStageToProto(agg.getInternalStage()));
+                    .setFunctionName(agg.getFunctionName())
+                    .setDistinct(agg.isDistinct())
+                    .setAlias(agg.getAlias())
+                    .setIsCountStar(agg.isCountStar())
+                    .setInternalStage(convertAggregateStageToProto(agg.getInternalStage()));
             if (agg.getArgument() != null) {
                 aggBuilder.setArgument(convertExpressionToProto(agg.getArgument()));
             }
@@ -145,7 +150,7 @@ public class JQuickConvertService {
     /**
      * 转换 Sort 节点
      */
-    protected JQuickSortNodeProto convertSortToProto(JQuickSortPhysicalNode node) {
+    public JQuickSortNodeProto convertSortToProto(JQuickSortPhysicalNode node) {
         JQuickSortNodeProto.Builder builder = JQuickSortNodeProto.newBuilder();
         for (JQuickSortPhysicalNode.OrderByItem item : node.getOrderByItems()) {
             builder.addOrderByItems(JQuickSortNodeProto.OrderByItemProto.newBuilder()
@@ -161,7 +166,7 @@ public class JQuickConvertService {
     /**
      * 转换 Limit 节点
      */
-    protected JQuickLimitNodeProto convertLimitToProto(JQuickLimitPhysicalNode node) {
+    public JQuickLimitNodeProto convertLimitToProto(JQuickLimitPhysicalNode node) {
         return JQuickLimitNodeProto.newBuilder()
                 .setLimit(node.getLimit())
                 .setOffset(node.getOffset())
@@ -171,7 +176,7 @@ public class JQuickConvertService {
     /**
      * 转换 Exchange 节点
      */
-    protected JQuickExchangeNodeProto convertExchangeToProto(JQuickExchangePhysicalNode node) {
+    public JQuickExchangeNodeProto convertExchangeToProto(JQuickExchangePhysicalNode node) {
         return JQuickExchangeNodeProto.newBuilder()
                 .setExchangeId("exchange_" + System.currentTimeMillis())
                 .setExchangeType(convertExchangeTypeToProto(node.getExchangeType()))
@@ -183,7 +188,7 @@ public class JQuickConvertService {
     /**
      * 转换 Values 节点
      */
-    protected JQuickValuesNodeProto convertValuesToProto(JQuickValuesPhysicalNode node) {
+    public JQuickValuesNodeProto convertValuesToProto(JQuickValuesPhysicalNode node) {
         JQuickValuesNodeProto.Builder builder = JQuickValuesNodeProto.newBuilder().addAllColumnNames(node.getColumnNames());
         for (Class<?> type : node.getColumnTypes()) {
             builder.addColumnTypes(type.getName());
@@ -203,7 +208,7 @@ public class JQuickConvertService {
     /**
      * 转换 Window 节点
      */
-    protected JQuickWindowNodeProto convertWindowToProto(JQuickWindowPhysicalNode node) {
+    public JQuickWindowNodeProto convertWindowToProto(JQuickWindowPhysicalNode node) {
         JQuickWindowNodeProto.Builder builder = JQuickWindowNodeProto.newBuilder();
         for (JQuickWindowPhysicalNode.WindowFunction wf : node.getWindowFunctions()) {
             JQuickWindowNodeProto.WindowFunctionProto.Builder wfBuilder = JQuickWindowNodeProto.WindowFunctionProto.newBuilder().setFunctionName(wf.getFunctionName()).setAlias(wf.getAlias());
@@ -223,7 +228,7 @@ public class JQuickConvertService {
     /**
      * 转换 WindowSpec 到 Proto
      */
-    protected JQuickWindowNodeProto.WindowSpecProto convertWindowSpecToProto(JQuickWindowPhysicalNode.WindowSpec spec) {
+    public JQuickWindowNodeProto.WindowSpecProto convertWindowSpecToProto(JQuickWindowPhysicalNode.WindowSpec spec) {
         JQuickWindowNodeProto.WindowSpecProto.Builder builder = JQuickWindowNodeProto.WindowSpecProto.newBuilder();
         for (JQuickExpression partitionKey : spec.getPartitionKeys()) {
             builder.addPartitionKeys(convertExpressionToProto(partitionKey));
@@ -244,11 +249,11 @@ public class JQuickConvertService {
     /**
      * 转换 WindowFrame 到 Proto
      */
-    protected JQuickWindowNodeProto.WindowFrameProto convertWindowFrameToProto(JQuickWindowPhysicalNode.WindowFrame frame) {
+    public JQuickWindowNodeProto.WindowFrameProto convertWindowFrameToProto(JQuickWindowPhysicalNode.WindowFrame frame) {
         JQuickWindowNodeProto.WindowFrameProto.Builder builder = JQuickWindowNodeProto.WindowFrameProto.newBuilder()
-                        .setFrameType(frame.getFrameType() == JQuickWindowPhysicalNode.WindowFrame.FrameType.ROWS ? JQuickWindowNodeProto.WindowFrameProto.FrameType.FRAME_ROWS : JQuickWindowNodeProto.WindowFrameProto.FrameType.FRAME_RANGE)
-                        .setStartType(convertBoundaryTypeToProto(frame.getStartType()))
-                        .setEndType(convertBoundaryTypeToProto(frame.getEndType()));
+                .setFrameType(frame.getFrameType() == JQuickWindowPhysicalNode.WindowFrame.FrameType.ROWS ? JQuickWindowNodeProto.WindowFrameProto.FrameType.FRAME_ROWS : JQuickWindowNodeProto.WindowFrameProto.FrameType.FRAME_RANGE)
+                .setStartType(convertBoundaryTypeToProto(frame.getStartType()))
+                .setEndType(convertBoundaryTypeToProto(frame.getEndType()));
         if (frame.getStartOffset() != null) {
             builder.setStartOffset(convertExpressionToProto(frame.getStartOffset()));
         }
@@ -261,7 +266,7 @@ public class JQuickConvertService {
     /**
      * 转换 SetOperation 节点
      */
-    protected JQuickSetOperationNodeProto convertSetOperationToProto(JQuickSetOperationPhysicalNode node) {
+    public JQuickSetOperationNodeProto convertSetOperationToProto(JQuickSetOperationPhysicalNode node) {
         JQuickSetOperationNodeProto.Builder builder = JQuickSetOperationNodeProto.newBuilder()
                 .setOperationType(convertSQLOperationTypeToProto(node.getOperationType()));
         // 添加 children
@@ -274,7 +279,7 @@ public class JQuickConvertService {
     /**
      * 转换 TopN 节点
      */
-    protected JQuickTopNNodeProto convertTopNToProto(JQuickTopNPhysicalNode node) {
+    public JQuickTopNNodeProto convertTopNToProto(JQuickTopNPhysicalNode node) {
         JQuickTopNNodeProto.Builder builder = JQuickTopNNodeProto.newBuilder()
                 .setLimit(node.getLimit())
                 .setOffset(node.getOffset());
@@ -292,7 +297,7 @@ public class JQuickConvertService {
     /**
      * 转换 RecursiveUnion 节点
      */
-    protected JQuickRecursiveUnionNodeProto convertRecursiveUnionToProto(JQuickRecursiveUnionPhysicalNode node) {
+    public JQuickRecursiveUnionNodeProto convertRecursiveUnionToProto(JQuickRecursiveUnionPhysicalNode node) {
         JQuickRecursiveUnionNodeProto.Builder builder = JQuickRecursiveUnionNodeProto.newBuilder()
                 .setCteName(node.getCteName())
                 .setUnionAll(node.isUnionAll())
@@ -307,7 +312,7 @@ public class JQuickConvertService {
     /**
      * 转换 PartitionInfo 到 Proto
      */
-    protected JQuickTablePartitionInfoProto convertPartitionInfoToProto(JQuickTablePartitionInfo info) {
+    public JQuickTablePartitionInfoProto convertPartitionInfoToProto(JQuickTablePartitionInfo info) {
         JQuickTablePartitionInfoProto.Builder builder = JQuickTablePartitionInfoProto.newBuilder()
                 .setTableName(info.getTableName())
                 .setPartitionColumn(info.getPartitionColumn())
@@ -330,7 +335,7 @@ public class JQuickConvertService {
     /**
      * 转换物理计划节点为 Proto
      */
-    protected JQuickPhysicalPlanNodeProto convertPhysicalPlanToProto(JQuickPhysicalPlanNode node) {
+    public JQuickPhysicalPlanNodeProto convertPhysicalPlanToProto(JQuickPhysicalPlanNode node) {
         if (node == null || node.getNodeType().equalsIgnoreCase("Empty")) {
             return JQuickPhysicalPlanNodeProto.newBuilder()
                     .setNodeId("empty")
@@ -412,7 +417,7 @@ public class JQuickConvertService {
     /**
      * 转换表达式为 Proto
      */
-    private JQuickExpressionProto convertExpressionToProto(JQuickExpression expr) {
+    public JQuickExpressionProto convertExpressionToProto(JQuickExpression expr) {
         if (expr == null) {
             return JQuickExpressionProto.newBuilder()
                     .setType(JQuickExpressionTypeProto.EXPR_LITERAL)
@@ -475,7 +480,7 @@ public class JQuickConvertService {
     }
 
 
-    protected JQuickJoinTypeProto convertJoinTypeToProto(com.github.paohaijiao.enums.JQuickJoinType joinType) {
+    public JQuickJoinTypeProto convertJoinTypeToProto(com.github.paohaijiao.enums.JQuickJoinType joinType) {
         switch (joinType) {
             case INNER: return JQuickJoinTypeProto.JOIN_INNER;
             case LEFT: return JQuickJoinTypeProto.JOIN_LEFT;
@@ -488,11 +493,11 @@ public class JQuickConvertService {
         }
     }
 
-    protected JQuickBuildSideProto convertBuildSideToProto(JQuickHashJoinPhysicalNode.BuildSide buildSide) {
+    public JQuickBuildSideProto convertBuildSideToProto(JQuickHashJoinPhysicalNode.BuildSide buildSide) {
         return buildSide == JQuickHashJoinPhysicalNode.BuildSide.LEFT ? JQuickBuildSideProto.BUILD_SIDE_LEFT : JQuickBuildSideProto.BUILD_SIDE_RIGHT;
     }
 
-    protected JQuickJoinDistributionProto convertJoinDistributionToProto(JQuickHashJoinPhysicalNode.JoinDistribution distribution) {
+    public JQuickJoinDistributionProto convertJoinDistributionToProto(JQuickHashJoinPhysicalNode.JoinDistribution distribution) {
         switch (distribution) {
             case LOCAL: return JQuickJoinDistributionProto.JOIN_DIST_LOCAL;
             case SHUFFLE_HASH: return JQuickJoinDistributionProto.JOIN_DIST_SHUFFLE;
@@ -502,7 +507,7 @@ public class JQuickConvertService {
         }
     }
 
-    protected JQuickAggregateStageProto convertAggregateStageToProto(JQuickHashAggregatePhysicalNode.AggregateStage stage) {
+    public JQuickAggregateStageProto convertAggregateStageToProto(JQuickHashAggregatePhysicalNode.AggregateStage stage) {
         switch (stage) {
             case PARTIAL: return JQuickAggregateStageProto.AGG_PARTIAL;
             case FINAL: return JQuickAggregateStageProto.AGG_FINAL;
@@ -511,7 +516,7 @@ public class JQuickConvertService {
         }
     }
 
-    protected JQuickExchangeTypeProto convertExchangeTypeToProto(com.github.paohaijiao.enums.JQuickExchangeType exchangeType) {
+    public JQuickExchangeTypeProto convertExchangeTypeToProto(com.github.paohaijiao.enums.JQuickExchangeType exchangeType) {
         switch (exchangeType) {
             case SHUFFLE: return JQuickExchangeTypeProto.EX_SHUFFLE;
             case BROADCAST: return JQuickExchangeTypeProto.EX_BROADCAST;
@@ -522,7 +527,7 @@ public class JQuickConvertService {
         }
     }
 
-    protected JQuickPartitionStrategyProto convertPartitionStrategyToProto(com.github.paohaijiao.enums.JQuickPartitionStrategy strategy) {
+    public JQuickPartitionStrategyProto convertPartitionStrategyToProto(com.github.paohaijiao.enums.JQuickPartitionStrategy strategy) {
         switch (strategy) {
             case HASH: return JQuickPartitionStrategyProto.PARTITION_HASH;
             case RANGE: return JQuickPartitionStrategyProto.PARTITION_RANGE;
@@ -533,7 +538,7 @@ public class JQuickConvertService {
         }
     }
 
-    protected JQuickBinaryOperatorProto convertBinaryOperatorToProto(com.github.paohaijiao.enums.JQuickBinaryOperator operator) {
+    public JQuickBinaryOperatorProto convertBinaryOperatorToProto(com.github.paohaijiao.enums.JQuickBinaryOperator operator) {
         switch (operator) {
             case EQ: return JQuickBinaryOperatorProto.OP_EQ;
             case NE: return JQuickBinaryOperatorProto.OP_NE;
@@ -553,7 +558,7 @@ public class JQuickConvertService {
         }
     }
 
-    protected JQuickSQLOperationTypeProto convertSQLOperationTypeToProto(com.github.paohaijiao.enums.JQuickSQLOperationType type) {
+    public JQuickSQLOperationTypeProto convertSQLOperationTypeToProto(com.github.paohaijiao.enums.JQuickSQLOperationType type) {
         switch (type) {
             case UNION: return JQuickSQLOperationTypeProto.SET_UNION;
             case UNION_ALL: return JQuickSQLOperationTypeProto.SET_UNION_ALL;
@@ -563,7 +568,7 @@ public class JQuickConvertService {
         }
     }
 
-    protected JQuickWindowNodeProto.WindowFrameProto.BoundaryType convertBoundaryTypeToProto(JQuickWindowPhysicalNode.WindowFrame.BoundaryType type) {
+    public JQuickWindowNodeProto.WindowFrameProto.BoundaryType convertBoundaryTypeToProto(JQuickWindowPhysicalNode.WindowFrame.BoundaryType type) {
         switch (type) {
             case UNBOUNDED_PRECEDING: return JQuickWindowNodeProto.WindowFrameProto.BoundaryType.BOUND_UNBOUNDED_PRECEDING;
             case PRECEDING: return JQuickWindowNodeProto.WindowFrameProto.BoundaryType.BOUND_PRECEDING;
@@ -573,4 +578,145 @@ public class JQuickConvertService {
             default: return JQuickWindowNodeProto.WindowFrameProto.BoundaryType.BOUND_CURRENT_ROW;
         }
     }
+    /**
+     * 转换 Set Operation 类型
+     */
+    public JQuickSQLOperationType convertSetOperationType(JQuickSQLOperationTypeProto proto) {
+        switch (proto) {
+            case SET_UNION:
+                return JQuickSQLOperationType.UNION;
+            case SET_UNION_ALL:
+                return JQuickSQLOperationType.UNION_ALL;
+            case SET_INTERSECT:
+                return JQuickSQLOperationType.INTERSECT;
+            case SET_EXCEPT:
+                return JQuickSQLOperationType.EXCEPT;
+            default:
+                return JQuickSQLOperationType.UNION;
+        }
+    }
+    public JQuickExpression buildExpression(JQuickExpressionProto proto) {
+        if (proto == null) return null;
+        switch (proto.getType()) {
+            case EXPR_COLUMN_REF:
+                return new JQuickColumnRefExpression(proto.getValue());
+            case EXPR_LITERAL:
+                return new JQuickLiteralExpression(proto.getValue());
+            case EXPR_BINARY_OPERATOR:
+                List<JQuickExpression> children = new ArrayList<>();
+                for (JQuickExpressionProto child : proto.getChildrenList()) {
+                    children.add(buildExpression(child));
+                }
+                if (children.size() >= 2) {
+                    return new JQuickBinaryExpression(children.get(0), children.get(1), convertBinaryOperator(proto.getBinaryOperator()));
+                }
+                return null;
+            default:
+                return null;
+        }
+    }
+
+    public com.github.paohaijiao.enums.JQuickJoinType convertJoinType(JQuickJoinTypeProto proto) {
+        switch (proto) {
+            case JOIN_INNER:
+                return com.github.paohaijiao.enums.JQuickJoinType.INNER;
+            case JOIN_LEFT:
+                return com.github.paohaijiao.enums.JQuickJoinType.LEFT;
+            case JOIN_RIGHT:
+                return com.github.paohaijiao.enums.JQuickJoinType.RIGHT;
+            case JOIN_FULL:
+                return com.github.paohaijiao.enums.JQuickJoinType.FULL;
+            default:
+                return com.github.paohaijiao.enums.JQuickJoinType.INNER;
+        }
+    }
+
+    public JQuickExchangeType convertExchangeType(JQuickExchangeTypeProto proto) {
+        switch (proto) {
+            case EX_SHUFFLE:
+                return JQuickExchangeType.SHUFFLE;
+            case EX_BROADCAST:
+                return JQuickExchangeType.BROADCAST;
+            case EX_GATHER:
+                return JQuickExchangeType.GATHER;
+            default:
+                return JQuickExchangeType.SHUFFLE;
+        }
+    }
+
+    /**
+     * 将 Proto 分区策略转换为内部枚举
+     */
+    public JQuickPartitionStrategy convertPartitionStrategy(JQuickPartitionStrategyProto proto) {
+        switch (proto) {
+            case PARTITION_HASH:
+                return JQuickPartitionStrategy.HASH;
+            case PARTITION_RANGE:
+                return JQuickPartitionStrategy.RANGE;
+            case PARTITION_ROUND_ROBIN:
+                return JQuickPartitionStrategy.ROUND_ROBIN;
+            case PARTITION_BROADCAST:
+                return JQuickPartitionStrategy.REPLICATE;
+            case PARTITION_FORWARD:
+            default:
+                return JQuickPartitionStrategy.HASH;
+        }
+    }
+
+    /**
+     * 将内部枚举分区策略转换为 Proto
+     */
+    public JQuickPartitionStrategyProto toProtoPartitionStrategy(JQuickPartitionStrategy strategy) {
+        switch (strategy) {
+            case HASH:
+                return JQuickPartitionStrategyProto.PARTITION_HASH;
+            case RANGE:
+                return JQuickPartitionStrategyProto.PARTITION_RANGE;
+            case ROUND_ROBIN:
+                return JQuickPartitionStrategyProto.PARTITION_ROUND_ROBIN;
+            case BUCKET:
+                return JQuickPartitionStrategyProto.PARTITION_HASH;  // BUCKET 使用 HASH 类型传输
+            case REPLICATE:
+                return JQuickPartitionStrategyProto.PARTITION_BROADCAST;
+            default:
+                return JQuickPartitionStrategyProto.PARTITION_HASH;
+        }
+    }
+
+    public JQuickBinaryOperator convertBinaryOperator(JQuickBinaryOperatorProto proto) {
+        switch (proto) {
+            case OP_EQ:
+                return JQuickBinaryOperator.EQ;
+            case OP_NE:
+                return JQuickBinaryOperator.NE;
+            case OP_LT:
+                return JQuickBinaryOperator.LT;
+            case OP_LTE:
+                return JQuickBinaryOperator.LE;
+            case OP_GT:
+                return JQuickBinaryOperator.GT;
+            case OP_GTE:
+                return JQuickBinaryOperator.GE;
+            case OP_AND:
+                return JQuickBinaryOperator.AND;
+            case OP_OR:
+                return JQuickBinaryOperator.OR;
+            case OP_LIKE:
+                return JQuickBinaryOperator.LIKE;
+            case OP_PLUS:
+                return JQuickBinaryOperator.PLUS;
+            case OP_MINUS:
+                return JQuickBinaryOperator.MINUS;
+            case OP_MULTIPLY:
+                return JQuickBinaryOperator.MULTIPLY;
+            case OP_DIVIDE:
+                return JQuickBinaryOperator.DIVIDE;
+            case OP_MOD:
+                return JQuickBinaryOperator.MODULO;
+            default:
+                return JQuickBinaryOperator.EQ;
+        }
+    }
+
+
 }

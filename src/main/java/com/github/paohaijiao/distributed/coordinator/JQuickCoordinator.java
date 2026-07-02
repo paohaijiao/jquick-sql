@@ -19,20 +19,18 @@ import com.github.paohaijiao.config.JQuickSqlConfig;
 import com.github.paohaijiao.console.JConsole;
 import com.github.paohaijiao.datasource.JQuickDataSourceManager;
 import com.github.paohaijiao.distributed.JQuickDistributedPlan;
+import com.github.paohaijiao.distributed.proto.JQuickprotoService;
 import com.github.paohaijiao.distributed.worker.JQuickDataConverter;
 import com.github.paohaijiao.enums.JQuickFragmentType;
 import com.github.paohaijiao.exception.JAssert;
 import com.github.paohaijiao.fragment.JQuickFragment;
 import com.github.paohaijiao.fragment.JQuickFragmenter;
 import com.github.paohaijiao.physical.JQuickPhysicalPlanNode;
-import com.github.paohaijiao.physical.domain.JQuickPhysicalColumn;
-import com.github.paohaijiao.physical.domain.JQuickPhysicalStats;
 import com.github.paohaijiao.physical.node.*;
 import com.github.paohaijiao.proto.*;
 import com.github.paohaijiao.statement.JQuickColumnMeta;
 import com.github.paohaijiao.statement.JQuickDataSet;
 import com.github.paohaijiao.statement.JQuickRow;
-import com.github.paohaijiao.uid.JQuickSnowflakeIdGenerator;
 import com.github.paohaijiao.uid.JQuickUuidGenerator;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
@@ -55,7 +53,7 @@ import java.util.stream.Collectors;
  * 4. 处理任务失败和重试
  * 5. 管理查询生命周期
  */
-public class JQuickCoordinator extends JQuickConvertService{
+public class JQuickCoordinator {
 
 
     private JConsole console=JConsole.initConsoleEnvironment();
@@ -94,6 +92,8 @@ public class JQuickCoordinator extends JQuickConvertService{
 
     private boolean running=false;
 
+    private JQuickprotoService jQuickprotoService=null;
+
 
     /**
      * 构造函数 - 完整参数
@@ -111,6 +111,7 @@ public class JQuickCoordinator extends JQuickConvertService{
         this.workerStubs = new ConcurrentHashMap<>();
         this.activeQueries = new ConcurrentHashMap<>();
         this.maxRetries = config.getMaxTaskRetries();
+        this.jQuickprotoService=new JQuickprotoService();
         for (int i = 0; i < workers.size(); i++) {
             WorkerEndpoint worker = workers.get(i);
             workerIdMap.put(worker.getWorkerId(), worker);
@@ -404,7 +405,7 @@ public class JQuickCoordinator extends JQuickConvertService{
                 .setType(convertFragmentType(fragment.getType()))
                 .setParallelism(fragment.getParallelism());
         // 转换物理计划节点
-        builder.setPlan(convertPhysicalPlanToProto(fragment.getPlan()));
+        builder.setPlan(jQuickprotoService.convertPhysicalPlanToProto(fragment.getPlan()));
         return builder.build();
     }
 
