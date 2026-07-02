@@ -1322,7 +1322,7 @@ public class JQuickNodeExecutor {
         switch (proto.getNodeCase()) {
             case TABLE_SCAN:
                 JQuickTableScanNodeProto scanProto = proto.getTableScan();
-                JQuickTableScanPhysicalNode scanNode = new JQuickTableScanPhysicalNode(scanProto.getTableName(), scanProto.getAlias(), new HashSet<>(scanProto.getRequiredColumnsList()), null, null);
+                JQuickTableScanPhysicalNode scanNode = new JQuickTableScanPhysicalNode(scanProto.getTableName(), scanProto.getAlias(), new HashSet<>(scanProto.getRequiredColumnsList()), buildExpression(scanProto.getFilterPredicate()), null);
                 return scanNode;
             case FILTER:
                 return new JQuickFilterPhysicalNode(buildExpression(proto.getFilter().getPredicate()), null);
@@ -1473,8 +1473,18 @@ public class JQuickNodeExecutor {
                 return JQuickBinaryOperator.NE;
             case OP_LT:
                 return JQuickBinaryOperator.LT;
+            case OP_LTE:
+                return JQuickBinaryOperator.LE;
             case OP_GT:
                 return JQuickBinaryOperator.GT;
+            case OP_GTE:
+                return JQuickBinaryOperator.GE;
+            case OP_AND:
+                return JQuickBinaryOperator.AND;
+            case OP_OR:
+                return JQuickBinaryOperator.OR;
+            case OP_LIKE:
+                return JQuickBinaryOperator.LIKE;
             case OP_PLUS:
                 return JQuickBinaryOperator.PLUS;
             case OP_MINUS:
@@ -1483,6 +1493,8 @@ public class JQuickNodeExecutor {
                 return JQuickBinaryOperator.MULTIPLY;
             case OP_DIVIDE:
                 return JQuickBinaryOperator.DIVIDE;
+            case OP_MOD:
+                return JQuickBinaryOperator.MODULO;
             default:
                 return JQuickBinaryOperator.EQ;
         }
