@@ -225,7 +225,7 @@ public class JQuickSelectStatementTest {
      */
     @Test
     public void testTableScanWithColumnPruning() {
-        Set<String> requiredCols = new HashSet<>(Arrays.asList("id", "name", "email"));
+        Set<String> requiredCols = new HashSet<>(Arrays.asList("id", "name", "age"));
         JQuickTableScanNode logicalScan = new JQuickTableScanNode("users", "u", requiredCols);
         JQuickPhysicalPlanNode physicalPlan = generator.generate(logicalScan);
         JQuickTableScanPhysicalNode scanNode = (JQuickTableScanPhysicalNode) physicalPlan;

@@ -129,7 +129,6 @@ public class JQuickNodeExecutor {
         console.info("executeTableScan - tableName: " + tableName + ", partitionInfo: " + (node.getPartitionInfo() != null ? "exists" : "null"));
         Set<String> requiredColumns = node.getRequiredColumns();
         JQuickDataSet data;
-        
         // 首先检查 input partitions 是否有数据（分布式场景）
         JQuickExecuteTaskRequest request = context.getRequest();
         if (request.getInputPartitionsCount() > 0) {
@@ -1322,7 +1321,8 @@ public class JQuickNodeExecutor {
         switch (proto.getNodeCase()) {
             case TABLE_SCAN:
                 JQuickTableScanNodeProto scanProto = proto.getTableScan();
-                JQuickTableScanPhysicalNode scanNode = new JQuickTableScanPhysicalNode(scanProto.getTableName(), scanProto.getAlias(), new HashSet<>(scanProto.getRequiredColumnsList()), buildExpression(scanProto.getFilterPredicate()), null);
+                JQuickTableScanPhysicalNode scanNode = new JQuickTableScanPhysicalNode(scanProto.getTableName(), scanProto.getAlias(), new HashSet<>(scanProto.getRequiredColumnsList()),
+                        scanProto.hasFilterPredicate()?buildExpression(scanProto.getFilterPredicate()):null);
                 return scanNode;
             case FILTER:
                 return new JQuickFilterPhysicalNode(buildExpression(proto.getFilter().getPredicate()), null);
