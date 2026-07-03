@@ -27,7 +27,9 @@ import java.util.List;
 public class JQuickInExpression implements JQuickExpression {
 
     private final JQuickExpression left;
+
     private final List<JQuickExpression> rightList;
+
     private final boolean isNot;
 
     public JQuickInExpression(JQuickExpression left, List<JQuickExpression> rightList, boolean isNot) {
@@ -99,6 +101,8 @@ public class JQuickInExpression implements JQuickExpression {
     }
 
     public JQuickExpression getLeft() { return left; }
+
     public List<JQuickExpression> getRightList() { return rightList; }
+
     public boolean isNot() { return isNot; }
 }

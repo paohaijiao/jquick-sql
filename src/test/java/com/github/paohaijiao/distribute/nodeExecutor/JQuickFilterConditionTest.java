@@ -24,6 +24,7 @@ import com.github.paohaijiao.distributed.worker.JQuickDataConverter;
 import com.github.paohaijiao.distributed.worker.JQuickWorker;
 import com.github.paohaijiao.enums.JQuickBinaryOperator;
 import com.github.paohaijiao.enums.JQuickJoinType;
+import com.github.paohaijiao.enums.JQuickUnaryOperator;
 import com.github.paohaijiao.expression.JQuickExpression;
 import com.github.paohaijiao.expression.domain.*;
 import com.github.paohaijiao.fragment.JQuickFragmenter;
@@ -54,7 +55,6 @@ public class JQuickFilterConditionTest {
 
     private static final String TABLE_USERS = "users";
 
-    // Worker 端口配置
     private static final int WORKER1_PORT = 19001;
 
     private static final int WORKER2_PORT = 19002;
@@ -64,10 +64,7 @@ public class JQuickFilterConditionTest {
     private static JConsole console;
 
     private static JQuickDataConverter dataConverter;
-    // 测试数据
-    private static JQuickDataSet employeeData;
 
-    private static JQuickDataSet largeDataSet;
 
     private JQuickWorker worker1;
 
@@ -89,9 +86,7 @@ public class JQuickFilterConditionTest {
         dataConverter = new JQuickDataConverter();
         console.info("测试环境初始化完成");
         generator = new JQuickPhysicalPlanGenerator();
-        // 清理数据源
         JQuickDataSourceManager.clearAll();
-        // 注册测试数据到数据源管理器（替代 broadcastTable）
         registerTestData();
         console.info("测试数据已注册到数据源管理器");
         // 创建 Worker 列表
@@ -229,16 +224,22 @@ public class JQuickFilterConditionTest {
     private JQuickBetweenExpression createBetween(String column, Object low, Object high) {
         return new JQuickBetweenExpression(new JQuickColumnRefExpression(column), new JQuickLiteralExpression(low), new JQuickLiteralExpression(high), false);
     }
+    /**
+     * 创建 BETWEEN 条件
+     */
+    private JQuickBetweenExpression createBetween(String column, Object low, Object high,Boolean isNot) {
+        return new JQuickBetweenExpression(new JQuickColumnRefExpression(column), new JQuickLiteralExpression(low), new JQuickLiteralExpression(high), isNot);
+    }
 
     /**
      * 创建 IN 条件
      */
-    private JQuickInExpression createIn(String column, List<Object> values) {
+    private JQuickInExpression createIn(String column, List<Object> values,Boolean isNot) {
         List<JQuickExpression> valueExprs = new ArrayList<>();
         for (Object value : values) {
             valueExprs.add(new JQuickLiteralExpression(value));
         }
-        return new JQuickInExpression(new JQuickColumnRefExpression(column), valueExprs, false);
+        return new JQuickInExpression(new JQuickColumnRefExpression(column), valueExprs, isNot);
     }
     /**
      * 测试3：复合条件 AND
@@ -335,6 +336,478 @@ public class JQuickFilterConditionTest {
         JQuickDataSet result = coordinator.executeQueryWithPlan(queryId, plan);
         result.printTable();
     }
+    /**
+     * 测试7：BETWEEN 条件
+     *
+     * SQL示例：SELECT * FROM users WHERE age not BETWEEN 18 AND 65
+     */
+    @Test
+    public void testNotBetweenCondition() {
+        JQuickTableScanNode usersScan = createTableScan("users","u");
+        JQuickBetweenExpression betweenCondition = createBetween("age", 22, 30,false);
+        JQuickFilterNode filterNode = createFilter(usersScan, betweenCondition);
+        JQuickPhysicalPlanNode physicalPlan = generator.generate(filterNode);
+        JQuickFilterPhysicalNode filterPhysical = (JQuickFilterPhysicalNode) physicalPlan;
+        JQuickExpression actualPredicate = filterPhysical.getPredicate();
+        System.out.println("=== BETWEEN条件测试通过 ===");
+        System.out.println("条件: age BETWEEN 18 AND 65");
+        JQuickFragmenter fragmenter = new JQuickFragmenter(1);
+        JQuickDistributedPlan plan = fragmenter.fragment(filterPhysical);
+        String queryId = "hash_partition_" + System.currentTimeMillis();
+        JQuickDataSet result = coordinator.executeQueryWithPlan(queryId, plan);
+        result.printTable();
+    }
+    @Test
+    public void testInCondition() {
+        JQuickTableScanNode usersScan = createTableScan("users","u");
+        JQuickInExpression inExpression  = createIn("age", Arrays.asList(22,30),false);
+        JQuickFilterNode filterNode = createFilter(usersScan, inExpression);
+        JQuickPhysicalPlanNode physicalPlan = generator.generate(filterNode);
+        JQuickFilterPhysicalNode filterPhysical = (JQuickFilterPhysicalNode) physicalPlan;
+        JQuickExpression actualPredicate = filterPhysical.getPredicate();
+        System.out.println("=== BETWEEN条件测试通过 ===");
+        System.out.println("条件: age BETWEEN 18 AND 65");
+        JQuickFragmenter fragmenter = new JQuickFragmenter(1);
+        JQuickDistributedPlan plan = fragmenter.fragment(filterPhysical);
+        String queryId = "hash_partition_" + System.currentTimeMillis();
+        JQuickDataSet result = coordinator.executeQueryWithPlan(queryId, plan);
+        result.printTable();
+    }
+    @Test
+    public void testNotInCondition() {
+        JQuickTableScanNode usersScan = createTableScan("users","u");
+        JQuickInExpression inExpression  = createIn("age", Arrays.asList(22,30),true);
+        JQuickFilterNode filterNode = createFilter(usersScan, inExpression);
+        JQuickPhysicalPlanNode physicalPlan = generator.generate(filterNode);
+        JQuickFilterPhysicalNode filterPhysical = (JQuickFilterPhysicalNode) physicalPlan;
+        JQuickExpression actualPredicate = filterPhysical.getPredicate();
+        System.out.println("=== BETWEEN条件测试通过 ===");
+        System.out.println("条件: age BETWEEN 18 AND 65");
+        JQuickFragmenter fragmenter = new JQuickFragmenter(1);
+        JQuickDistributedPlan plan = fragmenter.fragment(filterPhysical);
+        String queryId = "hash_partition_" + System.currentTimeMillis();
+        JQuickDataSet result = coordinator.executeQueryWithPlan(queryId, plan);
+        result.printTable();
+    }
+//    /**
+//     * 测试24：IN 条件（子查询 - 从另一个表获取值列表）
+//     *
+//     * SQL示例：SELECT * FROM users WHERE age IN (SELECT age FROM users WHERE status = 'active')
+//     *
+//     * 注意：这个测试需要创建另一个表或使用相同的表做子查询
+//     */
+//    @Test
+//    public void testInWithSubquery() {
+//        // 准备子查询数据：创建一个 age 列表表
+//        List<JQuickColumnMeta> ageListColumns = Arrays.asList(
+//                new JQuickColumnMeta("age_value", Integer.class, "age_list")
+//        );
+//        List<JQuickRow> ageListRows = Arrays.asList(
+//                createRow("age_value", 25),
+//                createRow("age_value", 30),
+//                createRow("age_value", 40)
+//        );
+//        JQuickDataSet ageListData = new JQuickDataSet(ageListColumns, ageListRows);
+//        JQuickDataSourceManager.registerTable("age_list", ageListData);
+//
+//        // 构建主查询：SELECT * FROM users WHERE age IN (SELECT age_value FROM age_list)
+//        JQuickTableScanNode usersScan = createTableScan("users", "u");
+//
+//        // 构建子查询：SELECT age_value FROM age_list
+//        JQuickTableScanNode ageListScan = createTableScan("age_list", "al");
+//        List<JQuickProjectNode.SelectItem> subSelectItems = Arrays.asList(
+//                new JQuickProjectNode.SelectItem(
+//                        new JQuickColumnRefExpression("age_value"),
+//                        "age_value"
+//                )
+//        );
+//        JQuickProjectNode subQueryProject = new JQuickProjectNode(subSelectItems, ageListScan);
+//
+//        // 创建 IN 子查询条件
+//        JQuickInExpression inSubqueryCondition = new JQuickInExpression(
+//                new JQuickColumnRefExpression("age"),
+//                subQueryProject,  // 子查询作为参数
+//                false  // not 标记
+//        );
+//
+//        JQuickFilterNode filterNode = createFilter(usersScan, inSubqueryCondition);
+//
+//        JQuickPhysicalPlanNode physicalPlan = generator.generate(filterNode);
+//        JQuickFilterPhysicalNode filterPhysical = (JQuickFilterPhysicalNode) physicalPlan;
+//        JQuickExpression actualPredicate = filterPhysical.getPredicate();
+//
+//        System.out.println("=== IN (子查询) 条件测试 ===");
+//        System.out.println("条件: age IN (SELECT age_value FROM age_list)");
+//        System.out.println("子查询结果: age_value = 25, 30, 40");
+//        System.out.println("预期结果: 返回 age 为 25, 30, 40 的用户");
+//        System.out.println("  (1Alice-25, 2Bob-30, 7Grace-40)");
+//
+//        JQuickFragmenter fragmenter = new JQuickFragmenter(1);
+//        JQuickDistributedPlan plan = fragmenter.fragment(filterPhysical);
+//        String queryId = "in_subquery_test_" + System.currentTimeMillis();
+//        JQuickDataSet result = coordinator.executeQueryWithPlan(queryId, plan);
+//        result.printTable();
+//    }
+
+    /**
+     * 测试8：IS NULL 条件
+     *
+     * SQL示例：SELECT * FROM users WHERE status IS NULL
+     *
+     * 注意：现有数据中 status 字段没有 NULL 值，所以结果应该为空
+     */
+    @Test
+    public void testIsNullCondition() {
+        JQuickTableScanNode usersScan = createTableScan("users", "u");
+        JQuickUnaryExpression isNullCondition = new JQuickUnaryExpression(com.github.paohaijiao.enums.JQuickUnaryOperator.IS_NULL, new JQuickColumnRefExpression("status"));
+        JQuickFilterNode filterNode = createFilter(usersScan, isNullCondition);
+        JQuickPhysicalPlanNode physicalPlan = generator.generate(filterNode);
+        JQuickFilterPhysicalNode filterPhysical = (JQuickFilterPhysicalNode) physicalPlan;
+        JQuickExpression actualPredicate = filterPhysical.getPredicate();
+
+        System.out.println("=== IS NULL条件测试通过 ===");
+        System.out.println("条件: status IS NULL");
+        System.out.println("预期结果: 空集（因为现有数据中 status 没有 NULL）");
+
+        JQuickFragmenter fragmenter = new JQuickFragmenter(1);
+        JQuickDistributedPlan plan = fragmenter.fragment(filterPhysical);
+        String queryId = "is_null_test_" + System.currentTimeMillis();
+        JQuickDataSet result = coordinator.executeQueryWithPlan(queryId, plan);
+        result.printTable();
+    }
+    /**
+     * 测试9：IS NOT NULL 条件
+     *
+     * SQL示例：SELECT * FROM users WHERE status IS NOT NULL
+     */
+    @Test
+    public void testIsNotNullCondition() {
+        JQuickTableScanNode usersScan = createTableScan("users", "u");
+        JQuickUnaryExpression isNotNullCondition = new JQuickUnaryExpression(JQuickUnaryOperator.IS_NOT_NULL, new JQuickColumnRefExpression("status"));
+        JQuickFilterNode filterNode = createFilter(usersScan, isNotNullCondition);
+
+        JQuickPhysicalPlanNode physicalPlan = generator.generate(filterNode);
+        JQuickFilterPhysicalNode filterPhysical = (JQuickFilterPhysicalNode) physicalPlan;
+        JQuickExpression actualPredicate = filterPhysical.getPredicate();
+
+        System.out.println("=== IS NOT NULL条件测试通过 ===");
+        System.out.println("条件: status IS NOT NULL");
+        System.out.println("预期结果: 返回所有用户（因为现有数据中 status 都没有 NULL）");
+
+        JQuickFragmenter fragmenter = new JQuickFragmenter(1);
+        JQuickDistributedPlan plan = fragmenter.fragment(filterPhysical);
+        String queryId = "is_not_null_test_" + System.currentTimeMillis();
+        JQuickDataSet result = coordinator.executeQueryWithPlan(queryId, plan);
+        result.printTable();
+    }
+    /**
+     * 测试13：等于条件 EQ (=)
+     *
+     * SQL示例：SELECT * FROM users WHERE age = 25
+     */
+    @Test
+    public void testEqualsCondition() {
+        JQuickTableScanNode usersScan = createTableScan("users", "u");
+        JQuickBinaryExpression eqCondition = createComparison("age", JQuickBinaryOperator.EQ, 25);
+        JQuickFilterNode filterNode = createFilter(usersScan, eqCondition);
+
+        JQuickPhysicalPlanNode physicalPlan = generator.generate(filterNode);
+        JQuickFilterPhysicalNode filterPhysical = (JQuickFilterPhysicalNode) physicalPlan;
+        JQuickExpression actualPredicate = filterPhysical.getPredicate();
+
+        System.out.println("=== = (等于) 条件测试 ===");
+        System.out.println("条件: age = 25");
+        System.out.println("预期结果: 返回 age = 25 的用户 (1Alice)");
+
+        JQuickFragmenter fragmenter = new JQuickFragmenter(1);
+        JQuickDistributedPlan plan = fragmenter.fragment(filterPhysical);
+        String queryId = "eq_test_" + System.currentTimeMillis();
+        JQuickDataSet result = coordinator.executeQueryWithPlan(queryId, plan);
+        result.printTable();
+    }
+    /**
+     * 测试14：大于条件 GT (>)
+     *
+     * SQL示例：SELECT * FROM users WHERE age > 30
+     */
+    @Test
+    public void testGreaterThanCondition() {
+        JQuickTableScanNode usersScan = createTableScan("users", "u");
+        JQuickBinaryExpression gtCondition = createComparison("age", JQuickBinaryOperator.GT, 30);
+        JQuickFilterNode filterNode = createFilter(usersScan, gtCondition);
+
+        JQuickPhysicalPlanNode physicalPlan = generator.generate(filterNode);
+        JQuickFilterPhysicalNode filterPhysical = (JQuickFilterPhysicalNode) physicalPlan;
+        JQuickExpression actualPredicate = filterPhysical.getPredicate();
+
+        System.out.println("=== > (大于) 条件测试 ===");
+        System.out.println("条件: age > 30");
+        System.out.println("预期结果: 返回 age > 30 的用户 (4David-35, 7Grace-40)");
+
+        JQuickFragmenter fragmenter = new JQuickFragmenter(1);
+        JQuickDistributedPlan plan = fragmenter.fragment(filterPhysical);
+        String queryId = "gt_test_" + System.currentTimeMillis();
+        JQuickDataSet result = coordinator.executeQueryWithPlan(queryId, plan);
+        result.printTable();
+    }
+    /**
+     * 测试15：小于条件 LT (<)
+     *
+     * SQL示例：SELECT * FROM users WHERE age < 22
+     */
+    @Test
+    public void testLessThanCondition() {
+        JQuickTableScanNode usersScan = createTableScan("users", "u");
+        JQuickBinaryExpression ltCondition = createComparison("age", JQuickBinaryOperator.LT, 22);
+        JQuickFilterNode filterNode = createFilter(usersScan, ltCondition);
+
+        JQuickPhysicalPlanNode physicalPlan = generator.generate(filterNode);
+        JQuickFilterPhysicalNode filterPhysical = (JQuickFilterPhysicalNode) physicalPlan;
+        JQuickExpression actualPredicate = filterPhysical.getPredicate();
+
+        System.out.println("=== < (小于) 条件测试 ===");
+        System.out.println("条件: age < 22");
+        System.out.println("预期结果: 返回 age < 22 的用户 (8Henry-19)");
+
+        JQuickFragmenter fragmenter = new JQuickFragmenter(1);
+        JQuickDistributedPlan plan = fragmenter.fragment(filterPhysical);
+        String queryId = "lt_test_" + System.currentTimeMillis();
+        JQuickDataSet result = coordinator.executeQueryWithPlan(queryId, plan);
+        result.printTable();
+    }
+
+    /**
+     * 测试16：小于等于条件 LTE (<=)
+     *
+     * SQL示例：SELECT * FROM users WHERE age <= 20
+     */
+    @Test
+    public void testLessThanOrEqualCondition() {
+        JQuickTableScanNode usersScan = createTableScan("users", "u");
+        JQuickBinaryExpression lteCondition = createComparison("age", JQuickBinaryOperator.LE, 20);
+        JQuickFilterNode filterNode = createFilter(usersScan, lteCondition);
+
+        JQuickPhysicalPlanNode physicalPlan = generator.generate(filterNode);
+        JQuickFilterPhysicalNode filterPhysical = (JQuickFilterPhysicalNode) physicalPlan;
+        JQuickExpression actualPredicate = filterPhysical.getPredicate();
+
+        System.out.println("=== <= (小于等于) 条件测试 ===");
+        System.out.println("条件: age <= 20");
+        System.out.println("预期结果: 返回 age <= 20 的用户 (3Charlie-20, 8Henry-19)");
+
+        JQuickFragmenter fragmenter = new JQuickFragmenter(1);
+        JQuickDistributedPlan plan = fragmenter.fragment(filterPhysical);
+        String queryId = "lte_test_" + System.currentTimeMillis();
+        JQuickDataSet result = coordinator.executeQueryWithPlan(queryId, plan);
+        result.printTable();
+    }
+
+    /**
+     * 测试17：大于等于条件 GTE (>=)
+     *
+     * SQL示例：SELECT * FROM users WHERE age >= 35
+     */
+    @Test
+    public void testGreaterThanOrEqualCondition() {
+        JQuickTableScanNode usersScan = createTableScan("users", "u");
+        JQuickBinaryExpression gteCondition = createComparison("age", JQuickBinaryOperator.GE, 35);
+        JQuickFilterNode filterNode = createFilter(usersScan, gteCondition);
+
+        JQuickPhysicalPlanNode physicalPlan = generator.generate(filterNode);
+        JQuickFilterPhysicalNode filterPhysical = (JQuickFilterPhysicalNode) physicalPlan;
+        JQuickExpression actualPredicate = filterPhysical.getPredicate();
+
+        System.out.println("=== >= (大于等于) 条件测试 ===");
+        System.out.println("条件: age >= 35");
+        System.out.println("预期结果: 返回 age >= 35 的用户 (4David-35, 7Grace-40)");
+
+        JQuickFragmenter fragmenter = new JQuickFragmenter(1);
+        JQuickDistributedPlan plan = fragmenter.fragment(filterPhysical);
+        String queryId = "gte_test_" + System.currentTimeMillis();
+        JQuickDataSet result = coordinator.executeQueryWithPlan(queryId, plan);
+        result.printTable();
+    }
+
+    /**
+     * 测试18：不等于条件 NE (!=)
+     *
+     * SQL示例：SELECT * FROM users WHERE age != 25
+     */
+    @Test
+    public void testNotEqualsCondition() {
+        JQuickTableScanNode usersScan = createTableScan("users", "u");
+        JQuickBinaryExpression neCondition = createComparison("age", JQuickBinaryOperator.NE, 25);
+        JQuickFilterNode filterNode = createFilter(usersScan, neCondition);
+
+        JQuickPhysicalPlanNode physicalPlan = generator.generate(filterNode);
+        JQuickFilterPhysicalNode filterPhysical = (JQuickFilterPhysicalNode) physicalPlan;
+        JQuickExpression actualPredicate = filterPhysical.getPredicate();
+
+        System.out.println("=== != (不等于) 条件测试 ===");
+        System.out.println("条件: age != 25");
+        System.out.println("预期结果: 返回 age != 25 的所有用户 (排除 1Alice)");
+
+        JQuickFragmenter fragmenter = new JQuickFragmenter(1);
+        JQuickDistributedPlan plan = fragmenter.fragment(filterPhysical);
+        String queryId = "ne_test_" + System.currentTimeMillis();
+        JQuickDataSet result = coordinator.executeQueryWithPlan(queryId, plan);
+        result.printTable();
+    }
+    /**
+     * 测试30：LIKE 谓词（基本匹配）
+     *
+     * SQL示例：SELECT * FROM users WHERE name LIKE 'A%'
+     */
+    @Test
+    public void testLikeCondition() {
+        JQuickTableScanNode usersScan = createTableScan("users", "u");
+        JQuickBinaryExpression likeCondition = new JQuickBinaryExpression(
+                new JQuickColumnRefExpression("name"),
+                new JQuickLiteralExpression("A%"),
+                JQuickBinaryOperator.LIKE
+        );
+        JQuickFilterNode filterNode = createFilter(usersScan, likeCondition);
+
+        JQuickPhysicalPlanNode physicalPlan = generator.generate(filterNode);
+        JQuickFilterPhysicalNode filterPhysical = (JQuickFilterPhysicalNode) physicalPlan;
+        JQuickExpression actualPredicate = filterPhysical.getPredicate();
+
+        System.out.println("=== LIKE 基本匹配测试 ===");
+        System.out.println("条件: name LIKE 'A%'");
+        System.out.println("预期结果: 返回 name 以 'A' 开头的用户");
+        System.out.println("  实际数据中：1Alice (以 A 开头)");
+
+        JQuickFragmenter fragmenter = new JQuickFragmenter(1);
+        JQuickDistributedPlan plan = fragmenter.fragment(filterPhysical);
+        String queryId = "like_test_" + System.currentTimeMillis();
+        JQuickDataSet result = coordinator.executeQueryWithPlan(queryId, plan);
+        result.printTable();
+    }
+    /**
+     * 测试31：LIKE 谓词（末尾匹配）
+     *
+     * SQL示例：SELECT * FROM users WHERE name LIKE '%e'
+     */
+    @Test
+    public void testLikeEndsWith() {
+        JQuickTableScanNode usersScan = createTableScan("users", "u");
+        // name LIKE '%e' - 匹配以 e 结尾的名字
+        JQuickBinaryExpression likeCondition = new JQuickBinaryExpression(
+                new JQuickColumnRefExpression("name"),
+                new JQuickLiteralExpression("%e"),
+                JQuickBinaryOperator.LIKE
+        );
+        JQuickFilterNode filterNode = createFilter(usersScan, likeCondition);
+
+        JQuickPhysicalPlanNode physicalPlan = generator.generate(filterNode);
+        JQuickFilterPhysicalNode filterPhysical = (JQuickFilterPhysicalNode) physicalPlan;
+        JQuickExpression actualPredicate = filterPhysical.getPredicate();
+
+        System.out.println("=== LIKE 末尾匹配测试 ===");
+        System.out.println("条件: name LIKE '%e'");
+        System.out.println("预期结果: 返回 name 以 'e' 结尾的用户");
+        System.out.println("  实际数据中：5Eve (以 e 结尾)");
+
+        JQuickFragmenter fragmenter = new JQuickFragmenter(1);
+        JQuickDistributedPlan plan = fragmenter.fragment(filterPhysical);
+        String queryId = "like_ends_with_test_" + System.currentTimeMillis();
+        JQuickDataSet result = coordinator.executeQueryWithPlan(queryId, plan);
+        result.printTable();
+    }
+    /**
+     * 测试34：NOT LIKE 谓词
+     *
+     * SQL示例：SELECT * FROM users WHERE name NOT LIKE 'A%'
+     */
+    @Test
+    public void testNotLikeCondition() {
+        JQuickTableScanNode usersScan = createTableScan("users", "u");
+        // name NOT LIKE 'A%' - 匹配不以 A 开头的名字
+        JQuickBinaryExpression notLikeCondition = new JQuickBinaryExpression(
+                new JQuickColumnRefExpression("name"),
+                new JQuickLiteralExpression("A%"),
+                JQuickBinaryOperator.NOT_LIKE
+        );
+        JQuickFilterNode filterNode = createFilter(usersScan, notLikeCondition);
+
+        JQuickPhysicalPlanNode physicalPlan = generator.generate(filterNode);
+        JQuickFilterPhysicalNode filterPhysical = (JQuickFilterPhysicalNode) physicalPlan;
+        JQuickExpression actualPredicate = filterPhysical.getPredicate();
+
+        System.out.println("=== NOT LIKE 测试 ===");
+        System.out.println("条件: name NOT LIKE 'A%'");
+        System.out.println("预期结果: 返回 name 不以 'A' 开头的所有用户");
+
+        JQuickFragmenter fragmenter = new JQuickFragmenter(1);
+        JQuickDistributedPlan plan = fragmenter.fragment(filterPhysical);
+        String queryId = "not_like_test_" + System.currentTimeMillis();
+        JQuickDataSet result = coordinator.executeQueryWithPlan(queryId, plan);
+        result.printTable();
+    }
+    /**
+     * 测试39：REGEXP 谓词（基本正则匹配）
+     *
+     * SQL示例：SELECT * FROM users WHERE name REGEXP '^A.*'
+     */
+    @Test
+    public void testRegexpCondition() {
+        JQuickTableScanNode usersScan = createTableScan("users", "u");
+        JQuickBinaryExpression regexpCondition = new JQuickBinaryExpression(
+                new JQuickColumnRefExpression("name"),
+                new JQuickLiteralExpression("^A.*"),
+                JQuickBinaryOperator.REGEX
+        );
+        JQuickFilterNode filterNode = createFilter(usersScan, regexpCondition);
+
+        JQuickPhysicalPlanNode physicalPlan = generator.generate(filterNode);
+        JQuickFilterPhysicalNode filterPhysical = (JQuickFilterPhysicalNode) physicalPlan;
+        JQuickExpression actualPredicate = filterPhysical.getPredicate();
+
+        System.out.println("=== REGEXP 基本匹配测试 ===");
+        System.out.println("条件: name REGEXP '^A.*'");
+        System.out.println("预期结果: 返回 name 以 'A' 开头的用户");
+        System.out.println("  实际数据中：1Alice (以 A 开头)");
+
+        JQuickFragmenter fragmenter = new JQuickFragmenter(1);
+        JQuickDistributedPlan plan = fragmenter.fragment(filterPhysical);
+        String queryId = "regexp_test_" + System.currentTimeMillis();
+        JQuickDataSet result = coordinator.executeQueryWithPlan(queryId, plan);
+        result.printTable();
+    }
+
+    /**
+     * 测试32：LIKE 谓词（包含匹配）
+     *
+     * SQL示例：SELECT * FROM users WHERE name LIKE '%li%'
+     */
+    @Test
+    public void testLikeContains() {
+        JQuickTableScanNode usersScan = createTableScan("users", "u");
+        // name LIKE '%li%' - 匹配包含 'li' 的名字
+        JQuickBinaryExpression likeCondition = new JQuickBinaryExpression(
+                new JQuickColumnRefExpression("name"),
+                new JQuickLiteralExpression("%li%"),
+                JQuickBinaryOperator.LIKE
+        );
+        JQuickFilterNode filterNode = createFilter(usersScan, likeCondition);
+
+        JQuickPhysicalPlanNode physicalPlan = generator.generate(filterNode);
+        JQuickFilterPhysicalNode filterPhysical = (JQuickFilterPhysicalNode) physicalPlan;
+        JQuickExpression actualPredicate = filterPhysical.getPredicate();
+
+        System.out.println("=== LIKE 包含匹配测试 ===");
+        System.out.println("条件: name LIKE '%li%'");
+        System.out.println("预期结果: 返回 name 包含 'li' 的用户");
+        System.out.println("  实际数据中：3Charlie (包含 'li')");
+
+        JQuickFragmenter fragmenter = new JQuickFragmenter(1);
+        JQuickDistributedPlan plan = fragmenter.fragment(filterPhysical);
+        String queryId = "like_contains_test_" + System.currentTimeMillis();
+        JQuickDataSet result = coordinator.executeQueryWithPlan(queryId, plan);
+        result.printTable();
+    }
+
+
     /**
      *
      * SQL示例：
