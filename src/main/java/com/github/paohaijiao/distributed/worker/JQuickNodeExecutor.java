@@ -53,7 +53,7 @@ public class JQuickNodeExecutor {
      * 执行片段的核心方法
      */
     public JQuickDataSet executeFragment(JQuickFragmentProto fragment, JQuickWorker.JQuickTaskContext context) {
-        JQuickPhysicalPlanNode rootNode = buildPhysicalNode(fragment.getPlan());
+        JQuickPhysicalPlanNode rootNode = jQuickprotoService.buildPhysicalNode(fragment.getPlan());
         JQuickDataSet result = executeNode(rootNode, context);
         if (!result.isEmpty()) {// 如果执行结果已经有数据，直接返回
             console.info("executeFragment: returning " + result.size() + " rows from executeNode");
@@ -186,7 +186,14 @@ public class JQuickNodeExecutor {
      * 执行 Filter
      */
     private JQuickDataSet executeFilter(JQuickFilterPhysicalNode node, JQuickWorker.JQuickTaskContext context) {
-        JQuickDataSet input = executeNode(node.getChild(), context);
+        JQuickExecuteTaskRequest request = context.getRequest();
+        JQuickDataSet input = JQuickDataSet.builder().build();
+        for (JQuickMemoryPartitionProto partition : request.getInputPartitionsList()) {
+            if (partition.hasData()) {
+                JQuickDataSet partitionData = dataConverter.convertFromProto(partition.getData());
+                input = input.concat(partitionData);
+            }
+        }
         JQuickDataSet result = input.filter(row -> expressionEvaluator.evaluatePredicate(row, node.getPredicate()));
         context.addProcessedRows(input.size());
         return result;
@@ -1327,48 +1334,7 @@ public class JQuickNodeExecutor {
         return Object.class;
     }
 
-    private JQuickPhysicalPlanNode buildPhysicalNode(JQuickPhysicalPlanNodeProto proto) {
-        if (proto == null) return null;
-        switch (proto.getNodeCase()) {
-            case TABLE_SCAN:
-                JQuickTableScanNodeProto scanProto = proto.getTableScan();
-                JQuickTableScanPhysicalNode scanNode = new JQuickTableScanPhysicalNode(scanProto.getTableName(), scanProto.getAlias(), new HashSet<>(scanProto.getRequiredColumnsList()),
-                        scanProto.hasFilterPredicate()?jQuickprotoService.buildExpression(scanProto.getFilterPredicate()):null);
-                return scanNode;
-            case FILTER:
-                return new JQuickFilterPhysicalNode(jQuickprotoService.buildExpression(proto.getFilter().getPredicate()), null);
-            case PROJECT:
-                JQuickProjectNodeProto projectProto = proto.getProject();
-                List<JQuickProjectPhysicalNode.SelectItem> selectItems = new ArrayList<>();
-                for (JQuickProjectNodeProto.SelectItemProto itemProto : projectProto.getSelectItemsList()) {
-                    selectItems.add(new JQuickProjectPhysicalNode.SelectItem(jQuickprotoService.buildExpression(itemProto.getExpression()), itemProto.getAlias()));
-                }
-                return new JQuickProjectPhysicalNode(selectItems, null, projectProto.getDistinct());
-            case HASH_JOIN:
-                JQuickHashJoinNodeProto joinProto = proto.getHashJoin();
-                return new JQuickHashJoinPhysicalNode(jQuickprotoService.convertJoinType(joinProto.getJoinType()), null, null, jQuickprotoService.buildExpression(joinProto.getCondition()), new ArrayList<>(), joinProto.getBuildSide() == JQuickBuildSideProto.BUILD_SIDE_LEFT ? JQuickHashJoinPhysicalNode.BuildSide.LEFT : JQuickHashJoinPhysicalNode.BuildSide.RIGHT, JQuickHashJoinPhysicalNode.JoinDistribution.LOCAL);
-            case EXCHANGE:
-                JQuickExchangeNodeProto exchangeProto = proto.getExchange();
-                return new JQuickExchangePhysicalNode(jQuickprotoService.convertExchangeType(exchangeProto.getExchangeType()), jQuickprotoService.convertPartitionStrategy(exchangeProto.getPartitionStrategy()), new ArrayList<>(), exchangeProto.getParallelism(), null);
-            case LIMIT:
-                JQuickLimitNodeProto limitProto = proto.getLimit();
-                return new JQuickLimitPhysicalNode(limitProto.getLimit(), limitProto.getOffset(), null);
-            case SET_OPERATION:
-                JQuickSetOperationNodeProto setOpProto = proto.getSetOperation();
-                JQuickSQLOperationType opType = jQuickprotoService.convertSetOperationType(setOpProto.getOperationType());
-                List<JQuickPhysicalPlanNode> children = new ArrayList<>();
-                for (JQuickPhysicalPlanNodeProto childProto : setOpProto.getChildrenList()) {
-                    children.add(buildPhysicalNode(childProto));
-                }
-                return new JQuickSetOperationPhysicalNode(opType, 
-                        children.size() > 0 ? children.get(0) : null, 
-                        children.size() > 1 ? children.get(1) : null);
-            case EMPTY:
-                return JQuickEmptyPhysicalNode.INSTANCE;
-            default:
-                return null;
-        }
-    }
+
     /**
      * 提取表别名
      */

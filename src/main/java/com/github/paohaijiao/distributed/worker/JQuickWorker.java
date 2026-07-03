@@ -3,9 +3,11 @@ package com.github.paohaijiao.distributed.worker;
 import com.github.paohaijiao.console.JConsole;
 import com.github.paohaijiao.datasource.JQuickDataSourceManager;
 import com.github.paohaijiao.distributed.coordinator.JQuickCoordinator;
+import com.github.paohaijiao.distributed.proto.JQuickprotoService;
 import com.github.paohaijiao.enums.JQuickExchangeType;
 import com.github.paohaijiao.enums.JQuickFragmentType;
 import com.github.paohaijiao.function.manager.JQuickMethodInvocationManager;
+import com.github.paohaijiao.physical.JQuickPhysicalPlanNode;
 import com.github.paohaijiao.proto.*;
 import com.github.paohaijiao.statement.JQuickColumnMeta;
 import com.github.paohaijiao.statement.JQuickDataSet;
@@ -70,6 +72,8 @@ public class JQuickWorker {
 
     private int coordinatorPort;
 
+    private JQuickprotoService jQuickprotoService;
+
 
 
     public JQuickWorker(String workerId, int port) {
@@ -84,6 +88,7 @@ public class JQuickWorker {
         this.expressionEvaluator = new JQuickExpressionEvaluator(functionManager);
         this.partitionManager = new JQuickPartitionManager();
         this.dataConverter = new JQuickDataConverter();
+        this.jQuickprotoService = new JQuickprotoService();
         this.nodeExecutor = new JQuickNodeExecutor(this, expressionEvaluator, partitionManager, dataConverter);
     }
     /**
@@ -270,6 +275,7 @@ public class JQuickWorker {
             if (JQuickFragmentType.SINK.equals(request.getFragment().getType())) {
                 console.info("SINK");
             }
+            JQuickPhysicalPlanNode rootNode = jQuickprotoService.buildPhysicalNode(request.getFragment().getPlan());
             JQuickDataSet result = nodeExecutor.executeFragment(request.getFragment(), context);// 执行物理计划片段
             if (request.hasOutputPartition()) {
                 sendOutputPartition(result, request.getOutputPartition());// 输出结果分区
@@ -358,7 +364,6 @@ public class JQuickWorker {
 
     private void sendOutputPartition(JQuickDataSet result, JQuickMemoryPartitionProto outputPartition) {
         console.info("=== sendOutputPartition Debug ===");
-        result.printTable();
         console.info("Result rows: " + result.size());
         console.info("Output partition: " + outputPartition.getPartitionId());
         console.info("Partition index: " + outputPartition.getPartitionIndex());

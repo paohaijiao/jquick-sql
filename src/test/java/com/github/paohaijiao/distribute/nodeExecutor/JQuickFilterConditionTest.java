@@ -15,7 +15,13 @@
  */
 package com.github.paohaijiao.distribute.nodeExecutor;
 
+import com.github.paohaijiao.config.JQuickSqlConfig;
+import com.github.paohaijiao.console.JConsole;
+import com.github.paohaijiao.datasource.JQuickDataSourceManager;
 import com.github.paohaijiao.distributed.JQuickDistributedPlan;
+import com.github.paohaijiao.distributed.coordinator.JQuickCoordinator;
+import com.github.paohaijiao.distributed.worker.JQuickDataConverter;
+import com.github.paohaijiao.distributed.worker.JQuickWorker;
 import com.github.paohaijiao.enums.JQuickBinaryOperator;
 import com.github.paohaijiao.enums.JQuickJoinType;
 import com.github.paohaijiao.expression.JQuickExpression;
@@ -26,9 +32,14 @@ import com.github.paohaijiao.logic.domain.*;
 import com.github.paohaijiao.logic2physical.JQuickPhysicalPlanGenerator;
 import com.github.paohaijiao.physical.JQuickPhysicalPlanNode;
 import com.github.paohaijiao.physical.node.JQuickFilterPhysicalNode;
+import com.github.paohaijiao.statement.JQuickColumnMeta;
+import com.github.paohaijiao.statement.JQuickDataSet;
+import com.github.paohaijiao.statement.JQuickRow;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.io.IOException;
 import java.util.*;
 
 
@@ -41,22 +52,114 @@ import java.util.*;
  */
 public class JQuickFilterConditionTest {
 
+    private static final String TABLE_USERS = "users";
+
+    // Worker 端口配置
+    private static final int WORKER1_PORT = 19001;
+
+    private static final int WORKER2_PORT = 19002;
+
+    private static final int WORKER3_PORT = 19003;
+
+    private static JConsole console;
+
+    private static JQuickDataConverter dataConverter;
+    // 测试数据
+    private static JQuickDataSet employeeData;
+
+    private static JQuickDataSet largeDataSet;
+
+    private JQuickWorker worker1;
+
+    private JQuickWorker worker2;
+
+    private JQuickWorker worker3;
+
+    private JQuickCoordinator coordinator;
+
     private JQuickPhysicalPlanGenerator generator;
-    private JQuickFragmenter fragmenter;
-    private JQuickFragmenter verboseFragmenter;
+
+
+    private List<JQuickCoordinator.WorkerEndpoint> endpoints;
+    private List<JQuickWorker> workers;
 
     @Before
-    public void setUp() {
+    public void setUp() throws IOException, InterruptedException {
+        console = JConsole.initConsoleEnvironment();
+        dataConverter = new JQuickDataConverter();
+        console.info("测试环境初始化完成");
         generator = new JQuickPhysicalPlanGenerator();
-        fragmenter = new JQuickFragmenter(4);
-        verboseFragmenter = new JQuickFragmenter(8);
+        // 清理数据源
+        JQuickDataSourceManager.clearAll();
+        // 注册测试数据到数据源管理器（替代 broadcastTable）
+        registerTestData();
+        console.info("测试数据已注册到数据源管理器");
+        // 创建 Worker 列表
+        workers = new ArrayList<>();
+        worker1 = new JQuickWorker("worker-1", WORKER1_PORT);
+        worker2 = new JQuickWorker("worker-2", WORKER2_PORT);
+        worker3 = new JQuickWorker("worker-3", WORKER3_PORT);
+        workers.add(worker1);
+        workers.add(worker2);
+        workers.add(worker3);
+        worker1.start();
+        worker2.start();
+        worker3.start();
+        Thread.sleep(1000);
+        worker1.clearReceivedDataCache();
+        worker2.clearReceivedDataCache();
+        worker3.clearReceivedDataCache();
+        endpoints = new ArrayList<>();
+        endpoints.add(new JQuickCoordinator.WorkerEndpoint("worker-1", "localhost", WORKER1_PORT, 0));
+        endpoints.add(new JQuickCoordinator.WorkerEndpoint("worker-2", "localhost", WORKER2_PORT, 1));
+        endpoints.add(new JQuickCoordinator.WorkerEndpoint("worker-3", "localhost", WORKER3_PORT, 2));
+        JQuickSqlConfig config=new JQuickSqlConfig();
+        config.setWorkers(endpoints);
+        coordinator = new JQuickCoordinator(config);
+        for (JQuickWorker worker : workers) {
+            worker.setWorkerEndpoints(endpoints);
+        }
+        console.info("测试环境启动完成");
+    }
+    @After
+    public void tearDown() {
+        JQuickDataSourceManager.clearAll();
     }
     /**
-     * 创建表扫描节点
+     * 注册测试数据
      */
-    private JQuickTableScanNode createTableScan(String tableName) {
-        return new JQuickTableScanNode(tableName);
+    private void registerTestData() {
+        List<JQuickColumnMeta> userColumns = Arrays.asList(
+                new JQuickColumnMeta("id", Integer.class, TABLE_USERS),
+                new JQuickColumnMeta("name", String.class, TABLE_USERS),
+                new JQuickColumnMeta("age", Integer.class, TABLE_USERS),
+                new JQuickColumnMeta("status", String.class, TABLE_USERS)
+        );
+        List<JQuickRow> userRows = Arrays.asList(
+                createRow("id", 1, "name", "1Alice", "age", 25, "status", "active"),
+                createRow("id", 2, "name", "2Bob", "age", 30, "status", "active"),
+                createRow("id", 3, "name", "3Charlie", "age", 20, "status", "pending"),
+                createRow("id", 4, "name", "4David", "age", 35, "status", "inactive"),
+                createRow("id", 5, "name", "5Eve", "age", 28, "status", "active"),
+                createRow("id", 6, "name", "6Frank", "age", 22, "status", "pending"),
+                createRow("id", 7, "name", "7Grace", "age", 40, "status", "active"),
+                createRow("id", 8, "name", "8Henry", "age", 19, "status", "inactive")
+        );
+        JQuickDataSet usersData = new JQuickDataSet(userColumns, userRows);
+        JQuickDataSourceManager.registerTable(TABLE_USERS, usersData);
     }
+
+    /**
+     * 创建行的辅助方法
+     */
+    private JQuickRow createRow(Object... keyValues) {
+        JQuickRow row = new JQuickRow();
+        for (int i = 0; i < keyValues.length; i += 2) {
+            row.put((String) keyValues[i], keyValues[i + 1]);
+        }
+        return row;
+    }
+
     /**
      * 创建等值条件
      */
@@ -140,12 +243,12 @@ public class JQuickFilterConditionTest {
     /**
      * 测试3：复合条件 AND
      *
-     * SQL示例：SELECT * FROM users WHERE age > 18 AND status = 'active'
+     * SQL示例：SELECT * FROM users WHERE age > 20 AND status = 'active'
      */
     @Test
     public void testAndCondition() {
-        JQuickTableScanNode usersScan = createTableScan("users");
-        JQuickExpression condition1 = createComparison("age", JQuickBinaryOperator.GT, 18);
+        JQuickTableScanNode usersScan = createTableScan("users","u");
+        JQuickExpression condition1 = createComparison("age", JQuickBinaryOperator.GT, 20);
         JQuickExpression condition2 = createComparison("status", JQuickBinaryOperator.EQ, "active");
         JQuickBinaryExpression andCondition = and(condition1, condition2);
         JQuickFilterNode filterNode = createFilter(usersScan, andCondition);
@@ -155,8 +258,11 @@ public class JQuickFilterConditionTest {
         JQuickBinaryExpression binaryExpr = (JQuickBinaryExpression) actualPredicate;
         System.out.println("=== AND条件测试通过 ===");
         System.out.println("条件: age > 18 AND status = 'active'");
-        JQuickDistributedPlan distributedPlan= fragmenter.fragment(filterPhysical);
-        fragmenter.printFragments(distributedPlan);
+        JQuickFragmenter fragmenter = new JQuickFragmenter(1);
+        JQuickDistributedPlan plan = fragmenter.fragment(filterPhysical);
+        String queryId = "hash_partition_" + System.currentTimeMillis();
+        JQuickDataSet result = coordinator.executeQueryWithPlan(queryId, plan);
+        result.printTable();
 
     }
     /**
@@ -166,7 +272,7 @@ public class JQuickFilterConditionTest {
      */
     @Test
     public void testOrCondition() {
-        JQuickTableScanNode usersScan = createTableScan("users");
+        JQuickTableScanNode usersScan = createTableScan("users","u");
         JQuickExpression condition1 = createComparison("age", JQuickBinaryOperator.GT, 18);
         JQuickExpression condition2 = createComparison("vip", JQuickBinaryOperator.EQ, true);
         JQuickBinaryExpression orCondition = or(condition1, condition2);
@@ -177,8 +283,11 @@ public class JQuickFilterConditionTest {
         JQuickBinaryExpression binaryExpr = (JQuickBinaryExpression) actualPredicate;
         System.out.println("=== OR条件测试通过 ===");
         System.out.println("条件: age > 18 OR vip = true");
-        JQuickDistributedPlan distributedPlan= fragmenter.fragment(filterPhysical);
-        fragmenter.printFragments(distributedPlan);
+        JQuickFragmenter fragmenter = new JQuickFragmenter(1);
+        JQuickDistributedPlan plan = fragmenter.fragment(filterPhysical);
+        String queryId = "hash_partition_" + System.currentTimeMillis();
+        JQuickDataSet result = coordinator.executeQueryWithPlan(queryId, plan);
+        result.printTable();
     }
     /**
      * 测试6：嵌套条件（AND/OR组合）
@@ -187,7 +296,7 @@ public class JQuickFilterConditionTest {
      */
     @Test
     public void testNestedCondition() {
-        JQuickTableScanNode usersScan = createTableScan("users");
+        JQuickTableScanNode usersScan = createTableScan("users","u");
         JQuickExpression innerAnd = and(createComparison("age", JQuickBinaryOperator.GT, 18), createComparison("status", JQuickBinaryOperator.EQ, "active"));
         JQuickBinaryExpression nestedCondition = or(innerAnd, createComparison("vip", JQuickBinaryOperator.EQ, true));
         JQuickFilterNode filterNode = createFilter(usersScan, nestedCondition);
@@ -199,8 +308,11 @@ public class JQuickFilterConditionTest {
         JQuickBinaryExpression innerExpr = (JQuickBinaryExpression) leftChild;
         System.out.println("=== 嵌套条件测试通过 ===");
         System.out.println("条件: (age > 18 AND status = 'active') OR vip = true");
-        JQuickDistributedPlan distributedPlan= fragmenter.fragment(filterPhysical);
-        fragmenter.printFragments(distributedPlan);
+        JQuickFragmenter fragmenter = new JQuickFragmenter(1);
+        JQuickDistributedPlan plan = fragmenter.fragment(filterPhysical);
+        String queryId = "hash_partition_" + System.currentTimeMillis();
+        JQuickDataSet result = coordinator.executeQueryWithPlan(queryId, plan);
+        result.printTable();
     }
     /**
      * 测试7：BETWEEN 条件
@@ -209,7 +321,7 @@ public class JQuickFilterConditionTest {
      */
     @Test
     public void testBetweenCondition() {
-        JQuickTableScanNode usersScan = createTableScan("users");
+        JQuickTableScanNode usersScan = createTableScan("users","u");
         JQuickBetweenExpression betweenCondition = createBetween("age", 18, 65);
         JQuickFilterNode filterNode = createFilter(usersScan, betweenCondition);
         JQuickPhysicalPlanNode physicalPlan = generator.generate(filterNode);
@@ -218,8 +330,11 @@ public class JQuickFilterConditionTest {
         JQuickBetweenExpression betweenExpr = (JQuickBetweenExpression) actualPredicate;
         System.out.println("=== BETWEEN条件测试通过 ===");
         System.out.println("条件: age BETWEEN 18 AND 65");
-        JQuickDistributedPlan distributedPlan= fragmenter.fragment(filterPhysical);
-        fragmenter.printFragments(distributedPlan);
+        JQuickFragmenter fragmenter = new JQuickFragmenter(1);
+        JQuickDistributedPlan plan = fragmenter.fragment(filterPhysical);
+        String queryId = "hash_partition_" + System.currentTimeMillis();
+        JQuickDataSet result = coordinator.executeQueryWithPlan(queryId, plan);
+        result.printTable();
     }
     /**
      *
@@ -237,7 +352,7 @@ public class JQuickFilterConditionTest {
      */
     @Test
     public void testRecursiveCte() {
-        JQuickTableScanNode employeeScan = createTableScan("employee");
+        JQuickTableScanNode employeeScan = createTableScan("employee","u");
         JQuickBinaryExpression isNullCondition = new JQuickBinaryExpression(new JQuickColumnRefExpression("manager_id"), new JQuickLiteralExpression(null), JQuickBinaryOperator.EQ);
         JQuickFilterNode anchorFilter = new JQuickFilterNode(isNullCondition, employeeScan);
 
@@ -259,15 +374,18 @@ public class JQuickFilterConditionTest {
         JQuickProjectNode recursiveProject = new JQuickProjectNode(recursiveItems, recursiveJoin);
         List<String> columnNames = Arrays.asList("id", "name", "manager_id", "level");
         JQuickRecursiveUnionNode recursiveUnion = new JQuickRecursiveUnionNode("org_hierarchy", columnNames, anchorProject, recursiveProject, true);
-        JQuickTableScanNode cteFinalRef = createTableScan("org_hierarchy");
+        JQuickTableScanNode cteFinalRef = createTableScan("org_hierarchy","u");
         JQuickProjectNode mainProject = createProject(cteFinalRef, "id", "name", "level");
         Map<String, JQuickLogicalPlanNode> ctes = new LinkedHashMap<>();
         ctes.put("org_hierarchy", recursiveUnion);
         JQuickWithNode withNode = new JQuickWithNode(mainProject, ctes);
         JQuickPhysicalPlanNode physicalPlan = generator.generate(withNode);
         System.out.println(physicalPlan);
-        JQuickDistributedPlan distributedPlan= fragmenter.fragment(physicalPlan);
-        fragmenter.printFragments(distributedPlan);
+        JQuickFragmenter fragmenter = new JQuickFragmenter(1);
+        JQuickDistributedPlan plan = fragmenter.fragment(null);
+        String queryId = "hash_partition_" + System.currentTimeMillis();
+        JQuickDataSet result = coordinator.executeQueryWithPlan(queryId, plan);
+        result.printTable();
     }
 
 }

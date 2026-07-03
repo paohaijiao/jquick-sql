@@ -13,13 +13,55 @@ import com.github.paohaijiao.physical.domain.JQuickPhysicalStats;
 import com.github.paohaijiao.physical.domain.JQuickTablePartitionInfo;
 import com.github.paohaijiao.physical.node.*;
 import com.github.paohaijiao.proto.*;
+import com.github.paohaijiao.statement.JQuickColumnMeta;
+import com.github.paohaijiao.statement.JQuickDataSet;
+import com.github.paohaijiao.statement.JQuickRow;
+import com.google.protobuf.Any;
+import com.google.protobuf.Value;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 public class JQuickprotoService {
+    /**
+     * 将 Proto 转换为内部 DataSet
+     */
+    public JQuickDataSet convertFromProto(JQuickDataSetProto proto) {
+        List<JQuickColumnMeta> columns = new ArrayList<>();
+        for (JQuickColumnMetaProto colProto : proto.getColumnsList()) {
+            try {
+                Class<?> clazz = Class.forName(colProto.getTypeName());
+                columns.add(new JQuickColumnMeta(
+                        colProto.getName(),
+                        clazz,
+                        colProto.getSource()
+                ));
+            } catch (ClassNotFoundException e) {
+                columns.add(new JQuickColumnMeta(
+                        colProto.getName(),
+                        Object.class,
+                        colProto.getSource()
+                ));
+            }
+        }
+        List<JQuickRow> rows = new ArrayList<>();
+        for (JQuickRowProto rowProto : proto.getRowsList()) {
+            JQuickRow row = new JQuickRow();
+            for (Map.Entry<String, Any> entry : rowProto.getDataMap().entrySet()) {
+                try {
+                    if (!entry.getValue().is(Value.class)) {
+                        row.put(entry.getKey(), entry.getValue().toString());
+                    } else {
+                        Value value = entry.getValue().unpack(Value.class);
+                        row.put(entry.getKey(), value.getStringValue());
+                    }
+                } catch (Exception e) {
+                    row.put(entry.getKey(), entry.getValue().toString());
+                }
+            }
+            rows.add(row);
+        }
+        return new JQuickDataSet(columns, rows);
+    }
     /**
      * 转换物理列为 Proto
      */
@@ -717,6 +759,47 @@ public class JQuickprotoService {
                 return JQuickBinaryOperator.EQ;
         }
     }
-
+    public JQuickPhysicalPlanNode buildPhysicalNode(JQuickPhysicalPlanNodeProto proto) {
+        if (proto == null) return null;
+        switch (proto.getNodeCase()) {
+            case TABLE_SCAN:
+                JQuickTableScanNodeProto scanProto = proto.getTableScan();
+                JQuickTableScanPhysicalNode scanNode = new JQuickTableScanPhysicalNode(scanProto.getTableName(), scanProto.getAlias(), new HashSet<>(scanProto.getRequiredColumnsList()),
+                        scanProto.hasFilterPredicate()?buildExpression(scanProto.getFilterPredicate()):null);
+                return scanNode;
+            case FILTER:
+                return new JQuickFilterPhysicalNode(buildExpression(proto.getFilter().getPredicate()), null);
+            case PROJECT:
+                JQuickProjectNodeProto projectProto = proto.getProject();
+                List<JQuickProjectPhysicalNode.SelectItem> selectItems = new ArrayList<>();
+                for (JQuickProjectNodeProto.SelectItemProto itemProto : projectProto.getSelectItemsList()) {
+                    selectItems.add(new JQuickProjectPhysicalNode.SelectItem(buildExpression(itemProto.getExpression()), itemProto.getAlias()));
+                }
+                return new JQuickProjectPhysicalNode(selectItems, null, projectProto.getDistinct());
+            case HASH_JOIN:
+                JQuickHashJoinNodeProto joinProto = proto.getHashJoin();
+                return new JQuickHashJoinPhysicalNode(convertJoinType(joinProto.getJoinType()), null, null, buildExpression(joinProto.getCondition()), new ArrayList<>(), joinProto.getBuildSide() == JQuickBuildSideProto.BUILD_SIDE_LEFT ? JQuickHashJoinPhysicalNode.BuildSide.LEFT : JQuickHashJoinPhysicalNode.BuildSide.RIGHT, JQuickHashJoinPhysicalNode.JoinDistribution.LOCAL);
+            case EXCHANGE:
+                JQuickExchangeNodeProto exchangeProto = proto.getExchange();
+                return new JQuickExchangePhysicalNode(convertExchangeType(exchangeProto.getExchangeType()), convertPartitionStrategy(exchangeProto.getPartitionStrategy()), new ArrayList<>(), exchangeProto.getParallelism(), null);
+            case LIMIT:
+                JQuickLimitNodeProto limitProto = proto.getLimit();
+                return new JQuickLimitPhysicalNode(limitProto.getLimit(), limitProto.getOffset(), null);
+            case SET_OPERATION:
+                JQuickSetOperationNodeProto setOpProto = proto.getSetOperation();
+                JQuickSQLOperationType opType = convertSetOperationType(setOpProto.getOperationType());
+                List<JQuickPhysicalPlanNode> children = new ArrayList<>();
+                for (JQuickPhysicalPlanNodeProto childProto : setOpProto.getChildrenList()) {
+                    children.add(buildPhysicalNode(childProto));
+                }
+                return new JQuickSetOperationPhysicalNode(opType,
+                        children.size() > 0 ? children.get(0) : null,
+                        children.size() > 1 ? children.get(1) : null);
+            case EMPTY:
+                return JQuickEmptyPhysicalNode.INSTANCE;
+            default:
+                return null;
+        }
+    }
 
 }
