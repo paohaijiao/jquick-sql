@@ -18,6 +18,7 @@ package com.github.paohaijiao.distributed.worker;
 import com.github.paohaijiao.console.JConsole;
 import com.github.paohaijiao.enums.JQuickBinaryOperator;
 import com.github.paohaijiao.enums.JQuickUnaryOperator;
+import com.github.paohaijiao.exception.JAssert;
 import com.github.paohaijiao.expression.JQuickExpression;
 import com.github.paohaijiao.expression.domain.*;
 import com.github.paohaijiao.function.core.JQuickMethodFunctionProvider;
@@ -121,8 +122,6 @@ public class JQuickExpressionEvaluator {
             JQuickBinaryExpression binary = (JQuickBinaryExpression) expr;
             Object left = evaluateExpression(row, binary.getLeft());
             Object right = evaluateExpression(row, binary.getRight());
-            // 如果是比较操作，且两个操作数都是相同的列引用（不带前缀），
-            // 尝试分别解析到左右表的值
             if ((binary.getOperator() == com.github.paohaijiao.enums.JQuickBinaryOperator.EQ ||
                  binary.getOperator() == com.github.paohaijiao.enums.JQuickBinaryOperator.NE ||
                  binary.getOperator() == com.github.paohaijiao.enums.JQuickBinaryOperator.LT ||
@@ -213,283 +212,21 @@ public class JQuickExpressionEvaluator {
     }
 
     private Object evaluateBuiltinFunction(String functionName, List<Object> args) {
-        functionName = functionName.toLowerCase();
-        // 字符串函数
-        if (functionName.equals("upper") || functionName.equals("toupper")) {
-            return args.isEmpty() || args.get(0) == null ? null : args.get(0).toString().toUpperCase();
-        }
-        if (functionName.equals("lower") || functionName.equals("tolower")) {
-            return args.isEmpty() || args.get(0) == null ? null : args.get(0).toString().toLowerCase();
-        }
-        if (functionName.equals("length")) {
-            return args.isEmpty() || args.get(0) == null ? 0L : (long) args.get(0).toString().length();
-        }
-        if (functionName.equals("concat")) {
-            StringBuilder sb = new StringBuilder();
-            for (Object arg : args) {
-                if (arg != null) sb.append(arg);
-            }
-            return sb.toString();
-        }
-        if (functionName.equals("substring") || functionName.equals("substr")) {
-            if (args.size() < 2) return null;
-            String str = args.get(0) == null ? "" : args.get(0).toString();
-            int start = ((Number) args.get(1)).intValue() - 1;
-            if (start < 0) start = 0;
-            if (start >= str.length()) return "";
-            if (args.size() >= 3) {
-                int length = ((Number) args.get(2)).intValue();
-                int end = Math.min(start + length, str.length());
-                return str.substring(start, end);
-            }
-            return str.substring(start);
-        }
-        if (functionName.equals("trim")) {
-            return args.isEmpty() || args.get(0) == null ? null : args.get(0).toString().trim();
-        }
-        if (functionName.equals("replace")) {
-            if (args.size() < 3) return null;
-            String str = args.get(0) == null ? "" : args.get(0).toString();
-            String target = args.get(1) == null ? "" : args.get(1).toString();
-            String replacement = args.get(2) == null ? "" : args.get(2).toString();
-            return str.replace(target, replacement);
-        }
-        if (functionName.equals("split")) {
-            if (args.size() < 2) return null;
-            String str = args.get(0) == null ? "" : args.get(0).toString();
-            String delimiter = args.get(1) == null ? "," : args.get(1).toString();
-            return Arrays.asList(str.split(delimiter));
-        }
-        if (functionName.equals("join")) {
-            if (args.size() < 2) return null;
-            Collection<?> collection = args.get(0) instanceof Collection ? (Collection<?>) args.get(0) : null;
-            String delimiter = args.get(1) == null ? "" : args.get(1).toString();
-            if (collection == null) return "";
-            return collection.stream().map(String::valueOf).collect(Collectors.joining(delimiter));
-        }
-
-        // 数学函数
-        if (functionName.equals("abs")) {
-            return args.isEmpty() || args.get(0) == null ? null : Math.abs(asNumber(args.get(0)).doubleValue());
-        }
-        if (functionName.equals("round")) {
-            if (args.isEmpty() || args.get(0) == null) return null;
-            double value = asNumber(args.get(0)).doubleValue();
-            if (args.size() >= 2) {
-                int scale = ((Number) args.get(1)).intValue();
-                double factor = Math.pow(10, scale);
-                return Math.round(value * factor) / factor;
-            }
-            return (double) Math.round(value);
-        }
-        if (functionName.equals("ceil")) {
-            return args.isEmpty() || args.get(0) == null ? null : Math.ceil(asNumber(args.get(0)).doubleValue());
-        }
-        if (functionName.equals("floor")) {
-            return args.isEmpty() || args.get(0) == null ? null : Math.floor(asNumber(args.get(0)).doubleValue());
-        }
-        if (functionName.equals("pow")) {
-            if (args.size() < 2) return null;
-            double base = asNumber(args.get(0)).doubleValue();
-            double exponent = asNumber(args.get(1)).doubleValue();
-            return Math.pow(base, exponent);
-        }
-        if (functionName.equals("sqrt")) {
-            return args.isEmpty() || args.get(0) == null ? null : Math.sqrt(asNumber(args.get(0)).doubleValue());
-        }
-        if (functionName.equals("mod")) {
-            if (args.size() < 2) return null;
-            double a = asNumber(args.get(0)).doubleValue();
-            double b = asNumber(args.get(1)).doubleValue();
-            return b == 0 ? 0 : a % b;
-        }
-        if (functionName.equals("max") || functionName.equals("greatest")) {
-            return args.stream()
-                    .filter(Objects::nonNull)
-                    .map(v -> asNumber(v).doubleValue())
-                    .max(Double::compareTo)
-                    .orElse(null);
-        }
-        if (functionName.equals("min") || functionName.equals("least")) {
-            return args.stream()
-                    .filter(Objects::nonNull)
-                    .map(v -> asNumber(v).doubleValue())
-                    .min(Double::compareTo)
-                    .orElse(null);
-        }
-
-        // 日期函数
-        if (functionName.equals("year")) {
-            return extractYear(getDateValue(args));
-        }
-        if (functionName.equals("month")) {
-            return extractMonth(getDateValue(args));
-        }
-        if (functionName.equals("day")) {
-            return extractDay(getDateValue(args));
-        }
-        if (functionName.equals("now")) {
-            return LocalDateTime.now();
-        }
-        if (functionName.equals("current_date") || functionName.equals("today")) {
-            return LocalDate.now();
-        }
-        if (functionName.equals("add_days") || functionName.equals("addDays")) {
-            if (args.size() < 2) return null;
-            Object date = args.get(0);
-            int days = ((Number) args.get(1)).intValue();
-            if (date instanceof LocalDate) return ((LocalDate) date).plusDays(days);
-            if (date instanceof LocalDateTime) return ((LocalDateTime) date).plusDays(days);
-            if (date instanceof Date) {
-                Calendar cal = Calendar.getInstance();
-                cal.setTime((Date) date);
-                cal.add(Calendar.DAY_OF_MONTH, days);
-                return cal.getTime();
-            }
-            return null;
-        }
-
-        // 条件函数
-        if (functionName.equals("if")) {
-            if (args.size() < 3) return null;
-            Boolean condition = args.get(0) instanceof Boolean ? (Boolean) args.get(0) : false;
-            return condition ? args.get(1) : args.get(2);
-        }
-        if (functionName.equals("coalesce") || functionName.equals("nvl")) {
-            for (Object arg : args) {
-                if (arg != null) return arg;
-            }
-            return null;
-        }
-        if (functionName.equals("between")) {
-            if (args.size() < 3) return false;
-            double value = asNumber(args.get(0)).doubleValue();
-            double min = asNumber(args.get(1)).doubleValue();
-            double max = asNumber(args.get(2)).doubleValue();
-            boolean inclusive = args.size() >= 4 && args.get(3) instanceof Boolean ? (Boolean) args.get(3) : true;
-            return inclusive ? value >= min && value <= max : value > min && value < max;
-        }
-
-        // 类型转换函数
-        if (functionName.equals("to_int") || functionName.equals("toInt")) {
-            if (args.isEmpty()) return null;
-            Number num = asNumber(args.get(0));
-            return num != null ? num.intValue() : null;
-        }
-        if (functionName.equals("to_long") || functionName.equals("toLong")) {
-            if (args.isEmpty()) return null;
-            Number num = asNumber(args.get(0));
-            return num != null ? num.longValue() : null;
-        }
-        if (functionName.equals("to_double") || functionName.equals("toDouble")) {
-            if (args.isEmpty()) return null;
-            Number num = asNumber(args.get(0));
-            return num != null ? num.doubleValue() : null;
-        }
-        if (functionName.equals("to_string") || functionName.equals("toString")) {
-            if (args.isEmpty()) return null;
-            return args.get(0) != null ? args.get(0).toString() : null;
-        }
-        if (functionName.equals("to_boolean") || functionName.equals("toBoolean")) {
-            if (args.isEmpty()) return null;
-            Object val = args.get(0);
-            if (val instanceof Boolean) return val;
-            if (val instanceof String) {
-                String str = ((String) val).toLowerCase();
-                return str.equals("true") || str.equals("yes") || str.equals("1");
-            }
-            if (val instanceof Number) return ((Number) val).doubleValue() != 0;
-            return false;
-        }
-        if (functionName.equals("cast")) {
-            if (args.size() < 2) return args.isEmpty() ? null : args.get(0);
-            Object value = args.get(0);
-            String targetType = args.get(1) == null ? "string" : args.get(1).toString().toLowerCase();
-            try {
-                switch (targetType) {
-                    case "int":
-                    case "integer":
-                        return asNumber(value).intValue();
-                    case "long":
-                        return asNumber(value).longValue();
-                    case "double":
-                        return asNumber(value).doubleValue();
-                    case "string":
-                    case "varchar":
-                        return value != null ? value.toString() : null;
-                    case "boolean":
-                        if (value instanceof Boolean) return value;
-                        if (value instanceof String) return Boolean.parseBoolean((String) value);
-                        return value != null;
-                    default:
-                        return value;
-                }
-            } catch (Exception e) {
-                return null;
-            }
-        }
-
-        return null;
+        String name = functionName.toLowerCase();
+        JAssert.notNull(functionName, "the function name  require not  null");
+        Optional<JQuickMethodFunctionProvider> provider = functionManager.getInvoker(name);
+        boolean exists=provider.isPresent();
+        JAssert.isTrue(exists, "the function name  not exists");
+        return provider.get().invoke(args);
     }
 
-    private Object getDateValue(List<Object> args) {
-        if (args.isEmpty()) return null;
-        Object val = args.get(0);
-        if (val instanceof Date) return val;
-        if (val instanceof LocalDate) return val;
-        if (val instanceof LocalDateTime) return val;
-        if (val instanceof String) {
-            try {
-                return LocalDate.parse((String) val);
-            } catch (Exception e) {
-                return null;
-            }
-        }
-        return null;
-    }
 
-    private Integer extractYear(Object date) {
-        if (date == null) return null;
-        if (date instanceof Date) {
-            Calendar cal = Calendar.getInstance();
-            cal.setTime((Date) date);
-            return cal.get(Calendar.YEAR);
-        }
-        if (date instanceof LocalDate) return ((LocalDate) date).getYear();
-        if (date instanceof LocalDateTime) return ((LocalDateTime) date).getYear();
-        return null;
-    }
-
-    private Integer extractMonth(Object date) {
-        if (date == null) return null;
-        if (date instanceof Date) {
-            Calendar cal = Calendar.getInstance();
-            cal.setTime((Date) date);
-            return cal.get(Calendar.MONTH) + 1;
-        }
-        if (date instanceof LocalDate) return ((LocalDate) date).getMonthValue();
-        if (date instanceof LocalDateTime) return ((LocalDateTime) date).getMonthValue();
-        return null;
-    }
-
-    private Integer extractDay(Object date) {
-        if (date == null) return null;
-        if (date instanceof Date) {
-            Calendar cal = Calendar.getInstance();
-            cal.setTime((Date) date);
-            return cal.get(Calendar.DAY_OF_MONTH);
-        }
-        if (date instanceof LocalDate) return ((LocalDate) date).getDayOfMonth();
-        if (date instanceof LocalDateTime) return ((LocalDateTime) date).getDayOfMonth();
-        return null;
-    }
 
     private Object applyBinaryOperator(Object left, Object right, JQuickBinaryOperator operator) {
         if (left == null || right == null) {
             if (isComparisonOperator(operator)) return null;
             return false;
         }
-
         switch (operator) {
             case EQ:
                 return Objects.equals(left, right);

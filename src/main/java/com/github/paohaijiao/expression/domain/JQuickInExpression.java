@@ -40,7 +40,6 @@ public class JQuickInExpression implements JQuickExpression {
     public Object evaluate(JQuickRow row) {
         Object leftVal = left.evaluate(row);
         if (leftVal == null) return null;
-
         boolean found = false;
         for (JQuickExpression expr : rightList) {
             Object rightVal = expr.evaluate(row);
@@ -49,12 +48,8 @@ public class JQuickInExpression implements JQuickExpression {
                 break;
             }
         }
-
         boolean result = isNot ? !found : found;
-
-        // SQL三值逻辑：如果左边为NULL，结果为NULL
         if (leftVal == null) return null;
-
         return result;
     }
 
