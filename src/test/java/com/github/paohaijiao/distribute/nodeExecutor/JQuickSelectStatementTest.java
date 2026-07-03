@@ -237,6 +237,20 @@ public class JQuickSelectStatementTest {
         JQuickDataSet result = coordinator.executeQueryWithPlan(queryId, plan);
         result.printTable();
     }
+    @Test
+    public void testTableScanWithColumnPruningWithAlias() {
+        Set<String> requiredCols = new HashSet<>(Arrays.asList("u.id", "u.name", "u.age"));
+        JQuickTableScanNode logicalScan = new JQuickTableScanNode("users", "u", requiredCols);
+        JQuickPhysicalPlanNode physicalPlan = generator.generate(logicalScan);
+        JQuickTableScanPhysicalNode scanNode = (JQuickTableScanPhysicalNode) physicalPlan;
+        assertEquals(requiredCols, scanNode.getRequiredColumns());
+        assertEquals(3, scanNode.getOutputSchema().size());
+        JQuickFragmenter fragmenter = new JQuickFragmenter(1);
+        JQuickDistributedPlan plan = fragmenter.fragment(scanNode);
+        String queryId = "hash_partition_" + System.currentTimeMillis();
+        JQuickDataSet result = coordinator.executeQueryWithPlan(queryId, plan);
+        result.printTable();
+    }
     /**
      * SQL: SELECT * FROM users WHERE age > 18
      *

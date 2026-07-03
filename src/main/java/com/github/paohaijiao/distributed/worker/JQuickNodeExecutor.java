@@ -133,7 +133,6 @@ public class JQuickNodeExecutor {
         console.info("executeTableScan - tableName: " + tableName + ", partitionInfo: " + (node.getPartitionInfo() != null ? "exists" : "null"));
         Set<String> requiredColumns = node.getRequiredColumns();
         JQuickDataSet data;
-        // 首先检查 input partitions 是否有数据（分布式场景）
         JQuickExecuteTaskRequest request = context.getRequest();
         if (request.getInputPartitionsCount() > 0) {
             console.info("Reading from input partitions (distributed mode)");
@@ -145,14 +144,22 @@ public class JQuickNodeExecutor {
             console.info("Reading from data source: " + tableName);
             data = readFromDataSource(tableName);
         }
-        
         console.info("Table data loaded - rows: " + data.size() + ", columns: " + data.getColumns().size());
         if (node.getFilterPredicate() != null) {
             data = applyFilter(data, node.getFilterPredicate());
             console.info("After filter - rows: " + data.size());
         }
         if (requiredColumns != null && !requiredColumns.isEmpty()) {
-            data= data.select(requiredColumns.toArray(new String[0]));
+            String alias=node.getAlias();
+            Set<String> columns = new HashSet<>();
+            for (String column : requiredColumns) {
+                if (null!=alias&&!alias.equals(column)) {
+                    columns.add(column.replace( alias+".",""));
+                }else {
+                    columns.add(column);
+                }
+            }
+            data= data.select(columns.toArray(new String[0]));
             console.info("After projection - columns: " + data.getColumns().size());
         }
         context.addProcessedRows(data.size());
