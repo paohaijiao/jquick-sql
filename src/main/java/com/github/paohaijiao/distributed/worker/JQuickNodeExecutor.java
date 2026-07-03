@@ -191,6 +191,7 @@ public class JQuickNodeExecutor {
         for (JQuickMemoryPartitionProto partition : request.getInputPartitionsList()) {
             if (partition.hasData()) {
                 JQuickDataSet partitionData = dataConverter.convertFromProto(partition.getData());
+                input.setColumns(partitionData.getColumns());
                 input = input.concat(partitionData);
             }
         }

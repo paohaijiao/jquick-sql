@@ -35,7 +35,7 @@ import java.util.stream.Collectors;
  */
 public class JQuickExpressionEvaluator {
 
-    JConsole console=JConsole.initConsoleEnvironment();
+    private final JConsole console=JConsole.initConsoleEnvironment();
 
     private final JQuickMethodInvocationManager functionManager;
 
@@ -130,15 +130,12 @@ public class JQuickExpressionEvaluator {
                  binary.getOperator() == com.github.paohaijiao.enums.JQuickBinaryOperator.GE) &&
                 binary.getLeft() instanceof JQuickColumnRefExpression &&
                 binary.getRight() instanceof JQuickColumnRefExpression) {
-                
                 String leftCol = ((JQuickColumnRefExpression) binary.getLeft()).getColumnName();
                 String rightCol = ((JQuickColumnRefExpression) binary.getRight()).getColumnName();
-                
                 // 如果两个列名相同且不带前缀，尝试分别解析到左右表的值
                 if (leftCol.equals(rightCol) && !leftCol.contains(".")) {
                     Object leftVal = row.get("left." + leftCol);
                     Object rightVal = row.get("right." + rightCol);
-                    
                     // 如果左右表都有这个列，则使用左右表的值进行比较
                     if (leftVal != null || row.containsKey("left." + leftCol)) {
                         left = leftVal;

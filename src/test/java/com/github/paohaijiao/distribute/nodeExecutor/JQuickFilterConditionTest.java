@@ -268,13 +268,13 @@ public class JQuickFilterConditionTest {
     /**
      * 测试4：复合条件 OR
      *
-     * SQL示例：SELECT * FROM users WHERE age > 18 OR vip = true
+     * SQL示例：SELECT * FROM users WHERE age > 34 OR status = 'pending'
      */
     @Test
     public void testOrCondition() {
         JQuickTableScanNode usersScan = createTableScan("users","u");
-        JQuickExpression condition1 = createComparison("age", JQuickBinaryOperator.GT, 18);
-        JQuickExpression condition2 = createComparison("vip", JQuickBinaryOperator.EQ, true);
+        JQuickExpression condition1 = createComparison("age", JQuickBinaryOperator.GT, 34);
+        JQuickExpression condition2 = createComparison("status", JQuickBinaryOperator.EQ, "pending");
         JQuickBinaryExpression orCondition = or(condition1, condition2);
         JQuickFilterNode filterNode = createFilter(usersScan, orCondition);
         JQuickPhysicalPlanNode physicalPlan = generator.generate(filterNode);
@@ -292,13 +292,13 @@ public class JQuickFilterConditionTest {
     /**
      * 测试6：嵌套条件（AND/OR组合）
      *
-     * SQL示例：SELECT * FROM users WHERE (age > 18 AND status = 'active') OR vip = true
+     * SQL示例：SELECT * FROM users WHERE (age > 25 AND status = 'active') OR name  = '3Charlie'
      */
     @Test
     public void testNestedCondition() {
         JQuickTableScanNode usersScan = createTableScan("users","u");
-        JQuickExpression innerAnd = and(createComparison("age", JQuickBinaryOperator.GT, 18), createComparison("status", JQuickBinaryOperator.EQ, "active"));
-        JQuickBinaryExpression nestedCondition = or(innerAnd, createComparison("vip", JQuickBinaryOperator.EQ, true));
+        JQuickExpression innerAnd = and(createComparison("age", JQuickBinaryOperator.GT, 25), createComparison("status", JQuickBinaryOperator.EQ, "active"));
+        JQuickBinaryExpression nestedCondition = or(innerAnd, createComparison("name", JQuickBinaryOperator.EQ, "3Charlie"));
         JQuickFilterNode filterNode = createFilter(usersScan, nestedCondition);
         JQuickPhysicalPlanNode physicalPlan = generator.generate(filterNode);
         JQuickFilterPhysicalNode filterPhysical = (JQuickFilterPhysicalNode) physicalPlan;
@@ -322,12 +322,11 @@ public class JQuickFilterConditionTest {
     @Test
     public void testBetweenCondition() {
         JQuickTableScanNode usersScan = createTableScan("users","u");
-        JQuickBetweenExpression betweenCondition = createBetween("age", 18, 65);
+        JQuickBetweenExpression betweenCondition = createBetween("age", 22, 30);
         JQuickFilterNode filterNode = createFilter(usersScan, betweenCondition);
         JQuickPhysicalPlanNode physicalPlan = generator.generate(filterNode);
         JQuickFilterPhysicalNode filterPhysical = (JQuickFilterPhysicalNode) physicalPlan;
         JQuickExpression actualPredicate = filterPhysical.getPredicate();
-        JQuickBetweenExpression betweenExpr = (JQuickBetweenExpression) actualPredicate;
         System.out.println("=== BETWEEN条件测试通过 ===");
         System.out.println("条件: age BETWEEN 18 AND 65");
         JQuickFragmenter fragmenter = new JQuickFragmenter(1);

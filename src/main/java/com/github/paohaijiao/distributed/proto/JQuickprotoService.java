@@ -644,6 +644,21 @@ public class JQuickprotoService {
                 return new JQuickColumnRefExpression(proto.getValue());
             case EXPR_LITERAL:
                 return new JQuickLiteralExpression(proto.getValue());
+            case EXPR_BETWEEN:
+                List<JQuickExpression> betweenChildren = new ArrayList<>();
+                for (JQuickExpressionProto child : proto.getChildrenList()) {
+                    betweenChildren.add(buildExpression(child));
+                }
+                if (betweenChildren.size() >= 3) {
+                    boolean isNot = "true".equals(proto.getAttributesMap().get("not"));
+                    return new JQuickBetweenExpression(
+                            betweenChildren.get(0),  // expression
+                            betweenChildren.get(1),  // low
+                            betweenChildren.get(2),  // high
+                            isNot
+                    );
+                }
+                return null;
             case EXPR_BINARY_OPERATOR:
                 List<JQuickExpression> children = new ArrayList<>();
                 for (JQuickExpressionProto child : proto.getChildrenList()) {
