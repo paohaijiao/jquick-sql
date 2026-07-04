@@ -242,6 +242,146 @@ public class JQuickFilterConditionTest {
         return new JQuickInExpression(new JQuickColumnRefExpression(column), valueExprs, isNot);
     }
     /**
+     * 测试13：等于条件 EQ (=)
+     *
+     * SQL示例：SELECT * FROM users WHERE age = 25
+     */
+    @Test
+    public void testEqualsCondition() {
+        JQuickTableScanNode usersScan = createTableScan("users", "u");
+        JQuickBinaryExpression eqCondition = createComparison("age", JQuickBinaryOperator.EQ, 25);
+        JQuickFilterNode filterNode = createFilter(usersScan, eqCondition);
+        JQuickPhysicalPlanNode physicalPlan = generator.generate(filterNode);
+        JQuickFilterPhysicalNode filterPhysical = (JQuickFilterPhysicalNode) physicalPlan;
+        JQuickFragmenter fragmenter = new JQuickFragmenter(1);
+        JQuickDistributedPlan plan = fragmenter.fragment(filterPhysical);
+        String queryId = "eq_test_" + System.currentTimeMillis();
+        JQuickDataSet result = coordinator.executeQueryWithPlan(queryId, plan);
+        result.printTable();
+    }
+    /**
+     * 测试18：不等于条件 NE (!=)
+     *
+     * SQL示例：SELECT * FROM users WHERE age != 25
+     */
+    @Test
+    public void testNotEqualsCondition() {
+        JQuickTableScanNode usersScan = createTableScan("users", "u");
+        JQuickBinaryExpression neCondition = createComparison("age", JQuickBinaryOperator.NE, 25);
+        JQuickFilterNode filterNode = createFilter(usersScan, neCondition);
+        JQuickPhysicalPlanNode physicalPlan = generator.generate(filterNode);
+        JQuickFilterPhysicalNode filterPhysical = (JQuickFilterPhysicalNode) physicalPlan;
+        JQuickFragmenter fragmenter = new JQuickFragmenter(1);
+        JQuickDistributedPlan plan = fragmenter.fragment(filterPhysical);
+        String queryId = "ne_test_" + System.currentTimeMillis();
+        JQuickDataSet result = coordinator.executeQueryWithPlan(queryId, plan);
+        result.printTable();
+    }
+    /**
+     * 测试14：大于条件 GT (>)
+     *
+     * SQL示例：SELECT * FROM users WHERE age > 30
+     */
+    @Test
+    public void testGreaterThanCondition() {
+        JQuickTableScanNode usersScan = createTableScan("users", "u");
+        JQuickBinaryExpression gtCondition = createComparison("age", JQuickBinaryOperator.GT, 30);
+        JQuickFilterNode filterNode = createFilter(usersScan, gtCondition);
+
+        JQuickPhysicalPlanNode physicalPlan = generator.generate(filterNode);
+        JQuickFilterPhysicalNode filterPhysical = (JQuickFilterPhysicalNode) physicalPlan;
+        JQuickExpression actualPredicate = filterPhysical.getPredicate();
+
+        System.out.println("=== > (大于) 条件测试 ===");
+        System.out.println("条件: age > 30");
+        System.out.println("预期结果: 返回 age > 30 的用户 (4David-35, 7Grace-40)");
+
+        JQuickFragmenter fragmenter = new JQuickFragmenter(1);
+        JQuickDistributedPlan plan = fragmenter.fragment(filterPhysical);
+        String queryId = "gt_test_" + System.currentTimeMillis();
+        JQuickDataSet result = coordinator.executeQueryWithPlan(queryId, plan);
+        result.printTable();
+    }
+    /**
+     * 测试15：小于条件 LT (<)
+     *
+     * SQL示例：SELECT * FROM users WHERE age < 22
+     */
+    @Test
+    public void testLessThanCondition() {
+        JQuickTableScanNode usersScan = createTableScan("users", "u");
+        JQuickBinaryExpression ltCondition = createComparison("age", JQuickBinaryOperator.LT, 22);
+        JQuickFilterNode filterNode = createFilter(usersScan, ltCondition);
+
+        JQuickPhysicalPlanNode physicalPlan = generator.generate(filterNode);
+        JQuickFilterPhysicalNode filterPhysical = (JQuickFilterPhysicalNode) physicalPlan;
+        JQuickExpression actualPredicate = filterPhysical.getPredicate();
+
+        System.out.println("=== < (小于) 条件测试 ===");
+        System.out.println("条件: age < 22");
+        System.out.println("预期结果: 返回 age < 22 的用户 (8Henry-19)");
+
+        JQuickFragmenter fragmenter = new JQuickFragmenter(1);
+        JQuickDistributedPlan plan = fragmenter.fragment(filterPhysical);
+        String queryId = "lt_test_" + System.currentTimeMillis();
+        JQuickDataSet result = coordinator.executeQueryWithPlan(queryId, plan);
+        result.printTable();
+    }
+
+    /**
+     * 测试16：小于等于条件 LTE (<=)
+     *
+     * SQL示例：SELECT * FROM users WHERE age <= 20
+     */
+    @Test
+    public void testLessThanOrEqualCondition() {
+        JQuickTableScanNode usersScan = createTableScan("users", "u");
+        JQuickBinaryExpression lteCondition = createComparison("age", JQuickBinaryOperator.LE, 20);
+        JQuickFilterNode filterNode = createFilter(usersScan, lteCondition);
+
+        JQuickPhysicalPlanNode physicalPlan = generator.generate(filterNode);
+        JQuickFilterPhysicalNode filterPhysical = (JQuickFilterPhysicalNode) physicalPlan;
+        JQuickExpression actualPredicate = filterPhysical.getPredicate();
+
+        System.out.println("=== <= (小于等于) 条件测试 ===");
+        System.out.println("条件: age <= 20");
+        System.out.println("预期结果: 返回 age <= 20 的用户 (3Charlie-20, 8Henry-19)");
+
+        JQuickFragmenter fragmenter = new JQuickFragmenter(1);
+        JQuickDistributedPlan plan = fragmenter.fragment(filterPhysical);
+        String queryId = "lte_test_" + System.currentTimeMillis();
+        JQuickDataSet result = coordinator.executeQueryWithPlan(queryId, plan);
+        result.printTable();
+    }
+
+    /**
+     * 测试17：大于等于条件 GTE (>=)
+     *
+     * SQL示例：SELECT * FROM users WHERE age >= 35
+     */
+    @Test
+    public void testGreaterThanOrEqualCondition() {
+        JQuickTableScanNode usersScan = createTableScan("users", "u");
+        JQuickBinaryExpression gteCondition = createComparison("age", JQuickBinaryOperator.GE, 35);
+        JQuickFilterNode filterNode = createFilter(usersScan, gteCondition);
+
+        JQuickPhysicalPlanNode physicalPlan = generator.generate(filterNode);
+        JQuickFilterPhysicalNode filterPhysical = (JQuickFilterPhysicalNode) physicalPlan;
+        JQuickExpression actualPredicate = filterPhysical.getPredicate();
+
+        System.out.println("=== >= (大于等于) 条件测试 ===");
+        System.out.println("条件: age >= 35");
+        System.out.println("预期结果: 返回 age >= 35 的用户 (4David-35, 7Grace-40)");
+
+        JQuickFragmenter fragmenter = new JQuickFragmenter(1);
+        JQuickDistributedPlan plan = fragmenter.fragment(filterPhysical);
+        String queryId = "gte_test_" + System.currentTimeMillis();
+        JQuickDataSet result = coordinator.executeQueryWithPlan(queryId, plan);
+        result.printTable();
+    }
+
+
+    /**
      * 测试3：复合条件 AND
      *
      * SQL示例：SELECT * FROM users WHERE age > 20 AND status = 'active'
@@ -500,159 +640,7 @@ public class JQuickFilterConditionTest {
         JQuickDataSet result = coordinator.executeQueryWithPlan(queryId, plan);
         result.printTable();
     }
-    /**
-     * 测试13：等于条件 EQ (=)
-     *
-     * SQL示例：SELECT * FROM users WHERE age = 25
-     */
-    @Test
-    public void testEqualsCondition() {
-        JQuickTableScanNode usersScan = createTableScan("users", "u");
-        JQuickBinaryExpression eqCondition = createComparison("age", JQuickBinaryOperator.EQ, 25);
-        JQuickFilterNode filterNode = createFilter(usersScan, eqCondition);
 
-        JQuickPhysicalPlanNode physicalPlan = generator.generate(filterNode);
-        JQuickFilterPhysicalNode filterPhysical = (JQuickFilterPhysicalNode) physicalPlan;
-        JQuickExpression actualPredicate = filterPhysical.getPredicate();
-
-        System.out.println("=== = (等于) 条件测试 ===");
-        System.out.println("条件: age = 25");
-        System.out.println("预期结果: 返回 age = 25 的用户 (1Alice)");
-
-        JQuickFragmenter fragmenter = new JQuickFragmenter(1);
-        JQuickDistributedPlan plan = fragmenter.fragment(filterPhysical);
-        String queryId = "eq_test_" + System.currentTimeMillis();
-        JQuickDataSet result = coordinator.executeQueryWithPlan(queryId, plan);
-        result.printTable();
-    }
-    /**
-     * 测试14：大于条件 GT (>)
-     *
-     * SQL示例：SELECT * FROM users WHERE age > 30
-     */
-    @Test
-    public void testGreaterThanCondition() {
-        JQuickTableScanNode usersScan = createTableScan("users", "u");
-        JQuickBinaryExpression gtCondition = createComparison("age", JQuickBinaryOperator.GT, 30);
-        JQuickFilterNode filterNode = createFilter(usersScan, gtCondition);
-
-        JQuickPhysicalPlanNode physicalPlan = generator.generate(filterNode);
-        JQuickFilterPhysicalNode filterPhysical = (JQuickFilterPhysicalNode) physicalPlan;
-        JQuickExpression actualPredicate = filterPhysical.getPredicate();
-
-        System.out.println("=== > (大于) 条件测试 ===");
-        System.out.println("条件: age > 30");
-        System.out.println("预期结果: 返回 age > 30 的用户 (4David-35, 7Grace-40)");
-
-        JQuickFragmenter fragmenter = new JQuickFragmenter(1);
-        JQuickDistributedPlan plan = fragmenter.fragment(filterPhysical);
-        String queryId = "gt_test_" + System.currentTimeMillis();
-        JQuickDataSet result = coordinator.executeQueryWithPlan(queryId, plan);
-        result.printTable();
-    }
-    /**
-     * 测试15：小于条件 LT (<)
-     *
-     * SQL示例：SELECT * FROM users WHERE age < 22
-     */
-    @Test
-    public void testLessThanCondition() {
-        JQuickTableScanNode usersScan = createTableScan("users", "u");
-        JQuickBinaryExpression ltCondition = createComparison("age", JQuickBinaryOperator.LT, 22);
-        JQuickFilterNode filterNode = createFilter(usersScan, ltCondition);
-
-        JQuickPhysicalPlanNode physicalPlan = generator.generate(filterNode);
-        JQuickFilterPhysicalNode filterPhysical = (JQuickFilterPhysicalNode) physicalPlan;
-        JQuickExpression actualPredicate = filterPhysical.getPredicate();
-
-        System.out.println("=== < (小于) 条件测试 ===");
-        System.out.println("条件: age < 22");
-        System.out.println("预期结果: 返回 age < 22 的用户 (8Henry-19)");
-
-        JQuickFragmenter fragmenter = new JQuickFragmenter(1);
-        JQuickDistributedPlan plan = fragmenter.fragment(filterPhysical);
-        String queryId = "lt_test_" + System.currentTimeMillis();
-        JQuickDataSet result = coordinator.executeQueryWithPlan(queryId, plan);
-        result.printTable();
-    }
-
-    /**
-     * 测试16：小于等于条件 LTE (<=)
-     *
-     * SQL示例：SELECT * FROM users WHERE age <= 20
-     */
-    @Test
-    public void testLessThanOrEqualCondition() {
-        JQuickTableScanNode usersScan = createTableScan("users", "u");
-        JQuickBinaryExpression lteCondition = createComparison("age", JQuickBinaryOperator.LE, 20);
-        JQuickFilterNode filterNode = createFilter(usersScan, lteCondition);
-
-        JQuickPhysicalPlanNode physicalPlan = generator.generate(filterNode);
-        JQuickFilterPhysicalNode filterPhysical = (JQuickFilterPhysicalNode) physicalPlan;
-        JQuickExpression actualPredicate = filterPhysical.getPredicate();
-
-        System.out.println("=== <= (小于等于) 条件测试 ===");
-        System.out.println("条件: age <= 20");
-        System.out.println("预期结果: 返回 age <= 20 的用户 (3Charlie-20, 8Henry-19)");
-
-        JQuickFragmenter fragmenter = new JQuickFragmenter(1);
-        JQuickDistributedPlan plan = fragmenter.fragment(filterPhysical);
-        String queryId = "lte_test_" + System.currentTimeMillis();
-        JQuickDataSet result = coordinator.executeQueryWithPlan(queryId, plan);
-        result.printTable();
-    }
-
-    /**
-     * 测试17：大于等于条件 GTE (>=)
-     *
-     * SQL示例：SELECT * FROM users WHERE age >= 35
-     */
-    @Test
-    public void testGreaterThanOrEqualCondition() {
-        JQuickTableScanNode usersScan = createTableScan("users", "u");
-        JQuickBinaryExpression gteCondition = createComparison("age", JQuickBinaryOperator.GE, 35);
-        JQuickFilterNode filterNode = createFilter(usersScan, gteCondition);
-
-        JQuickPhysicalPlanNode physicalPlan = generator.generate(filterNode);
-        JQuickFilterPhysicalNode filterPhysical = (JQuickFilterPhysicalNode) physicalPlan;
-        JQuickExpression actualPredicate = filterPhysical.getPredicate();
-
-        System.out.println("=== >= (大于等于) 条件测试 ===");
-        System.out.println("条件: age >= 35");
-        System.out.println("预期结果: 返回 age >= 35 的用户 (4David-35, 7Grace-40)");
-
-        JQuickFragmenter fragmenter = new JQuickFragmenter(1);
-        JQuickDistributedPlan plan = fragmenter.fragment(filterPhysical);
-        String queryId = "gte_test_" + System.currentTimeMillis();
-        JQuickDataSet result = coordinator.executeQueryWithPlan(queryId, plan);
-        result.printTable();
-    }
-
-    /**
-     * 测试18：不等于条件 NE (!=)
-     *
-     * SQL示例：SELECT * FROM users WHERE age != 25
-     */
-    @Test
-    public void testNotEqualsCondition() {
-        JQuickTableScanNode usersScan = createTableScan("users", "u");
-        JQuickBinaryExpression neCondition = createComparison("age", JQuickBinaryOperator.NE, 25);
-        JQuickFilterNode filterNode = createFilter(usersScan, neCondition);
-
-        JQuickPhysicalPlanNode physicalPlan = generator.generate(filterNode);
-        JQuickFilterPhysicalNode filterPhysical = (JQuickFilterPhysicalNode) physicalPlan;
-        JQuickExpression actualPredicate = filterPhysical.getPredicate();
-
-        System.out.println("=== != (不等于) 条件测试 ===");
-        System.out.println("条件: age != 25");
-        System.out.println("预期结果: 返回 age != 25 的所有用户 (排除 1Alice)");
-
-        JQuickFragmenter fragmenter = new JQuickFragmenter(1);
-        JQuickDistributedPlan plan = fragmenter.fragment(filterPhysical);
-        String queryId = "ne_test_" + System.currentTimeMillis();
-        JQuickDataSet result = coordinator.executeQueryWithPlan(queryId, plan);
-        result.printTable();
-    }
     /**
      * 测试30：LIKE 谓词（基本匹配）
      *
