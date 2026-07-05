@@ -130,7 +130,7 @@ public enum JQuickQueryStateProto
   }
   public static final com.google.protobuf.Descriptors.EnumDescriptor
       getDescriptor() {
-    return com.github.paohaijiao.proto.JQuickPhysicalPlanProto.getDescriptor().getEnumTypes().get(11);
+    return com.github.paohaijiao.proto.JQuickPhysicalPlanProto.getDescriptor().getEnumTypes().get(12);
   }
 
   private static final JQuickQueryStateProto[] VALUES = values();

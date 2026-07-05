@@ -133,7 +133,7 @@ public class JQuickFilterConditionTest {
                 new JQuickColumnMeta("status", String.class, TABLE_USERS)
         );
         List<JQuickRow> userRows = Arrays.asList(
-                createRow("id", 1, "name", "1Alice", "age", 25, "status", "active"),
+                createRow("id", 1, "name", "1Alice", "age", 25, "status", null),
                 createRow("id", 2, "name", "2Bob", "age", 30, "status", "active"),
                 createRow("id", 3, "name", "3Charlie", "age", 20, "status", "pending"),
                 createRow("id", 4, "name", "4David", "age", 35, "status", "inactive"),

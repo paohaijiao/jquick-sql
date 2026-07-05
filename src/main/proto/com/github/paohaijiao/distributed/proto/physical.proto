@@ -232,14 +232,23 @@ enum JQuickBinaryOperatorProto {
   OP_DIVIDE = 14; OP_MOD = 15;
 }
 
+enum JQuickUnaryOperatorProto {
+  OP_UNARY_NOT = 0;
+  OP_UNARY_PLUS = 1;
+  OP_UNARY_MINUS = 2;
+  OP_UNARY_IS_NULL = 3;
+  OP_UNARY_IS_NOT_NULL = 4;
+}
+
 message JQuickExpressionProto {
   JQuickExpressionTypeProto type = 1;
   string value = 2;
   repeated JQuickExpressionProto children = 3;
   map<string, string> attributes = 4;
   JQuickBinaryOperatorProto binary_operator = 5;
-  string function_name = 6;
-  repeated JQuickExpressionProto arguments = 7;
+  JQuickUnaryOperatorProto unary_operator = 6;
+  string function_name = 7;
+  repeated JQuickExpressionProto arguments = 8;
 }
 
 // ============================================================================

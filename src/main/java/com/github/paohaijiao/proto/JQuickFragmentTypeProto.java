@@ -94,7 +94,7 @@ public enum JQuickFragmentTypeProto
   }
   public static final com.google.protobuf.Descriptors.EnumDescriptor
       getDescriptor() {
-    return com.github.paohaijiao.proto.JQuickPhysicalPlanProto.getDescriptor().getEnumTypes().get(9);
+    return com.github.paohaijiao.proto.JQuickPhysicalPlanProto.getDescriptor().getEnumTypes().get(10);
   }
 
   private static final JQuickFragmentTypeProto[] VALUES = values();

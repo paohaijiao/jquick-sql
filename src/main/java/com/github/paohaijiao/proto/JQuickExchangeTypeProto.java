@@ -156,7 +156,7 @@ public enum JQuickExchangeTypeProto
   }
   public static final com.google.protobuf.Descriptors.EnumDescriptor
       getDescriptor() {
-    return com.github.paohaijiao.proto.JQuickPhysicalPlanProto.getDescriptor().getEnumTypes().get(7);
+    return com.github.paohaijiao.proto.JQuickPhysicalPlanProto.getDescriptor().getEnumTypes().get(8);
   }
 
   private static final JQuickExchangeTypeProto[] VALUES = values();

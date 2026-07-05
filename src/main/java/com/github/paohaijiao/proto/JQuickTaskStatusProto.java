@@ -112,7 +112,7 @@ public enum JQuickTaskStatusProto
   }
   public static final com.google.protobuf.Descriptors.EnumDescriptor
       getDescriptor() {
-    return com.github.paohaijiao.proto.JQuickPhysicalPlanProto.getDescriptor().getEnumTypes().get(10);
+    return com.github.paohaijiao.proto.JQuickPhysicalPlanProto.getDescriptor().getEnumTypes().get(11);
   }
 
   private static final JQuickTaskStatusProto[] VALUES = values();

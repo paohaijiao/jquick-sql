@@ -20,6 +20,7 @@ private static final long serialVersionUID = 0L;
     value_ = "";
     children_ = java.util.Collections.emptyList();
     binaryOperator_ = 0;
+    unaryOperator_ = 0;
     functionName_ = "";
     arguments_ = java.util.Collections.emptyList();
   }
@@ -256,11 +257,29 @@ java.lang.String defaultValue) {
     return result == null ? com.github.paohaijiao.proto.JQuickBinaryOperatorProto.UNRECOGNIZED : result;
   }
 
-  public static final int FUNCTION_NAME_FIELD_NUMBER = 6;
+  public static final int UNARY_OPERATOR_FIELD_NUMBER = 6;
+  private int unaryOperator_ = 0;
+  /**
+   * <code>.com.github.paohaijiao.proto.JQuickUnaryOperatorProto unary_operator = 6;</code>
+   * @return The enum numeric value on the wire for unaryOperator.
+   */
+  @java.lang.Override public int getUnaryOperatorValue() {
+    return unaryOperator_;
+  }
+  /**
+   * <code>.com.github.paohaijiao.proto.JQuickUnaryOperatorProto unary_operator = 6;</code>
+   * @return The unaryOperator.
+   */
+  @java.lang.Override public com.github.paohaijiao.proto.JQuickUnaryOperatorProto getUnaryOperator() {
+    com.github.paohaijiao.proto.JQuickUnaryOperatorProto result = com.github.paohaijiao.proto.JQuickUnaryOperatorProto.forNumber(unaryOperator_);
+    return result == null ? com.github.paohaijiao.proto.JQuickUnaryOperatorProto.UNRECOGNIZED : result;
+  }
+
+  public static final int FUNCTION_NAME_FIELD_NUMBER = 7;
   @SuppressWarnings("serial")
   private volatile java.lang.Object functionName_ = "";
   /**
-   * <code>string function_name = 6;</code>
+   * <code>string function_name = 7;</code>
    * @return The functionName.
    */
   @java.lang.Override
@@ -277,7 +296,7 @@ java.lang.String defaultValue) {
     }
   }
   /**
-   * <code>string function_name = 6;</code>
+   * <code>string function_name = 7;</code>
    * @return The bytes for functionName.
    */
   @java.lang.Override
@@ -295,18 +314,18 @@ java.lang.String defaultValue) {
     }
   }
 
-  public static final int ARGUMENTS_FIELD_NUMBER = 7;
+  public static final int ARGUMENTS_FIELD_NUMBER = 8;
   @SuppressWarnings("serial")
   private java.util.List<com.github.paohaijiao.proto.JQuickExpressionProto> arguments_;
   /**
-   * <code>repeated .com.github.paohaijiao.proto.JQuickExpressionProto arguments = 7;</code>
+   * <code>repeated .com.github.paohaijiao.proto.JQuickExpressionProto arguments = 8;</code>
    */
   @java.lang.Override
   public java.util.List<com.github.paohaijiao.proto.JQuickExpressionProto> getArgumentsList() {
     return arguments_;
   }
   /**
-   * <code>repeated .com.github.paohaijiao.proto.JQuickExpressionProto arguments = 7;</code>
+   * <code>repeated .com.github.paohaijiao.proto.JQuickExpressionProto arguments = 8;</code>
    */
   @java.lang.Override
   public java.util.List<? extends com.github.paohaijiao.proto.JQuickExpressionProtoOrBuilder> 
@@ -314,21 +333,21 @@ java.lang.String defaultValue) {
     return arguments_;
   }
   /**
-   * <code>repeated .com.github.paohaijiao.proto.JQuickExpressionProto arguments = 7;</code>
+   * <code>repeated .com.github.paohaijiao.proto.JQuickExpressionProto arguments = 8;</code>
    */
   @java.lang.Override
   public int getArgumentsCount() {
     return arguments_.size();
   }
   /**
-   * <code>repeated .com.github.paohaijiao.proto.JQuickExpressionProto arguments = 7;</code>
+   * <code>repeated .com.github.paohaijiao.proto.JQuickExpressionProto arguments = 8;</code>
    */
   @java.lang.Override
   public com.github.paohaijiao.proto.JQuickExpressionProto getArguments(int index) {
     return arguments_.get(index);
   }
   /**
-   * <code>repeated .com.github.paohaijiao.proto.JQuickExpressionProto arguments = 7;</code>
+   * <code>repeated .com.github.paohaijiao.proto.JQuickExpressionProto arguments = 8;</code>
    */
   @java.lang.Override
   public com.github.paohaijiao.proto.JQuickExpressionProtoOrBuilder getArgumentsOrBuilder(
@@ -368,11 +387,14 @@ java.lang.String defaultValue) {
     if (binaryOperator_ != com.github.paohaijiao.proto.JQuickBinaryOperatorProto.OP_EQ.getNumber()) {
       output.writeEnum(5, binaryOperator_);
     }
+    if (unaryOperator_ != com.github.paohaijiao.proto.JQuickUnaryOperatorProto.OP_UNARY_NOT.getNumber()) {
+      output.writeEnum(6, unaryOperator_);
+    }
     if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(functionName_)) {
-      com.google.protobuf.GeneratedMessageV3.writeString(output, 6, functionName_);
+      com.google.protobuf.GeneratedMessageV3.writeString(output, 7, functionName_);
     }
     for (int i = 0; i < arguments_.size(); i++) {
-      output.writeMessage(7, arguments_.get(i));
+      output.writeMessage(8, arguments_.get(i));
     }
     getUnknownFields().writeTo(output);
   }
@@ -408,12 +430,16 @@ java.lang.String defaultValue) {
       size += com.google.protobuf.CodedOutputStream
         .computeEnumSize(5, binaryOperator_);
     }
+    if (unaryOperator_ != com.github.paohaijiao.proto.JQuickUnaryOperatorProto.OP_UNARY_NOT.getNumber()) {
+      size += com.google.protobuf.CodedOutputStream
+        .computeEnumSize(6, unaryOperator_);
+    }
     if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(functionName_)) {
-      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(6, functionName_);
+      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(7, functionName_);
     }
     for (int i = 0; i < arguments_.size(); i++) {
       size += com.google.protobuf.CodedOutputStream
-        .computeMessageSize(7, arguments_.get(i));
+        .computeMessageSize(8, arguments_.get(i));
     }
     size += getUnknownFields().getSerializedSize();
     memoizedSize = size;
@@ -438,6 +464,7 @@ java.lang.String defaultValue) {
     if (!internalGetAttributes().equals(
         other.internalGetAttributes())) return false;
     if (binaryOperator_ != other.binaryOperator_) return false;
+    if (unaryOperator_ != other.unaryOperator_) return false;
     if (!getFunctionName()
         .equals(other.getFunctionName())) return false;
     if (!getArgumentsList()
@@ -467,6 +494,8 @@ java.lang.String defaultValue) {
     }
     hash = (37 * hash) + BINARY_OPERATOR_FIELD_NUMBER;
     hash = (53 * hash) + binaryOperator_;
+    hash = (37 * hash) + UNARY_OPERATOR_FIELD_NUMBER;
+    hash = (53 * hash) + unaryOperator_;
     hash = (37 * hash) + FUNCTION_NAME_FIELD_NUMBER;
     hash = (53 * hash) + getFunctionName().hashCode();
     if (getArgumentsCount() > 0) {
@@ -635,6 +664,7 @@ java.lang.String defaultValue) {
       bitField0_ = (bitField0_ & ~0x00000004);
       internalGetMutableAttributes().clear();
       binaryOperator_ = 0;
+      unaryOperator_ = 0;
       functionName_ = "";
       if (argumentsBuilder_ == null) {
         arguments_ = java.util.Collections.emptyList();
@@ -642,7 +672,7 @@ java.lang.String defaultValue) {
         arguments_ = null;
         argumentsBuilder_.clear();
       }
-      bitField0_ = (bitField0_ & ~0x00000040);
+      bitField0_ = (bitField0_ & ~0x00000080);
       return this;
     }
 
@@ -686,9 +716,9 @@ java.lang.String defaultValue) {
         result.children_ = childrenBuilder_.build();
       }
       if (argumentsBuilder_ == null) {
-        if (((bitField0_ & 0x00000040) != 0)) {
+        if (((bitField0_ & 0x00000080) != 0)) {
           arguments_ = java.util.Collections.unmodifiableList(arguments_);
-          bitField0_ = (bitField0_ & ~0x00000040);
+          bitField0_ = (bitField0_ & ~0x00000080);
         }
         result.arguments_ = arguments_;
       } else {
@@ -712,6 +742,9 @@ java.lang.String defaultValue) {
         result.binaryOperator_ = binaryOperator_;
       }
       if (((from_bitField0_ & 0x00000020) != 0)) {
+        result.unaryOperator_ = unaryOperator_;
+      }
+      if (((from_bitField0_ & 0x00000040) != 0)) {
         result.functionName_ = functionName_;
       }
     }
@@ -800,16 +833,19 @@ java.lang.String defaultValue) {
       if (other.binaryOperator_ != 0) {
         setBinaryOperatorValue(other.getBinaryOperatorValue());
       }
+      if (other.unaryOperator_ != 0) {
+        setUnaryOperatorValue(other.getUnaryOperatorValue());
+      }
       if (!other.getFunctionName().isEmpty()) {
         functionName_ = other.functionName_;
-        bitField0_ |= 0x00000020;
+        bitField0_ |= 0x00000040;
         onChanged();
       }
       if (argumentsBuilder_ == null) {
         if (!other.arguments_.isEmpty()) {
           if (arguments_.isEmpty()) {
             arguments_ = other.arguments_;
-            bitField0_ = (bitField0_ & ~0x00000040);
+            bitField0_ = (bitField0_ & ~0x00000080);
           } else {
             ensureArgumentsIsMutable();
             arguments_.addAll(other.arguments_);
@@ -822,7 +858,7 @@ java.lang.String defaultValue) {
             argumentsBuilder_.dispose();
             argumentsBuilder_ = null;
             arguments_ = other.arguments_;
-            bitField0_ = (bitField0_ & ~0x00000040);
+            bitField0_ = (bitField0_ & ~0x00000080);
             argumentsBuilder_ = 
               com.google.protobuf.GeneratedMessageV3.alwaysUseFieldBuilders ?
                  getArgumentsFieldBuilder() : null;
@@ -894,12 +930,17 @@ java.lang.String defaultValue) {
               bitField0_ |= 0x00000010;
               break;
             } // case 40
-            case 50: {
-              functionName_ = input.readStringRequireUtf8();
+            case 48: {
+              unaryOperator_ = input.readEnum();
               bitField0_ |= 0x00000020;
               break;
-            } // case 50
+            } // case 48
             case 58: {
+              functionName_ = input.readStringRequireUtf8();
+              bitField0_ |= 0x00000040;
+              break;
+            } // case 58
+            case 66: {
               com.github.paohaijiao.proto.JQuickExpressionProto m =
                   input.readMessage(
                       com.github.paohaijiao.proto.JQuickExpressionProto.parser(),
@@ -911,7 +952,7 @@ java.lang.String defaultValue) {
                 argumentsBuilder_.addMessage(m);
               }
               break;
-            } // case 58
+            } // case 66
             default: {
               if (!super.parseUnknownField(input, extensionRegistry, tag)) {
                 done = true; // was an endgroup tag
@@ -1474,9 +1515,62 @@ java.lang.String defaultValue) {
       return this;
     }
 
+    private int unaryOperator_ = 0;
+    /**
+     * <code>.com.github.paohaijiao.proto.JQuickUnaryOperatorProto unary_operator = 6;</code>
+     * @return The enum numeric value on the wire for unaryOperator.
+     */
+    @java.lang.Override public int getUnaryOperatorValue() {
+      return unaryOperator_;
+    }
+    /**
+     * <code>.com.github.paohaijiao.proto.JQuickUnaryOperatorProto unary_operator = 6;</code>
+     * @param value The enum numeric value on the wire for unaryOperator to set.
+     * @return This builder for chaining.
+     */
+    public Builder setUnaryOperatorValue(int value) {
+      unaryOperator_ = value;
+      bitField0_ |= 0x00000020;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>.com.github.paohaijiao.proto.JQuickUnaryOperatorProto unary_operator = 6;</code>
+     * @return The unaryOperator.
+     */
+    @java.lang.Override
+    public com.github.paohaijiao.proto.JQuickUnaryOperatorProto getUnaryOperator() {
+      com.github.paohaijiao.proto.JQuickUnaryOperatorProto result = com.github.paohaijiao.proto.JQuickUnaryOperatorProto.forNumber(unaryOperator_);
+      return result == null ? com.github.paohaijiao.proto.JQuickUnaryOperatorProto.UNRECOGNIZED : result;
+    }
+    /**
+     * <code>.com.github.paohaijiao.proto.JQuickUnaryOperatorProto unary_operator = 6;</code>
+     * @param value The unaryOperator to set.
+     * @return This builder for chaining.
+     */
+    public Builder setUnaryOperator(com.github.paohaijiao.proto.JQuickUnaryOperatorProto value) {
+      if (value == null) {
+        throw new NullPointerException();
+      }
+      bitField0_ |= 0x00000020;
+      unaryOperator_ = value.getNumber();
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>.com.github.paohaijiao.proto.JQuickUnaryOperatorProto unary_operator = 6;</code>
+     * @return This builder for chaining.
+     */
+    public Builder clearUnaryOperator() {
+      bitField0_ = (bitField0_ & ~0x00000020);
+      unaryOperator_ = 0;
+      onChanged();
+      return this;
+    }
+
     private java.lang.Object functionName_ = "";
     /**
-     * <code>string function_name = 6;</code>
+     * <code>string function_name = 7;</code>
      * @return The functionName.
      */
     public java.lang.String getFunctionName() {
@@ -1492,7 +1586,7 @@ java.lang.String defaultValue) {
       }
     }
     /**
-     * <code>string function_name = 6;</code>
+     * <code>string function_name = 7;</code>
      * @return The bytes for functionName.
      */
     public com.google.protobuf.ByteString
@@ -1509,7 +1603,7 @@ java.lang.String defaultValue) {
       }
     }
     /**
-     * <code>string function_name = 6;</code>
+     * <code>string function_name = 7;</code>
      * @param value The functionName to set.
      * @return This builder for chaining.
      */
@@ -1517,22 +1611,22 @@ java.lang.String defaultValue) {
         java.lang.String value) {
       if (value == null) { throw new NullPointerException(); }
       functionName_ = value;
-      bitField0_ |= 0x00000020;
+      bitField0_ |= 0x00000040;
       onChanged();
       return this;
     }
     /**
-     * <code>string function_name = 6;</code>
+     * <code>string function_name = 7;</code>
      * @return This builder for chaining.
      */
     public Builder clearFunctionName() {
       functionName_ = getDefaultInstance().getFunctionName();
-      bitField0_ = (bitField0_ & ~0x00000020);
+      bitField0_ = (bitField0_ & ~0x00000040);
       onChanged();
       return this;
     }
     /**
-     * <code>string function_name = 6;</code>
+     * <code>string function_name = 7;</code>
      * @param value The bytes for functionName to set.
      * @return This builder for chaining.
      */
@@ -1541,7 +1635,7 @@ java.lang.String defaultValue) {
       if (value == null) { throw new NullPointerException(); }
       checkByteStringIsUtf8(value);
       functionName_ = value;
-      bitField0_ |= 0x00000020;
+      bitField0_ |= 0x00000040;
       onChanged();
       return this;
     }
@@ -1549,9 +1643,9 @@ java.lang.String defaultValue) {
     private java.util.List<com.github.paohaijiao.proto.JQuickExpressionProto> arguments_ =
       java.util.Collections.emptyList();
     private void ensureArgumentsIsMutable() {
-      if (!((bitField0_ & 0x00000040) != 0)) {
+      if (!((bitField0_ & 0x00000080) != 0)) {
         arguments_ = new java.util.ArrayList<com.github.paohaijiao.proto.JQuickExpressionProto>(arguments_);
-        bitField0_ |= 0x00000040;
+        bitField0_ |= 0x00000080;
        }
     }
 
@@ -1559,7 +1653,7 @@ java.lang.String defaultValue) {
         com.github.paohaijiao.proto.JQuickExpressionProto, com.github.paohaijiao.proto.JQuickExpressionProto.Builder, com.github.paohaijiao.proto.JQuickExpressionProtoOrBuilder> argumentsBuilder_;
 
     /**
-     * <code>repeated .com.github.paohaijiao.proto.JQuickExpressionProto arguments = 7;</code>
+     * <code>repeated .com.github.paohaijiao.proto.JQuickExpressionProto arguments = 8;</code>
      */
     public java.util.List<com.github.paohaijiao.proto.JQuickExpressionProto> getArgumentsList() {
       if (argumentsBuilder_ == null) {
@@ -1569,7 +1663,7 @@ java.lang.String defaultValue) {
       }
     }
     /**
-     * <code>repeated .com.github.paohaijiao.proto.JQuickExpressionProto arguments = 7;</code>
+     * <code>repeated .com.github.paohaijiao.proto.JQuickExpressionProto arguments = 8;</code>
      */
     public int getArgumentsCount() {
       if (argumentsBuilder_ == null) {
@@ -1579,7 +1673,7 @@ java.lang.String defaultValue) {
       }
     }
     /**
-     * <code>repeated .com.github.paohaijiao.proto.JQuickExpressionProto arguments = 7;</code>
+     * <code>repeated .com.github.paohaijiao.proto.JQuickExpressionProto arguments = 8;</code>
      */
     public com.github.paohaijiao.proto.JQuickExpressionProto getArguments(int index) {
       if (argumentsBuilder_ == null) {
@@ -1589,7 +1683,7 @@ java.lang.String defaultValue) {
       }
     }
     /**
-     * <code>repeated .com.github.paohaijiao.proto.JQuickExpressionProto arguments = 7;</code>
+     * <code>repeated .com.github.paohaijiao.proto.JQuickExpressionProto arguments = 8;</code>
      */
     public Builder setArguments(
         int index, com.github.paohaijiao.proto.JQuickExpressionProto value) {
@@ -1606,7 +1700,7 @@ java.lang.String defaultValue) {
       return this;
     }
     /**
-     * <code>repeated .com.github.paohaijiao.proto.JQuickExpressionProto arguments = 7;</code>
+     * <code>repeated .com.github.paohaijiao.proto.JQuickExpressionProto arguments = 8;</code>
      */
     public Builder setArguments(
         int index, com.github.paohaijiao.proto.JQuickExpressionProto.Builder builderForValue) {
@@ -1620,7 +1714,7 @@ java.lang.String defaultValue) {
       return this;
     }
     /**
-     * <code>repeated .com.github.paohaijiao.proto.JQuickExpressionProto arguments = 7;</code>
+     * <code>repeated .com.github.paohaijiao.proto.JQuickExpressionProto arguments = 8;</code>
      */
     public Builder addArguments(com.github.paohaijiao.proto.JQuickExpressionProto value) {
       if (argumentsBuilder_ == null) {
@@ -1636,7 +1730,7 @@ java.lang.String defaultValue) {
       return this;
     }
     /**
-     * <code>repeated .com.github.paohaijiao.proto.JQuickExpressionProto arguments = 7;</code>
+     * <code>repeated .com.github.paohaijiao.proto.JQuickExpressionProto arguments = 8;</code>
      */
     public Builder addArguments(
         int index, com.github.paohaijiao.proto.JQuickExpressionProto value) {
@@ -1653,7 +1747,7 @@ java.lang.String defaultValue) {
       return this;
     }
     /**
-     * <code>repeated .com.github.paohaijiao.proto.JQuickExpressionProto arguments = 7;</code>
+     * <code>repeated .com.github.paohaijiao.proto.JQuickExpressionProto arguments = 8;</code>
      */
     public Builder addArguments(
         com.github.paohaijiao.proto.JQuickExpressionProto.Builder builderForValue) {
@@ -1667,7 +1761,7 @@ java.lang.String defaultValue) {
       return this;
     }
     /**
-     * <code>repeated .com.github.paohaijiao.proto.JQuickExpressionProto arguments = 7;</code>
+     * <code>repeated .com.github.paohaijiao.proto.JQuickExpressionProto arguments = 8;</code>
      */
     public Builder addArguments(
         int index, com.github.paohaijiao.proto.JQuickExpressionProto.Builder builderForValue) {
@@ -1681,7 +1775,7 @@ java.lang.String defaultValue) {
       return this;
     }
     /**
-     * <code>repeated .com.github.paohaijiao.proto.JQuickExpressionProto arguments = 7;</code>
+     * <code>repeated .com.github.paohaijiao.proto.JQuickExpressionProto arguments = 8;</code>
      */
     public Builder addAllArguments(
         java.lang.Iterable<? extends com.github.paohaijiao.proto.JQuickExpressionProto> values) {
@@ -1696,12 +1790,12 @@ java.lang.String defaultValue) {
       return this;
     }
     /**
-     * <code>repeated .com.github.paohaijiao.proto.JQuickExpressionProto arguments = 7;</code>
+     * <code>repeated .com.github.paohaijiao.proto.JQuickExpressionProto arguments = 8;</code>
      */
     public Builder clearArguments() {
       if (argumentsBuilder_ == null) {
         arguments_ = java.util.Collections.emptyList();
-        bitField0_ = (bitField0_ & ~0x00000040);
+        bitField0_ = (bitField0_ & ~0x00000080);
         onChanged();
       } else {
         argumentsBuilder_.clear();
@@ -1709,7 +1803,7 @@ java.lang.String defaultValue) {
       return this;
     }
     /**
-     * <code>repeated .com.github.paohaijiao.proto.JQuickExpressionProto arguments = 7;</code>
+     * <code>repeated .com.github.paohaijiao.proto.JQuickExpressionProto arguments = 8;</code>
      */
     public Builder removeArguments(int index) {
       if (argumentsBuilder_ == null) {
@@ -1722,14 +1816,14 @@ java.lang.String defaultValue) {
       return this;
     }
     /**
-     * <code>repeated .com.github.paohaijiao.proto.JQuickExpressionProto arguments = 7;</code>
+     * <code>repeated .com.github.paohaijiao.proto.JQuickExpressionProto arguments = 8;</code>
      */
     public com.github.paohaijiao.proto.JQuickExpressionProto.Builder getArgumentsBuilder(
         int index) {
       return getArgumentsFieldBuilder().getBuilder(index);
     }
     /**
-     * <code>repeated .com.github.paohaijiao.proto.JQuickExpressionProto arguments = 7;</code>
+     * <code>repeated .com.github.paohaijiao.proto.JQuickExpressionProto arguments = 8;</code>
      */
     public com.github.paohaijiao.proto.JQuickExpressionProtoOrBuilder getArgumentsOrBuilder(
         int index) {
@@ -1739,7 +1833,7 @@ java.lang.String defaultValue) {
       }
     }
     /**
-     * <code>repeated .com.github.paohaijiao.proto.JQuickExpressionProto arguments = 7;</code>
+     * <code>repeated .com.github.paohaijiao.proto.JQuickExpressionProto arguments = 8;</code>
      */
     public java.util.List<? extends com.github.paohaijiao.proto.JQuickExpressionProtoOrBuilder> 
          getArgumentsOrBuilderList() {
@@ -1750,14 +1844,14 @@ java.lang.String defaultValue) {
       }
     }
     /**
-     * <code>repeated .com.github.paohaijiao.proto.JQuickExpressionProto arguments = 7;</code>
+     * <code>repeated .com.github.paohaijiao.proto.JQuickExpressionProto arguments = 8;</code>
      */
     public com.github.paohaijiao.proto.JQuickExpressionProto.Builder addArgumentsBuilder() {
       return getArgumentsFieldBuilder().addBuilder(
           com.github.paohaijiao.proto.JQuickExpressionProto.getDefaultInstance());
     }
     /**
-     * <code>repeated .com.github.paohaijiao.proto.JQuickExpressionProto arguments = 7;</code>
+     * <code>repeated .com.github.paohaijiao.proto.JQuickExpressionProto arguments = 8;</code>
      */
     public com.github.paohaijiao.proto.JQuickExpressionProto.Builder addArgumentsBuilder(
         int index) {
@@ -1765,7 +1859,7 @@ java.lang.String defaultValue) {
           index, com.github.paohaijiao.proto.JQuickExpressionProto.getDefaultInstance());
     }
     /**
-     * <code>repeated .com.github.paohaijiao.proto.JQuickExpressionProto arguments = 7;</code>
+     * <code>repeated .com.github.paohaijiao.proto.JQuickExpressionProto arguments = 8;</code>
      */
     public java.util.List<com.github.paohaijiao.proto.JQuickExpressionProto.Builder> 
          getArgumentsBuilderList() {
@@ -1778,7 +1872,7 @@ java.lang.String defaultValue) {
         argumentsBuilder_ = new com.google.protobuf.RepeatedFieldBuilderV3<
             com.github.paohaijiao.proto.JQuickExpressionProto, com.github.paohaijiao.proto.JQuickExpressionProto.Builder, com.github.paohaijiao.proto.JQuickExpressionProtoOrBuilder>(
                 arguments_,
-                ((bitField0_ & 0x00000040) != 0),
+                ((bitField0_ & 0x00000080) != 0),
                 getParentForChildren(),
                 isClean());
         arguments_ = null;

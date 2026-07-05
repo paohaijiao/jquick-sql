@@ -4,29 +4,53 @@
 package com.github.paohaijiao.proto;
 
 /**
- * Protobuf enum {@code com.github.paohaijiao.proto.JQuickBuildSideProto}
+ * Protobuf enum {@code com.github.paohaijiao.proto.JQuickUnaryOperatorProto}
  */
-public enum JQuickBuildSideProto
+public enum JQuickUnaryOperatorProto
     implements com.google.protobuf.ProtocolMessageEnum {
   /**
-   * <code>BUILD_SIDE_LEFT = 0;</code>
+   * <code>OP_UNARY_NOT = 0;</code>
    */
-  BUILD_SIDE_LEFT(0),
+  OP_UNARY_NOT(0),
   /**
-   * <code>BUILD_SIDE_RIGHT = 1;</code>
+   * <code>OP_UNARY_PLUS = 1;</code>
    */
-  BUILD_SIDE_RIGHT(1),
+  OP_UNARY_PLUS(1),
+  /**
+   * <code>OP_UNARY_MINUS = 2;</code>
+   */
+  OP_UNARY_MINUS(2),
+  /**
+   * <code>OP_UNARY_IS_NULL = 3;</code>
+   */
+  OP_UNARY_IS_NULL(3),
+  /**
+   * <code>OP_UNARY_IS_NOT_NULL = 4;</code>
+   */
+  OP_UNARY_IS_NOT_NULL(4),
   UNRECOGNIZED(-1),
   ;
 
   /**
-   * <code>BUILD_SIDE_LEFT = 0;</code>
+   * <code>OP_UNARY_NOT = 0;</code>
    */
-  public static final int BUILD_SIDE_LEFT_VALUE = 0;
+  public static final int OP_UNARY_NOT_VALUE = 0;
   /**
-   * <code>BUILD_SIDE_RIGHT = 1;</code>
+   * <code>OP_UNARY_PLUS = 1;</code>
    */
-  public static final int BUILD_SIDE_RIGHT_VALUE = 1;
+  public static final int OP_UNARY_PLUS_VALUE = 1;
+  /**
+   * <code>OP_UNARY_MINUS = 2;</code>
+   */
+  public static final int OP_UNARY_MINUS_VALUE = 2;
+  /**
+   * <code>OP_UNARY_IS_NULL = 3;</code>
+   */
+  public static final int OP_UNARY_IS_NULL_VALUE = 3;
+  /**
+   * <code>OP_UNARY_IS_NOT_NULL = 4;</code>
+   */
+  public static final int OP_UNARY_IS_NOT_NULL_VALUE = 4;
 
 
   public final int getNumber() {
@@ -43,7 +67,7 @@ public enum JQuickBuildSideProto
    * @deprecated Use {@link #forNumber(int)} instead.
    */
   @java.lang.Deprecated
-  public static JQuickBuildSideProto valueOf(int value) {
+  public static JQuickUnaryOperatorProto valueOf(int value) {
     return forNumber(value);
   }
 
@@ -51,23 +75,26 @@ public enum JQuickBuildSideProto
    * @param value The numeric wire value of the corresponding enum entry.
    * @return The enum associated with the given numeric wire value.
    */
-  public static JQuickBuildSideProto forNumber(int value) {
+  public static JQuickUnaryOperatorProto forNumber(int value) {
     switch (value) {
-      case 0: return BUILD_SIDE_LEFT;
-      case 1: return BUILD_SIDE_RIGHT;
+      case 0: return OP_UNARY_NOT;
+      case 1: return OP_UNARY_PLUS;
+      case 2: return OP_UNARY_MINUS;
+      case 3: return OP_UNARY_IS_NULL;
+      case 4: return OP_UNARY_IS_NOT_NULL;
       default: return null;
     }
   }
 
-  public static com.google.protobuf.Internal.EnumLiteMap<JQuickBuildSideProto>
+  public static com.google.protobuf.Internal.EnumLiteMap<JQuickUnaryOperatorProto>
       internalGetValueMap() {
     return internalValueMap;
   }
   private static final com.google.protobuf.Internal.EnumLiteMap<
-      JQuickBuildSideProto> internalValueMap =
-        new com.google.protobuf.Internal.EnumLiteMap<JQuickBuildSideProto>() {
-          public JQuickBuildSideProto findValueByNumber(int number) {
-            return JQuickBuildSideProto.forNumber(number);
+      JQuickUnaryOperatorProto> internalValueMap =
+        new com.google.protobuf.Internal.EnumLiteMap<JQuickUnaryOperatorProto>() {
+          public JQuickUnaryOperatorProto findValueByNumber(int number) {
+            return JQuickUnaryOperatorProto.forNumber(number);
           }
         };
 
@@ -85,12 +112,12 @@ public enum JQuickBuildSideProto
   }
   public static final com.google.protobuf.Descriptors.EnumDescriptor
       getDescriptor() {
-    return com.github.paohaijiao.proto.JQuickPhysicalPlanProto.getDescriptor().getEnumTypes().get(5);
+    return com.github.paohaijiao.proto.JQuickPhysicalPlanProto.getDescriptor().getEnumTypes().get(3);
   }
 
-  private static final JQuickBuildSideProto[] VALUES = values();
+  private static final JQuickUnaryOperatorProto[] VALUES = values();
 
-  public static JQuickBuildSideProto valueOf(
+  public static JQuickUnaryOperatorProto valueOf(
       com.google.protobuf.Descriptors.EnumValueDescriptor desc) {
     if (desc.getType() != getDescriptor()) {
       throw new java.lang.IllegalArgumentException(
@@ -104,10 +131,10 @@ public enum JQuickBuildSideProto
 
   private final int value;
 
-  private JQuickBuildSideProto(int value) {
+  private JQuickUnaryOperatorProto(int value) {
     this.value = value;
   }
 
-  // @@protoc_insertion_point(enum_scope:com.github.paohaijiao.proto.JQuickBuildSideProto)
+  // @@protoc_insertion_point(enum_scope:com.github.paohaijiao.proto.JQuickUnaryOperatorProto)
 }
 

@@ -472,6 +472,7 @@ public class JQuickProtoService {
         } else if (expr instanceof JQuickUnaryExpression) {
             JQuickUnaryExpression unary = (JQuickUnaryExpression) expr;
             builder.setType(JQuickExpressionTypeProto.EXPR_UNARY_OPERATOR);
+            builder.setUnaryOperator(convertUnaryOperatorToProto(unary.getOperator()));
             builder.addChildren(convertExpressionToProto(unary.getExpression()));
         } else if (expr instanceof JQuickFunctionCallExpression) {
             JQuickFunctionCallExpression func = (JQuickFunctionCallExpression) expr;
@@ -593,6 +594,17 @@ public class JQuickProtoService {
         }
     }
 
+    public JQuickUnaryOperatorProto convertUnaryOperatorToProto(JQuickUnaryOperator operator) {
+        switch (operator) {
+            case NOT: return JQuickUnaryOperatorProto.OP_UNARY_NOT;
+            case PLUS: return JQuickUnaryOperatorProto.OP_UNARY_PLUS;
+            case MINUS: return JQuickUnaryOperatorProto.OP_UNARY_MINUS;
+            case IS_NULL: return JQuickUnaryOperatorProto.OP_UNARY_IS_NULL;
+            case IS_NOT_NULL: return JQuickUnaryOperatorProto.OP_UNARY_IS_NOT_NULL;
+            default: return JQuickUnaryOperatorProto.OP_UNARY_NOT;
+        }
+    }
+
     public JQuickSQLOperationTypeProto convertSQLOperationTypeToProto(com.github.paohaijiao.enums.JQuickSQLOperationType type) {
         switch (type) {
             case UNION: return JQuickSQLOperationTypeProto.SET_UNION;
@@ -699,8 +711,8 @@ public class JQuickProtoService {
                 for (JQuickExpressionProto child : proto.getChildrenList()) {
                     unAryChildren.add(buildExpression(child));
                 }
-                if (unAryChildren.size() >= 2) {
-                   // return new JQuickUnaryExpression( convertBinaryOperator(proto.getBinaryOperator()),null);
+                if (!unAryChildren.isEmpty()) {
+                    return new JQuickUnaryExpression(convertUnaryOperator(proto.getUnaryOperator()), unAryChildren.get(0));
                 }
                 return null;
             case EXPR_BETWEEN:
@@ -817,6 +829,23 @@ public class JQuickProtoService {
                 return JQuickBinaryOperator.MODULO;
             default:
                 return JQuickBinaryOperator.EQ;
+        }
+    }
+
+    public JQuickUnaryOperator convertUnaryOperator(JQuickUnaryOperatorProto proto) {
+        switch (proto) {
+            case OP_UNARY_NOT:
+                return JQuickUnaryOperator.NOT;
+            case OP_UNARY_PLUS:
+                return JQuickUnaryOperator.PLUS;
+            case OP_UNARY_MINUS:
+                return JQuickUnaryOperator.MINUS;
+            case OP_UNARY_IS_NULL:
+                return JQuickUnaryOperator.IS_NULL;
+            case OP_UNARY_IS_NOT_NULL:
+                return JQuickUnaryOperator.IS_NOT_NULL;
+            default:
+                return JQuickUnaryOperator.NOT;
         }
     }
     public JQuickPhysicalPlanNode buildPhysicalNode(JQuickPhysicalPlanNodeProto proto) {

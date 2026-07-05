@@ -107,7 +107,7 @@ public enum JQuickSQLOperationTypeProto
   }
   public static final com.google.protobuf.Descriptors.EnumDescriptor
       getDescriptor() {
-    return com.github.paohaijiao.proto.JQuickPhysicalPlanProto.getDescriptor().getEnumTypes().get(8);
+    return com.github.paohaijiao.proto.JQuickPhysicalPlanProto.getDescriptor().getEnumTypes().get(9);
   }
 
   private static final JQuickSQLOperationTypeProto[] VALUES = values();

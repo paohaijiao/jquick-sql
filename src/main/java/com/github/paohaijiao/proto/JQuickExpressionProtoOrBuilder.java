@@ -100,37 +100,48 @@ java.lang.String defaultValue);
   com.github.paohaijiao.proto.JQuickBinaryOperatorProto getBinaryOperator();
 
   /**
-   * <code>string function_name = 6;</code>
+   * <code>.com.github.paohaijiao.proto.JQuickUnaryOperatorProto unary_operator = 6;</code>
+   * @return The enum numeric value on the wire for unaryOperator.
+   */
+  int getUnaryOperatorValue();
+  /**
+   * <code>.com.github.paohaijiao.proto.JQuickUnaryOperatorProto unary_operator = 6;</code>
+   * @return The unaryOperator.
+   */
+  com.github.paohaijiao.proto.JQuickUnaryOperatorProto getUnaryOperator();
+
+  /**
+   * <code>string function_name = 7;</code>
    * @return The functionName.
    */
   java.lang.String getFunctionName();
   /**
-   * <code>string function_name = 6;</code>
+   * <code>string function_name = 7;</code>
    * @return The bytes for functionName.
    */
   com.google.protobuf.ByteString
       getFunctionNameBytes();
 
   /**
-   * <code>repeated .com.github.paohaijiao.proto.JQuickExpressionProto arguments = 7;</code>
+   * <code>repeated .com.github.paohaijiao.proto.JQuickExpressionProto arguments = 8;</code>
    */
   java.util.List<com.github.paohaijiao.proto.JQuickExpressionProto> 
       getArgumentsList();
   /**
-   * <code>repeated .com.github.paohaijiao.proto.JQuickExpressionProto arguments = 7;</code>
+   * <code>repeated .com.github.paohaijiao.proto.JQuickExpressionProto arguments = 8;</code>
    */
   com.github.paohaijiao.proto.JQuickExpressionProto getArguments(int index);
   /**
-   * <code>repeated .com.github.paohaijiao.proto.JQuickExpressionProto arguments = 7;</code>
+   * <code>repeated .com.github.paohaijiao.proto.JQuickExpressionProto arguments = 8;</code>
    */
   int getArgumentsCount();
   /**
-   * <code>repeated .com.github.paohaijiao.proto.JQuickExpressionProto arguments = 7;</code>
+   * <code>repeated .com.github.paohaijiao.proto.JQuickExpressionProto arguments = 8;</code>
    */
   java.util.List<? extends com.github.paohaijiao.proto.JQuickExpressionProtoOrBuilder> 
       getArgumentsOrBuilderList();
   /**
-   * <code>repeated .com.github.paohaijiao.proto.JQuickExpressionProto arguments = 7;</code>
+   * <code>repeated .com.github.paohaijiao.proto.JQuickExpressionProto arguments = 8;</code>
    */
   com.github.paohaijiao.proto.JQuickExpressionProtoOrBuilder getArgumentsOrBuilder(
       int index);

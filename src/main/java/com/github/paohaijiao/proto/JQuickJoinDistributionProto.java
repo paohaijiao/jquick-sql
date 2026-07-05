@@ -135,7 +135,7 @@ public enum JQuickJoinDistributionProto
   }
   public static final com.google.protobuf.Descriptors.EnumDescriptor
       getDescriptor() {
-    return com.github.paohaijiao.proto.JQuickPhysicalPlanProto.getDescriptor().getEnumTypes().get(5);
+    return com.github.paohaijiao.proto.JQuickPhysicalPlanProto.getDescriptor().getEnumTypes().get(6);
   }
 
   private static final JQuickJoinDistributionProto[] VALUES = values();

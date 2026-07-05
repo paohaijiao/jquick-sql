@@ -98,7 +98,7 @@ public enum JQuickAggregateStageProto
   }
   public static final com.google.protobuf.Descriptors.EnumDescriptor
       getDescriptor() {
-    return com.github.paohaijiao.proto.JQuickPhysicalPlanProto.getDescriptor().getEnumTypes().get(6);
+    return com.github.paohaijiao.proto.JQuickPhysicalPlanProto.getDescriptor().getEnumTypes().get(7);
   }
 
   private static final JQuickAggregateStageProto[] VALUES = values();
