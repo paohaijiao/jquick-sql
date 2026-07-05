@@ -1,9 +1,6 @@
 package com.github.paohaijiao.distributed.proto;
 
-import com.github.paohaijiao.enums.JQuickBinaryOperator;
-import com.github.paohaijiao.enums.JQuickExchangeType;
-import com.github.paohaijiao.enums.JQuickPartitionStrategy;
-import com.github.paohaijiao.enums.JQuickSQLOperationType;
+import com.github.paohaijiao.enums.*;
 import com.github.paohaijiao.expression.JQuickExpression;
 import com.github.paohaijiao.expression.domain.*;
 import com.github.paohaijiao.physical.JQuickPhysicalPlanNode;
@@ -21,7 +18,7 @@ import com.google.protobuf.Value;
 
 import java.util.*;
 
-public class JQuickprotoService {
+public class JQuickProtoService {
     /**
      * 将 Proto 转换为内部 DataSet
      */
@@ -388,19 +385,14 @@ public class JQuickprotoService {
         JQuickPhysicalPlanNodeProto.Builder builder = JQuickPhysicalPlanNodeProto.newBuilder()
                 .setNodeId(UUID.randomUUID().toString())
                 .setNodeType(node.getNodeType());
-
         for (JQuickPhysicalColumn col : node.getOutputSchema()) {
             builder.addOutputSchema(convertPhysicalColumnToProto(col));
         }
-
-        // 转换统计信息
         JQuickPhysicalStats stats = node.getStats();
         if (stats != null && stats.getEstimatedRowCount() > 0) {
             builder.setStats(convertStatsToProto(stats));
         }
-
         String nodeType = node.getNodeType();
-
         switch (nodeType) {
             case "TableScan":
                 builder.setTableScan(convertTableScanToProto((JQuickTableScanPhysicalNode) node));
@@ -518,7 +510,8 @@ public class JQuickprotoService {
             }
         }
 
-        return builder.build();
+        JQuickExpressionProto expressionProto= builder.build();
+        return expressionProto;
     }
 
 
@@ -644,6 +637,72 @@ public class JQuickprotoService {
                 return new JQuickColumnRefExpression(proto.getValue());
             case EXPR_LITERAL:
                 return new JQuickLiteralExpression(proto.getValue());
+            case EXPR_FUNCTION:
+                String functionName = proto.getValue();
+                List<JQuickExpression> arguments = new ArrayList<>();
+                for (JQuickExpressionProto argProto : proto.getArgumentsList()) {
+                    arguments.add(buildExpression(argProto));
+                }
+                boolean isStarArg = "true".equals(proto.getAttributesMap().get("is_star"));
+                return new JQuickFunctionCallExpression(functionName, arguments, isStarArg);
+            case EXPR_CASE_WHEN:
+                List<JQuickExpression> conditions = new ArrayList<>();
+                List<JQuickExpression> results = new ArrayList<>();
+                List<JQuickExpressionProto> children = proto.getChildrenList();
+                int i = 0;
+                while (i + 1 < children.size()) {
+                    conditions.add(buildExpression(children.get(i)));
+                    results.add(buildExpression(children.get(i + 1)));
+                    i += 2;
+                }
+                JQuickExpression elseResult = null;
+                if (i < children.size()) {
+                    elseResult = buildExpression(children.get(i));
+                }
+                return new JQuickCaseWhenExpression(conditions, results, elseResult);
+            case EXPR_SUBQUERY:
+                //return new JQuickFunctionCallExpression(proto.getValue());
+            case EXPR_IN:
+                List<JQuickExpression> inChildren = new ArrayList<>();
+                for (JQuickExpressionProto child : proto.getChildrenList()) {
+                    inChildren.add(buildExpression(child));
+                }
+                if (inChildren.size() >= 2) {
+                    JQuickExpression left = inChildren.get(0);
+                    List<JQuickExpression> rightList = inChildren.subList(1, inChildren.size());
+                    boolean isNot = "true".equals(proto.getAttributesMap().get("not"));
+                    return new JQuickInExpression(left, rightList, isNot);
+                }
+                return null;
+            case EXPR_IS_NULL:
+                List<JQuickExpression> isNullChildren = new ArrayList<>();
+                for (JQuickExpressionProto child : proto.getChildrenList()) {
+                    isNullChildren.add(buildExpression(child));
+                }
+                if (!isNullChildren.isEmpty()) {
+                    boolean isNot = "true".equals(proto.getAttributesMap().get("not"));
+                    JQuickUnaryOperator operator = isNot ? JQuickUnaryOperator.IS_NOT_NULL : JQuickUnaryOperator.IS_NULL;
+                    return new JQuickUnaryExpression(operator, isNullChildren.get(0));
+                }
+                return null;
+            case EXPR_BINARY_OPERATOR:
+                List<JQuickExpression> binChildren = new ArrayList<>();
+                for (JQuickExpressionProto child : proto.getChildrenList()) {
+                    binChildren.add(buildExpression(child));
+                }
+                if (binChildren.size() >= 2) {
+                    return new JQuickBinaryExpression(binChildren.get(0), binChildren.get(1), convertBinaryOperator(proto.getBinaryOperator()));
+                }
+                return null;
+            case EXPR_UNARY_OPERATOR:
+                List<JQuickExpression> unAryChildren = new ArrayList<>();
+                for (JQuickExpressionProto child : proto.getChildrenList()) {
+                    unAryChildren.add(buildExpression(child));
+                }
+                if (unAryChildren.size() >= 2) {
+                   // return new JQuickUnaryExpression( convertBinaryOperator(proto.getBinaryOperator()),null);
+                }
+                return null;
             case EXPR_BETWEEN:
                 List<JQuickExpression> betweenChildren = new ArrayList<>();
                 for (JQuickExpressionProto child : proto.getChildrenList()) {
@@ -651,21 +710,7 @@ public class JQuickprotoService {
                 }
                 if (betweenChildren.size() >= 3) {
                     boolean isNot = "true".equals(proto.getAttributesMap().get("not"));
-                    return new JQuickBetweenExpression(
-                            betweenChildren.get(0),  // expression
-                            betweenChildren.get(1),  // low
-                            betweenChildren.get(2),  // high
-                            isNot
-                    );
-                }
-                return null;
-            case EXPR_BINARY_OPERATOR:
-                List<JQuickExpression> children = new ArrayList<>();
-                for (JQuickExpressionProto child : proto.getChildrenList()) {
-                    children.add(buildExpression(child));
-                }
-                if (children.size() >= 2) {
-                    return new JQuickBinaryExpression(children.get(0), children.get(1), convertBinaryOperator(proto.getBinaryOperator()));
+                    return new JQuickBetweenExpression(betweenChildren.get(0), betweenChildren.get(1), betweenChildren.get(2), isNot);
                 }
                 return null;
             default:

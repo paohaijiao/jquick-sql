@@ -2,13 +2,9 @@ package com.github.paohaijiao.distributed.worker;
 
 import com.github.paohaijiao.console.JConsole;
 import com.github.paohaijiao.datasource.JQuickDataSourceManager;
-import com.github.paohaijiao.distributed.proto.JQuickprotoService;
-import com.github.paohaijiao.enums.JQuickBinaryOperator;
+import com.github.paohaijiao.distributed.proto.JQuickProtoService;
 import com.github.paohaijiao.enums.JQuickExchangeType;
-import com.github.paohaijiao.enums.JQuickPartitionStrategy;
-import com.github.paohaijiao.enums.JQuickSQLOperationType;
 import com.github.paohaijiao.expression.JQuickExpression;
-import com.github.paohaijiao.expression.domain.JQuickBinaryExpression;
 import com.github.paohaijiao.expression.domain.JQuickColumnRefExpression;
 import com.github.paohaijiao.expression.domain.JQuickFunctionCallExpression;
 import com.github.paohaijiao.expression.domain.JQuickLiteralExpression;
@@ -38,7 +34,7 @@ public class JQuickNodeExecutor {
 
     private final JQuickDataConverter dataConverter;
 
-    private final JQuickprotoService jQuickprotoService;
+    private final JQuickProtoService jQuickprotoService;
 
 
     public JQuickNodeExecutor(JQuickWorker worker, JQuickExpressionEvaluator expressionEvaluator, JQuickPartitionManager partitionManager, JQuickDataConverter dataConverter) {
@@ -46,7 +42,7 @@ public class JQuickNodeExecutor {
         this.expressionEvaluator = expressionEvaluator;
         this.partitionManager = partitionManager;
         this.dataConverter = dataConverter;
-        this.jQuickprotoService = new JQuickprotoService();
+        this.jQuickprotoService = new JQuickProtoService();
     }
 
     /**

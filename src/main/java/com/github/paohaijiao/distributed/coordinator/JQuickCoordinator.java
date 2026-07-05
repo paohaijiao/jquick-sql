@@ -19,7 +19,7 @@ import com.github.paohaijiao.config.JQuickSqlConfig;
 import com.github.paohaijiao.console.JConsole;
 import com.github.paohaijiao.datasource.JQuickDataSourceManager;
 import com.github.paohaijiao.distributed.JQuickDistributedPlan;
-import com.github.paohaijiao.distributed.proto.JQuickprotoService;
+import com.github.paohaijiao.distributed.proto.JQuickProtoService;
 import com.github.paohaijiao.distributed.worker.JQuickDataConverter;
 import com.github.paohaijiao.enums.JQuickFragmentType;
 import com.github.paohaijiao.exception.JAssert;
@@ -92,7 +92,7 @@ public class JQuickCoordinator {
 
     private boolean running=false;
 
-    private JQuickprotoService jQuickprotoService=null;
+    private JQuickProtoService jQuickprotoService=null;
 
 
     /**
@@ -111,7 +111,7 @@ public class JQuickCoordinator {
         this.workerStubs = new ConcurrentHashMap<>();
         this.activeQueries = new ConcurrentHashMap<>();
         this.maxRetries = config.getMaxTaskRetries();
-        this.jQuickprotoService=new JQuickprotoService();
+        this.jQuickprotoService=new JQuickProtoService();
         for (int i = 0; i < workers.size(); i++) {
             WorkerEndpoint worker = workers.get(i);
             workerIdMap.put(worker.getWorkerId(), worker);
@@ -305,7 +305,6 @@ public class JQuickCoordinator {
                 .setFragment(fragmentProto)
                 .setMemoryLimitBytes(1024 * 1024 * 1024);
         console.info("buildTaskRequest - Fragment " + fragment.getFragmentId() + " has " + fragment.getInputs().size() + " input exchanges, " + fragment.getChildren().size() + " children");
-        
         // 处理 SOURCE Fragment - 从数据源获取数据
         if (null != fragment && JQuickFragmentType.SOURCE.equals(fragment.getType()) && null != fragment.getPlan()) {
             if (fragment.getPlan() instanceof JQuickTableScanPhysicalNode) {
@@ -404,7 +403,6 @@ public class JQuickCoordinator {
                 .setFragmentId(fragment.getFragmentId())
                 .setType(convertFragmentType(fragment.getType()))
                 .setParallelism(fragment.getParallelism());
-        // 转换物理计划节点
         builder.setPlan(jQuickprotoService.convertPhysicalPlanToProto(fragment.getPlan()));
         return builder.build();
     }

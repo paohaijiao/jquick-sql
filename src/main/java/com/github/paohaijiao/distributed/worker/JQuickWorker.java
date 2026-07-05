@@ -3,7 +3,7 @@ package com.github.paohaijiao.distributed.worker;
 import com.github.paohaijiao.console.JConsole;
 import com.github.paohaijiao.datasource.JQuickDataSourceManager;
 import com.github.paohaijiao.distributed.coordinator.JQuickCoordinator;
-import com.github.paohaijiao.distributed.proto.JQuickprotoService;
+import com.github.paohaijiao.distributed.proto.JQuickProtoService;
 import com.github.paohaijiao.enums.JQuickExchangeType;
 import com.github.paohaijiao.enums.JQuickFragmentType;
 import com.github.paohaijiao.function.manager.JQuickMethodInvocationManager;
@@ -72,7 +72,7 @@ public class JQuickWorker {
 
     private int coordinatorPort;
 
-    private JQuickprotoService jQuickprotoService;
+    private JQuickProtoService jQuickprotoService;
 
 
 
@@ -88,7 +88,7 @@ public class JQuickWorker {
         this.expressionEvaluator = new JQuickExpressionEvaluator(functionManager);
         this.partitionManager = new JQuickPartitionManager();
         this.dataConverter = new JQuickDataConverter();
-        this.jQuickprotoService = new JQuickprotoService();
+        this.jQuickprotoService = new JQuickProtoService();
         this.nodeExecutor = new JQuickNodeExecutor(this, expressionEvaluator, partitionManager, dataConverter);
     }
     /**

@@ -36,6 +36,7 @@ import com.github.paohaijiao.physical.node.JQuickFilterPhysicalNode;
 import com.github.paohaijiao.statement.JQuickColumnMeta;
 import com.github.paohaijiao.statement.JQuickDataSet;
 import com.github.paohaijiao.statement.JQuickRow;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -51,6 +52,7 @@ import java.util.*;
  * @version 1.0.0
  * @since 2026/5/24
  */
+@Slf4j
 public class JQuickFilterConditionTest {
 
     private static final String TABLE_USERS = "users";
@@ -287,15 +289,8 @@ public class JQuickFilterConditionTest {
         JQuickTableScanNode usersScan = createTableScan("users", "u");
         JQuickBinaryExpression gtCondition = createComparison("age", JQuickBinaryOperator.GT, 30);
         JQuickFilterNode filterNode = createFilter(usersScan, gtCondition);
-
         JQuickPhysicalPlanNode physicalPlan = generator.generate(filterNode);
         JQuickFilterPhysicalNode filterPhysical = (JQuickFilterPhysicalNode) physicalPlan;
-        JQuickExpression actualPredicate = filterPhysical.getPredicate();
-
-        System.out.println("=== > (大于) 条件测试 ===");
-        System.out.println("条件: age > 30");
-        System.out.println("预期结果: 返回 age > 30 的用户 (4David-35, 7Grace-40)");
-
         JQuickFragmenter fragmenter = new JQuickFragmenter(1);
         JQuickDistributedPlan plan = fragmenter.fragment(filterPhysical);
         String queryId = "gt_test_" + System.currentTimeMillis();
@@ -312,15 +307,8 @@ public class JQuickFilterConditionTest {
         JQuickTableScanNode usersScan = createTableScan("users", "u");
         JQuickBinaryExpression ltCondition = createComparison("age", JQuickBinaryOperator.LT, 22);
         JQuickFilterNode filterNode = createFilter(usersScan, ltCondition);
-
         JQuickPhysicalPlanNode physicalPlan = generator.generate(filterNode);
         JQuickFilterPhysicalNode filterPhysical = (JQuickFilterPhysicalNode) physicalPlan;
-        JQuickExpression actualPredicate = filterPhysical.getPredicate();
-
-        System.out.println("=== < (小于) 条件测试 ===");
-        System.out.println("条件: age < 22");
-        System.out.println("预期结果: 返回 age < 22 的用户 (8Henry-19)");
-
         JQuickFragmenter fragmenter = new JQuickFragmenter(1);
         JQuickDistributedPlan plan = fragmenter.fragment(filterPhysical);
         String queryId = "lt_test_" + System.currentTimeMillis();
@@ -331,22 +319,15 @@ public class JQuickFilterConditionTest {
     /**
      * 测试16：小于等于条件 LTE (<=)
      *
-     * SQL示例：SELECT * FROM users WHERE age <= 20
+     * SQL示例：SELECT * FROM users WHERE age <= 22
      */
     @Test
     public void testLessThanOrEqualCondition() {
         JQuickTableScanNode usersScan = createTableScan("users", "u");
-        JQuickBinaryExpression lteCondition = createComparison("age", JQuickBinaryOperator.LE, 20);
+        JQuickBinaryExpression lteCondition = createComparison("age", JQuickBinaryOperator.LE, 22);
         JQuickFilterNode filterNode = createFilter(usersScan, lteCondition);
-
         JQuickPhysicalPlanNode physicalPlan = generator.generate(filterNode);
         JQuickFilterPhysicalNode filterPhysical = (JQuickFilterPhysicalNode) physicalPlan;
-        JQuickExpression actualPredicate = filterPhysical.getPredicate();
-
-        System.out.println("=== <= (小于等于) 条件测试 ===");
-        System.out.println("条件: age <= 20");
-        System.out.println("预期结果: 返回 age <= 20 的用户 (3Charlie-20, 8Henry-19)");
-
         JQuickFragmenter fragmenter = new JQuickFragmenter(1);
         JQuickDistributedPlan plan = fragmenter.fragment(filterPhysical);
         String queryId = "lte_test_" + System.currentTimeMillis();
@@ -364,22 +345,52 @@ public class JQuickFilterConditionTest {
         JQuickTableScanNode usersScan = createTableScan("users", "u");
         JQuickBinaryExpression gteCondition = createComparison("age", JQuickBinaryOperator.GE, 35);
         JQuickFilterNode filterNode = createFilter(usersScan, gteCondition);
-
         JQuickPhysicalPlanNode physicalPlan = generator.generate(filterNode);
         JQuickFilterPhysicalNode filterPhysical = (JQuickFilterPhysicalNode) physicalPlan;
-        JQuickExpression actualPredicate = filterPhysical.getPredicate();
-
-        System.out.println("=== >= (大于等于) 条件测试 ===");
-        System.out.println("条件: age >= 35");
-        System.out.println("预期结果: 返回 age >= 35 的用户 (4David-35, 7Grace-40)");
-
         JQuickFragmenter fragmenter = new JQuickFragmenter(1);
         JQuickDistributedPlan plan = fragmenter.fragment(filterPhysical);
         String queryId = "gte_test_" + System.currentTimeMillis();
         JQuickDataSet result = coordinator.executeQueryWithPlan(queryId, plan);
         result.printTable();
     }
-
+    /**
+     * 测试8：IS NULL 条件
+     *
+     * SQL示例：SELECT * FROM users WHERE status IS NULL
+     *
+     * 注意：现有数据中 status 字段没有 NULL 值，所以结果应该为空
+     */
+    @Test
+    public void testIsNullCondition() {
+        JQuickTableScanNode usersScan = createTableScan("users", "u");
+        JQuickUnaryExpression isNullCondition = new JQuickUnaryExpression(com.github.paohaijiao.enums.JQuickUnaryOperator.IS_NULL, new JQuickColumnRefExpression("status"));
+        JQuickFilterNode filterNode = createFilter(usersScan, isNullCondition);
+        JQuickPhysicalPlanNode physicalPlan = generator.generate(filterNode);
+        JQuickFilterPhysicalNode filterPhysical = (JQuickFilterPhysicalNode) physicalPlan;
+        JQuickFragmenter fragmenter = new JQuickFragmenter(1);
+        JQuickDistributedPlan plan = fragmenter.fragment(filterPhysical);
+        String queryId = "is_null_test_" + System.currentTimeMillis();
+        JQuickDataSet result = coordinator.executeQueryWithPlan(queryId, plan);
+        result.printTable();
+    }
+    /**
+     * 测试9：IS NOT NULL 条件
+     *
+     * SQL示例：SELECT * FROM users WHERE status IS NOT NULL
+     */
+    @Test
+    public void testIsNotNullCondition() {
+        JQuickTableScanNode usersScan = createTableScan("users", "u");
+        JQuickUnaryExpression isNotNullCondition = new JQuickUnaryExpression(JQuickUnaryOperator.IS_NOT_NULL, new JQuickColumnRefExpression("status"));
+        JQuickFilterNode filterNode = createFilter(usersScan, isNotNullCondition);
+        JQuickPhysicalPlanNode physicalPlan = generator.generate(filterNode);
+        JQuickFilterPhysicalNode filterPhysical = (JQuickFilterPhysicalNode) physicalPlan;
+        JQuickFragmenter fragmenter = new JQuickFragmenter(1);
+        JQuickDistributedPlan plan = fragmenter.fragment(filterPhysical);
+        String queryId = "is_not_null_test_" + System.currentTimeMillis();
+        JQuickDataSet result = coordinator.executeQueryWithPlan(queryId, plan);
+        result.printTable();
+    }
 
     /**
      * 测试3：复合条件 AND
@@ -420,10 +431,6 @@ public class JQuickFilterConditionTest {
         JQuickFilterNode filterNode = createFilter(usersScan, orCondition);
         JQuickPhysicalPlanNode physicalPlan = generator.generate(filterNode);
         JQuickFilterPhysicalNode filterPhysical = (JQuickFilterPhysicalNode) physicalPlan;
-        JQuickExpression actualPredicate = filterPhysical.getPredicate();
-        JQuickBinaryExpression binaryExpr = (JQuickBinaryExpression) actualPredicate;
-        System.out.println("=== OR条件测试通过 ===");
-        System.out.println("条件: age > 18 OR vip = true");
         JQuickFragmenter fragmenter = new JQuickFragmenter(1);
         JQuickDistributedPlan plan = fragmenter.fragment(filterPhysical);
         String queryId = "hash_partition_" + System.currentTimeMillis();
@@ -445,10 +452,6 @@ public class JQuickFilterConditionTest {
         JQuickFilterPhysicalNode filterPhysical = (JQuickFilterPhysicalNode) physicalPlan;
         JQuickExpression actualPredicate = filterPhysical.getPredicate();
         JQuickBinaryExpression outerExpr = (JQuickBinaryExpression) actualPredicate;
-        JQuickExpression leftChild = outerExpr.getLeft();
-        JQuickBinaryExpression innerExpr = (JQuickBinaryExpression) leftChild;
-        System.out.println("=== 嵌套条件测试通过 ===");
-        System.out.println("条件: (age > 18 AND status = 'active') OR vip = true");
         JQuickFragmenter fragmenter = new JQuickFragmenter(1);
         JQuickDistributedPlan plan = fragmenter.fragment(filterPhysical);
         String queryId = "hash_partition_" + System.currentTimeMillis();
@@ -467,9 +470,6 @@ public class JQuickFilterConditionTest {
         JQuickFilterNode filterNode = createFilter(usersScan, betweenCondition);
         JQuickPhysicalPlanNode physicalPlan = generator.generate(filterNode);
         JQuickFilterPhysicalNode filterPhysical = (JQuickFilterPhysicalNode) physicalPlan;
-        JQuickExpression actualPredicate = filterPhysical.getPredicate();
-        System.out.println("=== BETWEEN条件测试通过 ===");
-        System.out.println("条件: age BETWEEN 18 AND 65");
         JQuickFragmenter fragmenter = new JQuickFragmenter(1);
         JQuickDistributedPlan plan = fragmenter.fragment(filterPhysical);
         String queryId = "hash_partition_" + System.currentTimeMillis();
@@ -589,57 +589,7 @@ public class JQuickFilterConditionTest {
 //        result.printTable();
 //    }
 
-    /**
-     * 测试8：IS NULL 条件
-     *
-     * SQL示例：SELECT * FROM users WHERE status IS NULL
-     *
-     * 注意：现有数据中 status 字段没有 NULL 值，所以结果应该为空
-     */
-    @Test
-    public void testIsNullCondition() {
-        JQuickTableScanNode usersScan = createTableScan("users", "u");
-        JQuickUnaryExpression isNullCondition = new JQuickUnaryExpression(com.github.paohaijiao.enums.JQuickUnaryOperator.IS_NULL, new JQuickColumnRefExpression("status"));
-        JQuickFilterNode filterNode = createFilter(usersScan, isNullCondition);
-        JQuickPhysicalPlanNode physicalPlan = generator.generate(filterNode);
-        JQuickFilterPhysicalNode filterPhysical = (JQuickFilterPhysicalNode) physicalPlan;
-        JQuickExpression actualPredicate = filterPhysical.getPredicate();
 
-        System.out.println("=== IS NULL条件测试通过 ===");
-        System.out.println("条件: status IS NULL");
-        System.out.println("预期结果: 空集（因为现有数据中 status 没有 NULL）");
-
-        JQuickFragmenter fragmenter = new JQuickFragmenter(1);
-        JQuickDistributedPlan plan = fragmenter.fragment(filterPhysical);
-        String queryId = "is_null_test_" + System.currentTimeMillis();
-        JQuickDataSet result = coordinator.executeQueryWithPlan(queryId, plan);
-        result.printTable();
-    }
-    /**
-     * 测试9：IS NOT NULL 条件
-     *
-     * SQL示例：SELECT * FROM users WHERE status IS NOT NULL
-     */
-    @Test
-    public void testIsNotNullCondition() {
-        JQuickTableScanNode usersScan = createTableScan("users", "u");
-        JQuickUnaryExpression isNotNullCondition = new JQuickUnaryExpression(JQuickUnaryOperator.IS_NOT_NULL, new JQuickColumnRefExpression("status"));
-        JQuickFilterNode filterNode = createFilter(usersScan, isNotNullCondition);
-
-        JQuickPhysicalPlanNode physicalPlan = generator.generate(filterNode);
-        JQuickFilterPhysicalNode filterPhysical = (JQuickFilterPhysicalNode) physicalPlan;
-        JQuickExpression actualPredicate = filterPhysical.getPredicate();
-
-        System.out.println("=== IS NOT NULL条件测试通过 ===");
-        System.out.println("条件: status IS NOT NULL");
-        System.out.println("预期结果: 返回所有用户（因为现有数据中 status 都没有 NULL）");
-
-        JQuickFragmenter fragmenter = new JQuickFragmenter(1);
-        JQuickDistributedPlan plan = fragmenter.fragment(filterPhysical);
-        String queryId = "is_not_null_test_" + System.currentTimeMillis();
-        JQuickDataSet result = coordinator.executeQueryWithPlan(queryId, plan);
-        result.printTable();
-    }
 
     /**
      * 测试30：LIKE 谓词（基本匹配）
