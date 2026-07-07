@@ -429,6 +429,32 @@ public class JQuickFilterConditionTest {
         JQuickDataSet result = coordinator.executeQueryWithPlan(queryId, plan);
         result.printTable();
     }
+    @Test
+    public void testInCondition() {
+        JQuickTableScanNode usersScan = createTableScan("users","u");
+        JQuickInExpression inExpression  = createIn("age", Arrays.asList(22,30),false);
+        JQuickFilterNode filterNode = createFilter(usersScan, inExpression);
+        JQuickPhysicalPlanNode physicalPlan = generator.generate(filterNode);
+        JQuickFilterPhysicalNode filterPhysical = (JQuickFilterPhysicalNode) physicalPlan;
+        JQuickFragmenter fragmenter = new JQuickFragmenter(1);
+        JQuickDistributedPlan plan = fragmenter.fragment(filterPhysical);
+        String queryId = "hash_partition_" + System.currentTimeMillis();
+        JQuickDataSet result = coordinator.executeQueryWithPlan(queryId, plan);
+        result.printTable();
+    }
+    @Test
+    public void testNotInCondition() {
+        JQuickTableScanNode usersScan = createTableScan("users","u");
+        JQuickInExpression inExpression  = createIn("age", Arrays.asList(22,30),true);
+        JQuickFilterNode filterNode = createFilter(usersScan, inExpression);
+        JQuickPhysicalPlanNode physicalPlan = generator.generate(filterNode);
+        JQuickFilterPhysicalNode filterPhysical = (JQuickFilterPhysicalNode) physicalPlan;
+        JQuickFragmenter fragmenter = new JQuickFragmenter(1);
+        JQuickDistributedPlan plan = fragmenter.fragment(filterPhysical);
+        String queryId = "hash_partition_" + System.currentTimeMillis();
+        JQuickDataSet result = coordinator.executeQueryWithPlan(queryId, plan);
+        result.printTable();
+    }
     /**
      * 测试3：复合条件 AND
      *
@@ -497,38 +523,7 @@ public class JQuickFilterConditionTest {
     }
 
 
-    @Test
-    public void testInCondition() {
-        JQuickTableScanNode usersScan = createTableScan("users","u");
-        JQuickInExpression inExpression  = createIn("age", Arrays.asList(22,30),false);
-        JQuickFilterNode filterNode = createFilter(usersScan, inExpression);
-        JQuickPhysicalPlanNode physicalPlan = generator.generate(filterNode);
-        JQuickFilterPhysicalNode filterPhysical = (JQuickFilterPhysicalNode) physicalPlan;
-        JQuickExpression actualPredicate = filterPhysical.getPredicate();
-        System.out.println("=== BETWEEN条件测试通过 ===");
-        System.out.println("条件: age BETWEEN 18 AND 65");
-        JQuickFragmenter fragmenter = new JQuickFragmenter(1);
-        JQuickDistributedPlan plan = fragmenter.fragment(filterPhysical);
-        String queryId = "hash_partition_" + System.currentTimeMillis();
-        JQuickDataSet result = coordinator.executeQueryWithPlan(queryId, plan);
-        result.printTable();
-    }
-    @Test
-    public void testNotInCondition() {
-        JQuickTableScanNode usersScan = createTableScan("users","u");
-        JQuickInExpression inExpression  = createIn("age", Arrays.asList(22,30),true);
-        JQuickFilterNode filterNode = createFilter(usersScan, inExpression);
-        JQuickPhysicalPlanNode physicalPlan = generator.generate(filterNode);
-        JQuickFilterPhysicalNode filterPhysical = (JQuickFilterPhysicalNode) physicalPlan;
-        JQuickExpression actualPredicate = filterPhysical.getPredicate();
-        System.out.println("=== BETWEEN条件测试通过 ===");
-        System.out.println("条件: age BETWEEN 18 AND 65");
-        JQuickFragmenter fragmenter = new JQuickFragmenter(1);
-        JQuickDistributedPlan plan = fragmenter.fragment(filterPhysical);
-        String queryId = "hash_partition_" + System.currentTimeMillis();
-        JQuickDataSet result = coordinator.executeQueryWithPlan(queryId, plan);
-        result.printTable();
-    }
+
 //    /**
 //     * 测试24：IN 条件（子查询 - 从另一个表获取值列表）
 //     *
