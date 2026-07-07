@@ -391,7 +391,44 @@ public class JQuickFilterConditionTest {
         JQuickDataSet result = coordinator.executeQueryWithPlan(queryId, plan);
         result.printTable();
     }
-
+    /**
+     * 测试7：BETWEEN 条件
+     *
+     * SQL示例：SELECT * FROM users WHERE age BETWEEN 18 AND 65
+     */
+    @Test
+    public void testBetweenCondition() {
+        JQuickTableScanNode usersScan = createTableScan("users","u");
+        JQuickBetweenExpression betweenCondition = createBetween("age", 22, 30);
+        JQuickFilterNode filterNode = createFilter(usersScan, betweenCondition);
+        JQuickPhysicalPlanNode physicalPlan = generator.generate(filterNode);
+        JQuickFilterPhysicalNode filterPhysical = (JQuickFilterPhysicalNode) physicalPlan;
+        JQuickFragmenter fragmenter = new JQuickFragmenter(1);
+        JQuickDistributedPlan plan = fragmenter.fragment(filterPhysical);
+        String queryId = "hash_partition_" + System.currentTimeMillis();
+        JQuickDataSet result = coordinator.executeQueryWithPlan(queryId, plan);
+        result.printTable();
+    }
+    /**
+     * 测试7：BETWEEN 条件
+     *
+     * SQL示例：SELECT * FROM users WHERE age not BETWEEN 18 AND 65
+     */
+    @Test
+    public void testNotBetweenCondition() {
+        JQuickTableScanNode usersScan = createTableScan("users","u");
+        JQuickBetweenExpression betweenCondition = createBetween("age", 22, 30,true);
+        JQuickFilterNode filterNode = createFilter(usersScan, betweenCondition);
+        JQuickPhysicalPlanNode physicalPlan = generator.generate(filterNode);
+        JQuickFilterPhysicalNode filterPhysical = (JQuickFilterPhysicalNode) physicalPlan;
+        System.out.println("=== BETWEEN条件测试通过 ===");
+        System.out.println("条件: age BETWEEN 18 AND 65");
+        JQuickFragmenter fragmenter = new JQuickFragmenter(1);
+        JQuickDistributedPlan plan = fragmenter.fragment(filterPhysical);
+        String queryId = "hash_partition_" + System.currentTimeMillis();
+        JQuickDataSet result = coordinator.executeQueryWithPlan(queryId, plan);
+        result.printTable();
+    }
     /**
      * 测试3：复合条件 AND
      *
@@ -458,45 +495,8 @@ public class JQuickFilterConditionTest {
         JQuickDataSet result = coordinator.executeQueryWithPlan(queryId, plan);
         result.printTable();
     }
-    /**
-     * 测试7：BETWEEN 条件
-     *
-     * SQL示例：SELECT * FROM users WHERE age BETWEEN 18 AND 65
-     */
-    @Test
-    public void testBetweenCondition() {
-        JQuickTableScanNode usersScan = createTableScan("users","u");
-        JQuickBetweenExpression betweenCondition = createBetween("age", 22, 30);
-        JQuickFilterNode filterNode = createFilter(usersScan, betweenCondition);
-        JQuickPhysicalPlanNode physicalPlan = generator.generate(filterNode);
-        JQuickFilterPhysicalNode filterPhysical = (JQuickFilterPhysicalNode) physicalPlan;
-        JQuickFragmenter fragmenter = new JQuickFragmenter(1);
-        JQuickDistributedPlan plan = fragmenter.fragment(filterPhysical);
-        String queryId = "hash_partition_" + System.currentTimeMillis();
-        JQuickDataSet result = coordinator.executeQueryWithPlan(queryId, plan);
-        result.printTable();
-    }
-    /**
-     * 测试7：BETWEEN 条件
-     *
-     * SQL示例：SELECT * FROM users WHERE age not BETWEEN 18 AND 65
-     */
-    @Test
-    public void testNotBetweenCondition() {
-        JQuickTableScanNode usersScan = createTableScan("users","u");
-        JQuickBetweenExpression betweenCondition = createBetween("age", 22, 30,false);
-        JQuickFilterNode filterNode = createFilter(usersScan, betweenCondition);
-        JQuickPhysicalPlanNode physicalPlan = generator.generate(filterNode);
-        JQuickFilterPhysicalNode filterPhysical = (JQuickFilterPhysicalNode) physicalPlan;
-        JQuickExpression actualPredicate = filterPhysical.getPredicate();
-        System.out.println("=== BETWEEN条件测试通过 ===");
-        System.out.println("条件: age BETWEEN 18 AND 65");
-        JQuickFragmenter fragmenter = new JQuickFragmenter(1);
-        JQuickDistributedPlan plan = fragmenter.fragment(filterPhysical);
-        String queryId = "hash_partition_" + System.currentTimeMillis();
-        JQuickDataSet result = coordinator.executeQueryWithPlan(queryId, plan);
-        result.printTable();
-    }
+
+
     @Test
     public void testInCondition() {
         JQuickTableScanNode usersScan = createTableScan("users","u");
