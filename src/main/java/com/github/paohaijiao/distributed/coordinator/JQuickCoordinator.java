@@ -174,8 +174,6 @@ public class JQuickCoordinator {
         List<JQuickFragment> sortedFragments = topologicalSort(allFragments); //按依赖关系排序（叶子节点先执行）
         console.info("Fragment execution order: " + sortedFragments.stream().map(f -> f.getFragmentId() + "(" + f.getType() + ")").collect(Collectors.joining(" -> ")));
         execution.setStatus(QueryExecution.QueryStatus.RUNNING);
-        // 按顺序执行 Fragment，确保子 Fragment 完成后再执行父 Fragment
-        // 拓扑排序已经保证了顺序：SOURCE -> INTERMEDIATE -> SINK
         for (JQuickFragment fragment : sortedFragments) {
             console.info("Executing fragment synchronously - fragmentId: " + fragment.getFragmentId() + ", type: " + fragment.getType());
             if(JQuickFragmentType.SOURCE.equals(fragment.getType())){
@@ -188,7 +186,6 @@ public class JQuickCoordinator {
                 console.info("Executing fragment SINK ");
             }
             List<JQuickDataSet> fragmentResult = executeFragment(fragment, execution);
-
             execution.addFragmentResult(fragment.getFragmentId(), fragmentResult);
             console.info("Fragment " + fragment.getFragmentId() + " completed, result rows: " + (fragmentResult != null ? fragmentResult.stream().mapToInt(JQuickDataSet::size).sum() : 0));
         }

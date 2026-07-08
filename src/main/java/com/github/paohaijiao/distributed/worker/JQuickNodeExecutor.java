@@ -51,31 +51,7 @@ public class JQuickNodeExecutor {
     public JQuickDataSet executeFragment(JQuickFragmentProto fragment, JQuickWorker.JQuickTaskContext context) {
         JQuickPhysicalPlanNode rootNode = jQuickprotoService.buildPhysicalNode(fragment.getPlan());
         JQuickDataSet result = executeNode(rootNode, context);
-        if (!result.isEmpty()) {// 如果执行结果已经有数据，直接返回
-            console.info("executeFragment: returning " + result.size() + " rows from executeNode");
-            return result;
-        }
-        if (fragment.getType() == JQuickFragmentTypeProto.FRAGMENT_SINK) {// 如果是 SINK Fragment，尝试从 gRPC 接收的数据中收集结果
-            console.info("executeFragment: SINK Fragment, trying to collect from gRPC");
-            List<JQuickRow> allRows = new ArrayList<>();
-            List<JQuickColumnMeta> columns = null;
-            for (String partitionId : worker.getAllReceivedPartitions()) {
-                JQuickDataSet data = worker.getReceivedPartitionData(partitionId);
-                if (data != null && !data.isEmpty()) {
-                    if (columns == null && !data.getColumns().isEmpty()) {
-                        columns = data.getColumns();
-                    }
-                    allRows.addAll(data.getRows());
-                    console.info("SINK Fragment collected " + data.size() + " rows from partition " + partitionId);
-                }
-            }
-            if (!allRows.isEmpty() && columns != null) { // 如果接收到数据，合并后返回
-                console.info("SINK Fragment total collected " + allRows.size() + " rows from gRPC received data");
-                return new JQuickDataSet(columns, allRows);
-            }
-            console.warn("SINK Fragment received no data from gRPC!");
-        }
-        
+        console.info("executeFragment: returning " + result.size() + " rows from executeNode ["+rootNode.getNodeType()+"]");
         return result;
     }
 
@@ -189,6 +165,9 @@ public class JQuickNodeExecutor {
                 JQuickDataSet partitionData = dataConverter.convertFromProto(partition.getData());
                 input.setColumns(partitionData.getColumns());
                 input = input.concat(partitionData);
+            }else{
+                JQuickDataSet partitionData = dataConverter.convertFromProto(partition.getData());
+                input.setColumns(partitionData.getColumns());
             }
         }
         JQuickDataSet result = input.filter(row -> expressionEvaluator.evaluatePredicate(row, node.getPredicate()));

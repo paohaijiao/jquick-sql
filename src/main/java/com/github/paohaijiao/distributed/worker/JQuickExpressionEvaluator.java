@@ -295,7 +295,8 @@ public class JQuickExpressionEvaluator {
     private boolean likeMatch(String value, String pattern) {
         if (value == null || pattern == null) return false;
         String regex = pattern.replace("%", ".*").replace("_", ".");
-        return value.matches(regex);
+        boolean match= value.matches(regex);
+        return match;
     }
 
     private Number asNumber(Object value) {
