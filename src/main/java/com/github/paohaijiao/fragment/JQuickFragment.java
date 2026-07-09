@@ -19,8 +19,6 @@ package com.github.paohaijiao.fragment;
 import com.github.paohaijiao.enums.JQuickFragmentType;
 import com.github.paohaijiao.exchange.JQuickExchangeNode;
 import com.github.paohaijiao.physical.JQuickPhysicalPlanNode;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 
 import java.util.ArrayList;
 import java.util.List;

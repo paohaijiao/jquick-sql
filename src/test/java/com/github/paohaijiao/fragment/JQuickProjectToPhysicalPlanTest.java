@@ -23,7 +23,6 @@ import com.github.paohaijiao.logic.JQuickLogicalPlanNode;
 import com.github.paohaijiao.logic.domain.*;
 import com.github.paohaijiao.logic2physical.JQuickPhysicalPlanGenerator;
 import com.github.paohaijiao.physical.JQuickPhysicalPlanNode;
-import com.github.paohaijiao.physical.node.JQuickHashAggregatePhysicalNode;
 import org.junit.Before;
 import org.junit.Test;
 

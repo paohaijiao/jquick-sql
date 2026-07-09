@@ -9,7 +9,7 @@ import com.github.paohaijiao.expression.domain.JQuickColumnRefExpression;
 import com.github.paohaijiao.expression.domain.JQuickLiteralExpression;
 import com.github.paohaijiao.function.manager.JQuickMethodInvocationManager;
 import com.github.paohaijiao.physical.domain.JQuickTablePartitionInfo;
-import com.github.paohaijiao.physical.node.*;
+import com.github.paohaijiao.physical.node.JQuickTableScanPhysicalNode;
 import com.github.paohaijiao.proto.JQuickExecuteTaskRequest;
 import com.github.paohaijiao.statement.JQuickColumnMeta;
 import com.github.paohaijiao.statement.JQuickDataSet;

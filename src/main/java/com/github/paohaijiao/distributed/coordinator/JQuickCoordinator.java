@@ -26,7 +26,7 @@ import com.github.paohaijiao.exception.JAssert;
 import com.github.paohaijiao.fragment.JQuickFragment;
 import com.github.paohaijiao.fragment.JQuickFragmenter;
 import com.github.paohaijiao.physical.JQuickPhysicalPlanNode;
-import com.github.paohaijiao.physical.node.*;
+import com.github.paohaijiao.physical.node.JQuickTableScanPhysicalNode;
 import com.github.paohaijiao.proto.*;
 import com.github.paohaijiao.statement.JQuickColumnMeta;
 import com.github.paohaijiao.statement.JQuickDataSet;

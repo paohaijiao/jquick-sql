@@ -29,7 +29,6 @@ import com.github.paohaijiao.logic.domain.JQuickTableScanNode;
 import com.github.paohaijiao.logic.domain.JQuickWithNode;
 import com.github.paohaijiao.logic2physical.JQuickPhysicalPlanGenerator;
 import com.github.paohaijiao.physical.JQuickPhysicalPlanNode;
-import com.github.paohaijiao.physical.node.JQuickProjectPhysicalNode;
 import com.github.paohaijiao.physical.node.JQuickTableScanPhysicalNode;
 import org.junit.Before;
 import org.junit.Test;

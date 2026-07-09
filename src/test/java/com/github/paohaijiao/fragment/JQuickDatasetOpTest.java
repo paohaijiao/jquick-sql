@@ -19,7 +19,6 @@ import com.github.paohaijiao.config.JQuickSqlConfig;
 import com.github.paohaijiao.datasource.JQuickDataSourceManager;
 import com.github.paohaijiao.distributed.JQuickDistributedPlan;
 import com.github.paohaijiao.distributed.coordinator.JQuickCoordinator;
-import com.github.paohaijiao.distributed.worker.JQuickPartitionManager;
 import com.github.paohaijiao.distributed.worker.JQuickWorker;
 import com.github.paohaijiao.enums.JQuickBinaryOperator;
 import com.github.paohaijiao.enums.JQuickSQLOperationType;
@@ -41,11 +40,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.HashMap;
+import java.util.*;
 
 /**
  * packageName com.github.paohaijiao.physical

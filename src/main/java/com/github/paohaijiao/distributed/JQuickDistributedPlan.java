@@ -17,7 +17,6 @@ package com.github.paohaijiao.distributed;
 
 import com.github.paohaijiao.console.JConsole;
 import com.github.paohaijiao.enums.JQuickFragmentType;
-import com.github.paohaijiao.exchange.JQuickExchangeNode;
 import com.github.paohaijiao.fragment.JQuickFragment;
 
 import java.util.*;

@@ -8,7 +8,8 @@ import com.github.paohaijiao.expression.domain.JQuickBinaryExpression;
 import com.github.paohaijiao.expression.domain.JQuickColumnRefExpression;
 import com.github.paohaijiao.expression.domain.JQuickLiteralExpression;
 import com.github.paohaijiao.function.manager.JQuickMethodInvocationManager;
-import com.github.paohaijiao.physical.node.*;
+import com.github.paohaijiao.physical.node.JQuickFilterPhysicalNode;
+import com.github.paohaijiao.physical.node.JQuickTableScanPhysicalNode;
 import com.github.paohaijiao.proto.JQuickExecuteTaskRequest;
 import com.github.paohaijiao.statement.JQuickColumnMeta;
 import com.github.paohaijiao.statement.JQuickDataSet;
@@ -17,9 +18,11 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 public class JQuickFilterPhysicalNodeTest {
 

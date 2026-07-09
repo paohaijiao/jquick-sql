@@ -2,7 +2,7 @@ package com.github.paohaijiao.distribute.nodeExecutor.worker;
 
 import com.github.paohaijiao.datasource.JQuickDataSourceManager;
 import com.github.paohaijiao.distributed.coordinator.JQuickCoordinator.WorkerEndpoint;
-import com.github.paohaijiao.distributed.worker.*;
+import com.github.paohaijiao.distributed.worker.JQuickWorker;
 import com.github.paohaijiao.proto.JQuickExecuteTaskRequest;
 import com.github.paohaijiao.statement.JQuickColumnMeta;
 import com.github.paohaijiao.statement.JQuickDataSet;

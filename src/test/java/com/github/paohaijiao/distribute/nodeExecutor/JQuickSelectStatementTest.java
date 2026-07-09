@@ -15,7 +15,6 @@
  */
 package com.github.paohaijiao.distribute.nodeExecutor;
 
-import com.github.paohaijiao.ast2logic.JQuickASTToLogicalPlanVisitor;
 import com.github.paohaijiao.config.JQuickSqlConfig;
 import com.github.paohaijiao.console.JConsole;
 import com.github.paohaijiao.datasource.JQuickDataSourceManager;

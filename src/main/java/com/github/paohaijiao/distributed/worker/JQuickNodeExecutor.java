@@ -11,7 +11,9 @@ import com.github.paohaijiao.expression.domain.JQuickLiteralExpression;
 import com.github.paohaijiao.physical.JQuickPhysicalPlanNode;
 import com.github.paohaijiao.physical.domain.JQuickPhysicalColumn;
 import com.github.paohaijiao.physical.node.*;
-import com.github.paohaijiao.proto.*;
+import com.github.paohaijiao.proto.JQuickExecuteTaskRequest;
+import com.github.paohaijiao.proto.JQuickFragmentProto;
+import com.github.paohaijiao.proto.JQuickMemoryPartitionProto;
 import com.github.paohaijiao.statement.JQuickColumnMeta;
 import com.github.paohaijiao.statement.JQuickDataSet;
 import com.github.paohaijiao.statement.JQuickRow;
@@ -153,7 +155,6 @@ public class JQuickNodeExecutor {
         console.warn("readFromInputPartitions - no data found for table: " + tableName);
         return JQuickDataSet.builder().build();
     }
-
     /**
      * 执行 Filter
      */
