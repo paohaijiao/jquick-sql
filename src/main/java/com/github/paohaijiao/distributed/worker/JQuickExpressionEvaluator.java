@@ -254,11 +254,29 @@ public class JQuickExpressionEvaluator {
                 return likeMatch(left.toString(), right.toString());
             case NOT_LIKE:
                 return !likeMatch(left.toString(), right.toString());
+            case REGEX:
+                return regexMatch(left.toString(), right.toString());
+            case NOT_REGEX:
+                return !regexMatch(left.toString(), right.toString());
             default:
                 return false;
         }
     }
-
+    /**
+     * 正则表达式匹配
+     * @param value 要匹配的字符串
+     * @param pattern 正则表达式模式
+     * @return 是否匹配
+     */
+    private boolean regexMatch(String value, String pattern) {
+        if (value == null || pattern == null) return false;
+        try {
+            return value.matches(pattern);
+        } catch (java.util.regex.PatternSyntaxException e) {
+            console.warn("Invalid regex pattern: " + pattern, e);
+            return false;
+        }
+    }
     private boolean isComparisonOperator(JQuickBinaryOperator operator) {
         return operator == JQuickBinaryOperator.EQ || operator == JQuickBinaryOperator.NE ||
                 operator == JQuickBinaryOperator.GT || operator == JQuickBinaryOperator.LT ||

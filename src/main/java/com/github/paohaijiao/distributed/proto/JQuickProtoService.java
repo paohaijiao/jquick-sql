@@ -574,7 +574,7 @@ public class JQuickProtoService {
         }
     }
 
-    public JQuickBinaryOperatorProto convertBinaryOperatorToProto(com.github.paohaijiao.enums.JQuickBinaryOperator operator) {
+    public JQuickBinaryOperatorProto convertBinaryOperatorToProto(JQuickBinaryOperator operator) {
         switch (operator) {
             case EQ: return JQuickBinaryOperatorProto.OP_EQ;
             case NE: return JQuickBinaryOperatorProto.OP_NE;
@@ -591,6 +591,9 @@ public class JQuickProtoService {
             case MULTIPLY: return JQuickBinaryOperatorProto.OP_MULTIPLY;
             case DIVIDE: return JQuickBinaryOperatorProto.OP_DIVIDE;
             case MODULO: return JQuickBinaryOperatorProto.OP_MOD;
+            case REGEX: return JQuickBinaryOperatorProto.OP_REGEX;
+            case NOT_REGEX: return JQuickBinaryOperatorProto.OP_NOT_REGEX;
+//            case EXIST: return JQuickBinaryOperatorProto.OP_EXIST;
             default: return JQuickBinaryOperatorProto.OP_EQ;
         }
     }
@@ -820,6 +823,10 @@ public class JQuickProtoService {
                 return JQuickBinaryOperator.LIKE;
             case OP_NOT_LIKE:
                 return JQuickBinaryOperator.NOT_LIKE;
+            case OP_REGEX:
+                return JQuickBinaryOperator.REGEX;
+            case OP_NOT_REGEX:
+                return JQuickBinaryOperator.NOT_REGEX;
             case OP_PLUS:
                 return JQuickBinaryOperator.PLUS;
             case OP_MINUS:

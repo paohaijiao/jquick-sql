@@ -76,6 +76,18 @@ public enum JQuickBinaryOperatorProto
    * <code>OP_MOD = 16;</code>
    */
   OP_MOD(16),
+  /**
+   * <code>OP_REGEX = 17;</code>
+   */
+  OP_REGEX(17),
+  /**
+   * <code>OP_NOT_REGEX = 18;</code>
+   */
+  OP_NOT_REGEX(18),
+  /**
+   * <code>OP_EXIST = 19;</code>
+   */
+  OP_EXIST(19),
   UNRECOGNIZED(-1),
   ;
 
@@ -147,6 +159,18 @@ public enum JQuickBinaryOperatorProto
    * <code>OP_MOD = 16;</code>
    */
   public static final int OP_MOD_VALUE = 16;
+  /**
+   * <code>OP_REGEX = 17;</code>
+   */
+  public static final int OP_REGEX_VALUE = 17;
+  /**
+   * <code>OP_NOT_REGEX = 18;</code>
+   */
+  public static final int OP_NOT_REGEX_VALUE = 18;
+  /**
+   * <code>OP_EXIST = 19;</code>
+   */
+  public static final int OP_EXIST_VALUE = 19;
 
 
   public final int getNumber() {
@@ -190,6 +214,9 @@ public enum JQuickBinaryOperatorProto
       case 14: return OP_MULTIPLY;
       case 15: return OP_DIVIDE;
       case 16: return OP_MOD;
+      case 17: return OP_REGEX;
+      case 18: return OP_NOT_REGEX;
+      case 19: return OP_EXIST;
       default: return null;
     }
   }

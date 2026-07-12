@@ -229,7 +229,7 @@ enum JQuickBinaryOperatorProto {
   OP_GT = 4; OP_GTE = 5; OP_AND = 6; OP_OR = 7;
   OP_LIKE = 8;  OP_NOT_LIKE = 9; OP_IN = 10; OP_NOT_IN = 11;
   OP_PLUS = 12; OP_MINUS = 13; OP_MULTIPLY = 14;
-  OP_DIVIDE = 15; OP_MOD = 16;
+  OP_DIVIDE = 15; OP_MOD = 16;OP_REGEX= 17;OP_NOT_REGEX= 18;OP_EXIST= 19;
 }
 
 enum JQuickUnaryOperatorProto {

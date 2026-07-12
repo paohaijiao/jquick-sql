@@ -478,6 +478,50 @@ public class JQuickFilterConditionTest {
         result.printTable();
     }
     /**
+     * 测试39：REGEXP 谓词（基本正则匹配）
+     *
+     * SQL示例：SELECT * FROM users WHERE name REGEXP '^A.*'
+     */
+    @Test
+    public void testRegexpCondition() {
+        JQuickTableScanNode usersScan = createTableScan("users", "u");
+        JQuickBinaryExpression regexpCondition = new JQuickBinaryExpression(
+                new JQuickColumnRefExpression("name"),
+                new JQuickLiteralExpression("^1A.*"),
+                JQuickBinaryOperator.REGEX
+        );
+        JQuickFilterNode filterNode = createFilter(usersScan, regexpCondition);
+        JQuickPhysicalPlanNode physicalPlan = generator.generate(filterNode);
+        JQuickFilterPhysicalNode filterPhysical = (JQuickFilterPhysicalNode) physicalPlan;
+        JQuickFragmenter fragmenter = new JQuickFragmenter(1);
+        JQuickDistributedPlan plan = fragmenter.fragment(filterPhysical);
+        String queryId = "regexp_test_" + System.currentTimeMillis();
+        JQuickDataSet result = coordinator.executeQueryWithPlan(queryId, plan);
+        result.printTable();
+    }
+    /**
+     * 测试39：REGEXP 谓词（基本正则匹配）
+     *
+     * SQL示例：SELECT * FROM users WHERE name not REGEXP '^A.*'
+     */
+    @Test
+    public void testNotRegexpCondition() {
+        JQuickTableScanNode usersScan = createTableScan("users", "u");
+        JQuickBinaryExpression regexpCondition = new JQuickBinaryExpression(
+                new JQuickColumnRefExpression("name"),
+                new JQuickLiteralExpression("^1A.*"),
+                JQuickBinaryOperator.NOT_REGEX
+        );
+        JQuickFilterNode filterNode = createFilter(usersScan, regexpCondition);
+        JQuickPhysicalPlanNode physicalPlan = generator.generate(filterNode);
+        JQuickFilterPhysicalNode filterPhysical = (JQuickFilterPhysicalNode) physicalPlan;
+        JQuickFragmenter fragmenter = new JQuickFragmenter(1);
+        JQuickDistributedPlan plan = fragmenter.fragment(filterPhysical);
+        String queryId = "regexp_test_" + System.currentTimeMillis();
+        JQuickDataSet result = coordinator.executeQueryWithPlan(queryId, plan);
+        result.printTable();
+    }
+    /**
      * 测试31：LIKE 谓词（末尾匹配）
      *
      * SQL示例：SELECT * FROM users WHERE name LIKE '%e'
@@ -518,6 +562,29 @@ public class JQuickFilterConditionTest {
         JQuickFragmenter fragmenter = new JQuickFragmenter(1);
         JQuickDistributedPlan plan = fragmenter.fragment(filterPhysical);
         String queryId = "not_like_test_" + System.currentTimeMillis();
+        JQuickDataSet result = coordinator.executeQueryWithPlan(queryId, plan);
+        result.printTable();
+    }
+    /**
+     * 测试32：LIKE 谓词（包含匹配）
+     *
+     * SQL示例：SELECT * FROM users WHERE name LIKE '%li%'
+     */
+    @Test
+    public void testLikeContains() {
+        JQuickTableScanNode usersScan = createTableScan("users", "u");
+        JQuickBinaryExpression likeCondition = new JQuickBinaryExpression(
+                new JQuickColumnRefExpression("name"),
+                new JQuickLiteralExpression("%li%"),
+                JQuickBinaryOperator.LIKE
+        );
+        JQuickFilterNode filterNode = createFilter(usersScan, likeCondition);
+
+        JQuickPhysicalPlanNode physicalPlan = generator.generate(filterNode);
+        JQuickFilterPhysicalNode filterPhysical = (JQuickFilterPhysicalNode) physicalPlan;
+        JQuickFragmenter fragmenter = new JQuickFragmenter(1);
+        JQuickDistributedPlan plan = fragmenter.fragment(filterPhysical);
+        String queryId = "like_contains_test_" + System.currentTimeMillis();
         JQuickDataSet result = coordinator.executeQueryWithPlan(queryId, plan);
         result.printTable();
     }
@@ -653,68 +720,9 @@ public class JQuickFilterConditionTest {
 
 
 
-    /**
-     * 测试39：REGEXP 谓词（基本正则匹配）
-     *
-     * SQL示例：SELECT * FROM users WHERE name REGEXP '^A.*'
-     */
-    @Test
-    public void testRegexpCondition() {
-        JQuickTableScanNode usersScan = createTableScan("users", "u");
-        JQuickBinaryExpression regexpCondition = new JQuickBinaryExpression(
-                new JQuickColumnRefExpression("name"),
-                new JQuickLiteralExpression("^A.*"),
-                JQuickBinaryOperator.REGEX
-        );
-        JQuickFilterNode filterNode = createFilter(usersScan, regexpCondition);
 
-        JQuickPhysicalPlanNode physicalPlan = generator.generate(filterNode);
-        JQuickFilterPhysicalNode filterPhysical = (JQuickFilterPhysicalNode) physicalPlan;
-        JQuickExpression actualPredicate = filterPhysical.getPredicate();
 
-        System.out.println("=== REGEXP 基本匹配测试 ===");
-        System.out.println("条件: name REGEXP '^A.*'");
-        System.out.println("预期结果: 返回 name 以 'A' 开头的用户");
-        System.out.println("  实际数据中：1Alice (以 A 开头)");
 
-        JQuickFragmenter fragmenter = new JQuickFragmenter(1);
-        JQuickDistributedPlan plan = fragmenter.fragment(filterPhysical);
-        String queryId = "regexp_test_" + System.currentTimeMillis();
-        JQuickDataSet result = coordinator.executeQueryWithPlan(queryId, plan);
-        result.printTable();
-    }
-
-    /**
-     * 测试32：LIKE 谓词（包含匹配）
-     *
-     * SQL示例：SELECT * FROM users WHERE name LIKE '%li%'
-     */
-    @Test
-    public void testLikeContains() {
-        JQuickTableScanNode usersScan = createTableScan("users", "u");
-        // name LIKE '%li%' - 匹配包含 'li' 的名字
-        JQuickBinaryExpression likeCondition = new JQuickBinaryExpression(
-                new JQuickColumnRefExpression("name"),
-                new JQuickLiteralExpression("%li%"),
-                JQuickBinaryOperator.LIKE
-        );
-        JQuickFilterNode filterNode = createFilter(usersScan, likeCondition);
-
-        JQuickPhysicalPlanNode physicalPlan = generator.generate(filterNode);
-        JQuickFilterPhysicalNode filterPhysical = (JQuickFilterPhysicalNode) physicalPlan;
-        JQuickExpression actualPredicate = filterPhysical.getPredicate();
-
-        System.out.println("=== LIKE 包含匹配测试 ===");
-        System.out.println("条件: name LIKE '%li%'");
-        System.out.println("预期结果: 返回 name 包含 'li' 的用户");
-        System.out.println("  实际数据中：3Charlie (包含 'li')");
-
-        JQuickFragmenter fragmenter = new JQuickFragmenter(1);
-        JQuickDistributedPlan plan = fragmenter.fragment(filterPhysical);
-        String queryId = "like_contains_test_" + System.currentTimeMillis();
-        JQuickDataSet result = coordinator.executeQueryWithPlan(queryId, plan);
-        result.printTable();
-    }
 
 
     /**
