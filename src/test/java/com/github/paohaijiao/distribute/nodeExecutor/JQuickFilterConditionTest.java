@@ -458,14 +458,14 @@ public class JQuickFilterConditionTest {
     /**
      * 测试30：LIKE 谓词（基本匹配）
      *
-     * SQL示例：SELECT * FROM users WHERE name LIKE 'A%'
+     * SQL示例：SELECT * FROM users WHERE name LIKE '1%'
      */
     @Test
     public void testLikeCondition() {
         JQuickTableScanNode usersScan = createTableScan("users", "u");
         JQuickBinaryExpression likeCondition = new JQuickBinaryExpression(
                 new JQuickColumnRefExpression("name"),
-                new JQuickLiteralExpression("A%"),
+                new JQuickLiteralExpression("1%"),
                 JQuickBinaryOperator.LIKE
         );
         JQuickFilterNode filterNode = createFilter(usersScan, likeCondition);
@@ -485,23 +485,14 @@ public class JQuickFilterConditionTest {
     @Test
     public void testLikeEndsWith() {
         JQuickTableScanNode usersScan = createTableScan("users", "u");
-        // name LIKE '%e' - 匹配以 e 结尾的名字
         JQuickBinaryExpression likeCondition = new JQuickBinaryExpression(
                 new JQuickColumnRefExpression("name"),
                 new JQuickLiteralExpression("%e"),
                 JQuickBinaryOperator.LIKE
         );
         JQuickFilterNode filterNode = createFilter(usersScan, likeCondition);
-
         JQuickPhysicalPlanNode physicalPlan = generator.generate(filterNode);
         JQuickFilterPhysicalNode filterPhysical = (JQuickFilterPhysicalNode) physicalPlan;
-        JQuickExpression actualPredicate = filterPhysical.getPredicate();
-
-        System.out.println("=== LIKE 末尾匹配测试 ===");
-        System.out.println("条件: name LIKE '%e'");
-        System.out.println("预期结果: 返回 name 以 'e' 结尾的用户");
-        System.out.println("  实际数据中：5Eve (以 e 结尾)");
-
         JQuickFragmenter fragmenter = new JQuickFragmenter(1);
         JQuickDistributedPlan plan = fragmenter.fragment(filterPhysical);
         String queryId = "like_ends_with_test_" + System.currentTimeMillis();
@@ -511,27 +502,19 @@ public class JQuickFilterConditionTest {
     /**
      * 测试34：NOT LIKE 谓词
      *
-     * SQL示例：SELECT * FROM users WHERE name NOT LIKE 'A%'
+     * SQL示例：SELECT * FROM users WHERE name NOT LIKE '1%'
      */
     @Test
     public void testNotLikeCondition() {
         JQuickTableScanNode usersScan = createTableScan("users", "u");
-        // name NOT LIKE 'A%' - 匹配不以 A 开头的名字
         JQuickBinaryExpression notLikeCondition = new JQuickBinaryExpression(
                 new JQuickColumnRefExpression("name"),
-                new JQuickLiteralExpression("A%"),
+                new JQuickLiteralExpression("1%"),
                 JQuickBinaryOperator.NOT_LIKE
         );
         JQuickFilterNode filterNode = createFilter(usersScan, notLikeCondition);
-
         JQuickPhysicalPlanNode physicalPlan = generator.generate(filterNode);
         JQuickFilterPhysicalNode filterPhysical = (JQuickFilterPhysicalNode) physicalPlan;
-        JQuickExpression actualPredicate = filterPhysical.getPredicate();
-
-        System.out.println("=== NOT LIKE 测试 ===");
-        System.out.println("条件: name NOT LIKE 'A%'");
-        System.out.println("预期结果: 返回 name 不以 'A' 开头的所有用户");
-
         JQuickFragmenter fragmenter = new JQuickFragmenter(1);
         JQuickDistributedPlan plan = fragmenter.fragment(filterPhysical);
         String queryId = "not_like_test_" + System.currentTimeMillis();

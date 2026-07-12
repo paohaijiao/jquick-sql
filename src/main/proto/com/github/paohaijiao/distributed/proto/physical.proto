@@ -227,9 +227,9 @@ enum JQuickExpressionTypeProto {
 enum JQuickBinaryOperatorProto {
   OP_EQ = 0; OP_NE = 1; OP_LT = 2; OP_LTE = 3;
   OP_GT = 4; OP_GTE = 5; OP_AND = 6; OP_OR = 7;
-  OP_LIKE = 8; OP_IN = 9; OP_NOT_IN = 10;
-  OP_PLUS = 11; OP_MINUS = 12; OP_MULTIPLY = 13;
-  OP_DIVIDE = 14; OP_MOD = 15;
+  OP_LIKE = 8;  OP_NOT_LIKE = 9; OP_IN = 10; OP_NOT_IN = 11;
+  OP_PLUS = 12; OP_MINUS = 13; OP_MULTIPLY = 14;
+  OP_DIVIDE = 15; OP_MOD = 16;
 }
 
 enum JQuickUnaryOperatorProto {

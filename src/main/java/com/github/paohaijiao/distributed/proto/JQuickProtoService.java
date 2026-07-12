@@ -585,6 +585,7 @@ public class JQuickProtoService {
             case AND: return JQuickBinaryOperatorProto.OP_AND;
             case OR: return JQuickBinaryOperatorProto.OP_OR;
             case LIKE: return JQuickBinaryOperatorProto.OP_LIKE;
+            case NOT_LIKE: return JQuickBinaryOperatorProto.OP_NOT_LIKE;
             case PLUS: return JQuickBinaryOperatorProto.OP_PLUS;
             case MINUS: return JQuickBinaryOperatorProto.OP_MINUS;
             case MULTIPLY: return JQuickBinaryOperatorProto.OP_MULTIPLY;
@@ -817,6 +818,8 @@ public class JQuickProtoService {
                 return JQuickBinaryOperator.OR;
             case OP_LIKE:
                 return JQuickBinaryOperator.LIKE;
+            case OP_NOT_LIKE:
+                return JQuickBinaryOperator.NOT_LIKE;
             case OP_PLUS:
                 return JQuickBinaryOperator.PLUS;
             case OP_MINUS:

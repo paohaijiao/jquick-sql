@@ -45,33 +45,37 @@ public enum JQuickBinaryOperatorProto
    */
   OP_LIKE(8),
   /**
-   * <code>OP_IN = 9;</code>
+   * <code>OP_NOT_LIKE = 9;</code>
    */
-  OP_IN(9),
+  OP_NOT_LIKE(9),
   /**
-   * <code>OP_NOT_IN = 10;</code>
+   * <code>OP_IN = 10;</code>
    */
-  OP_NOT_IN(10),
+  OP_IN(10),
   /**
-   * <code>OP_PLUS = 11;</code>
+   * <code>OP_NOT_IN = 11;</code>
    */
-  OP_PLUS(11),
+  OP_NOT_IN(11),
   /**
-   * <code>OP_MINUS = 12;</code>
+   * <code>OP_PLUS = 12;</code>
    */
-  OP_MINUS(12),
+  OP_PLUS(12),
   /**
-   * <code>OP_MULTIPLY = 13;</code>
+   * <code>OP_MINUS = 13;</code>
    */
-  OP_MULTIPLY(13),
+  OP_MINUS(13),
   /**
-   * <code>OP_DIVIDE = 14;</code>
+   * <code>OP_MULTIPLY = 14;</code>
    */
-  OP_DIVIDE(14),
+  OP_MULTIPLY(14),
   /**
-   * <code>OP_MOD = 15;</code>
+   * <code>OP_DIVIDE = 15;</code>
    */
-  OP_MOD(15),
+  OP_DIVIDE(15),
+  /**
+   * <code>OP_MOD = 16;</code>
+   */
+  OP_MOD(16),
   UNRECOGNIZED(-1),
   ;
 
@@ -112,33 +116,37 @@ public enum JQuickBinaryOperatorProto
    */
   public static final int OP_LIKE_VALUE = 8;
   /**
-   * <code>OP_IN = 9;</code>
+   * <code>OP_NOT_LIKE = 9;</code>
    */
-  public static final int OP_IN_VALUE = 9;
+  public static final int OP_NOT_LIKE_VALUE = 9;
   /**
-   * <code>OP_NOT_IN = 10;</code>
+   * <code>OP_IN = 10;</code>
    */
-  public static final int OP_NOT_IN_VALUE = 10;
+  public static final int OP_IN_VALUE = 10;
   /**
-   * <code>OP_PLUS = 11;</code>
+   * <code>OP_NOT_IN = 11;</code>
    */
-  public static final int OP_PLUS_VALUE = 11;
+  public static final int OP_NOT_IN_VALUE = 11;
   /**
-   * <code>OP_MINUS = 12;</code>
+   * <code>OP_PLUS = 12;</code>
    */
-  public static final int OP_MINUS_VALUE = 12;
+  public static final int OP_PLUS_VALUE = 12;
   /**
-   * <code>OP_MULTIPLY = 13;</code>
+   * <code>OP_MINUS = 13;</code>
    */
-  public static final int OP_MULTIPLY_VALUE = 13;
+  public static final int OP_MINUS_VALUE = 13;
   /**
-   * <code>OP_DIVIDE = 14;</code>
+   * <code>OP_MULTIPLY = 14;</code>
    */
-  public static final int OP_DIVIDE_VALUE = 14;
+  public static final int OP_MULTIPLY_VALUE = 14;
   /**
-   * <code>OP_MOD = 15;</code>
+   * <code>OP_DIVIDE = 15;</code>
    */
-  public static final int OP_MOD_VALUE = 15;
+  public static final int OP_DIVIDE_VALUE = 15;
+  /**
+   * <code>OP_MOD = 16;</code>
+   */
+  public static final int OP_MOD_VALUE = 16;
 
 
   public final int getNumber() {
@@ -174,13 +182,14 @@ public enum JQuickBinaryOperatorProto
       case 6: return OP_AND;
       case 7: return OP_OR;
       case 8: return OP_LIKE;
-      case 9: return OP_IN;
-      case 10: return OP_NOT_IN;
-      case 11: return OP_PLUS;
-      case 12: return OP_MINUS;
-      case 13: return OP_MULTIPLY;
-      case 14: return OP_DIVIDE;
-      case 15: return OP_MOD;
+      case 9: return OP_NOT_LIKE;
+      case 10: return OP_IN;
+      case 11: return OP_NOT_IN;
+      case 12: return OP_PLUS;
+      case 13: return OP_MINUS;
+      case 14: return OP_MULTIPLY;
+      case 15: return OP_DIVIDE;
+      case 16: return OP_MOD;
       default: return null;
     }
   }
