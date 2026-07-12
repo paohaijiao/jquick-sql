@@ -211,7 +211,7 @@ public class JQuickCoordinator {
             JQuickExecuteTaskResponse response = scheduleTask(fragment, taskIndex, parallelism, execution);
             if (response.getStatus() == JQuickTaskStatusProto.TASK_SUCCESS) {
                 JQuickDataSet data = dataConverter.convertFromProto(response.getResultData());
-                if (!data.isEmpty()) {
+                if (data != null && !data.getColumns().isEmpty()) {
                     results.add(data);
                 }
             } else {

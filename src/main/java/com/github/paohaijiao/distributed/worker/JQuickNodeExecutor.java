@@ -161,19 +161,47 @@ public class JQuickNodeExecutor {
     private JQuickDataSet executeFilter(JQuickFilterPhysicalNode node, JQuickWorker.JQuickTaskContext context) {
         JQuickExecuteTaskRequest request = context.getRequest();
         JQuickDataSet input = JQuickDataSet.builder().build();
+        List<JQuickColumnMeta> columnMetas = null;
         for (JQuickMemoryPartitionProto partition : request.getInputPartitionsList()) {
             if (partition.hasData()) {
                 JQuickDataSet partitionData = dataConverter.convertFromProto(partition.getData());
-                input.setColumns(partitionData.getColumns());
+                if (columnMetas == null) {
+                    columnMetas = partitionData.getColumns();
+                    input.setColumns(columnMetas);
+                }
                 input = input.concat(partitionData);
-            }else{
-                JQuickDataSet partitionData = dataConverter.convertFromProto(partition.getData());
-                input.setColumns(partitionData.getColumns());
+            }
+        }
+        if (input.isEmpty() && columnMetas == null) {
+            columnMetas = extractColumnMetasFromFragment(request.getFragment());
+            if (columnMetas != null && !columnMetas.isEmpty()) {
+                input = new JQuickDataSet(columnMetas, Collections.emptyList());
             }
         }
         JQuickDataSet result = input.filter(row -> expressionEvaluator.evaluatePredicate(row, node.getPredicate()));
         context.addProcessedRows(input.size());
         return result;
+    }
+    /**
+     * 从 Fragment 中提取列元数据
+     */
+    private List<JQuickColumnMeta> extractColumnMetasFromFragment(JQuickFragmentProto fragment) {
+        try {
+            JQuickPhysicalPlanNode rootNode = jQuickprotoService.buildPhysicalNode(fragment.getPlan());
+            if (rootNode != null) {
+                List<JQuickPhysicalColumn> outputSchema = rootNode.getOutputSchema();
+                if (outputSchema != null && !outputSchema.isEmpty()) {
+                    List<JQuickColumnMeta> metas = new ArrayList<>();
+                    for (JQuickPhysicalColumn col : outputSchema) {
+                        metas.add(new JQuickColumnMeta(col.getName(), col.getType() != null ? col.getType() : Object.class, col.getSourceTable() != null ? col.getSourceTable() : ""));
+                    }
+                    return metas;
+                }
+            }
+        } catch (Exception e) {
+            console.warn("Failed to extract column metas from fragment: " + e.getMessage());
+        }
+        return null;
     }
 
     /**
