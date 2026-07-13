@@ -249,6 +249,7 @@ message JQuickExpressionProto {
   JQuickUnaryOperatorProto unary_operator = 6;
   string function_name = 7;
   repeated JQuickExpressionProto arguments = 8;
+  JQuickPhysicalPlanNodeProto subquery_plan = 9;
 }
 
 // ============================================================================
@@ -263,6 +264,7 @@ message JQuickPhysicalPlanNodeProto {
   JQuickPhysicalStatsProto stats = 4;
   repeated JQuickPhysicalColumnProto output_schema = 5;
   repeated string child_node_ids = 6;
+  repeated JQuickPhysicalPlanNodeProto children = 7;
 
   oneof node {
     JQuickTableScanNodeProto table_scan = 10;

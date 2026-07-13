@@ -341,6 +341,32 @@ java.lang.String defaultValue) {
     return arguments_.get(index);
   }
 
+  public static final int SUBQUERY_PLAN_FIELD_NUMBER = 9;
+  private com.github.paohaijiao.proto.JQuickPhysicalPlanNodeProto subqueryPlan_;
+  /**
+   * <code>.com.github.paohaijiao.proto.JQuickPhysicalPlanNodeProto subquery_plan = 9;</code>
+   * @return Whether the subqueryPlan field is set.
+   */
+  @java.lang.Override
+  public boolean hasSubqueryPlan() {
+    return subqueryPlan_ != null;
+  }
+  /**
+   * <code>.com.github.paohaijiao.proto.JQuickPhysicalPlanNodeProto subquery_plan = 9;</code>
+   * @return The subqueryPlan.
+   */
+  @java.lang.Override
+  public com.github.paohaijiao.proto.JQuickPhysicalPlanNodeProto getSubqueryPlan() {
+    return subqueryPlan_ == null ? com.github.paohaijiao.proto.JQuickPhysicalPlanNodeProto.getDefaultInstance() : subqueryPlan_;
+  }
+  /**
+   * <code>.com.github.paohaijiao.proto.JQuickPhysicalPlanNodeProto subquery_plan = 9;</code>
+   */
+  @java.lang.Override
+  public com.github.paohaijiao.proto.JQuickPhysicalPlanNodeProtoOrBuilder getSubqueryPlanOrBuilder() {
+    return subqueryPlan_ == null ? com.github.paohaijiao.proto.JQuickPhysicalPlanNodeProto.getDefaultInstance() : subqueryPlan_;
+  }
+
   private byte memoizedIsInitialized = -1;
   @java.lang.Override
   public final boolean isInitialized() {
@@ -381,6 +407,9 @@ java.lang.String defaultValue) {
     }
     for (int i = 0; i < arguments_.size(); i++) {
       output.writeMessage(8, arguments_.get(i));
+    }
+    if (subqueryPlan_ != null) {
+      output.writeMessage(9, getSubqueryPlan());
     }
     getUnknownFields().writeTo(output);
   }
@@ -428,6 +457,10 @@ java.lang.String defaultValue) {
       size += com.google.protobuf.CodedOutputStream
         .computeMessageSize(8, arguments_.get(i));
     }
+    if (subqueryPlan_ != null) {
+      size += com.google.protobuf.CodedOutputStream
+        .computeMessageSize(9, getSubqueryPlan());
+    }
     size += getUnknownFields().getSerializedSize();
     memoizedSize = size;
     return size;
@@ -459,6 +492,11 @@ java.lang.String defaultValue) {
         .equals(other.getFunctionName())) return false;
     if (!getArgumentsList()
         .equals(other.getArgumentsList())) return false;
+    if (hasSubqueryPlan() != other.hasSubqueryPlan()) return false;
+    if (hasSubqueryPlan()) {
+      if (!getSubqueryPlan()
+          .equals(other.getSubqueryPlan())) return false;
+    }
     if (!getUnknownFields().equals(other.getUnknownFields())) return false;
     return true;
   }
@@ -493,6 +531,10 @@ java.lang.String defaultValue) {
     if (getArgumentsCount() > 0) {
       hash = (37 * hash) + ARGUMENTS_FIELD_NUMBER;
       hash = (53 * hash) + getArgumentsList().hashCode();
+    }
+    if (hasSubqueryPlan()) {
+      hash = (37 * hash) + SUBQUERY_PLAN_FIELD_NUMBER;
+      hash = (53 * hash) + getSubqueryPlan().hashCode();
     }
     hash = (29 * hash) + getUnknownFields().hashCode();
     memoizedHashCode = hash;
@@ -669,6 +711,11 @@ java.lang.String defaultValue) {
         argumentsBuilder_.clear();
       }
       bitField0_ = (bitField0_ & ~0x00000080);
+      subqueryPlan_ = null;
+      if (subqueryPlanBuilder_ != null) {
+        subqueryPlanBuilder_.dispose();
+        subqueryPlanBuilder_ = null;
+      }
       return this;
     }
 
@@ -744,6 +791,11 @@ java.lang.String defaultValue) {
       }
       if (((from_bitField0_ & 0x00000040) != 0)) {
         result.functionName_ = functionName_;
+      }
+      if (((from_bitField0_ & 0x00000100) != 0)) {
+        result.subqueryPlan_ = subqueryPlanBuilder_ == null
+            ? subqueryPlan_
+            : subqueryPlanBuilder_.build();
       }
     }
 
@@ -863,6 +915,9 @@ java.lang.String defaultValue) {
           }
         }
       }
+      if (other.hasSubqueryPlan()) {
+        mergeSubqueryPlan(other.getSubqueryPlan());
+      }
       this.mergeUnknownFields(other.getUnknownFields());
       onChanged();
       return this;
@@ -951,6 +1006,13 @@ java.lang.String defaultValue) {
               }
               break;
             } // case 66
+            case 74: {
+              input.readMessage(
+                  getSubqueryPlanFieldBuilder().getBuilder(),
+                  extensionRegistry);
+              bitField0_ |= 0x00000100;
+              break;
+            } // case 74
             default: {
               if (!super.parseUnknownField(input, extensionRegistry, tag)) {
                 done = true; // was an endgroup tag
@@ -1923,6 +1985,125 @@ java.lang.String defaultValue) {
         arguments_ = null;
       }
       return argumentsBuilder_;
+    }
+
+    private com.github.paohaijiao.proto.JQuickPhysicalPlanNodeProto subqueryPlan_;
+    private com.google.protobuf.SingleFieldBuilderV3<
+        com.github.paohaijiao.proto.JQuickPhysicalPlanNodeProto, com.github.paohaijiao.proto.JQuickPhysicalPlanNodeProto.Builder, com.github.paohaijiao.proto.JQuickPhysicalPlanNodeProtoOrBuilder> subqueryPlanBuilder_;
+    /**
+     * <code>.com.github.paohaijiao.proto.JQuickPhysicalPlanNodeProto subquery_plan = 9;</code>
+     * @return Whether the subqueryPlan field is set.
+     */
+    public boolean hasSubqueryPlan() {
+      return ((bitField0_ & 0x00000100) != 0);
+    }
+    /**
+     * <code>.com.github.paohaijiao.proto.JQuickPhysicalPlanNodeProto subquery_plan = 9;</code>
+     * @return The subqueryPlan.
+     */
+    public com.github.paohaijiao.proto.JQuickPhysicalPlanNodeProto getSubqueryPlan() {
+      if (subqueryPlanBuilder_ == null) {
+        return subqueryPlan_ == null ? com.github.paohaijiao.proto.JQuickPhysicalPlanNodeProto.getDefaultInstance() : subqueryPlan_;
+      } else {
+        return subqueryPlanBuilder_.getMessage();
+      }
+    }
+    /**
+     * <code>.com.github.paohaijiao.proto.JQuickPhysicalPlanNodeProto subquery_plan = 9;</code>
+     */
+    public Builder setSubqueryPlan(com.github.paohaijiao.proto.JQuickPhysicalPlanNodeProto value) {
+      if (subqueryPlanBuilder_ == null) {
+        if (value == null) {
+          throw new NullPointerException();
+        }
+        subqueryPlan_ = value;
+      } else {
+        subqueryPlanBuilder_.setMessage(value);
+      }
+      bitField0_ |= 0x00000100;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>.com.github.paohaijiao.proto.JQuickPhysicalPlanNodeProto subquery_plan = 9;</code>
+     */
+    public Builder setSubqueryPlan(
+        com.github.paohaijiao.proto.JQuickPhysicalPlanNodeProto.Builder builderForValue) {
+      if (subqueryPlanBuilder_ == null) {
+        subqueryPlan_ = builderForValue.build();
+      } else {
+        subqueryPlanBuilder_.setMessage(builderForValue.build());
+      }
+      bitField0_ |= 0x00000100;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>.com.github.paohaijiao.proto.JQuickPhysicalPlanNodeProto subquery_plan = 9;</code>
+     */
+    public Builder mergeSubqueryPlan(com.github.paohaijiao.proto.JQuickPhysicalPlanNodeProto value) {
+      if (subqueryPlanBuilder_ == null) {
+        if (((bitField0_ & 0x00000100) != 0) &&
+          subqueryPlan_ != null &&
+          subqueryPlan_ != com.github.paohaijiao.proto.JQuickPhysicalPlanNodeProto.getDefaultInstance()) {
+          getSubqueryPlanBuilder().mergeFrom(value);
+        } else {
+          subqueryPlan_ = value;
+        }
+      } else {
+        subqueryPlanBuilder_.mergeFrom(value);
+      }
+      bitField0_ |= 0x00000100;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>.com.github.paohaijiao.proto.JQuickPhysicalPlanNodeProto subquery_plan = 9;</code>
+     */
+    public Builder clearSubqueryPlan() {
+      bitField0_ = (bitField0_ & ~0x00000100);
+      subqueryPlan_ = null;
+      if (subqueryPlanBuilder_ != null) {
+        subqueryPlanBuilder_.dispose();
+        subqueryPlanBuilder_ = null;
+      }
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>.com.github.paohaijiao.proto.JQuickPhysicalPlanNodeProto subquery_plan = 9;</code>
+     */
+    public com.github.paohaijiao.proto.JQuickPhysicalPlanNodeProto.Builder getSubqueryPlanBuilder() {
+      bitField0_ |= 0x00000100;
+      onChanged();
+      return getSubqueryPlanFieldBuilder().getBuilder();
+    }
+    /**
+     * <code>.com.github.paohaijiao.proto.JQuickPhysicalPlanNodeProto subquery_plan = 9;</code>
+     */
+    public com.github.paohaijiao.proto.JQuickPhysicalPlanNodeProtoOrBuilder getSubqueryPlanOrBuilder() {
+      if (subqueryPlanBuilder_ != null) {
+        return subqueryPlanBuilder_.getMessageOrBuilder();
+      } else {
+        return subqueryPlan_ == null ?
+            com.github.paohaijiao.proto.JQuickPhysicalPlanNodeProto.getDefaultInstance() : subqueryPlan_;
+      }
+    }
+    /**
+     * <code>.com.github.paohaijiao.proto.JQuickPhysicalPlanNodeProto subquery_plan = 9;</code>
+     */
+    private com.google.protobuf.SingleFieldBuilderV3<
+        com.github.paohaijiao.proto.JQuickPhysicalPlanNodeProto, com.github.paohaijiao.proto.JQuickPhysicalPlanNodeProto.Builder, com.github.paohaijiao.proto.JQuickPhysicalPlanNodeProtoOrBuilder> 
+        getSubqueryPlanFieldBuilder() {
+      if (subqueryPlanBuilder_ == null) {
+        subqueryPlanBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
+            com.github.paohaijiao.proto.JQuickPhysicalPlanNodeProto, com.github.paohaijiao.proto.JQuickPhysicalPlanNodeProto.Builder, com.github.paohaijiao.proto.JQuickPhysicalPlanNodeProtoOrBuilder>(
+                getSubqueryPlan(),
+                getParentForChildren(),
+                isClean());
+        subqueryPlan_ = null;
+      }
+      return subqueryPlanBuilder_;
     }
     @java.lang.Override
     public final Builder setUnknownFields(

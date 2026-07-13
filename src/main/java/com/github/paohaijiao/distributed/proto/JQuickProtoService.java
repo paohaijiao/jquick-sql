@@ -448,7 +448,8 @@ public class JQuickProtoService {
                 builder.setEmpty(JQuickEmptyNodeProto.newBuilder().build());
         }
         for (JQuickPhysicalPlanNode child : node.getChildren()) {
-            builder.addChildNodeIds("child_" + child.getNodeType());
+            builder.addChildNodeIds(child.getNodeType());
+            builder.addChildren(convertPhysicalPlanToProto(child));
         }
         return builder.build();
     }
@@ -517,6 +518,38 @@ public class JQuickProtoService {
             if (caseWhen.getElseResult() != null) {
                 builder.addChildren(convertExpressionToProto(caseWhen.getElseResult()));
             }
+        } else if (expr instanceof JQuickSubqueryExpression) {
+            JQuickSubqueryExpression subqueryExpr = (JQuickSubqueryExpression) expr;
+            builder.setType(JQuickExpressionTypeProto.EXPR_SUBQUERY);
+            builder.putAttributes("subqueryType", subqueryExpr.getSubqueryType().name());
+            if (subqueryExpr.getLeftExpression() != null) {
+                builder.addChildren(convertExpressionToProto(subqueryExpr.getLeftExpression()));
+            }
+            if (subqueryExpr.getRightExpression() != null) {
+                builder.addChildren(convertExpressionToProto(subqueryExpr.getRightExpression()));
+            }
+            if (subqueryExpr.getSubquery() != null) {
+                com.github.paohaijiao.logic2physical.JQuickPhysicalPlanGenerator planGenerator = 
+                        new com.github.paohaijiao.logic2physical.JQuickPhysicalPlanGenerator();
+                JQuickPhysicalPlanNode physicalPlan = planGenerator.generate(subqueryExpr.getSubquery());
+                if (physicalPlan != null) {
+                    builder.setSubqueryPlan(convertPhysicalPlanToProto(physicalPlan));
+                }
+            }
+        } else if (expr instanceof JQuickExistsExpression) {
+            JQuickExistsExpression existsExpr = (JQuickExistsExpression) expr;
+            builder.setType(JQuickExpressionTypeProto.EXPR_SUBQUERY);
+            builder.putAttributes("subqueryType", existsExpr.isNotExists() ? "NOT_EXISTS" : "EXISTS");
+            builder.putAttributes("exprKind", "EXISTS_EXPR");
+            JQuickSubqueryExpression subqueryExpr = existsExpr.getSubquery();
+            if (subqueryExpr != null && subqueryExpr.getSubquery() != null) {
+                com.github.paohaijiao.logic2physical.JQuickPhysicalPlanGenerator planGenerator = 
+                        new com.github.paohaijiao.logic2physical.JQuickPhysicalPlanGenerator();
+                JQuickPhysicalPlanNode physicalPlan = planGenerator.generate(subqueryExpr.getSubquery());
+                if (physicalPlan != null) {
+                    builder.setSubqueryPlan(convertPhysicalPlanToProto(physicalPlan));
+                }
+            }
         }
 
         JQuickExpressionProto expressionProto= builder.build();
@@ -557,6 +590,15 @@ public class JQuickProtoService {
             case FINAL: return JQuickAggregateStageProto.AGG_FINAL;
             case SINGLE: return JQuickAggregateStageProto.AGG_SINGLE;
             default: return JQuickAggregateStageProto.AGG_SINGLE;
+        }
+    }
+
+    public JQuickHashAggregatePhysicalNode.AggregateStage convertAggregateStage(JQuickAggregateStageProto proto) {
+        switch (proto) {
+            case AGG_PARTIAL: return JQuickHashAggregatePhysicalNode.AggregateStage.PARTIAL;
+            case AGG_FINAL: return JQuickHashAggregatePhysicalNode.AggregateStage.FINAL;
+            case AGG_SINGLE: return JQuickHashAggregatePhysicalNode.AggregateStage.SINGLE;
+            default: return JQuickHashAggregatePhysicalNode.AggregateStage.SINGLE;
         }
     }
 
@@ -688,7 +730,29 @@ public class JQuickProtoService {
                 }
                 return new JQuickCaseWhenExpression(conditions, results, elseResult);
             case EXPR_SUBQUERY:
-                //return new JQuickFunctionCallExpression(proto.getValue());
+                String subqueryTypeStr = proto.getAttributesMap().get("subqueryType");
+                if (subqueryTypeStr != null) {
+                    JQuickSubqueryType subqueryType = JQuickSubqueryType.valueOf(subqueryTypeStr);
+                    List<JQuickExpression> subqueryChildren = new ArrayList<>();
+                    for (JQuickExpressionProto child : proto.getChildrenList()) {
+                        subqueryChildren.add(buildExpression(child));
+                    }
+                    JQuickExpression leftExpr = subqueryChildren.size() > 0 ? subqueryChildren.get(0) : null;
+                    JQuickExpression rightExpr = subqueryChildren.size() > 1 ? subqueryChildren.get(1) : null;
+                    JQuickPhysicalPlanNode subqueryPlan = null;
+                    if (proto.hasSubqueryPlan()) {
+                        subqueryPlan = buildPhysicalNode(proto.getSubqueryPlan());
+                    }
+
+                    String exprKind = proto.getAttributesMap().get("exprKind");
+                    if ("EXISTS_EXPR".equals(exprKind)) {
+                        JQuickSubqueryExpression subqueryExpr = new JQuickSubqueryExpression(subqueryPlan, subqueryType, leftExpr, rightExpr);
+                        return new JQuickExistsExpression(subqueryExpr, subqueryType == JQuickSubqueryType.NOT_EXISTS);
+                    }
+
+                    return new JQuickSubqueryExpression(subqueryPlan, subqueryType, leftExpr, rightExpr);
+                }
+                return null;
             case EXPR_IN:
                 List<JQuickExpression> inChildren = new ArrayList<>();
                 for (JQuickExpressionProto child : proto.getChildrenList()) {
@@ -871,6 +935,12 @@ public class JQuickProtoService {
     }
     public JQuickPhysicalPlanNode buildPhysicalNode(JQuickPhysicalPlanNodeProto proto) {
         if (proto == null) return null;
+
+        List<JQuickPhysicalPlanNode> children = new ArrayList<>();
+        for (JQuickPhysicalPlanNodeProto childProto : proto.getChildrenList()) {
+            children.add(buildPhysicalNode(childProto));
+        }
+
         switch (proto.getNodeCase()) {
             case TABLE_SCAN:
                 JQuickTableScanNodeProto scanProto = proto.getTableScan();
@@ -878,33 +948,95 @@ public class JQuickProtoService {
                         scanProto.hasFilterPredicate()?buildExpression(scanProto.getFilterPredicate()):null);
                 return scanNode;
             case FILTER:
-                return new JQuickFilterPhysicalNode(buildExpression(proto.getFilter().getPredicate()), null);
+                return new JQuickFilterPhysicalNode(buildExpression(proto.getFilter().getPredicate()), 
+                        children.size() > 0 ? children.get(0) : null);
             case PROJECT:
                 JQuickProjectNodeProto projectProto = proto.getProject();
                 List<JQuickProjectPhysicalNode.SelectItem> selectItems = new ArrayList<>();
                 for (JQuickProjectNodeProto.SelectItemProto itemProto : projectProto.getSelectItemsList()) {
                     selectItems.add(new JQuickProjectPhysicalNode.SelectItem(buildExpression(itemProto.getExpression()), itemProto.getAlias()));
                 }
-                return new JQuickProjectPhysicalNode(selectItems, null, projectProto.getDistinct());
+                return new JQuickProjectPhysicalNode(selectItems, 
+                        children.size() > 0 ? children.get(0) : null, projectProto.getDistinct());
             case HASH_JOIN:
                 JQuickHashJoinNodeProto joinProto = proto.getHashJoin();
-                return new JQuickHashJoinPhysicalNode(convertJoinType(joinProto.getJoinType()), null, null, buildExpression(joinProto.getCondition()), new ArrayList<>(), joinProto.getBuildSide() == JQuickBuildSideProto.BUILD_SIDE_LEFT ? JQuickHashJoinPhysicalNode.BuildSide.LEFT : JQuickHashJoinPhysicalNode.BuildSide.RIGHT, JQuickHashJoinPhysicalNode.JoinDistribution.LOCAL);
+                return new JQuickHashJoinPhysicalNode(convertJoinType(joinProto.getJoinType()), 
+                        children.size() > 0 ? children.get(0) : null, 
+                        children.size() > 1 ? children.get(1) : null, 
+                        buildExpression(joinProto.getCondition()), new ArrayList<>(), 
+                        joinProto.getBuildSide() == JQuickBuildSideProto.BUILD_SIDE_LEFT ? JQuickHashJoinPhysicalNode.BuildSide.LEFT : JQuickHashJoinPhysicalNode.BuildSide.RIGHT, 
+                        JQuickHashJoinPhysicalNode.JoinDistribution.LOCAL);
             case EXCHANGE:
                 JQuickExchangeNodeProto exchangeProto = proto.getExchange();
-                return new JQuickExchangePhysicalNode(convertExchangeType(exchangeProto.getExchangeType()), convertPartitionStrategy(exchangeProto.getPartitionStrategy()), new ArrayList<>(), exchangeProto.getParallelism(), null);
+                return new JQuickExchangePhysicalNode(convertExchangeType(exchangeProto.getExchangeType()), 
+                        convertPartitionStrategy(exchangeProto.getPartitionStrategy()), 
+                        new ArrayList<>(), exchangeProto.getParallelism(), 
+                        children.size() > 0 ? children.get(0) : null);
             case LIMIT:
                 JQuickLimitNodeProto limitProto = proto.getLimit();
-                return new JQuickLimitPhysicalNode(limitProto.getLimit(), limitProto.getOffset(), null);
+                return new JQuickLimitPhysicalNode(limitProto.getLimit(), limitProto.getOffset(), 
+                        children.size() > 0 ? children.get(0) : null);
             case SET_OPERATION:
                 JQuickSetOperationNodeProto setOpProto = proto.getSetOperation();
                 JQuickSQLOperationType opType = convertSetOperationType(setOpProto.getOperationType());
-                List<JQuickPhysicalPlanNode> children = new ArrayList<>();
-                for (JQuickPhysicalPlanNodeProto childProto : setOpProto.getChildrenList()) {
-                    children.add(buildPhysicalNode(childProto));
-                }
                 return new JQuickSetOperationPhysicalNode(opType,
                         children.size() > 0 ? children.get(0) : null,
                         children.size() > 1 ? children.get(1) : null);
+            case NESTED_LOOP_JOIN:
+                JQuickNestedLoopJoinNodeProto nestedJoinProto = proto.getNestedLoopJoin();
+                return new JQuickNestedLoopJoinPhysicalNode(convertJoinType(nestedJoinProto.getJoinType()),
+                        children.size() > 0 ? children.get(0) : null,
+                        children.size() > 1 ? children.get(1) : null,
+                        buildExpression(nestedJoinProto.getCondition()));
+            case HASH_AGGREGATE:
+                JQuickHashAggregateNodeProto aggProto = proto.getHashAggregate();
+                List<JQuickExpression> groupKeys = new ArrayList<>();
+                for (JQuickExpressionProto keyProto : aggProto.getGroupKeysList()) {
+                    groupKeys.add(buildExpression(keyProto));
+                }
+                List<JQuickHashAggregatePhysicalNode.AggregateFunction> aggregates = new ArrayList<>();
+                for (JQuickHashAggregateNodeProto.AggregateFunctionProto funcProto : aggProto.getAggregatesList()) {
+                    aggregates.add(new JQuickHashAggregatePhysicalNode.AggregateFunction(
+                            funcProto.getFunctionName(),
+                            buildExpression(funcProto.getArgument()),
+                            funcProto.getDistinct(),
+                            funcProto.getAlias(),
+                            funcProto.getIsCountStar(),
+                            funcProto.getSeparator(),
+                            convertAggregateStage(funcProto.getInternalStage())
+                    ));
+                }
+                return new JQuickHashAggregatePhysicalNode(groupKeys, aggregates,
+                        children.size() > 0 ? children.get(0) : null,
+                        buildExpression(aggProto.getHavingCondition()),
+                        convertAggregateStage(aggProto.getStage())
+                );
+            case SORT:
+                JQuickSortNodeProto sortProto = proto.getSort();
+                List<JQuickSortPhysicalNode.OrderByItem> sortItems = new ArrayList<>();
+                for (JQuickSortNodeProto.OrderByItemProto itemProto : sortProto.getOrderByItemsList()) {
+                    sortItems.add(new JQuickSortPhysicalNode.OrderByItem(itemProto.getColumnName(), itemProto.getAscending(), itemProto.getNullsFirst()));
+                }
+                return new JQuickSortPhysicalNode(sortItems, children.size() > 0 ? children.get(0) : null);
+            case VALUES:
+                JQuickValuesNodeProto valuesProto = proto.getValues();
+                return new JQuickValuesPhysicalNode(new ArrayList<>(), new ArrayList<>(valuesProto.getColumnNamesList()), new ArrayList<>());
+            case WINDOW:
+                return new JQuickWindowPhysicalNode(new ArrayList<>(), children.size() > 0 ? children.get(0) : null);
+            case TOP_N:
+                JQuickTopNNodeProto topNProto = proto.getTopN();
+                List<JQuickSortPhysicalNode.OrderByItem> topNItems = new ArrayList<>();
+                for (JQuickSortNodeProto.OrderByItemProto itemProto : topNProto.getOrderByItemsList()) {
+                    topNItems.add(new JQuickSortPhysicalNode.OrderByItem(itemProto.getColumnName(), itemProto.getAscending(), itemProto.getNullsFirst()));
+                }
+                return new JQuickTopNPhysicalNode(topNItems, topNProto.getLimit(), topNProto.getOffset(), children.size() > 0 ? children.get(0) : null);
+            case RECURSIVE_UNION:
+                JQuickRecursiveUnionNodeProto recursiveProto = proto.getRecursiveUnion();
+                return new JQuickRecursiveUnionPhysicalNode(recursiveProto.getCteName(),
+                        new ArrayList<>(recursiveProto.getColumnNamesList()),
+                        children.size() > 0 ? children.get(0) : null,
+                        children.size() > 1 ? children.get(1) : null,
+                        recursiveProto.getUnionAll());
             case EMPTY:
                 return JQuickEmptyPhysicalNode.INSTANCE;
             default:

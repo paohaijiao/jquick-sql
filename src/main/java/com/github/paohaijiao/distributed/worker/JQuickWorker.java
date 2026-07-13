@@ -90,6 +90,7 @@ public class JQuickWorker {
         this.dataConverter = new JQuickDataConverter();
         this.jQuickprotoService = new JQuickProtoService();
         this.nodeExecutor = new JQuickNodeExecutor(this, expressionEvaluator, partitionManager, dataConverter);
+        this.expressionEvaluator.setNodeExecutor(nodeExecutor);
     }
     /**
      * 向 Coordinator 注册并获取所有 Worker 端点

@@ -19,6 +19,7 @@ import com.github.paohaijiao.context.JQuickExecutionContext;
 import com.github.paohaijiao.enums.JQuickSubqueryType;
 import com.github.paohaijiao.expression.JQuickExpression;
 import com.github.paohaijiao.logic.JQuickLogicalPlanNode;
+import com.github.paohaijiao.physical.JQuickPhysicalPlanNode;
 import com.github.paohaijiao.statement.JQuickDataSet;
 import com.github.paohaijiao.statement.JQuickRow;
 
@@ -33,6 +34,8 @@ public class JQuickSubqueryExpression implements JQuickExpression {
 
     private final JQuickLogicalPlanNode subquery;
 
+    private final JQuickPhysicalPlanNode physicalPlan;
+
     private final JQuickSubqueryType type;
 
     private final JQuickExpression leftExpression;  // 用于 IN/ANY/ALL 子查询
@@ -40,24 +43,36 @@ public class JQuickSubqueryExpression implements JQuickExpression {
     private final JQuickExpression rightExpression; // 用于比较子查询
 
 
-    // 标量子查询构造器
+    // 标量子查询构造器（逻辑计划）
     public JQuickSubqueryExpression(JQuickLogicalPlanNode subquery) {
-        this(subquery, JQuickSubqueryType.SCALAR, null, null);
+        this(subquery, null, JQuickSubqueryType.SCALAR, null, null);
     }
 
-    // EXISTS/NOT_EXISTS 构造器
+    // EXISTS/NOT_EXISTS 构造器（逻辑计划）
     public JQuickSubqueryExpression(JQuickLogicalPlanNode subquery, JQuickSubqueryType type) {
-        this(subquery, type, null, null);
+        this(subquery, null, type, null, null);
     }
 
-    // IN/NOT_IN 构造器
+    // IN/NOT_IN 构造器（逻辑计划）
     public JQuickSubqueryExpression(JQuickLogicalPlanNode subquery, JQuickSubqueryType type, JQuickExpression leftExpression) {
-        this(subquery, type, leftExpression, null);
+        this(subquery, null, type, leftExpression, null);
     }
 
-    // ANY/ALL 构造器
+    // ANY/ALL 构造器（逻辑计划）
     public JQuickSubqueryExpression(JQuickLogicalPlanNode subquery, JQuickSubqueryType type, JQuickExpression leftExpression, JQuickExpression rightExpression) {
+        this(subquery, null, type, leftExpression, rightExpression);
+    }
+
+    // 物理计划构造器（反序列化使用）
+    public JQuickSubqueryExpression(JQuickPhysicalPlanNode physicalPlan, JQuickSubqueryType type, JQuickExpression leftExpression, JQuickExpression rightExpression) {
+        this(null, physicalPlan, type, leftExpression, rightExpression);
+    }
+
+    // 完整构造器
+    private JQuickSubqueryExpression(JQuickLogicalPlanNode subquery, JQuickPhysicalPlanNode physicalPlan, 
+                                      JQuickSubqueryType type, JQuickExpression leftExpression, JQuickExpression rightExpression) {
         this.subquery = subquery;
+        this.physicalPlan = physicalPlan;
         this.type = type;
         this.leftExpression = leftExpression;
         this.rightExpression = rightExpression;
@@ -65,32 +80,7 @@ public class JQuickSubqueryExpression implements JQuickExpression {
 
     @Override
     public Object evaluate(JQuickRow row) {
-        // 创建子查询执行上下文
-        JQuickExecutionContext childContext = createChildContext(row);
-        try {
-            // 执行子查询
-            JQuickDataSet result = null;//subquery.execute(childContext);
-            switch (type) {
-                case SCALAR:
-                    return evaluateScalar(result);
-                case EXISTS:
-                    return !result.isEmpty();
-                case NOT_EXISTS:
-                    return result.isEmpty();
-                case IN:
-                    return evaluateIn(result, row);
-                case NOT_IN:
-                    return !evaluateIn(result, row);
-                case ANY:
-                    return evaluateAny(result, row);
-                case ALL:
-                    return evaluateAll(result, row);
-                default:
-                    return null;
-            }
-        } catch (Exception e) {
-            throw new RuntimeException("Subquery execution failed", e);
-        }
+        throw new UnsupportedOperationException("Subquery expression evaluation must be performed through JQuickExpressionEvaluator.evaluateExpression()");
     }
 
     @Override
@@ -304,7 +294,8 @@ public class JQuickSubqueryExpression implements JQuickExpression {
 
 
     public JQuickLogicalPlanNode getSubquery() { return subquery; }
-    //public JQuickSubqueryType getType() { return type; }
+    public JQuickPhysicalPlanNode getPhysicalPlan() { return physicalPlan; }
+    public JQuickSubqueryType getSubqueryType() { return type; }
     public JQuickExpression getLeftExpression() { return leftExpression; }
     public JQuickExpression getRightExpression() { return rightExpression; }
 }

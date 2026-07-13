@@ -25,6 +25,7 @@ import com.github.paohaijiao.distributed.worker.JQuickWorker;
 import com.github.paohaijiao.enums.JQuickBinaryOperator;
 import com.github.paohaijiao.enums.JQuickJoinType;
 import com.github.paohaijiao.enums.JQuickUnaryOperator;
+import com.github.paohaijiao.enums.JQuickSubqueryType;
 import com.github.paohaijiao.expression.JQuickExpression;
 import com.github.paohaijiao.expression.domain.*;
 import com.github.paohaijiao.fragment.JQuickFragmenter;
@@ -827,7 +828,78 @@ public class JQuickFilterConditionTest {
         result.printTable();
     }
 
+    /**
+     * 测试 subqueryExpressionAtom - 标量子查询
+     *
+     * SQL示例：SELECT * FROM users WHERE age > (SELECT AVG(age) FROM users)
+     */
+    @Test
+    public void testSubqueryExpressionAtom_Scalar() {
+        JQuickTableScanNode usersScan = createTableScan("users", "u");
+        JQuickTableScanNode subQueryScan = createTableScan("users", "sub");
+        JQuickProjectNode subQueryProject = createProject(subQueryScan, "age");
+        JQuickSubqueryExpression scalarSubquery = new JQuickSubqueryExpression(subQueryProject);
+        JQuickBinaryExpression condition = new JQuickBinaryExpression(
+                new JQuickColumnRefExpression("age"),
+                scalarSubquery,
+                JQuickBinaryOperator.GT
+        );
+        JQuickFilterNode filterNode = createFilter(usersScan, condition);
+        JQuickPhysicalPlanNode physicalPlan = generator.generate(filterNode);
+        JQuickFilterPhysicalNode filterPhysical = (JQuickFilterPhysicalNode) physicalPlan;
+        JQuickFragmenter fragmenter = new JQuickFragmenter(1);
+        JQuickDistributedPlan plan = fragmenter.fragment(filterPhysical);
+        String queryId = "subquery_scalar_test_" + System.currentTimeMillis();
+        JQuickDataSet result = coordinator.executeQueryWithPlan(queryId, plan);
+        result.printTable();
+    }
 
+    /**
+     * 测试 subqueryExpressionAtom - EXISTS 子查询
+     *
+     * SQL示例：SELECT * FROM users WHERE EXISTS (SELECT * FROM users WHERE age = 25)
+     */
+    @Test
+    public void testSubqueryExpressionAtom_Exists() {
+        JQuickTableScanNode usersScan = createTableScan("users", "u");
+        JQuickTableScanNode subQueryScan = createTableScan("users", "sub");
+        JQuickBinaryExpression subQueryCondition = createComparison("age", JQuickBinaryOperator.EQ, 25);
+        JQuickFilterNode subQueryFilter = createFilter(subQueryScan, subQueryCondition);
+        JQuickSubqueryExpression existsSubquery = new JQuickSubqueryExpression(subQueryFilter, JQuickSubqueryType.EXISTS);
+        JQuickFilterNode filterNode = createFilter(usersScan, existsSubquery);
+        JQuickPhysicalPlanNode physicalPlan = generator.generate(filterNode);
+        JQuickFilterPhysicalNode filterPhysical = (JQuickFilterPhysicalNode) physicalPlan;
+        JQuickFragmenter fragmenter = new JQuickFragmenter(1);
+        JQuickDistributedPlan plan = fragmenter.fragment(filterPhysical);
+        String queryId = "subquery_exists_test_" + System.currentTimeMillis();
+        JQuickDataSet result = coordinator.executeQueryWithPlan(queryId, plan);
+        result.printTable();
+    }
+
+    /**
+     * 测试 subqueryExpressionAtom - IN 子查询
+     *
+     * SQL示例：SELECT * FROM users WHERE age IN (SELECT age FROM users WHERE status = 'active')
+     */
+    @Test
+    public void testSubqueryExpressionAtom_In() {
+        JQuickTableScanNode usersScan = createTableScan("users", "u");
+
+        JQuickTableScanNode subQueryScan = createTableScan("users", "sub");
+        JQuickBinaryExpression subQueryCondition = createComparison("status", JQuickBinaryOperator.EQ, "active");
+        JQuickFilterNode subQueryFilter = createFilter(subQueryScan, subQueryCondition);
+        JQuickProjectNode subQueryProject = createProject(subQueryFilter, "age");
+        JQuickSubqueryExpression inSubquery = new JQuickSubqueryExpression(subQueryProject, JQuickSubqueryType.IN, new JQuickColumnRefExpression("age"));
+
+        JQuickFilterNode filterNode = createFilter(usersScan, inSubquery);
+        JQuickPhysicalPlanNode physicalPlan = generator.generate(filterNode);
+        JQuickFilterPhysicalNode filterPhysical = (JQuickFilterPhysicalNode) physicalPlan;
+        JQuickFragmenter fragmenter = new JQuickFragmenter(1);
+        JQuickDistributedPlan plan = fragmenter.fragment(filterPhysical);
+        String queryId = "subquery_in_test_" + System.currentTimeMillis();
+        JQuickDataSet result = coordinator.executeQueryWithPlan(queryId, plan);
+        result.printTable();
+    }
 
 //    /**
 //     * 测试24：IN 条件（子查询 - 从另一个表获取值列表）

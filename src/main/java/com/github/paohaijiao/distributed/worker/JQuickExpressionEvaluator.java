@@ -18,11 +18,15 @@ package com.github.paohaijiao.distributed.worker;
 import com.github.paohaijiao.console.JConsole;
 import com.github.paohaijiao.enums.JQuickBinaryOperator;
 import com.github.paohaijiao.enums.JQuickUnaryOperator;
+import com.github.paohaijiao.enums.JQuickSubqueryType;
 import com.github.paohaijiao.exception.JAssert;
 import com.github.paohaijiao.expression.JQuickExpression;
 import com.github.paohaijiao.expression.domain.*;
 import com.github.paohaijiao.function.core.JQuickMethodFunctionProvider;
 import com.github.paohaijiao.function.manager.JQuickMethodInvocationManager;
+import com.github.paohaijiao.logic2physical.JQuickPhysicalPlanGenerator;
+import com.github.paohaijiao.physical.JQuickPhysicalPlanNode;
+import com.github.paohaijiao.statement.JQuickDataSet;
 import com.github.paohaijiao.statement.JQuickRow;
 
 import java.util.*;
@@ -35,6 +39,8 @@ public class JQuickExpressionEvaluator {
     private final JConsole console=JConsole.initConsoleEnvironment();
 
     private final JQuickMethodInvocationManager functionManager;
+
+    private JQuickNodeExecutor nodeExecutor;
 
     private Map<String, String> aliasToTableMap = new HashMap<>();
 
@@ -54,6 +60,13 @@ public class JQuickExpressionEvaluator {
     public void clearAliasContext() {
         this.aliasToTableMap.clear();
         this.columnAliasMap.clear();
+    }
+
+    /**
+     * 设置节点执行器（用于子查询执行）
+     */
+    public void setNodeExecutor(JQuickNodeExecutor nodeExecutor) {
+        this.nodeExecutor = nodeExecutor;
     }
 
     /**
@@ -186,6 +199,14 @@ public class JQuickExpressionEvaluator {
                 return evaluateExpression(row, caseWhen.getElseResult());
             }
             return null;
+        } else if (expr instanceof JQuickSubqueryExpression) {
+            JQuickSubqueryExpression subqueryExpr = (JQuickSubqueryExpression) expr;
+            return evaluateSubquery(row, subqueryExpr);
+        } else if (expr instanceof JQuickExistsExpression) {
+            JQuickExistsExpression existsExpr = (JQuickExistsExpression) expr;
+            JQuickSubqueryExpression subqueryExpr = existsExpr.getSubquery();
+            JQuickDataSet result = executeSubqueryPlan(subqueryExpr);
+            return existsExpr.isNotExists() ? result.isEmpty() : !result.isEmpty();
         }
 
         return null;
@@ -344,5 +365,160 @@ public class JQuickExpressionEvaluator {
             return cmp;
         }
         return v1.toString().compareTo(v2.toString());
+    }
+
+    private Object evaluateSubquery(JQuickRow row, JQuickSubqueryExpression subquery) {
+        try {
+            JQuickDataSet result = executeSubqueryPlan(subquery);
+
+            JQuickSubqueryType type = subquery.getSubqueryType();
+            if (type == JQuickSubqueryType.SCALAR) {
+                return evaluateScalarSubquery(result);
+            } else if (type == JQuickSubqueryType.EXISTS) {
+                return !result.isEmpty();
+            } else if (type == JQuickSubqueryType.NOT_EXISTS) {
+                return result.isEmpty();
+            } else if (type == JQuickSubqueryType.IN) {
+                return evaluateInSubquery(result, row, subquery.getLeftExpression());
+            } else if (type == JQuickSubqueryType.NOT_IN) {
+                return !evaluateInSubquery(result, row, subquery.getLeftExpression());
+            } else if (type == JQuickSubqueryType.ANY) {
+                return evaluateAnySubquery(result, row, subquery.getLeftExpression());
+            } else if (type == JQuickSubqueryType.ALL) {
+                return evaluateAllSubquery(result, row, subquery.getLeftExpression());
+            }
+            return null;
+        } catch (Exception e) {
+            console.error("Failed to evaluate subquery", e);
+            return null;
+        }
+    }
+
+    private JQuickDataSet executeSubqueryPlan(JQuickSubqueryExpression subquery) {
+        JQuickPhysicalPlanNode physicalPlan = subquery.getPhysicalPlan();
+        if (physicalPlan != null) {
+            if (nodeExecutor != null) {
+                return nodeExecutor.executePhysicalPlan(physicalPlan);
+            } else {
+                console.warn("JQuickNodeExecutor not set, cannot execute subquery");
+                return JQuickDataSet.builder().build();
+            }
+        }
+
+        com.github.paohaijiao.logic.JQuickLogicalPlanNode logicalPlan = subquery.getSubquery();
+        if (logicalPlan == null) {
+            console.warn("Subquery expression has null plan");
+            return JQuickDataSet.builder().build();
+        }
+
+        JQuickPhysicalPlanGenerator planGenerator = new JQuickPhysicalPlanGenerator();
+        physicalPlan = planGenerator.generate(logicalPlan);
+
+        if (physicalPlan == null) {
+            console.warn("Failed to generate physical plan for subquery");
+            return JQuickDataSet.builder().build();
+        }
+
+        if (nodeExecutor != null) {
+            return nodeExecutor.executePhysicalPlan(physicalPlan);
+        } else {
+            console.warn("JQuickNodeExecutor not set, cannot execute subquery");
+            return JQuickDataSet.builder().build();
+        }
+    }
+
+    private Object evaluateScalarSubquery(JQuickDataSet result) {
+        if (result.isEmpty()) {
+            return null;
+        }
+
+        JQuickRow firstRow = result.first();
+        if (firstRow == null) {
+            return null;
+        }
+
+        List<String> columns = result.getColumnNames();
+        if (columns.isEmpty()) {
+            return null;
+        }
+
+        return firstRow.get(columns.get(0));
+    }
+
+    private boolean evaluateInSubquery(JQuickDataSet result, JQuickRow outerRow, JQuickExpression leftExpression) {
+        if (leftExpression == null) {
+            return false;
+        }
+
+        Object leftValue = evaluateExpression(outerRow, leftExpression);
+        if (leftValue == null) {
+            return false;
+        }
+
+        for (JQuickRow row : result.getRows()) {
+            List<String> columns = result.getColumnNames();
+            if (columns.isEmpty()) continue;
+
+            Object rightValue = row.get(columns.get(0));
+            if (Objects.equals(leftValue, rightValue)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private boolean evaluateAnySubquery(JQuickDataSet result, JQuickRow outerRow, JQuickExpression leftExpression) {
+        if (leftExpression == null) {
+            return false;
+        }
+
+        Object leftValue = evaluateExpression(outerRow, leftExpression);
+        if (leftValue == null) {
+            return false;
+        }
+
+        for (JQuickRow row : result.getRows()) {
+            List<String> columns = result.getColumnNames();
+            if (columns.isEmpty()) continue;
+
+            Object rightValue = row.get(columns.get(0));
+            if (rightValue == null) continue;
+
+            if (compareValues(leftValue, rightValue, false) == 0) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private boolean evaluateAllSubquery(JQuickDataSet result, JQuickRow outerRow, JQuickExpression leftExpression) {
+        if (leftExpression == null) {
+            return false;
+        }
+
+        Object leftValue = evaluateExpression(outerRow, leftExpression);
+        if (leftValue == null) {
+            return false;
+        }
+
+        if (result.isEmpty()) {
+            return true;
+        }
+
+        for (JQuickRow row : result.getRows()) {
+            List<String> columns = result.getColumnNames();
+            if (columns.isEmpty()) continue;
+
+            Object rightValue = row.get(columns.get(0));
+            if (rightValue == null) continue;
+
+            if (compareValues(leftValue, rightValue, false) != 0) {
+                return false;
+            }
+        }
+
+        return true;
     }
 }

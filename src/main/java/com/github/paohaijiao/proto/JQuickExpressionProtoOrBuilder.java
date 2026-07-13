@@ -148,4 +148,19 @@ java.lang.String defaultValue);
    */
   com.github.paohaijiao.proto.JQuickExpressionProtoOrBuilder getArgumentsOrBuilder(
       int index);
+
+  /**
+   * <code>.com.github.paohaijiao.proto.JQuickPhysicalPlanNodeProto subquery_plan = 9;</code>
+   * @return Whether the subqueryPlan field is set.
+   */
+  boolean hasSubqueryPlan();
+  /**
+   * <code>.com.github.paohaijiao.proto.JQuickPhysicalPlanNodeProto subquery_plan = 9;</code>
+   * @return The subqueryPlan.
+   */
+  com.github.paohaijiao.proto.JQuickPhysicalPlanNodeProto getSubqueryPlan();
+  /**
+   * <code>.com.github.paohaijiao.proto.JQuickPhysicalPlanNodeProto subquery_plan = 9;</code>
+   */
+  com.github.paohaijiao.proto.JQuickPhysicalPlanNodeProtoOrBuilder getSubqueryPlanOrBuilder();
 }

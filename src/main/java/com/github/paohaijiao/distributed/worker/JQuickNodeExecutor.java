@@ -100,6 +100,19 @@ public class JQuickNodeExecutor {
     }
 
     /**
+     * 执行物理计划（用于子查询）
+     */
+    public JQuickDataSet executePhysicalPlan(JQuickPhysicalPlanNode node) {
+        JQuickExecuteTaskRequest emptyRequest = JQuickExecuteTaskRequest.newBuilder()
+                .setQueryId("subquery")
+                .setTaskId("subquery_task_" + System.currentTimeMillis())
+                .setMemoryLimitBytes(1024 * 1024 * 1024)
+                .build();
+        JQuickWorker.JQuickTaskContext context = worker.new JQuickTaskContext(emptyRequest.getTaskId(), emptyRequest);
+        return executeNode(node, context);
+    }
+
+    /**
      * 执行 TableScan
      */
     private JQuickDataSet executeTableScan(JQuickTableScanPhysicalNode node, JQuickWorker.JQuickTaskContext context) {

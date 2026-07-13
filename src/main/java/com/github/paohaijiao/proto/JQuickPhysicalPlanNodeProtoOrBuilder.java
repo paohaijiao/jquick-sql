@@ -102,6 +102,30 @@ public interface JQuickPhysicalPlanNodeProtoOrBuilder extends
       getChildNodeIdsBytes(int index);
 
   /**
+   * <code>repeated .com.github.paohaijiao.proto.JQuickPhysicalPlanNodeProto children = 7;</code>
+   */
+  java.util.List<com.github.paohaijiao.proto.JQuickPhysicalPlanNodeProto> 
+      getChildrenList();
+  /**
+   * <code>repeated .com.github.paohaijiao.proto.JQuickPhysicalPlanNodeProto children = 7;</code>
+   */
+  com.github.paohaijiao.proto.JQuickPhysicalPlanNodeProto getChildren(int index);
+  /**
+   * <code>repeated .com.github.paohaijiao.proto.JQuickPhysicalPlanNodeProto children = 7;</code>
+   */
+  int getChildrenCount();
+  /**
+   * <code>repeated .com.github.paohaijiao.proto.JQuickPhysicalPlanNodeProto children = 7;</code>
+   */
+  java.util.List<? extends com.github.paohaijiao.proto.JQuickPhysicalPlanNodeProtoOrBuilder> 
+      getChildrenOrBuilderList();
+  /**
+   * <code>repeated .com.github.paohaijiao.proto.JQuickPhysicalPlanNodeProto children = 7;</code>
+   */
+  com.github.paohaijiao.proto.JQuickPhysicalPlanNodeProtoOrBuilder getChildrenOrBuilder(
+      int index);
+
+  /**
    * <code>.com.github.paohaijiao.proto.JQuickTableScanNodeProto table_scan = 10;</code>
    * @return Whether the tableScan field is set.
    */
