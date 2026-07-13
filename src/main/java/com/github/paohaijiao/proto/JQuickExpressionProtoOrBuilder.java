@@ -19,16 +19,19 @@ public interface JQuickExpressionProtoOrBuilder extends
   com.github.paohaijiao.proto.JQuickExpressionTypeProto getType();
 
   /**
-   * <code>string value = 2;</code>
+   * <code>.google.protobuf.Any value = 2;</code>
+   * @return Whether the value field is set.
+   */
+  boolean hasValue();
+  /**
+   * <code>.google.protobuf.Any value = 2;</code>
    * @return The value.
    */
-  java.lang.String getValue();
+  com.google.protobuf.Any getValue();
   /**
-   * <code>string value = 2;</code>
-   * @return The bytes for value.
+   * <code>.google.protobuf.Any value = 2;</code>
    */
-  com.google.protobuf.ByteString
-      getValueBytes();
+  com.google.protobuf.AnyOrBuilder getValueOrBuilder();
 
   /**
    * <code>repeated .com.github.paohaijiao.proto.JQuickExpressionProto children = 3;</code>

@@ -17,7 +17,6 @@ private static final long serialVersionUID = 0L;
   }
   private JQuickExpressionProto() {
     type_ = 0;
-    value_ = "";
     children_ = java.util.Collections.emptyList();
     binaryOperator_ = 0;
     unaryOperator_ = 0;
@@ -81,42 +80,29 @@ private static final long serialVersionUID = 0L;
   }
 
   public static final int VALUE_FIELD_NUMBER = 2;
-  @SuppressWarnings("serial")
-  private volatile java.lang.Object value_ = "";
+  private com.google.protobuf.Any value_;
   /**
-   * <code>string value = 2;</code>
+   * <code>.google.protobuf.Any value = 2;</code>
+   * @return Whether the value field is set.
+   */
+  @java.lang.Override
+  public boolean hasValue() {
+    return value_ != null;
+  }
+  /**
+   * <code>.google.protobuf.Any value = 2;</code>
    * @return The value.
    */
   @java.lang.Override
-  public java.lang.String getValue() {
-    java.lang.Object ref = value_;
-    if (ref instanceof java.lang.String) {
-      return (java.lang.String) ref;
-    } else {
-      com.google.protobuf.ByteString bs = 
-          (com.google.protobuf.ByteString) ref;
-      java.lang.String s = bs.toStringUtf8();
-      value_ = s;
-      return s;
-    }
+  public com.google.protobuf.Any getValue() {
+    return value_ == null ? com.google.protobuf.Any.getDefaultInstance() : value_;
   }
   /**
-   * <code>string value = 2;</code>
-   * @return The bytes for value.
+   * <code>.google.protobuf.Any value = 2;</code>
    */
   @java.lang.Override
-  public com.google.protobuf.ByteString
-      getValueBytes() {
-    java.lang.Object ref = value_;
-    if (ref instanceof java.lang.String) {
-      com.google.protobuf.ByteString b = 
-          com.google.protobuf.ByteString.copyFromUtf8(
-              (java.lang.String) ref);
-      value_ = b;
-      return b;
-    } else {
-      return (com.google.protobuf.ByteString) ref;
-    }
+  public com.google.protobuf.AnyOrBuilder getValueOrBuilder() {
+    return value_ == null ? com.google.protobuf.Any.getDefaultInstance() : value_;
   }
 
   public static final int CHILDREN_FIELD_NUMBER = 3;
@@ -372,8 +358,8 @@ java.lang.String defaultValue) {
     if (type_ != com.github.paohaijiao.proto.JQuickExpressionTypeProto.EXPR_COLUMN_REF.getNumber()) {
       output.writeEnum(1, type_);
     }
-    if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(value_)) {
-      com.google.protobuf.GeneratedMessageV3.writeString(output, 2, value_);
+    if (value_ != null) {
+      output.writeMessage(2, getValue());
     }
     for (int i = 0; i < children_.size(); i++) {
       output.writeMessage(3, children_.get(i));
@@ -409,8 +395,9 @@ java.lang.String defaultValue) {
       size += com.google.protobuf.CodedOutputStream
         .computeEnumSize(1, type_);
     }
-    if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(value_)) {
-      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(2, value_);
+    if (value_ != null) {
+      size += com.google.protobuf.CodedOutputStream
+        .computeMessageSize(2, getValue());
     }
     for (int i = 0; i < children_.size(); i++) {
       size += com.google.protobuf.CodedOutputStream
@@ -457,8 +444,11 @@ java.lang.String defaultValue) {
     com.github.paohaijiao.proto.JQuickExpressionProto other = (com.github.paohaijiao.proto.JQuickExpressionProto) obj;
 
     if (type_ != other.type_) return false;
-    if (!getValue()
-        .equals(other.getValue())) return false;
+    if (hasValue() != other.hasValue()) return false;
+    if (hasValue()) {
+      if (!getValue()
+          .equals(other.getValue())) return false;
+    }
     if (!getChildrenList()
         .equals(other.getChildrenList())) return false;
     if (!internalGetAttributes().equals(
@@ -482,8 +472,10 @@ java.lang.String defaultValue) {
     hash = (19 * hash) + getDescriptor().hashCode();
     hash = (37 * hash) + TYPE_FIELD_NUMBER;
     hash = (53 * hash) + type_;
-    hash = (37 * hash) + VALUE_FIELD_NUMBER;
-    hash = (53 * hash) + getValue().hashCode();
+    if (hasValue()) {
+      hash = (37 * hash) + VALUE_FIELD_NUMBER;
+      hash = (53 * hash) + getValue().hashCode();
+    }
     if (getChildrenCount() > 0) {
       hash = (37 * hash) + CHILDREN_FIELD_NUMBER;
       hash = (53 * hash) + getChildrenList().hashCode();
@@ -654,7 +646,11 @@ java.lang.String defaultValue) {
       super.clear();
       bitField0_ = 0;
       type_ = 0;
-      value_ = "";
+      value_ = null;
+      if (valueBuilder_ != null) {
+        valueBuilder_.dispose();
+        valueBuilder_ = null;
+      }
       if (childrenBuilder_ == null) {
         children_ = java.util.Collections.emptyList();
       } else {
@@ -732,7 +728,9 @@ java.lang.String defaultValue) {
         result.type_ = type_;
       }
       if (((from_bitField0_ & 0x00000002) != 0)) {
-        result.value_ = value_;
+        result.value_ = valueBuilder_ == null
+            ? value_
+            : valueBuilder_.build();
       }
       if (((from_bitField0_ & 0x00000008) != 0)) {
         result.attributes_ = internalGetAttributes();
@@ -796,10 +794,8 @@ java.lang.String defaultValue) {
       if (other.type_ != 0) {
         setTypeValue(other.getTypeValue());
       }
-      if (!other.getValue().isEmpty()) {
-        value_ = other.value_;
-        bitField0_ |= 0x00000002;
-        onChanged();
+      if (other.hasValue()) {
+        mergeValue(other.getValue());
       }
       if (childrenBuilder_ == null) {
         if (!other.children_.isEmpty()) {
@@ -899,7 +895,9 @@ java.lang.String defaultValue) {
               break;
             } // case 8
             case 18: {
-              value_ = input.readStringRequireUtf8();
+              input.readMessage(
+                  getValueFieldBuilder().getBuilder(),
+                  extensionRegistry);
               bitField0_ |= 0x00000002;
               break;
             } // case 18
@@ -1023,76 +1021,123 @@ java.lang.String defaultValue) {
       return this;
     }
 
-    private java.lang.Object value_ = "";
+    private com.google.protobuf.Any value_;
+    private com.google.protobuf.SingleFieldBuilderV3<
+        com.google.protobuf.Any, com.google.protobuf.Any.Builder, com.google.protobuf.AnyOrBuilder> valueBuilder_;
     /**
-     * <code>string value = 2;</code>
+     * <code>.google.protobuf.Any value = 2;</code>
+     * @return Whether the value field is set.
+     */
+    public boolean hasValue() {
+      return ((bitField0_ & 0x00000002) != 0);
+    }
+    /**
+     * <code>.google.protobuf.Any value = 2;</code>
      * @return The value.
      */
-    public java.lang.String getValue() {
-      java.lang.Object ref = value_;
-      if (!(ref instanceof java.lang.String)) {
-        com.google.protobuf.ByteString bs =
-            (com.google.protobuf.ByteString) ref;
-        java.lang.String s = bs.toStringUtf8();
-        value_ = s;
-        return s;
+    public com.google.protobuf.Any getValue() {
+      if (valueBuilder_ == null) {
+        return value_ == null ? com.google.protobuf.Any.getDefaultInstance() : value_;
       } else {
-        return (java.lang.String) ref;
+        return valueBuilder_.getMessage();
       }
     }
     /**
-     * <code>string value = 2;</code>
-     * @return The bytes for value.
+     * <code>.google.protobuf.Any value = 2;</code>
      */
-    public com.google.protobuf.ByteString
-        getValueBytes() {
-      java.lang.Object ref = value_;
-      if (ref instanceof String) {
-        com.google.protobuf.ByteString b = 
-            com.google.protobuf.ByteString.copyFromUtf8(
-                (java.lang.String) ref);
-        value_ = b;
-        return b;
+    public Builder setValue(com.google.protobuf.Any value) {
+      if (valueBuilder_ == null) {
+        if (value == null) {
+          throw new NullPointerException();
+        }
+        value_ = value;
       } else {
-        return (com.google.protobuf.ByteString) ref;
+        valueBuilder_.setMessage(value);
       }
+      bitField0_ |= 0x00000002;
+      onChanged();
+      return this;
     }
     /**
-     * <code>string value = 2;</code>
-     * @param value The value to set.
-     * @return This builder for chaining.
+     * <code>.google.protobuf.Any value = 2;</code>
      */
     public Builder setValue(
-        java.lang.String value) {
-      if (value == null) { throw new NullPointerException(); }
-      value_ = value;
+        com.google.protobuf.Any.Builder builderForValue) {
+      if (valueBuilder_ == null) {
+        value_ = builderForValue.build();
+      } else {
+        valueBuilder_.setMessage(builderForValue.build());
+      }
       bitField0_ |= 0x00000002;
       onChanged();
       return this;
     }
     /**
-     * <code>string value = 2;</code>
-     * @return This builder for chaining.
+     * <code>.google.protobuf.Any value = 2;</code>
+     */
+    public Builder mergeValue(com.google.protobuf.Any value) {
+      if (valueBuilder_ == null) {
+        if (((bitField0_ & 0x00000002) != 0) &&
+          value_ != null &&
+          value_ != com.google.protobuf.Any.getDefaultInstance()) {
+          getValueBuilder().mergeFrom(value);
+        } else {
+          value_ = value;
+        }
+      } else {
+        valueBuilder_.mergeFrom(value);
+      }
+      bitField0_ |= 0x00000002;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>.google.protobuf.Any value = 2;</code>
      */
     public Builder clearValue() {
-      value_ = getDefaultInstance().getValue();
       bitField0_ = (bitField0_ & ~0x00000002);
+      value_ = null;
+      if (valueBuilder_ != null) {
+        valueBuilder_.dispose();
+        valueBuilder_ = null;
+      }
       onChanged();
       return this;
     }
     /**
-     * <code>string value = 2;</code>
-     * @param value The bytes for value to set.
-     * @return This builder for chaining.
+     * <code>.google.protobuf.Any value = 2;</code>
      */
-    public Builder setValueBytes(
-        com.google.protobuf.ByteString value) {
-      if (value == null) { throw new NullPointerException(); }
-      checkByteStringIsUtf8(value);
-      value_ = value;
+    public com.google.protobuf.Any.Builder getValueBuilder() {
       bitField0_ |= 0x00000002;
       onChanged();
-      return this;
+      return getValueFieldBuilder().getBuilder();
+    }
+    /**
+     * <code>.google.protobuf.Any value = 2;</code>
+     */
+    public com.google.protobuf.AnyOrBuilder getValueOrBuilder() {
+      if (valueBuilder_ != null) {
+        return valueBuilder_.getMessageOrBuilder();
+      } else {
+        return value_ == null ?
+            com.google.protobuf.Any.getDefaultInstance() : value_;
+      }
+    }
+    /**
+     * <code>.google.protobuf.Any value = 2;</code>
+     */
+    private com.google.protobuf.SingleFieldBuilderV3<
+        com.google.protobuf.Any, com.google.protobuf.Any.Builder, com.google.protobuf.AnyOrBuilder> 
+        getValueFieldBuilder() {
+      if (valueBuilder_ == null) {
+        valueBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
+            com.google.protobuf.Any, com.google.protobuf.Any.Builder, com.google.protobuf.AnyOrBuilder>(
+                getValue(),
+                getParentForChildren(),
+                isClean());
+        value_ = null;
+      }
+      return valueBuilder_;
     }
 
     private java.util.List<com.github.paohaijiao.proto.JQuickExpressionProto> children_ =

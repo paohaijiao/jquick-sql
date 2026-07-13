@@ -23,6 +23,7 @@ import com.github.paohaijiao.proto.JQuickRowProto;
 import com.github.paohaijiao.statement.JQuickColumnMeta;
 import com.github.paohaijiao.statement.JQuickDataSet;
 import com.github.paohaijiao.statement.JQuickRow;
+import com.github.paohaijiao.util.JQuickAnyTypeConverterFactory;
 import com.google.protobuf.Any;
 import com.google.protobuf.NullValue;
 import com.google.protobuf.Value;
@@ -36,6 +37,8 @@ import java.util.Map;
  */
 public class JQuickDataConverter {
 
+    JQuickAnyTypeConverterFactory factory= JQuickAnyTypeConverterFactory.getInstance();
+
     /**
      * 将内部 DataSet 转换为 Proto
      */
@@ -48,12 +51,7 @@ public class JQuickDataConverter {
         for (JQuickRow row : data.getRows()) {
             JQuickRowProto.Builder rowBuilder = JQuickRowProto.newBuilder();
             for (Map.Entry<String, Object> entry : row.entrySet()) {
-                Any anyValue;
-                if (entry.getValue() != null) {
-                    anyValue = Any.pack(Value.newBuilder().setStringValue(entry.getValue().toString()).build());
-                } else {
-                    anyValue = Any.pack(Value.newBuilder().setNullValue(NullValue.NULL_VALUE).build());
-                }
+                Any anyValue=factory.toAny(entry.getValue());
                 rowBuilder.putData(entry.getKey(), anyValue);
             }
             builder.addRows(rowBuilder.build());
@@ -80,29 +78,8 @@ public class JQuickDataConverter {
             JQuickRow row = new JQuickRow();
             for (Map.Entry<String, Any> entry : rowProto.getDataMap().entrySet()) {
                 try {
-                    if (!entry.getValue().is(Value.class)) {
-                        row.put(entry.getKey(), entry.getValue().toString());
-                    } else {
-                        Value value = entry.getValue().unpack(Value.class);
-                        Object val = entry.getValue();
-                        if (value.hasNullValue()) {
-                            row.put(entry.getKey(), null);
-                        } else if (value.hasStringValue()) {
-                            row.put(entry.getKey(), value.getStringValue());
-                        } else if (value.hasNumberValue()) {
-                            row.put(entry.getKey(), value.getNumberValue());
-                        } else if (value.hasBoolValue()) {
-                            row.put(entry.getKey(), value.getBoolValue());
-                        } else if (value.hasListValue()) {
-                            row.put(entry.getKey(), value.getListValue().toString());
-                        } else if (value.hasStructValue()) {
-                            row.put(entry.getKey(), value.getStructValue().toString());
-                        }
-                        else {
-                            // 空 Value，视为 null
-                            row.put(entry.getKey(), null);
-                        }
-                    }
+                   Object val= factory.fromAny(entry.getValue());
+                   row.put(entry.getKey(), val);
                 } catch (Exception e) {
                     row.put(entry.getKey(), entry.getValue().toString());
                 }

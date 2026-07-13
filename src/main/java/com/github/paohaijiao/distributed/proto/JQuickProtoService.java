@@ -13,12 +13,16 @@ import com.github.paohaijiao.proto.*;
 import com.github.paohaijiao.statement.JQuickColumnMeta;
 import com.github.paohaijiao.statement.JQuickDataSet;
 import com.github.paohaijiao.statement.JQuickRow;
+import com.github.paohaijiao.util.JQuickAnyTypeConverterFactory;
 import com.google.protobuf.Any;
+import com.google.protobuf.NullValue;
 import com.google.protobuf.Value;
 
 import java.util.*;
 
 public class JQuickProtoService {
+
+    public static JQuickAnyTypeConverterFactory typeConverterFactory=JQuickAnyTypeConverterFactory.getInstance();
     /**
      * 将 Proto 转换为内部 DataSet
      */
@@ -453,17 +457,20 @@ public class JQuickProtoService {
      */
     public JQuickExpressionProto convertExpressionToProto(JQuickExpression expr) {
         if (expr == null) {
+            Any  nullAny=typeConverterFactory.packNull();
             return JQuickExpressionProto.newBuilder()
                     .setType(JQuickExpressionTypeProto.EXPR_LITERAL)
-                    .setValue("null")
+                    .setValue(nullAny)
                     .build();
         }
         JQuickExpressionProto.Builder builder = JQuickExpressionProto.newBuilder();
         if (expr instanceof JQuickColumnRefExpression) {
-            builder.setType(JQuickExpressionTypeProto.EXPR_COLUMN_REF).setValue(((JQuickColumnRefExpression) expr).getColumnName());
+            Any type=typeConverterFactory.toAny(((JQuickColumnRefExpression) expr).getColumnName());
+            builder.setType(JQuickExpressionTypeProto.EXPR_COLUMN_REF).setValue(type);
         } else if (expr instanceof JQuickLiteralExpression) {
             Object value = ((JQuickLiteralExpression) expr).getValue();
-            builder.setType(JQuickExpressionTypeProto.EXPR_LITERAL).setValue(value != null ? value.toString() : "null");
+            Any type=typeConverterFactory.toAny(value);
+            builder.setType(JQuickExpressionTypeProto.EXPR_LITERAL).setValue(type);
         } else if (expr instanceof JQuickBinaryExpression) {
             JQuickBinaryExpression binary = (JQuickBinaryExpression) expr;
             builder.setType(JQuickExpressionTypeProto.EXPR_BINARY_OPERATOR).setBinaryOperator(convertBinaryOperatorToProto(binary.getOperator()));
@@ -650,11 +657,13 @@ public class JQuickProtoService {
         if (proto == null) return null;
         switch (proto.getType()) {
             case EXPR_COLUMN_REF:
-                return new JQuickColumnRefExpression(proto.getValue());
+                String type=typeConverterFactory.toType(proto.getValue(),String.class);
+                return new JQuickColumnRefExpression(type);
             case EXPR_LITERAL:
-                return new JQuickLiteralExpression(proto.getValue());
+                Object val=typeConverterFactory.fromAny(proto.getValue());
+                return new JQuickLiteralExpression(val);
             case EXPR_FUNCTION:
-                String functionName = proto.getValue();
+                String functionName=typeConverterFactory.toType( proto.getValue(),String.class);
                 List<JQuickExpression> arguments = new ArrayList<>();
                 for (JQuickExpressionProto argProto : proto.getArgumentsList()) {
                     arguments.add(buildExpression(argProto));

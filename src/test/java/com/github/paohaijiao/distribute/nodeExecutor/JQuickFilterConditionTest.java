@@ -130,17 +130,18 @@ public class JQuickFilterConditionTest {
                 new JQuickColumnMeta("id", Integer.class, TABLE_USERS),
                 new JQuickColumnMeta("name", String.class, TABLE_USERS),
                 new JQuickColumnMeta("age", Integer.class, TABLE_USERS),
-                new JQuickColumnMeta("status", String.class, TABLE_USERS)
+                new JQuickColumnMeta("status", String.class, TABLE_USERS),
+                new JQuickColumnMeta("enabled", Boolean.class, TABLE_USERS)
         );
         List<JQuickRow> userRows = Arrays.asList(
-                createRow("id", 1, "name", "1Alice", "age", 25, "status", null),
-                createRow("id", 2, "name", "2Bob", "age", 30, "status", "active"),
-                createRow("id", 3, "name", "3Charlie", "age", 20, "status", "pending"),
-                createRow("id", 4, "name", "4David", "age", 35, "status", "inactive"),
-                createRow("id", 5, "name", "5Eve", "age", 28, "status", "active"),
-                createRow("id", 6, "name", "6Frank", "age", 22, "status", "pending"),
-                createRow("id", 7, "name", "7Grace", "age", 40, "status", "active"),
-                createRow("id", 8, "name", "8Henry", "age", 19, "status", "inactive")
+                createRow("id", 1, "name", "1Alice", "age", 25, "status", null,"enabled",true),
+                createRow("id", 2, "name", "2Bob", "age", 30, "status", "active","enabled",true),
+                createRow("id", 3, "name", "3Charlie", "age", 20, "status", "pending","enabled",true),
+                createRow("id", 4, "name", "4David", "age", 35, "status", "inactive","enabled",false),
+                createRow("id", 5, "name", "5Eve", "age", 28, "status", "active","enabled",false),
+                createRow("id", 6, "name", "6Frank", "age", 22, "status", "pending","enabled",false),
+                createRow("id", 7, "name", "7Grace", "age", 40, "status", "active","enabled",false),
+                createRow("id", 8, "name", "8Henry", "age", 19, "status", "inactive","enabled",true)
         );
         JQuickDataSet usersData = new JQuickDataSet(userColumns, userRows);
         JQuickDataSourceManager.registerTable(TABLE_USERS, usersData);
@@ -656,6 +657,176 @@ public class JQuickFilterConditionTest {
     }
 
 
+
+    /**
+     * 测试 expressionAtomPredicate - 常量表达式作为谓词
+     *
+     * SQL示例：SELECT * FROM users WHERE TRUE
+     * 等价于：SELECT * FROM users
+     */
+    @Test
+    public void testExpressionAtomPredicate_Constant() {
+        JQuickTableScanNode usersScan = createTableScan("users", "u");
+        JQuickLiteralExpression constantPredicate = new JQuickLiteralExpression(true);
+        JQuickFilterNode filterNode = createFilter(usersScan, constantPredicate);
+        JQuickPhysicalPlanNode physicalPlan = generator.generate(filterNode);
+        JQuickFilterPhysicalNode filterPhysical = (JQuickFilterPhysicalNode) physicalPlan;
+        JQuickFragmenter fragmenter = new JQuickFragmenter(1);
+        JQuickDistributedPlan plan = fragmenter.fragment(filterPhysical);
+        String queryId = "atom_constant_test_" + System.currentTimeMillis();
+        JQuickDataSet result = coordinator.executeQueryWithPlan(queryId, plan);
+        result.printTable();
+    }
+
+    /**
+     * 测试 expressionAtomPredicate - 列引用作为谓词
+     *
+     * SQL示例：SELECT * FROM users WHERE enabled
+     * 注意：这在SQL中通常不合法，但expressionAtomPredicate语法允许
+     */
+    @Test
+    public void testExpressionAtomPredicate_ColumnRef() {
+        JQuickTableScanNode usersScan = createTableScan("users", "u");
+        JQuickColumnRefExpression columnPredicate = new JQuickColumnRefExpression("enabled");
+        JQuickFilterNode filterNode = createFilter(usersScan, columnPredicate);
+        JQuickPhysicalPlanNode physicalPlan = generator.generate(filterNode);
+        JQuickFilterPhysicalNode filterPhysical = (JQuickFilterPhysicalNode) physicalPlan;
+        JQuickFragmenter fragmenter = new JQuickFragmenter(1);
+        JQuickDistributedPlan plan = fragmenter.fragment(filterPhysical);
+        String queryId = "atom_column_test_" + System.currentTimeMillis();
+        JQuickDataSet result = coordinator.executeQueryWithPlan(queryId, plan);
+        result.printTable();
+    }
+
+    /**
+     * 测试 expressionAtomPredicate - 一元NOT表达式作为谓词
+     *
+     * SQL示例：SELECT * FROM users WHERE NOT enabled
+     */
+    @Test
+    public void testExpressionAtomPredicate_UnaryNot() {
+        JQuickTableScanNode usersScan = createTableScan("users", "u");
+        JQuickUnaryExpression notPredicate = new JQuickUnaryExpression(JQuickUnaryOperator.NOT, new JQuickColumnRefExpression("enabled"));
+        JQuickFilterNode filterNode = createFilter(usersScan, notPredicate);
+        JQuickPhysicalPlanNode physicalPlan = generator.generate(filterNode);
+        JQuickFilterPhysicalNode filterPhysical = (JQuickFilterPhysicalNode) physicalPlan;
+        JQuickFragmenter fragmenter = new JQuickFragmenter(1);
+        JQuickDistributedPlan plan = fragmenter.fragment(filterPhysical);
+        String queryId = "atom_unary_not_test_" + System.currentTimeMillis();
+        JQuickDataSet result = coordinator.executeQueryWithPlan(queryId, plan);
+        result.printTable();
+    }
+
+    /**
+     * 测试 expressionAtomPredicate - 数学表达式作为谓词
+     *
+     * SQL示例：SELECT * FROM users WHERE age + 5 > 30
+     */
+    @Test
+    public void testExpressionAtomPredicate_MathExpression() {
+        JQuickTableScanNode usersScan = createTableScan("users", "u");
+        JQuickBinaryExpression mathExpr = new JQuickBinaryExpression(
+                new JQuickColumnRefExpression("age"),
+                new JQuickLiteralExpression(5),
+                JQuickBinaryOperator.PLUS
+        );
+        JQuickBinaryExpression condition = new JQuickBinaryExpression(
+                mathExpr,
+                new JQuickLiteralExpression(30),
+                JQuickBinaryOperator.GT
+        );
+        JQuickFilterNode filterNode = createFilter(usersScan, condition);
+        JQuickPhysicalPlanNode physicalPlan = generator.generate(filterNode);
+        JQuickFilterPhysicalNode filterPhysical = (JQuickFilterPhysicalNode) physicalPlan;
+        JQuickFragmenter fragmenter = new JQuickFragmenter(1);
+        JQuickDistributedPlan plan = fragmenter.fragment(filterPhysical);
+        String queryId = "atom_math_test_" + System.currentTimeMillis();
+        JQuickDataSet result = coordinator.executeQueryWithPlan(queryId, plan);
+        result.printTable();
+    }
+
+    /**
+     * 测试 expressionAtomPredicate - 一元负号表达式作为谓词
+     *
+     * SQL示例：SELECT * FROM users WHERE -age = -25
+     */
+    @Test
+    public void testExpressionAtomPredicate_UnaryMinus() {
+        JQuickTableScanNode usersScan = createTableScan("users", "u");
+        JQuickUnaryExpression negExpr = new JQuickUnaryExpression(JQuickUnaryOperator.MINUS, new JQuickColumnRefExpression("age"));
+        JQuickBinaryExpression condition = new JQuickBinaryExpression(
+                negExpr,
+                new JQuickLiteralExpression(-25),
+                JQuickBinaryOperator.EQ
+        );
+        JQuickFilterNode filterNode = createFilter(usersScan, condition);
+        JQuickPhysicalPlanNode physicalPlan = generator.generate(filterNode);
+        JQuickFilterPhysicalNode filterPhysical = (JQuickFilterPhysicalNode) physicalPlan;
+        JQuickFragmenter fragmenter = new JQuickFragmenter(1);
+        JQuickDistributedPlan plan = fragmenter.fragment(filterPhysical);
+        String queryId = "atom_unary_minus_test_" + System.currentTimeMillis();
+        JQuickDataSet result = coordinator.executeQueryWithPlan(queryId, plan);
+        result.printTable();
+    }
+
+    /**
+     * 测试 expressionAtomPredicate - 嵌套表达式作为谓词
+     *
+     * SQL示例：SELECT * FROM users WHERE (age + 10) * 2 > 70
+     */
+    @Test
+    public void testExpressionAtomPredicate_NestedExpression() {
+        JQuickTableScanNode usersScan = createTableScan("users", "u");
+        JQuickBinaryExpression innerExpr = new JQuickBinaryExpression(
+                new JQuickColumnRefExpression("age"),
+                new JQuickLiteralExpression(10),
+                JQuickBinaryOperator.PLUS
+        );
+        JQuickBinaryExpression outerExpr = new JQuickBinaryExpression(
+                innerExpr,
+                new JQuickLiteralExpression(2),
+                JQuickBinaryOperator.MULTIPLY
+        );
+        JQuickBinaryExpression condition = new JQuickBinaryExpression(
+                outerExpr,
+                new JQuickLiteralExpression(70),
+                JQuickBinaryOperator.GT
+        );
+        JQuickFilterNode filterNode = createFilter(usersScan, condition);
+        JQuickPhysicalPlanNode physicalPlan = generator.generate(filterNode);
+        JQuickFilterPhysicalNode filterPhysical = (JQuickFilterPhysicalNode) physicalPlan;
+        JQuickFragmenter fragmenter = new JQuickFragmenter(1);
+        JQuickDistributedPlan plan = fragmenter.fragment(filterPhysical);
+        String queryId = "atom_nested_test_" + System.currentTimeMillis();
+        JQuickDataSet result = coordinator.executeQueryWithPlan(queryId, plan);
+        result.printTable();
+    }
+
+    /**
+     * 测试 expressionAtomPredicate - 函数调用作为谓词
+     *
+     * SQL示例：SELECT * FROM users WHERE LENGTH(name) > 6
+     */
+    @Test
+    public void testExpressionAtomPredicate_FunctionCall() {
+        JQuickTableScanNode usersScan = createTableScan("users", "u");
+        List<JQuickExpression> args = new ArrayList<>();
+        args.add(new JQuickColumnRefExpression("name"));
+        JQuickFunctionCallExpression funcCall = new JQuickFunctionCallExpression("LENGTH", args);
+        JQuickBinaryExpression condition = new JQuickBinaryExpression(
+                funcCall,
+                new JQuickLiteralExpression(6),
+                JQuickBinaryOperator.GT
+        );
+        JQuickFilterNode filterNode = createFilter(usersScan, condition);
+        JQuickPhysicalPlanNode physicalPlan = generator.generate(filterNode);
+        JQuickFilterPhysicalNode filterPhysical = (JQuickFilterPhysicalNode) physicalPlan;
+        JQuickFragmenter fragmenter = new JQuickFragmenter(1);
+        JQuickDistributedPlan plan = fragmenter.fragment(filterPhysical);
+        String queryId = "atom_function_test_" + System.currentTimeMillis();
+        JQuickDataSet result = coordinator.executeQueryWithPlan(queryId, plan);
+        result.printTable();
+    }
 
 //    /**
 //     * 测试24：IN 条件（子查询 - 从另一个表获取值列表）

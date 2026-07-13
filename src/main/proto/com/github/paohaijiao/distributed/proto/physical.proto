@@ -242,7 +242,7 @@ enum JQuickUnaryOperatorProto {
 
 message JQuickExpressionProto {
   JQuickExpressionTypeProto type = 1;
-  string value = 2;
+  google.protobuf.Any value = 2;
   repeated JQuickExpressionProto children = 3;
   map<string, string> attributes = 4;
   JQuickBinaryOperatorProto binary_operator = 5;
