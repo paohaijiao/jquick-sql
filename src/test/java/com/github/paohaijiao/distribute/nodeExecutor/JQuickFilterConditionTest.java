@@ -716,6 +716,31 @@ public class JQuickFilterConditionTest {
         JQuickDataSet result = coordinator.executeQueryWithPlan(queryId, plan);
         result.printTable();
     }
+    /**
+     * 测试 expressionAtomPredicate - 函数调用作为谓词
+     *
+     * SQL示例：SELECT * FROM users WHERE LENGTH(name) > 5
+     */
+    @Test
+    public void testExpressionAtomPredicate_FunctionCall() {
+        JQuickTableScanNode usersScan = createTableScan("users", "u");
+        List<JQuickExpression> args = new ArrayList<>();
+        args.add(new JQuickColumnRefExpression("name"));
+        JQuickFunctionCallExpression funcCall = new JQuickFunctionCallExpression("LENGTH", args);
+        JQuickBinaryExpression condition = new JQuickBinaryExpression(
+                funcCall,
+                new JQuickLiteralExpression(5),
+                JQuickBinaryOperator.GT
+        );
+        JQuickFilterNode filterNode = createFilter(usersScan, condition);
+        JQuickPhysicalPlanNode physicalPlan = generator.generate(filterNode);
+        JQuickFilterPhysicalNode filterPhysical = (JQuickFilterPhysicalNode) physicalPlan;
+        JQuickFragmenter fragmenter = new JQuickFragmenter(1);
+        JQuickDistributedPlan plan = fragmenter.fragment(filterPhysical);
+        String queryId = "atom_function_test_" + System.currentTimeMillis();
+        JQuickDataSet result = coordinator.executeQueryWithPlan(queryId, plan);
+        result.printTable();
+    }
 
     /**
      * 测试 expressionAtomPredicate - 数学表达式作为谓词
@@ -802,31 +827,7 @@ public class JQuickFilterConditionTest {
         result.printTable();
     }
 
-    /**
-     * 测试 expressionAtomPredicate - 函数调用作为谓词
-     *
-     * SQL示例：SELECT * FROM users WHERE LENGTH(name) > 6
-     */
-    @Test
-    public void testExpressionAtomPredicate_FunctionCall() {
-        JQuickTableScanNode usersScan = createTableScan("users", "u");
-        List<JQuickExpression> args = new ArrayList<>();
-        args.add(new JQuickColumnRefExpression("name"));
-        JQuickFunctionCallExpression funcCall = new JQuickFunctionCallExpression("LENGTH", args);
-        JQuickBinaryExpression condition = new JQuickBinaryExpression(
-                funcCall,
-                new JQuickLiteralExpression(6),
-                JQuickBinaryOperator.GT
-        );
-        JQuickFilterNode filterNode = createFilter(usersScan, condition);
-        JQuickPhysicalPlanNode physicalPlan = generator.generate(filterNode);
-        JQuickFilterPhysicalNode filterPhysical = (JQuickFilterPhysicalNode) physicalPlan;
-        JQuickFragmenter fragmenter = new JQuickFragmenter(1);
-        JQuickDistributedPlan plan = fragmenter.fragment(filterPhysical);
-        String queryId = "atom_function_test_" + System.currentTimeMillis();
-        JQuickDataSet result = coordinator.executeQueryWithPlan(queryId, plan);
-        result.printTable();
-    }
+
 
 //    /**
 //     * 测试24：IN 条件（子查询 - 从另一个表获取值列表）

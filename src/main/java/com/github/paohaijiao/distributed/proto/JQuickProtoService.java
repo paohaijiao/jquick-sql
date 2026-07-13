@@ -1,6 +1,7 @@
 package com.github.paohaijiao.distributed.proto;
 
 import com.github.paohaijiao.enums.*;
+import com.github.paohaijiao.exception.JAssert;
 import com.github.paohaijiao.expression.JQuickExpression;
 import com.github.paohaijiao.expression.domain.*;
 import com.github.paohaijiao.physical.JQuickPhysicalPlanNode;
@@ -663,7 +664,8 @@ public class JQuickProtoService {
                 Object val=typeConverterFactory.fromAny(proto.getValue());
                 return new JQuickLiteralExpression(val);
             case EXPR_FUNCTION:
-                String functionName=typeConverterFactory.toType( proto.getValue(),String.class);
+                String functionName=proto.getFunctionName();
+                JAssert.notNull(functionName,"the functionName ["+functionName+"] load failed from spi");
                 List<JQuickExpression> arguments = new ArrayList<>();
                 for (JQuickExpressionProto argProto : proto.getArgumentsList()) {
                     arguments.add(buildExpression(argProto));
