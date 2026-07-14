@@ -865,7 +865,8 @@ public class JQuickFilterConditionTest {
         JQuickTableScanNode subQueryScan = createTableScan("users", "sub");
         JQuickBinaryExpression subQueryCondition = createComparison("age", JQuickBinaryOperator.EQ, 25);
         JQuickFilterNode subQueryFilter = createFilter(subQueryScan, subQueryCondition);
-        JQuickSubqueryExpression existsSubquery = new JQuickSubqueryExpression(subQueryFilter, JQuickSubqueryType.EXISTS);
+        JQuickSubqueryExpression scalarSubquery = new JQuickSubqueryExpression(subQueryFilter);
+        JQuickExistsExpression existsSubquery = new JQuickExistsExpression(scalarSubquery, false);
         JQuickFilterNode filterNode = createFilter(usersScan, existsSubquery);
         JQuickPhysicalPlanNode physicalPlan = generator.generate(filterNode);
         JQuickFilterPhysicalNode filterPhysical = (JQuickFilterPhysicalNode) physicalPlan;
@@ -884,13 +885,11 @@ public class JQuickFilterConditionTest {
     @Test
     public void testSubqueryExpressionAtom_In() {
         JQuickTableScanNode usersScan = createTableScan("users", "u");
-
         JQuickTableScanNode subQueryScan = createTableScan("users", "sub");
         JQuickBinaryExpression subQueryCondition = createComparison("status", JQuickBinaryOperator.EQ, "active");
         JQuickFilterNode subQueryFilter = createFilter(subQueryScan, subQueryCondition);
         JQuickProjectNode subQueryProject = createProject(subQueryFilter, "age");
         JQuickSubqueryExpression inSubquery = new JQuickSubqueryExpression(subQueryProject, JQuickSubqueryType.IN, new JQuickColumnRefExpression("age"));
-
         JQuickFilterNode filterNode = createFilter(usersScan, inSubquery);
         JQuickPhysicalPlanNode physicalPlan = generator.generate(filterNode);
         JQuickFilterPhysicalNode filterPhysical = (JQuickFilterPhysicalNode) physicalPlan;
@@ -898,7 +897,7 @@ public class JQuickFilterConditionTest {
         JQuickDistributedPlan plan = fragmenter.fragment(filterPhysical);
         String queryId = "subquery_in_test_" + System.currentTimeMillis();
         JQuickDataSet result = coordinator.executeQueryWithPlan(queryId, plan);
-        result.printTable();
+        result.show();
     }
 
 //    /**

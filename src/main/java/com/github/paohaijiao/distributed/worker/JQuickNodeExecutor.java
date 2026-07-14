@@ -103,13 +103,39 @@ public class JQuickNodeExecutor {
      * 执行物理计划（用于子查询）
      */
     public JQuickDataSet executePhysicalPlan(JQuickPhysicalPlanNode node) {
-        JQuickExecuteTaskRequest emptyRequest = JQuickExecuteTaskRequest.newBuilder()
+        Set<JQuickTableScanPhysicalNode> tableScans = collectTableScans(node);
+        JQuickExecuteTaskRequest.Builder requestBuilder = JQuickExecuteTaskRequest.newBuilder()
                 .setQueryId("subquery")
                 .setTaskId("subquery_task_" + System.currentTimeMillis())
-                .setMemoryLimitBytes(1024 * 1024 * 1024)
-                .build();
-        JQuickWorker.JQuickTaskContext context = worker.new JQuickTaskContext(emptyRequest.getTaskId(), emptyRequest);
+                .setMemoryLimitBytes(1024 * 1024 * 1024);
+        for (JQuickTableScanPhysicalNode tableScan : tableScans) {
+            JQuickDataSet tableData = readFromDataSource(tableScan.getTableName());
+            JQuickMemoryPartitionProto partition = JQuickMemoryPartitionProto.newBuilder()
+                    .setPartitionId("subquery_partition_" + tableScan.getTableName())
+                    .setPartitionIndex(0)
+                    .setTotalPartitions(1)
+                    .setData(dataConverter.convertToProto(tableData))
+                    .build();
+            requestBuilder.addInputPartitions(partition);
+        }
+        JQuickExecuteTaskRequest request = requestBuilder.build();
+        JQuickWorker.JQuickTaskContext context = worker.new JQuickTaskContext(request.getTaskId(), request);
         return executeNode(node, context);
+    }
+
+    private Set<JQuickTableScanPhysicalNode> collectTableScans(JQuickPhysicalPlanNode node) {
+        Set<JQuickTableScanPhysicalNode> tableScans = new HashSet<>();
+        collectTableScansRecursive(node, tableScans);
+        return tableScans;
+    }
+
+    private void collectTableScansRecursive(JQuickPhysicalPlanNode node, Set<JQuickTableScanPhysicalNode> tableScans) {
+        if (node instanceof JQuickTableScanPhysicalNode) {
+            tableScans.add((JQuickTableScanPhysicalNode) node);
+        }
+        for (JQuickPhysicalPlanNode child : node.getChildren()) {
+            collectTableScansRecursive(child, tableScans);
+        }
     }
 
     /**
@@ -157,11 +183,19 @@ public class JQuickNodeExecutor {
      * 从 input partitions 读取数据（分布式场景）
      */
     private JQuickDataSet readFromInputPartitions(String tableName, JQuickExecuteTaskRequest request) {
+        String targetPartitionId = "subquery_partition_" + tableName;
         for (JQuickMemoryPartitionProto partition : request.getInputPartitionsList()) {
             console.info("readFromInputPartitions - checking partition: " + partition.getPartitionId() + ", hasData: " + partition.hasData());
-            if (partition.hasData()) {
+            if (partition.getPartitionId().equals(targetPartitionId) && partition.hasData()) {
                 JQuickDataSet partitionData = dataConverter.convertFromProto(partition.getData());
                 console.info("readFromInputPartitions - found data in partition: " + partition.getPartitionId() + ", rows: " + partitionData.size());
+                return partitionData;
+            }
+        }
+        for (JQuickMemoryPartitionProto partition : request.getInputPartitionsList()) {
+            if (partition.hasData()) {
+                JQuickDataSet partitionData = dataConverter.convertFromProto(partition.getData());
+                console.info("readFromInputPartitions - fallback to first available partition: " + partition.getPartitionId() + ", rows: " + partitionData.size());
                 return partitionData;
             }
         }
@@ -183,12 +217,6 @@ public class JQuickNodeExecutor {
                     input.setColumns(columnMetas);
                 }
                 input = input.concat(partitionData);
-            }
-        }
-        if (input.isEmpty() && columnMetas == null) {
-            columnMetas = extractColumnMetasFromFragment(request.getFragment());
-            if (columnMetas != null && !columnMetas.isEmpty()) {
-                input = new JQuickDataSet(columnMetas, Collections.emptyList());
             }
         }
         JQuickDataSet result = input.filter(row -> expressionEvaluator.evaluatePredicate(row, node.getPredicate()));

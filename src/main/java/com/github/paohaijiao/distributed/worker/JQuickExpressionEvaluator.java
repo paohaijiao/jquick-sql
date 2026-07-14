@@ -357,7 +357,6 @@ public class JQuickExpressionEvaluator {
             double d2 = asNumber(v2).doubleValue();
             return Double.compare(d1, d2);
         } catch (Exception e) {
-            // 回退到字符串比较
         }
         if (v1 instanceof Comparable && v2 instanceof Comparable) {
             @SuppressWarnings("unchecked")
@@ -370,7 +369,6 @@ public class JQuickExpressionEvaluator {
     private Object evaluateSubquery(JQuickRow row, JQuickSubqueryExpression subquery) {
         try {
             JQuickDataSet result = executeSubqueryPlan(subquery);
-
             JQuickSubqueryType type = subquery.getSubqueryType();
             if (type == JQuickSubqueryType.SCALAR) {
                 return evaluateScalarSubquery(result);
@@ -404,21 +402,17 @@ public class JQuickExpressionEvaluator {
                 return JQuickDataSet.builder().build();
             }
         }
-
         com.github.paohaijiao.logic.JQuickLogicalPlanNode logicalPlan = subquery.getSubquery();
         if (logicalPlan == null) {
             console.warn("Subquery expression has null plan");
             return JQuickDataSet.builder().build();
         }
-
         JQuickPhysicalPlanGenerator planGenerator = new JQuickPhysicalPlanGenerator();
         physicalPlan = planGenerator.generate(logicalPlan);
-
         if (physicalPlan == null) {
             console.warn("Failed to generate physical plan for subquery");
             return JQuickDataSet.builder().build();
         }
-
         if (nodeExecutor != null) {
             return nodeExecutor.executePhysicalPlan(physicalPlan);
         } else {

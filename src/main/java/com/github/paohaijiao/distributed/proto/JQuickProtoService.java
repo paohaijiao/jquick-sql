@@ -935,29 +935,24 @@ public class JQuickProtoService {
     }
     public JQuickPhysicalPlanNode buildPhysicalNode(JQuickPhysicalPlanNodeProto proto) {
         if (proto == null) return null;
-
         List<JQuickPhysicalPlanNode> children = new ArrayList<>();
         for (JQuickPhysicalPlanNodeProto childProto : proto.getChildrenList()) {
             children.add(buildPhysicalNode(childProto));
         }
-
         switch (proto.getNodeCase()) {
             case TABLE_SCAN:
                 JQuickTableScanNodeProto scanProto = proto.getTableScan();
-                JQuickTableScanPhysicalNode scanNode = new JQuickTableScanPhysicalNode(scanProto.getTableName(), scanProto.getAlias(), new HashSet<>(scanProto.getRequiredColumnsList()),
-                        scanProto.hasFilterPredicate()?buildExpression(scanProto.getFilterPredicate()):null);
+                JQuickTableScanPhysicalNode scanNode = new JQuickTableScanPhysicalNode(scanProto.getTableName(), scanProto.getAlias(), new HashSet<>(scanProto.getRequiredColumnsList()), scanProto.hasFilterPredicate()?buildExpression(scanProto.getFilterPredicate()):null);
                 return scanNode;
             case FILTER:
-                return new JQuickFilterPhysicalNode(buildExpression(proto.getFilter().getPredicate()), 
-                        children.size() > 0 ? children.get(0) : null);
+                return new JQuickFilterPhysicalNode(buildExpression(proto.getFilter().getPredicate()), children.size() > 0 ? children.get(0) : null);
             case PROJECT:
                 JQuickProjectNodeProto projectProto = proto.getProject();
                 List<JQuickProjectPhysicalNode.SelectItem> selectItems = new ArrayList<>();
                 for (JQuickProjectNodeProto.SelectItemProto itemProto : projectProto.getSelectItemsList()) {
                     selectItems.add(new JQuickProjectPhysicalNode.SelectItem(buildExpression(itemProto.getExpression()), itemProto.getAlias()));
                 }
-                return new JQuickProjectPhysicalNode(selectItems, 
-                        children.size() > 0 ? children.get(0) : null, projectProto.getDistinct());
+                return new JQuickProjectPhysicalNode(selectItems, children.size() > 0 ? children.get(0) : null, projectProto.getDistinct());
             case HASH_JOIN:
                 JQuickHashJoinNodeProto joinProto = proto.getHashJoin();
                 return new JQuickHashJoinPhysicalNode(convertJoinType(joinProto.getJoinType()), 
@@ -970,22 +965,22 @@ public class JQuickProtoService {
                 JQuickExchangeNodeProto exchangeProto = proto.getExchange();
                 return new JQuickExchangePhysicalNode(convertExchangeType(exchangeProto.getExchangeType()), 
                         convertPartitionStrategy(exchangeProto.getPartitionStrategy()), 
-                        new ArrayList<>(), exchangeProto.getParallelism(), 
-                        children.size() > 0 ? children.get(0) : null);
+                        new ArrayList<>(), exchangeProto.getParallelism(),
+                        !children.isEmpty() ? children.get(0) : null);
             case LIMIT:
                 JQuickLimitNodeProto limitProto = proto.getLimit();
-                return new JQuickLimitPhysicalNode(limitProto.getLimit(), limitProto.getOffset(), 
-                        children.size() > 0 ? children.get(0) : null);
+                return new JQuickLimitPhysicalNode(limitProto.getLimit(), limitProto.getOffset(),
+                        !children.isEmpty() ? children.get(0) : null);
             case SET_OPERATION:
                 JQuickSetOperationNodeProto setOpProto = proto.getSetOperation();
                 JQuickSQLOperationType opType = convertSetOperationType(setOpProto.getOperationType());
                 return new JQuickSetOperationPhysicalNode(opType,
-                        children.size() > 0 ? children.get(0) : null,
+                        !children.isEmpty() ? children.get(0) : null,
                         children.size() > 1 ? children.get(1) : null);
             case NESTED_LOOP_JOIN:
                 JQuickNestedLoopJoinNodeProto nestedJoinProto = proto.getNestedLoopJoin();
                 return new JQuickNestedLoopJoinPhysicalNode(convertJoinType(nestedJoinProto.getJoinType()),
-                        children.size() > 0 ? children.get(0) : null,
+                        !children.isEmpty() ? children.get(0) : null,
                         children.size() > 1 ? children.get(1) : null,
                         buildExpression(nestedJoinProto.getCondition()));
             case HASH_AGGREGATE:
@@ -1007,7 +1002,7 @@ public class JQuickProtoService {
                     ));
                 }
                 return new JQuickHashAggregatePhysicalNode(groupKeys, aggregates,
-                        children.size() > 0 ? children.get(0) : null,
+                        !children.isEmpty() ? children.get(0) : null,
                         buildExpression(aggProto.getHavingCondition()),
                         convertAggregateStage(aggProto.getStage())
                 );
