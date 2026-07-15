@@ -15,7 +15,13 @@
  */
 package com.github.paohaijiao.distribute.nodeExecutor;
 
+import com.github.paohaijiao.config.JQuickSqlConfig;
+import com.github.paohaijiao.console.JConsole;
+import com.github.paohaijiao.datasource.JQuickDataSourceManager;
 import com.github.paohaijiao.distributed.JQuickDistributedPlan;
+import com.github.paohaijiao.distributed.coordinator.JQuickCoordinator;
+import com.github.paohaijiao.distributed.worker.JQuickDataConverter;
+import com.github.paohaijiao.distributed.worker.JQuickWorker;
 import com.github.paohaijiao.enums.JQuickBinaryOperator;
 import com.github.paohaijiao.expression.JQuickExpression;
 import com.github.paohaijiao.expression.domain.*;
@@ -24,9 +30,15 @@ import com.github.paohaijiao.logic.JQuickLogicalPlanNode;
 import com.github.paohaijiao.logic.domain.*;
 import com.github.paohaijiao.logic2physical.JQuickPhysicalPlanGenerator;
 import com.github.paohaijiao.physical.JQuickPhysicalPlanNode;
+import com.github.paohaijiao.statement.JQuickColumnMeta;
+import com.github.paohaijiao.statement.JQuickDataSet;
+import com.github.paohaijiao.statement.JQuickRow;
+import lombok.extern.slf4j.Slf4j;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.io.IOException;
 import java.util.*;
 
 import static org.junit.Assert.assertEquals;
@@ -39,35 +51,177 @@ import static org.junit.Assert.assertNotNull;
  * @version 1.0.0
  * @since 2026/5/24
  */
+@Slf4j
 public class JQuickProjectToPhysicalPlanTest {
 
+    private static final String TABLE_USERS = "users";
+
+    private static final String TABLE_EMPLOYEES = "employees";
+
+    private static final String TABLE_STUDENTS = "students";
+
+    private static final String TABLE_SALES = "sales";
+
+    private static final String TABLE_ORDERS = "orders";
+
+    private static final int WORKER1_PORT = 19001;
+
+    private static final int WORKER2_PORT = 19002;
+
+    private static final int WORKER3_PORT = 19003;
+
+    private static JConsole console;
+
+    private static JQuickDataConverter dataConverter;
+
+    private JQuickWorker worker1;
+
+    private JQuickWorker worker2;
+
+    private JQuickWorker worker3;
+
+    private JQuickCoordinator coordinator;
+
     private JQuickPhysicalPlanGenerator generator;
-    private JQuickFragmenter fragmenter;
-    private JQuickFragmenter verboseFragmenter;
+
+    private List<JQuickCoordinator.WorkerEndpoint> endpoints;
+    private List<JQuickWorker> workers;
 
     @Before
-    public void setUp() {
+    public void setUp() throws IOException, InterruptedException {
+        console = JConsole.initConsoleEnvironment();
+        dataConverter = new JQuickDataConverter();
+        console.info("测试环境初始化完成");
         generator = new JQuickPhysicalPlanGenerator();
-        fragmenter = new JQuickFragmenter(4);
-        verboseFragmenter = new JQuickFragmenter(8);
+        JQuickDataSourceManager.clearAll();
+        registerTestData();
+        console.info("测试数据已注册到数据源管理器");
+        workers = new ArrayList<>();
+        worker1 = new JQuickWorker("worker-1", WORKER1_PORT);
+        worker2 = new JQuickWorker("worker-2", WORKER2_PORT);
+        worker3 = new JQuickWorker("worker-3", WORKER3_PORT);
+        workers.add(worker1);
+        workers.add(worker2);
+        workers.add(worker3);
+        worker1.start();
+        worker2.start();
+        worker3.start();
+        Thread.sleep(1000);
+        worker1.clearReceivedDataCache();
+        worker2.clearReceivedDataCache();
+        worker3.clearReceivedDataCache();
+        endpoints = new ArrayList<>();
+        endpoints.add(new JQuickCoordinator.WorkerEndpoint("worker-1", "localhost", WORKER1_PORT, 0));
+        endpoints.add(new JQuickCoordinator.WorkerEndpoint("worker-2", "localhost", WORKER2_PORT, 1));
+        endpoints.add(new JQuickCoordinator.WorkerEndpoint("worker-3", "localhost", WORKER3_PORT, 2));
+        JQuickSqlConfig config = new JQuickSqlConfig();
+        config.setWorkers(endpoints);
+        coordinator = new JQuickCoordinator(config);
+        for (JQuickWorker worker : workers) {
+            worker.setWorkerEndpoints(endpoints);
+        }
+        console.info("测试环境启动完成");
     }
-    /**
-     * 创建表扫描节点
-     */
+
+    @After
+    public void tearDown() {
+        JQuickDataSourceManager.clearAll();
+    }
+
+    private void registerTestData() {
+        List<JQuickColumnMeta> userColumns = Arrays.asList(
+                new JQuickColumnMeta("id", Integer.class, TABLE_USERS),
+                new JQuickColumnMeta("name", String.class, TABLE_USERS),
+                new JQuickColumnMeta("age", Integer.class, TABLE_USERS),
+                new JQuickColumnMeta("status", String.class, TABLE_USERS),
+                new JQuickColumnMeta("enabled", Boolean.class, TABLE_USERS),
+                new JQuickColumnMeta("first_name", String.class, TABLE_USERS),
+                new JQuickColumnMeta("last_name", String.class, TABLE_USERS),
+                new JQuickColumnMeta("email", String.class, TABLE_USERS)
+        );
+        List<JQuickRow> userRows = Arrays.asList(
+                createRow("id", 1, "name", "Alice", "age", 25, "status", "active", "enabled", true, "first_name", "Alice", "last_name", "Smith", "email", "alice@test.com"),
+                createRow("id", 2, "name", "Bob", "age", 30, "status", "active", "enabled", true, "first_name", "Bob", "last_name", "Johnson", "email", "bob@test.com"),
+                createRow("id", 3, "name", "Charlie", "age", 20, "status", "pending", "enabled", true, "first_name", "Charlie", "last_name", "Brown", "email", "charlie@test.com"),
+                createRow("id", 4, "name", "David", "age", 35, "status", "inactive", "enabled", false, "first_name", "David", "last_name", "Wilson", "email", "david@test.com"),
+                createRow("id", 5, "name", "Eve", "age", 28, "status", "active", "enabled", false, "first_name", "Eve", "last_name", "Davis", "email", "eve@test.com")
+        );
+        JQuickDataSet usersData = new JQuickDataSet(userColumns, userRows);
+        JQuickDataSourceManager.registerTable(TABLE_USERS, usersData);
+
+        List<JQuickColumnMeta> employeeColumns = Arrays.asList(
+                new JQuickColumnMeta("id", Integer.class, TABLE_EMPLOYEES),
+                new JQuickColumnMeta("name", String.class, TABLE_EMPLOYEES),
+                new JQuickColumnMeta("salary", Double.class, TABLE_EMPLOYEES)
+        );
+        List<JQuickRow> employeeRows = Arrays.asList(
+                createRow("id", 1, "name", "Alice", "salary", 5000.0),
+                createRow("id", 2, "name", "Bob", "salary", 6000.0),
+                createRow("id", 3, "name", "Charlie", "salary", 4500.0)
+        );
+        JQuickDataSet employeesData = new JQuickDataSet(employeeColumns, employeeRows);
+        JQuickDataSourceManager.registerTable(TABLE_EMPLOYEES, employeesData);
+
+        List<JQuickColumnMeta> studentColumns = Arrays.asList(
+                new JQuickColumnMeta("id", Integer.class, TABLE_STUDENTS),
+                new JQuickColumnMeta("name", String.class, TABLE_STUDENTS),
+                new JQuickColumnMeta("score", Integer.class, TABLE_STUDENTS)
+        );
+        List<JQuickRow> studentRows = Arrays.asList(
+                createRow("id", 1, "name", "Alice", "score", 85),
+                createRow("id", 2, "name", "Bob", "score", 55),
+                createRow("id", 3, "name", "Charlie", "score", 70),
+                createRow("id", 4, "name", "David", "score", 90)
+        );
+        JQuickDataSet studentsData = new JQuickDataSet(studentColumns, studentRows);
+        JQuickDataSourceManager.registerTable(TABLE_STUDENTS, studentsData);
+
+        List<JQuickColumnMeta> salesColumns = Arrays.asList(
+                new JQuickColumnMeta("id", Integer.class, TABLE_SALES),
+                new JQuickColumnMeta("category", String.class, TABLE_SALES),
+                new JQuickColumnMeta("amount", Double.class, TABLE_SALES)
+        );
+        List<JQuickRow> salesRows = Arrays.asList(
+                createRow("id", 1, "category", "electronics", "amount", 500.0),
+                createRow("id", 2, "category", "clothing", "amount", 300.0),
+                createRow("id", 3, "category", "electronics", "amount", 800.0),
+                createRow("id", 4, "category", "clothing", "amount", 200.0),
+                createRow("id", 5, "category", "books", "amount", 150.0)
+        );
+        JQuickDataSet salesData = new JQuickDataSet(salesColumns, salesRows);
+        JQuickDataSourceManager.registerTable(TABLE_SALES, salesData);
+
+        List<JQuickColumnMeta> orderColumns = Arrays.asList(
+                new JQuickColumnMeta("id", Integer.class, TABLE_ORDERS),
+                new JQuickColumnMeta("user_id", Integer.class, TABLE_ORDERS),
+                new JQuickColumnMeta("order_date", String.class, TABLE_ORDERS)
+        );
+        List<JQuickRow> orderRows = Arrays.asList(
+                createRow("id", 1, "user_id", 1, "order_date", "2024-01-01"),
+                createRow("id", 2, "user_id", 1, "order_date", "2024-02-01"),
+                createRow("id", 3, "user_id", 2, "order_date", "2024-01-15"),
+                createRow("id", 4, "user_id", 3, "order_date", "2024-03-01")
+        );
+        JQuickDataSet ordersData = new JQuickDataSet(orderColumns, orderRows);
+        JQuickDataSourceManager.registerTable(TABLE_ORDERS, ordersData);
+    }
+
+    private JQuickRow createRow(Object... keyValues) {
+        JQuickRow row = new JQuickRow();
+        for (int i = 0; i < keyValues.length; i += 2) {
+            row.put((String) keyValues[i], keyValues[i + 1]);
+        }
+        return row;
+    }
+
     private JQuickTableScanNode createTableScan(String tableName) {
         return new JQuickTableScanNode(tableName);
     }
 
-    /**
-     * 创建带别名的表扫描节点
-     */
     private JQuickTableScanNode createTableScan(String tableName, String alias) {
         return new JQuickTableScanNode(tableName, alias);
     }
 
-    /**
-     * 创建简单列投影
-     */
     private JQuickProjectNode createSimpleProject(JQuickLogicalPlanNode child, String... columns) {
         List<JQuickProjectNode.SelectItem> items = new ArrayList<>();
         for (String col : columns) {
@@ -76,9 +230,6 @@ public class JQuickProjectToPhysicalPlanTest {
         return new JQuickProjectNode(items, child);
     }
 
-    /**
-     * 创建带别名的投影
-     */
     private JQuickProjectNode createProjectWithAlias(JQuickLogicalPlanNode child, Map<String, String> columnToAlias) {
         List<JQuickProjectNode.SelectItem> items = new ArrayList<>();
         for (Map.Entry<String, String> entry : columnToAlias.entrySet()) {
@@ -88,9 +239,6 @@ public class JQuickProjectToPhysicalPlanTest {
         return new JQuickProjectNode(items, child);
     }
 
-    /**
-     * 创建二元运算表达式投影
-     */
     private JQuickProjectNode createBinaryExpressionProject(JQuickLogicalPlanNode child, String leftCol, String rightCol, JQuickBinaryOperator operator, String alias) {
         JQuickBinaryExpression expr = new JQuickBinaryExpression(new JQuickColumnRefExpression(leftCol), new JQuickColumnRefExpression(rightCol), operator);
         List<JQuickProjectNode.SelectItem> items = new ArrayList<>();
@@ -98,9 +246,6 @@ public class JQuickProjectToPhysicalPlanTest {
         return new JQuickProjectNode(items, child);
     }
 
-    /**
-     * 创建常量表达式投影
-     */
     private JQuickProjectNode createConstantProject(JQuickLogicalPlanNode child, Object constant, String alias) {
         JQuickLiteralExpression constantExpr = new JQuickLiteralExpression(constant);
         List<JQuickProjectNode.SelectItem> items = new ArrayList<>();
@@ -108,9 +253,6 @@ public class JQuickProjectToPhysicalPlanTest {
         return new JQuickProjectNode(items, child);
     }
 
-    /**
-     * 创建函数调用投影
-     */
     private JQuickProjectNode createFunctionProject(JQuickLogicalPlanNode child, String functionName, String argument, String alias) {
         JQuickFunctionCallExpression functionCall = new JQuickFunctionCallExpression(functionName, Collections.singletonList(new JQuickColumnRefExpression(argument)));
         List<JQuickProjectNode.SelectItem> items = new ArrayList<>();
@@ -118,16 +260,11 @@ public class JQuickProjectToPhysicalPlanTest {
         return new JQuickProjectNode(items, child);
     }
 
-    /**
-     * 创建过滤节点
-     */
     private JQuickFilterNode createFilter(JQuickLogicalPlanNode child, String column, JQuickBinaryOperator operator, Object value) {
         JQuickBinaryExpression predicate = new JQuickBinaryExpression(new JQuickColumnRefExpression(column), new JQuickLiteralExpression(value), operator);
         return new JQuickFilterNode(predicate, child);
     }
-    /**
-     * 创建分组键列表
-     */
+
     private List<JQuickExpression> createGroupKeys(String... keys) {
         List<JQuickExpression> groupKeys = new ArrayList<>();
         for (String key : keys) {
@@ -135,9 +272,7 @@ public class JQuickProjectToPhysicalPlanTest {
         }
         return groupKeys;
     }
-    /**
-     * 创建聚合函数列表
-     */
+
     private List<JQuickGroupByNode.AggregateItem> createAggregates(String... aggSpecs) {
         List<JQuickGroupByNode.AggregateItem> aggregates = new ArrayList<>();
         for (String spec : aggSpecs) {
@@ -151,52 +286,55 @@ public class JQuickProjectToPhysicalPlanTest {
         }
         return aggregates;
     }
-    /**
-     * 创建 HAVING 条件
-     */
+
     private JQuickExpression createHavingCondition(String column, JQuickBinaryOperator operator, Object value) {
         return new JQuickBinaryExpression(new JQuickColumnRefExpression(column), new JQuickLiteralExpression(value), operator);
     }
+
     /**
-     * 测试1：简单列投影
+     * 测试简单列投影
      *
      * SQL示例：SELECT id, name, age FROM users
      */
     @Test
     public void testSimpleColumnProjection() {
-        JQuickTableScanNode usersScan = createTableScan("users");
+        JQuickTableScanNode usersScan = createTableScan("users", "u");
         JQuickProjectNode projectNode = createSimpleProject(usersScan, "id", "name", "age");
         JQuickPhysicalPlanNode physicalPlan = generator.generate(projectNode);
-        System.out.println(physicalPlan);
-        JQuickDistributedPlan distributedPlan= fragmenter.fragment(physicalPlan);
-        fragmenter.printFragments(distributedPlan);
+        JQuickDistributedPlan plan = new JQuickFragmenter(1).fragment(physicalPlan);
+        String queryId = "simple_project_test_" + System.currentTimeMillis();
+        JQuickDataSet result = coordinator.executeQueryWithPlan(queryId, plan);
+        result.printTable();
     }
+
     /**
-     * 测试3：表达式投影（算术运算）
+     * 测试算术表达式投影
      *
      * SQL示例：SELECT id, salary * 1.1 AS new_salary FROM employees
      */
     @Test
     public void testArithmeticExpressionProjection() {
-        JQuickTableScanNode employeesScan = createTableScan("employees");
+        JQuickTableScanNode employeesScan = createTableScan("employees", "e");
         JQuickBinaryExpression multiplyExpr = new JQuickBinaryExpression(new JQuickColumnRefExpression("salary"), new JQuickLiteralExpression(1.1), JQuickBinaryOperator.MULTIPLY);
         List<JQuickProjectNode.SelectItem> items = new ArrayList<>();
         items.add(new JQuickProjectNode.SelectItem(new JQuickColumnRefExpression("id"), "id"));
         items.add(new JQuickProjectNode.SelectItem(multiplyExpr, "new_salary"));
         JQuickProjectNode projectNode = new JQuickProjectNode(items, employeesScan);
         JQuickPhysicalPlanNode physicalPlan = generator.generate(projectNode);
-        assertNotNull(physicalPlan);
-        JQuickDistributedPlan distributedPlan= fragmenter.fragment(physicalPlan);
-        fragmenter.printFragments(distributedPlan);
+        JQuickDistributedPlan plan = new JQuickFragmenter(1).fragment(physicalPlan);
+        String queryId = "arithmetic_project_test_" + System.currentTimeMillis();
+        JQuickDataSet result = coordinator.executeQueryWithPlan(queryId, plan);
+        result.printTable();
     }
+
     /**
-     * 测试5：函数调用投影
+     * 测试函数调用投影
      *
      * SQL示例：SELECT id, UPPER(name) AS upper_name, LENGTH(email) AS email_len FROM users
      */
     @Test
     public void testFunctionCallProjection() {
-        JQuickTableScanNode usersScan = createTableScan("users");
+        JQuickTableScanNode usersScan = createTableScan("users", "u");
         List<JQuickProjectNode.SelectItem> items = new ArrayList<>();
         items.add(new JQuickProjectNode.SelectItem(new JQuickColumnRefExpression("id"), "id"));
         JQuickFunctionCallExpression upperFunc = new JQuickFunctionCallExpression("UPPER", Collections.singletonList(new JQuickColumnRefExpression("name")));
@@ -205,14 +343,16 @@ public class JQuickProjectToPhysicalPlanTest {
         items.add(new JQuickProjectNode.SelectItem(lengthFunc, "email_len"));
         JQuickProjectNode projectNode = new JQuickProjectNode(items, usersScan);
         JQuickPhysicalPlanNode physicalPlan = generator.generate(projectNode);
-        assertNotNull(physicalPlan);
-        JQuickDistributedPlan distributedPlan= fragmenter.fragment(physicalPlan);
-        fragmenter.printFragments(distributedPlan);
+        JQuickDistributedPlan plan = new JQuickFragmenter(1).fragment(physicalPlan);
+        String queryId = "function_project_test_" + System.currentTimeMillis();
+        JQuickDataSet result = coordinator.executeQueryWithPlan(queryId, plan);
+        result.printTable();
     }
+
     /**
+     * 测试JOIN投影
      *
-     * SQL示例：SELECT u.id, u.name, o.order_date
-     *          FROM users u JOIN orders o ON u.id = o.user_id
+     * SQL示例：SELECT u.id, u.name, o.order_date FROM users u JOIN orders o ON u.id = o.user_id
      */
     @Test
     public void testJoinProjection() {
@@ -226,85 +366,95 @@ public class JQuickProjectToPhysicalPlanTest {
         items.add(new JQuickProjectNode.SelectItem(new JQuickColumnRefExpression("o.order_date"), "order_date"));
         JQuickProjectNode projectNode = new JQuickProjectNode(items, joinNode);
         JQuickPhysicalPlanNode physicalPlan = generator.generate(projectNode);
-        assertNotNull(physicalPlan);
-        JQuickDistributedPlan distributedPlan= fragmenter.fragment(physicalPlan);
-        fragmenter.printFragments(distributedPlan);
+        JQuickDistributedPlan plan = new JQuickFragmenter(1).fragment(physicalPlan);
+        String queryId = "join_project_test_" + System.currentTimeMillis();
+        JQuickDataSet result = coordinator.executeQueryWithPlan(queryId, plan);
+        result.printTable();
     }
+
     /**
-     * 测试11：多层嵌套投影
+     * 测试嵌套投影
      *
-     * SQL示例：SELECT * FROM (SELECT id, name FROM users) t
+     * SQL示例：SELECT id, name FROM users
      */
     @Test
     public void testNestedProjection() {
-        JQuickTableScanNode usersScan = createTableScan("users");
+        JQuickTableScanNode usersScan = createTableScan("users", "u");
         JQuickProjectNode innerProject = createSimpleProject(usersScan, "id", "name");
-        JQuickTableScanNode innerRef = createTableScan("inner", "t");
-        JQuickProjectNode outerProject = createSimpleProject(innerRef, "id", "name");
         JQuickPhysicalPlanNode physicalPlan = generator.generate(innerProject);
         assertNotNull(physicalPlan);
         assertEquals("Project", physicalPlan.getNodeType());
-        JQuickDistributedPlan distributedPlan= fragmenter.fragment(physicalPlan);
-        fragmenter.printFragments(distributedPlan);
+        JQuickDistributedPlan plan = new JQuickFragmenter(1).fragment(physicalPlan);
+        String queryId = "nested_project_test_" + System.currentTimeMillis();
+        JQuickDataSet result = coordinator.executeQueryWithPlan(queryId, plan);
+        result.printTable();
     }
+
     /**
+     * 测试投影+排序
      *
      * SQL示例：SELECT id, name FROM users ORDER BY name
      */
     @Test
     public void testProjectionWithSort() {
-        JQuickTableScanNode usersScan = createTableScan("users");
+        JQuickTableScanNode usersScan = createTableScan("users", "u");
         JQuickProjectNode projectNode = createSimpleProject(usersScan, "id", "name");
         List<JQuickSortNode.OrderByItem> orderByItems = new ArrayList<>();
         orderByItems.add(new JQuickSortNode.OrderByItem("name", true));
         JQuickSortNode sortNode = new JQuickSortNode(orderByItems, projectNode);
         JQuickPhysicalPlanNode physicalPlan = generator.generate(sortNode);
-        assertNotNull(physicalPlan);
-        JQuickDistributedPlan distributedPlan= fragmenter.fragment(physicalPlan);
-        fragmenter.printFragments(distributedPlan);
+        JQuickDistributedPlan plan = new JQuickFragmenter(1).fragment(physicalPlan);
+        String queryId = "project_sort_test_" + System.currentTimeMillis();
+        JQuickDataSet result = coordinator.executeQueryWithPlan(queryId, plan);
+        result.printTable();
     }
-    /***
-     * SQL示例：SELECT id, name FROM users LIMIT 10
+
+    /**
+     * 测试投影+限制
+     *
+     * SQL示例：SELECT id, name FROM users LIMIT 3
      */
     @Test
     public void testProjectionWithLimit() {
-        JQuickTableScanNode usersScan = createTableScan("users");
+        JQuickTableScanNode usersScan = createTableScan("users", "u");
         JQuickProjectNode projectNode = createSimpleProject(usersScan, "id", "name");
-        JQuickLimitNode limitNode = new JQuickLimitNode(10, projectNode);
+        JQuickLimitNode limitNode = new JQuickLimitNode(3, projectNode);
         JQuickPhysicalPlanNode physicalPlan = generator.generate(limitNode);
-        assertNotNull(physicalPlan);
-        JQuickDistributedPlan distributedPlan= fragmenter.fragment(physicalPlan);
-        fragmenter.printFragments(distributedPlan);
+        JQuickDistributedPlan plan = new JQuickFragmenter(1).fragment(physicalPlan);
+        String queryId = "project_limit_test_" + System.currentTimeMillis();
+        JQuickDataSet result = coordinator.executeQueryWithPlan(queryId, plan);
+        result.printTable();
     }
+
     /**
-     * 测试16：CASE WHEN 表达式投影
+     * 测试CASE WHEN表达式投影
      *
-     * SQL示例：SELECT id, CASE WHEN score >= 60 THEN 'PASS' ELSE 'FAIL' END AS result
+     * SQL示例：SELECT id, CASE WHEN score >= 60 THEN 'PASS' ELSE 'FAIL' END AS result FROM students
      */
     @Test
     public void testCaseWhenProjection() {
-        JQuickTableScanNode studentsScan = createTableScan("students");
+        JQuickTableScanNode studentsScan = createTableScan("students", "s");
         JQuickBinaryExpression condition = new JQuickBinaryExpression(new JQuickColumnRefExpression("score"), new JQuickLiteralExpression(60), JQuickBinaryOperator.GE);
-        JQuickCaseWhenExpression caseWhenExpr = new JQuickCaseWhenExpression(Arrays.asList(condition),Arrays.asList( new JQuickLiteralExpression("PASS")),new JQuickLiteralExpression("FAIL"));
+        JQuickCaseWhenExpression caseWhenExpr = new JQuickCaseWhenExpression(Arrays.asList(condition), Arrays.asList(new JQuickLiteralExpression("PASS")), new JQuickLiteralExpression("FAIL"));
         List<JQuickProjectNode.SelectItem> items = new ArrayList<>();
         items.add(new JQuickProjectNode.SelectItem(new JQuickColumnRefExpression("id"), "id"));
         items.add(new JQuickProjectNode.SelectItem(caseWhenExpr, "result"));
         JQuickProjectNode projectNode = new JQuickProjectNode(items, studentsScan);
         JQuickPhysicalPlanNode physicalPlan = generator.generate(projectNode);
-        assertNotNull(physicalPlan);
-        assertEquals("Project", physicalPlan.getNodeType());
-        JQuickDistributedPlan distributedPlan= fragmenter.fragment(physicalPlan);
-        fragmenter.printFragments(distributedPlan);
+        JQuickDistributedPlan plan = new JQuickFragmenter(1).fragment(physicalPlan);
+        String queryId = "casewhen_project_test_" + System.currentTimeMillis();
+        JQuickDataSet result = coordinator.executeQueryWithPlan(queryId, plan);
+        result.printTable();
     }
 
     /**
-     * 测试17：字符串拼接投影
+     * 测试字符串拼接投影
      *
-     * SQL示例：SELECT id, CONCAT(first_name, ' ', last_name) AS full_name
+     * SQL示例：SELECT id, CONCAT(first_name, ' ', last_name) AS full_name FROM users
      */
     @Test
     public void testStringConcatProjection() {
-        JQuickTableScanNode usersScan = createTableScan("users");
+        JQuickTableScanNode usersScan = createTableScan("users", "u");
         List<JQuickExpression> concatArgs = new ArrayList<>();
         concatArgs.add(new JQuickColumnRefExpression("first_name"));
         concatArgs.add(new JQuickLiteralExpression(" "));
@@ -315,33 +465,65 @@ public class JQuickProjectToPhysicalPlanTest {
         items.add(new JQuickProjectNode.SelectItem(concatFunc, "full_name"));
         JQuickProjectNode projectNode = new JQuickProjectNode(items, usersScan);
         JQuickPhysicalPlanNode physicalPlan = generator.generate(projectNode);
-        assertNotNull(physicalPlan);
-        System.out.println("=== 字符串拼接投影测试通过 ===");
-        System.out.println("表达式: CONCAT(first_name, ' ', last_name) AS full_name");
-        JQuickDistributedPlan distributedPlan= fragmenter.fragment(physicalPlan);
-        fragmenter.printFragments(distributedPlan);
+        JQuickDistributedPlan plan = new JQuickFragmenter(1).fragment(physicalPlan);
+        String queryId = "concat_project_test_" + System.currentTimeMillis();
+        JQuickDataSet result = coordinator.executeQueryWithPlan(queryId, plan);
+        result.printTable();
     }
+
     /**
-    **
+     * 测试GROUP BY聚合投影
      *
-     * SQL示例：SELECT category, SUM(amount) total FROM sales GROUP BY category HAVING SUM(amount) > 1000
+     * SQL示例：SELECT category, SUM(amount) AS total FROM sales GROUP BY category HAVING SUM(amount) > 100
      */
     @Test
     public void testGroupByWithSort() {
-        JQuickTableScanNode salesScan = createTableScan("sales");
+        JQuickTableScanNode salesScan = createTableScan("sales", "s");
         List<JQuickExpression> groupKeys = createGroupKeys("category");
         List<JQuickGroupByNode.AggregateItem> aggregates = createAggregates("SUM:amount:total");
-        JQuickExpression havingCondition = createHavingCondition("total", JQuickBinaryOperator.GT, 1000);
+        JQuickExpression havingCondition = createHavingCondition("total", JQuickBinaryOperator.GT, 100);
         JQuickGroupByNode groupByNode = new JQuickGroupByNode(groupKeys, aggregates, salesScan, havingCondition);
         JQuickPhysicalPlanNode physicalPlan = generator.generate(groupByNode);
-        assertNotNull(physicalPlan);
-        JQuickDistributedPlan distributedPlan= fragmenter.fragment(physicalPlan);
-        fragmenter.printFragments(distributedPlan);
-
+        JQuickDistributedPlan plan = new JQuickFragmenter(1).fragment(physicalPlan);
+        String queryId = "groupby_project_test_" + System.currentTimeMillis();
+        JQuickDataSet result = coordinator.executeQueryWithPlan(queryId, plan);
+        result.printTable();
     }
 
+    /**
+     * 测试带别名的投影
+     *
+     * SQL示例：SELECT id AS user_id, name AS user_name, age AS user_age FROM users
+     */
+    @Test
+    public void testProjectionWithAlias() {
+        JQuickTableScanNode usersScan = createTableScan("users", "u");
+        Map<String, String> columnToAlias = new HashMap<>();
+        columnToAlias.put("id", "user_id");
+        columnToAlias.put("name", "user_name");
+        columnToAlias.put("age", "user_age");
+        JQuickProjectNode projectNode = createProjectWithAlias(usersScan, columnToAlias);
+        JQuickPhysicalPlanNode physicalPlan = generator.generate(projectNode);
+        JQuickDistributedPlan plan = new JQuickFragmenter(1).fragment(physicalPlan);
+        String queryId = "project_alias_test_" + System.currentTimeMillis();
+        JQuickDataSet result = coordinator.executeQueryWithPlan(queryId, plan);
+        result.printTable();
+    }
 
-
-
-
+    /**
+     * 测试投影+过滤组合
+     *
+     * SQL示例：SELECT id, name, age FROM users WHERE status = 'active'
+     */
+    @Test
+    public void testProjectionWithFilter() {
+        JQuickTableScanNode usersScan = createTableScan("users", "u");
+        JQuickFilterNode filterNode = createFilter(usersScan, "status", JQuickBinaryOperator.EQ, "active");
+        JQuickProjectNode projectNode = createSimpleProject(filterNode, "id", "name", "age");
+        JQuickPhysicalPlanNode physicalPlan = generator.generate(projectNode);
+        JQuickDistributedPlan plan = new JQuickFragmenter(1).fragment(physicalPlan);
+        String queryId = "project_filter_test_" + System.currentTimeMillis();
+        JQuickDataSet result = coordinator.executeQueryWithPlan(queryId, plan);
+        result.printTable();
+    }
 }
