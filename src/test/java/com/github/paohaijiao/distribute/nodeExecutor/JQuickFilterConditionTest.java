@@ -900,6 +900,114 @@ public class JQuickFilterConditionTest {
         result.show();
     }
 
+    /**
+     * 测试 CASE WHEN 表达式作为谓词
+     *
+     * SQL示例：SELECT * FROM users WHERE CASE WHEN age > 30 THEN 'old' ELSE 'young' END = 'old'
+     */
+    @Test
+    public void testCaseWhenPredicate() {
+        JQuickTableScanNode usersScan = createTableScan("users", "u");
+        List<JQuickExpression> conditions = new ArrayList<>();
+        List<JQuickExpression> results = new ArrayList<>();
+        conditions.add(createComparison("age", JQuickBinaryOperator.GT, 30));
+        results.add(new JQuickLiteralExpression("old"));
+        JQuickExpression elseResult = new JQuickLiteralExpression("young");
+        JQuickCaseWhenExpression caseWhenExpr = new JQuickCaseWhenExpression(conditions, results, elseResult);
+        JQuickBinaryExpression condition = new JQuickBinaryExpression(
+                caseWhenExpr,
+                new JQuickLiteralExpression("old"),
+                JQuickBinaryOperator.EQ
+        );
+        JQuickFilterNode filterNode = createFilter(usersScan, condition);
+        JQuickPhysicalPlanNode physicalPlan = generator.generate(filterNode);
+        JQuickFilterPhysicalNode filterPhysical = (JQuickFilterPhysicalNode) physicalPlan;
+        JQuickFragmenter fragmenter = new JQuickFragmenter(1);
+        JQuickDistributedPlan plan = fragmenter.fragment(filterPhysical);
+        String queryId = "casewhen_test_" + System.currentTimeMillis();
+        JQuickDataSet result = coordinator.executeQueryWithPlan(queryId, plan);
+        result.printTable();
+    }
+
+    /**
+     * 测试 CASE WHEN 多条件分支
+     *
+     * SQL示例：SELECT * FROM users WHERE CASE WHEN age < 20 THEN 'teen' WHEN age BETWEEN 20 AND 30 THEN 'young' ELSE 'old' END = 'young'
+     */
+    @Test
+    public void testCaseWhenMultiCondition() {
+        JQuickTableScanNode usersScan = createTableScan("users", "u");
+        List<JQuickExpression> conditions = new ArrayList<>();
+        List<JQuickExpression> results = new ArrayList<>();
+        conditions.add(createComparison("age", JQuickBinaryOperator.LT, 20));
+        results.add(new JQuickLiteralExpression("teen"));
+        conditions.add(createBetween("age", 20, 30));
+        results.add(new JQuickLiteralExpression("young"));
+        JQuickExpression elseResult = new JQuickLiteralExpression("old");
+        JQuickCaseWhenExpression caseWhenExpr = new JQuickCaseWhenExpression(conditions, results, elseResult);
+        JQuickBinaryExpression condition = new JQuickBinaryExpression(
+                caseWhenExpr,
+                new JQuickLiteralExpression("young"),
+                JQuickBinaryOperator.EQ
+        );
+        JQuickFilterNode filterNode = createFilter(usersScan, condition);
+        JQuickPhysicalPlanNode physicalPlan = generator.generate(filterNode);
+        JQuickFilterPhysicalNode filterPhysical = (JQuickFilterPhysicalNode) physicalPlan;
+        JQuickFragmenter fragmenter = new JQuickFragmenter(1);
+        JQuickDistributedPlan plan = fragmenter.fragment(filterPhysical);
+        String queryId = "casewhen_multi_test_" + System.currentTimeMillis();
+        JQuickDataSet result = coordinator.executeQueryWithPlan(queryId, plan);
+        result.printTable();
+    }
+
+    /**
+     * 测试 CASE WHEN 无 ELSE 分支
+     *
+     * SQL示例：SELECT * FROM users WHERE CASE WHEN enabled = true THEN 'active' END IS NOT NULL
+     */
+    @Test
+    public void testCaseWhenWithoutElse() {
+        JQuickTableScanNode usersScan = createTableScan("users", "u");
+        List<JQuickExpression> conditions = new ArrayList<>();
+        List<JQuickExpression> results = new ArrayList<>();
+        conditions.add(createComparison("enabled", JQuickBinaryOperator.EQ, true));
+        results.add(new JQuickLiteralExpression("active"));
+        JQuickCaseWhenExpression caseWhenExpr = new JQuickCaseWhenExpression(conditions, results, null);
+        JQuickUnaryExpression isNotNullCondition = new JQuickUnaryExpression(JQuickUnaryOperator.IS_NOT_NULL, caseWhenExpr);
+        JQuickFilterNode filterNode = createFilter(usersScan, isNotNullCondition);
+        JQuickPhysicalPlanNode physicalPlan = generator.generate(filterNode);
+        JQuickFilterPhysicalNode filterPhysical = (JQuickFilterPhysicalNode) physicalPlan;
+        JQuickFragmenter fragmenter = new JQuickFragmenter(1);
+        JQuickDistributedPlan plan = fragmenter.fragment(filterPhysical);
+        String queryId = "casewhen_no_else_test_" + System.currentTimeMillis();
+        JQuickDataSet result = coordinator.executeQueryWithPlan(queryId, plan);
+        result.printTable();
+    }
+
+    /**
+     * 测试 CASE WHEN 返回布尔值作为谓词
+     *
+     * SQL示例：SELECT * FROM users WHERE CASE WHEN age > 18 THEN true ELSE false END
+     */
+    @Test
+    public void testCaseWhenBooleanResult() {
+        JQuickTableScanNode usersScan = createTableScan("users", "u");
+        List<JQuickExpression> conditions = new ArrayList<>();
+        List<JQuickExpression> results = new ArrayList<>();
+        conditions.add(createComparison("age", JQuickBinaryOperator.GT, 18));
+        results.add(new JQuickLiteralExpression(true));
+        JQuickExpression elseResult = new JQuickLiteralExpression(false);
+        JQuickCaseWhenExpression caseWhenExpr = new JQuickCaseWhenExpression(conditions, results, elseResult);
+        JQuickFilterNode filterNode = createFilter(usersScan, caseWhenExpr);
+        JQuickPhysicalPlanNode physicalPlan = generator.generate(filterNode);
+        JQuickFilterPhysicalNode filterPhysical = (JQuickFilterPhysicalNode) physicalPlan;
+        JQuickFragmenter fragmenter = new JQuickFragmenter(1);
+        JQuickDistributedPlan plan = fragmenter.fragment(filterPhysical);
+        String queryId = "casewhen_boolean_test_" + System.currentTimeMillis();
+        JQuickDataSet result = coordinator.executeQueryWithPlan(queryId, plan);
+        result.printTable();
+    }
+
 //    /**
 //     * 测试24：IN 条件（子查询 - 从另一个表获取值列表）
 //     *

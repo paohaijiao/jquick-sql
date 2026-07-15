@@ -192,13 +192,6 @@ public class JQuickNodeExecutor {
                 return partitionData;
             }
         }
-        for (JQuickMemoryPartitionProto partition : request.getInputPartitionsList()) {
-            if (partition.hasData()) {
-                JQuickDataSet partitionData = dataConverter.convertFromProto(partition.getData());
-                console.info("readFromInputPartitions - fallback to first available partition: " + partition.getPartitionId() + ", rows: " + partitionData.size());
-                return partitionData;
-            }
-        }
         console.warn("readFromInputPartitions - no data found for table: " + tableName);
         return JQuickDataSet.builder().build();
     }
@@ -206,19 +199,7 @@ public class JQuickNodeExecutor {
      * 执行 Filter
      */
     private JQuickDataSet executeFilter(JQuickFilterPhysicalNode node, JQuickWorker.JQuickTaskContext context) {
-        JQuickExecuteTaskRequest request = context.getRequest();
-        JQuickDataSet input = JQuickDataSet.builder().build();
-        List<JQuickColumnMeta> columnMetas = null;
-        for (JQuickMemoryPartitionProto partition : request.getInputPartitionsList()) {
-            if (partition.hasData()) {
-                JQuickDataSet partitionData = dataConverter.convertFromProto(partition.getData());
-                if (columnMetas == null) {
-                    columnMetas = partitionData.getColumns();
-                    input.setColumns(columnMetas);
-                }
-                input = input.concat(partitionData);
-            }
-        }
+        JQuickDataSet input = executeNode(node.getChild(), context);
         JQuickDataSet result = input.filter(row -> expressionEvaluator.evaluatePredicate(row, node.getPredicate()));
         context.addProcessedRows(input.size());
         return result;

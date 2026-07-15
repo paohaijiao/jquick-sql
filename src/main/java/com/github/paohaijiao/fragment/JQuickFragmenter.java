@@ -142,8 +142,11 @@ public class JQuickFragmenter {
         }
 
         //  过滤和投影节点：创建 Fragment（保证语义）
-        if (node instanceof JQuickFilterPhysicalNode || node instanceof JQuickProjectPhysicalNode) {
-            return true;
+        if (node instanceof JQuickFilterPhysicalNode ) {
+            return false;
+        }
+        if (node instanceof JQuickProjectPhysicalNode ) {
+            return false;
         }
         return false;
     }
