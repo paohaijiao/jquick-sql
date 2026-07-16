@@ -144,6 +144,7 @@ public class JQuickProjectToPhysicalPlanTest {
                 createRow("id", 2, "name", "Bob", "age", 30, "status", "active", "enabled", true, "first_name", "Bob", "last_name", "Johnson", "email", "bob@test.com"),
                 createRow("id", 3, "name", "Charlie", "age", 20, "status", "pending", "enabled", true, "first_name", "Charlie", "last_name", "Brown", "email", "charlie@test.com"),
                 createRow("id", 4, "name", "David", "age", 35, "status", "inactive", "enabled", false, "first_name", "David", "last_name", "Wilson", "email", "david@test.com"),
+                createRow("id", 5, "name", "Eve", "age", 28, "status", "active", "enabled", false, "first_name", "Eve", "last_name", "Davis", "email", "eve@test.com"),
                 createRow("id", 5, "name", "Eve", "age", 28, "status", "active", "enabled", false, "first_name", "Eve", "last_name", "Davis", "email", "eve@test.com")
         );
         JQuickDataSet usersData = new JQuickDataSet(userColumns, userRows);
@@ -290,7 +291,40 @@ public class JQuickProjectToPhysicalPlanTest {
     private JQuickExpression createHavingCondition(String column, JQuickBinaryOperator operator, Object value) {
         return new JQuickBinaryExpression(new JQuickColumnRefExpression(column), new JQuickLiteralExpression(value), operator);
     }
-
+    /**
+     * 测试简单列投影
+     *
+     * SQL示例：SELECT *FROM users
+     */
+    @Test
+    public void testStarColumnProjection() {
+        JQuickTableScanNode usersScan = createTableScan("users", "u");
+        List<JQuickProjectNode.SelectItem> items = new ArrayList<>();
+        items.add(JQuickProjectNode.SelectItem.star());
+        JQuickProjectNode projectNode = new JQuickProjectNode(items, usersScan);
+        JQuickPhysicalPlanNode physicalPlan = generator.generate(projectNode);
+        JQuickDistributedPlan plan = new JQuickFragmenter(1).fragment(physicalPlan);
+        String queryId = "simple_project_test_" + System.currentTimeMillis();
+        JQuickDataSet result = coordinator.executeQueryWithPlan(queryId, plan);
+        result.printTable();
+    }
+    /**
+     * 测试简单列投影
+     *
+     * SQL示例：SELECT distinct *FROM users
+     */
+    @Test
+    public void testDistinctStarColumnProjection() {
+        JQuickTableScanNode usersScan = createTableScan("users", "u");
+        List<JQuickProjectNode.SelectItem> items = new ArrayList<>();
+        items.add(JQuickProjectNode.SelectItem.star());
+        JQuickProjectNode projectNode = new JQuickProjectNode(items, usersScan,true);
+        JQuickPhysicalPlanNode physicalPlan = generator.generate(projectNode);
+        JQuickDistributedPlan plan = new JQuickFragmenter(1).fragment(physicalPlan);
+        String queryId = "simple_project_test_" + System.currentTimeMillis();
+        JQuickDataSet result = coordinator.executeQueryWithPlan(queryId, plan);
+        result.printTable();
+    }
     /**
      * 测试简单列投影
      *

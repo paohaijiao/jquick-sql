@@ -36,4 +36,10 @@ public interface JQuickProjectNodeProtoOrBuilder extends
    * @return The distinct.
    */
   boolean getDistinct();
+
+  /**
+   * <code>bool is_star = 3;</code>
+   * @return The isStar.
+   */
+  boolean getIsStar();
 }

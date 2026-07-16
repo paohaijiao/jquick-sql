@@ -101,10 +101,14 @@ public class JQuickPhysicalPlanGenerator implements JQuickLogicalPlanVisitor {
         node.getChild().accept(this);
         JQuickPhysicalPlanNode childPhysical = logicalToPhysical.get(node.getChild());
         List<JQuickProjectPhysicalNode.SelectItem> items = new ArrayList<>();
+        boolean hasStar = false;
         for (JQuickProjectNode.SelectItem item : node.getSelectItems()) {
+            if (item.isStar()) {
+                hasStar = true;
+            }
             items.add(new JQuickProjectPhysicalNode.SelectItem(item.getExpression(), item.getAlias()));
         }
-        JQuickProjectPhysicalNode physicalNode = new JQuickProjectPhysicalNode(items, childPhysical, node.isDistinct());
+        JQuickProjectPhysicalNode physicalNode = new JQuickProjectPhysicalNode(items, childPhysical, node.isDistinct(), hasStar);
         logicalToPhysical.put(node, physicalNode);
     }
 
@@ -281,7 +285,7 @@ public class JQuickPhysicalPlanGenerator implements JQuickLogicalPlanVisitor {
         if (plan instanceof JQuickProjectPhysicalNode) {
             JQuickProjectPhysicalNode project = (JQuickProjectPhysicalNode) plan;
             JQuickPhysicalPlanNode newChild = replaceCteReference(project.getChildren().get(0), cteName, replacement);
-            return new JQuickProjectPhysicalNode(project.getSelectItems(), newChild, project.isDistinct());
+            return new JQuickProjectPhysicalNode(project.getSelectItems(), newChild, project.isDistinct(), project.isStar());
         }
         if (plan instanceof JQuickFilterPhysicalNode) {
             JQuickFilterPhysicalNode filter = (JQuickFilterPhysicalNode) plan;
@@ -432,6 +436,9 @@ public class JQuickPhysicalPlanGenerator implements JQuickLogicalPlanVisitor {
         }
         if (plan instanceof JQuickProjectPhysicalNode) {
             JQuickProjectPhysicalNode project = (JQuickProjectPhysicalNode) plan;
+            if (project.isStar()) {
+                return project;
+            }
             List<JQuickProjectPhysicalNode.SelectItem> filteredItems = new ArrayList<>();
             for (JQuickProjectPhysicalNode.SelectItem item : project.getSelectItems()) {
                 if (requiredColumns.contains(item.getAlias())) {
@@ -439,7 +446,7 @@ public class JQuickPhysicalPlanGenerator implements JQuickLogicalPlanVisitor {
                 }
             }
             if (filteredItems.size() < project.getSelectItems().size()) {
-                return new JQuickProjectPhysicalNode(filteredItems, project.getChildren().get(0), project.isDistinct());
+                return new JQuickProjectPhysicalNode(filteredItems, project.getChildren().get(0), project.isDistinct(), false);
             }
         }
 

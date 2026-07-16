@@ -309,6 +309,7 @@ message JQuickFilterNodeProto {
 message JQuickProjectNodeProto {
   repeated SelectItemProto select_items = 1;
   bool distinct = 2;
+  bool is_star = 3;
 
   message SelectItemProto {
     JQuickExpressionProto expression = 1;

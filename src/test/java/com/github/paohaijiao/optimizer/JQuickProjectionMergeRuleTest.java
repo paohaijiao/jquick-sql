@@ -183,7 +183,8 @@ public class JQuickProjectionMergeRuleTest {
     /**
      * SQL: SELECT name FROM (SELECT name FROM users WHERE age > 18) t
      *
-     * 验证：Project 和 Filter 之间的合并（不能跨 Filter 合并）
+     * 验证：两个 Project 合并为一个，Filter 被下推到 TableScan
+     * 优化后: Project(name) -> TableScan(users, filter=age > 18)
      */
     @Test
     public void testMergeProjectsWithFilter() {
@@ -196,9 +197,11 @@ public class JQuickProjectionMergeRuleTest {
         JQuickLogicalPlanNode result = rule.optimize(outerProject);
         assertTrue(result instanceof JQuickProjectNode);
         JQuickProjectNode resultProject = (JQuickProjectNode) result;
-        assertTrue(resultProject.getChild() instanceof JQuickFilterNode);
-        JQuickFilterNode resultFilter = (JQuickFilterNode) resultProject.getChild();
-        assertTrue(resultFilter.getChild() instanceof JQuickTableScanNode);
+        assertTrue(resultProject.getChild() instanceof JQuickTableScanNode);
+        JQuickTableScanNode resultScan = (JQuickTableScanNode) resultProject.getChild();
+        assertTrue(resultScan.getFilterPredicate() != null);
+        assertEquals(1, resultProject.getSelectItems().size());
+        assertEquals("name", resultProject.getSelectItems().get(0).getAlias());
     }
     /**
      * SQL: SELECT name FROM (SELECT name FROM users ORDER BY id) t

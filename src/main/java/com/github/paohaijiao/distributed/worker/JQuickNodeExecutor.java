@@ -231,6 +231,13 @@ public class JQuickNodeExecutor {
      */
     private JQuickDataSet executeProject(JQuickProjectPhysicalNode node, JQuickWorker.JQuickTaskContext context) {
         JQuickDataSet input = executeNode(node.getChild(), context);
+        if (node.isStar()) {
+            if (node.isDistinct()) {
+                List<JQuickRow> distinctRows = input.getRows().stream().distinct().collect(Collectors.toList());
+                return new JQuickDataSet(input.getColumns(), distinctRows);
+            }
+            return input;
+        }
         List<JQuickRow> projectedRows = new ArrayList<>();
         for (JQuickRow row : input.getRows()) {
             JQuickRow newRow = new JQuickRow();
@@ -249,7 +256,6 @@ public class JQuickNodeExecutor {
         if (node.isDistinct()) {
             projectedRows = projectedRows.stream().distinct().collect(Collectors.toList());
         }
-        //将 JQuickPhysicalColumn 转换为 JQuickColumnMeta
         List<JQuickColumnMeta> columnMetas = buildColumnMetasForProject(node);
         return new JQuickDataSet(columnMetas, projectedRows);
     }

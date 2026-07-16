@@ -122,7 +122,9 @@ public class JQuickProtoService {
      * 转换 Project 节点
      */
     public JQuickProjectNodeProto convertProjectToProto(JQuickProjectPhysicalNode node) {
-        JQuickProjectNodeProto.Builder builder = JQuickProjectNodeProto.newBuilder().setDistinct(node.isDistinct());
+        JQuickProjectNodeProto.Builder builder = JQuickProjectNodeProto.newBuilder()
+                .setDistinct(node.isDistinct())
+                .setIsStar(node.isStar());
         for (JQuickProjectPhysicalNode.SelectItem item : node.getSelectItems()) {
             JQuickProjectNodeProto.SelectItemProto.Builder itemBuilder = JQuickProjectNodeProto.SelectItemProto.newBuilder().setExpression(convertExpressionToProto(item.getExpression()));
             if (item.getAlias() != null) {
@@ -952,7 +954,7 @@ public class JQuickProtoService {
                 for (JQuickProjectNodeProto.SelectItemProto itemProto : projectProto.getSelectItemsList()) {
                     selectItems.add(new JQuickProjectPhysicalNode.SelectItem(buildExpression(itemProto.getExpression()), itemProto.getAlias()));
                 }
-                return new JQuickProjectPhysicalNode(selectItems, children.size() > 0 ? children.get(0) : null, projectProto.getDistinct());
+                return new JQuickProjectPhysicalNode(selectItems, children.size() > 0 ? children.get(0) : null, projectProto.getDistinct(), projectProto.getIsStar());
             case HASH_JOIN:
                 JQuickHashJoinNodeProto joinProto = proto.getHashJoin();
                 return new JQuickHashJoinPhysicalNode(convertJoinType(joinProto.getJoinType()), 

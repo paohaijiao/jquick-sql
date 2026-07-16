@@ -851,6 +851,17 @@ private static final long serialVersionUID = 0L;
     return distinct_;
   }
 
+  public static final int IS_STAR_FIELD_NUMBER = 3;
+  private boolean isStar_ = false;
+  /**
+   * <code>bool is_star = 3;</code>
+   * @return The isStar.
+   */
+  @java.lang.Override
+  public boolean getIsStar() {
+    return isStar_;
+  }
+
   private byte memoizedIsInitialized = -1;
   @java.lang.Override
   public final boolean isInitialized() {
@@ -871,6 +882,9 @@ private static final long serialVersionUID = 0L;
     if (distinct_ != false) {
       output.writeBool(2, distinct_);
     }
+    if (isStar_ != false) {
+      output.writeBool(3, isStar_);
+    }
     getUnknownFields().writeTo(output);
   }
 
@@ -887,6 +901,10 @@ private static final long serialVersionUID = 0L;
     if (distinct_ != false) {
       size += com.google.protobuf.CodedOutputStream
         .computeBoolSize(2, distinct_);
+    }
+    if (isStar_ != false) {
+      size += com.google.protobuf.CodedOutputStream
+        .computeBoolSize(3, isStar_);
     }
     size += getUnknownFields().getSerializedSize();
     memoizedSize = size;
@@ -907,6 +925,8 @@ private static final long serialVersionUID = 0L;
         .equals(other.getSelectItemsList())) return false;
     if (getDistinct()
         != other.getDistinct()) return false;
+    if (getIsStar()
+        != other.getIsStar()) return false;
     if (!getUnknownFields().equals(other.getUnknownFields())) return false;
     return true;
   }
@@ -925,6 +945,9 @@ private static final long serialVersionUID = 0L;
     hash = (37 * hash) + DISTINCT_FIELD_NUMBER;
     hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
         getDistinct());
+    hash = (37 * hash) + IS_STAR_FIELD_NUMBER;
+    hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
+        getIsStar());
     hash = (29 * hash) + getUnknownFields().hashCode();
     memoizedHashCode = hash;
     return hash;
@@ -1066,6 +1089,7 @@ private static final long serialVersionUID = 0L;
       }
       bitField0_ = (bitField0_ & ~0x00000001);
       distinct_ = false;
+      isStar_ = false;
       return this;
     }
 
@@ -1114,6 +1138,9 @@ private static final long serialVersionUID = 0L;
       int from_bitField0_ = bitField0_;
       if (((from_bitField0_ & 0x00000002) != 0)) {
         result.distinct_ = distinct_;
+      }
+      if (((from_bitField0_ & 0x00000004) != 0)) {
+        result.isStar_ = isStar_;
       }
     }
 
@@ -1190,6 +1217,9 @@ private static final long serialVersionUID = 0L;
       if (other.getDistinct() != false) {
         setDistinct(other.getDistinct());
       }
+      if (other.getIsStar() != false) {
+        setIsStar(other.getIsStar());
+      }
       this.mergeUnknownFields(other.getUnknownFields());
       onChanged();
       return this;
@@ -1234,6 +1264,11 @@ private static final long serialVersionUID = 0L;
               bitField0_ |= 0x00000002;
               break;
             } // case 16
+            case 24: {
+              isStar_ = input.readBool();
+              bitField0_ |= 0x00000004;
+              break;
+            } // case 24
             default: {
               if (!super.parseUnknownField(input, extensionRegistry, tag)) {
                 done = true; // was an endgroup tag
@@ -1519,6 +1554,38 @@ private static final long serialVersionUID = 0L;
     public Builder clearDistinct() {
       bitField0_ = (bitField0_ & ~0x00000002);
       distinct_ = false;
+      onChanged();
+      return this;
+    }
+
+    private boolean isStar_ ;
+    /**
+     * <code>bool is_star = 3;</code>
+     * @return The isStar.
+     */
+    @java.lang.Override
+    public boolean getIsStar() {
+      return isStar_;
+    }
+    /**
+     * <code>bool is_star = 3;</code>
+     * @param value The isStar to set.
+     * @return This builder for chaining.
+     */
+    public Builder setIsStar(boolean value) {
+      
+      isStar_ = value;
+      bitField0_ |= 0x00000004;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>bool is_star = 3;</code>
+     * @return This builder for chaining.
+     */
+    public Builder clearIsStar() {
+      bitField0_ = (bitField0_ & ~0x00000004);
+      isStar_ = false;
       onChanged();
       return this;
     }

@@ -33,6 +33,8 @@ public class JQuickProjectPhysicalNode extends JQuickAbstractPhysicalNode {
 
     private final boolean distinct;
 
+    private final boolean star;
+
     public static class SelectItem {
 
         private final JQuickExpression expression;
@@ -53,12 +55,16 @@ public class JQuickProjectPhysicalNode extends JQuickAbstractPhysicalNode {
         }
     }
     public JQuickProjectPhysicalNode(List<SelectItem> selectItems, JQuickPhysicalPlanNode child) {
-      this(selectItems,child,false);
+      this(selectItems,child,false,false);
     }
     public JQuickProjectPhysicalNode(List<SelectItem> selectItems, JQuickPhysicalPlanNode child, boolean distinct) {
+        this(selectItems, child, distinct, false);
+    }
+    public JQuickProjectPhysicalNode(List<SelectItem> selectItems, JQuickPhysicalPlanNode child, boolean distinct, boolean star) {
         super(child);
         this.selectItems = new ArrayList<>(selectItems);
         this.distinct = distinct;
+        this.star = star;
     }
 
     @Override
@@ -68,6 +74,10 @@ public class JQuickProjectPhysicalNode extends JQuickAbstractPhysicalNode {
 
     @Override
     public List<JQuickPhysicalColumn> getOutputSchema() {
+        if (star) {
+            JQuickPhysicalPlanNode child = getChild();
+            return child != null ? child.getOutputSchema() : new ArrayList<>();
+        }
         return selectItems.stream()
                 .map(item -> new JQuickPhysicalColumn(item.getAlias(), Object.class, null, true))
                 .collect(Collectors.toList());
@@ -76,7 +86,7 @@ public class JQuickProjectPhysicalNode extends JQuickAbstractPhysicalNode {
     @Override
     public JQuickPhysicalPlanNode clone() {
         List<SelectItem> clonedItems = selectItems.stream().map(SelectItem::clone).collect(Collectors.toList());
-        return new JQuickProjectPhysicalNode(clonedItems, children.get(0).clone(), distinct);
+        return new JQuickProjectPhysicalNode(clonedItems, children.get(0).clone(), distinct, star);
     }
 
     @Override
@@ -87,6 +97,8 @@ public class JQuickProjectPhysicalNode extends JQuickAbstractPhysicalNode {
     public List<SelectItem> getSelectItems() { return selectItems; }
 
     public boolean isDistinct() { return distinct; }
+
+    public boolean isStar() { return star; }
     @Override
     public JQuickPhysicalStats getStats() {
         JQuickPhysicalPlanNode child = getChild();

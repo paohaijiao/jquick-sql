@@ -628,393 +628,394 @@ public final class JQuickPhysicalPlanProto {
       "\t\022\034\n\024stream_to_downstream\030\010 \001(\010\"^\n\025JQuic" +
       "kFilterNodeProto\022E\n\tpredicate\030\001 \001(\01322.co" +
       "m.github.paohaijiao.proto.JQuickExpressi" +
-      "onProto\"\357\001\n\026JQuickProjectNodeProto\022Y\n\014se" +
+      "onProto\"\200\002\n\026JQuickProjectNodeProto\022Y\n\014se" +
       "lect_items\030\001 \003(\0132C.com.github.paohaijiao" +
       ".proto.JQuickProjectNodeProto.SelectItem" +
-      "Proto\022\020\n\010distinct\030\002 \001(\010\032h\n\017SelectItemPro" +
-      "to\022F\n\nexpression\030\001 \001(\01322.com.github.paoh" +
-      "aijiao.proto.JQuickExpressionProto\022\r\n\005al" +
-      "ias\030\002 \001(\t\"\334\005\n\027JQuickHashJoinNodeProto\022C\n" +
-      "\tjoin_type\030\001 \001(\01620.com.github.paohaijiao" +
-      ".proto.JQuickJoinTypeProto\022E\n\tcondition\030" +
-      "\002 \001(\01322.com.github.paohaijiao.proto.JQui" +
-      "ckExpressionProto\022X\n\tjoin_keys\030\003 \003(\0132E.c" +
-      "om.github.paohaijiao.proto.JQuickHashJoi" +
-      "nNodeProto.JoinKeyPairProto\022E\n\nbuild_sid" +
-      "e\030\004 \001(\01621.com.github.paohaijiao.proto.JQ" +
-      "uickBuildSideProto\022N\n\014distribution\030\005 \001(\016" +
-      "28.com.github.paohaijiao.proto.JQuickJoi" +
-      "nDistributionProto\022P\n\017build_partition\030\006 " +
-      "\001(\01327.com.github.paohaijiao.proto.JQuick" +
-      "MemoryPartitionProto\022P\n\017probe_partition\030" +
-      "\007 \001(\01327.com.github.paohaijiao.proto.JQui" +
-      "ckMemoryPartitionProto\032\237\001\n\020JoinKeyPairPr" +
-      "oto\022D\n\010left_key\030\001 \001(\01322.com.github.paoha" +
-      "ijiao.proto.JQuickExpressionProto\022E\n\trig" +
-      "ht_key\030\002 \001(\01322.com.github.paohaijiao.pro" +
-      "to.JQuickExpressionProto\"\253\001\n\035JQuickNeste" +
-      "dLoopJoinNodeProto\022C\n\tjoin_type\030\001 \001(\01620." +
-      "com.github.paohaijiao.proto.JQuickJoinTy" +
-      "peProto\022E\n\tcondition\030\002 \001(\01322.com.github." +
-      "paohaijiao.proto.JQuickExpressionProto\"\366" +
-      "\007\n\034JQuickHashAggregateNodeProto\022F\n\ngroup" +
-      "_keys\030\001 \003(\01322.com.github.paohaijiao.prot" +
-      "o.JQuickExpressionProto\022d\n\naggregates\030\002 " +
-      "\003(\0132P.com.github.paohaijiao.proto.JQuick" +
-      "HashAggregateNodeProto.AggregateFunction" +
-      "Proto\022L\n\020having_condition\030\003 \001(\01322.com.gi" +
-      "thub.paohaijiao.proto.JQuickExpressionPr" +
-      "oto\022E\n\005stage\030\004 \001(\01626.com.github.paohaiji" +
-      "ao.proto.JQuickAggregateStageProto\022a\n\rgr" +
-      "ouping_sets\030\005 \003(\0132J.com.github.paohaijia" +
-      "o.proto.JQuickHashAggregateNodeProto.Gro" +
-      "upingSetProto\022\036\n\026use_memory_partial_agg\030" +
-      "\006 \001(\010\032\220\002\n\026AggregateFunctionProto\022\025\n\rfunc" +
-      "tion_name\030\001 \001(\t\022D\n\010argument\030\002 \001(\01322.com." +
-      "github.paohaijiao.proto.JQuickExpression" +
-      "Proto\022\020\n\010distinct\030\003 \001(\010\022\r\n\005alias\030\004 \001(\t\022\025" +
-      "\n\ris_count_star\030\005 \001(\010\022\021\n\tseparator\030\006 \001(\t" +
-      "\022N\n\016internal_stage\030\007 \001(\01626.com.github.pa" +
-      "ohaijiao.proto.JQuickAggregateStageProto" +
-      "\032\374\001\n\020GroupingSetProto\022@\n\004keys\030\001 \003(\01322.co" +
-      "m.github.paohaijiao.proto.JQuickExpressi" +
-      "onProto\022h\n\004type\030\002 \001(\0162Z.com.github.paoha" +
-      "ijiao.proto.JQuickHashAggregateNodeProto" +
-      ".GroupingSetProto.GroupingSetType\"<\n\017Gro" +
-      "upingSetType\022\r\n\tGS_SIMPLE\020\000\022\r\n\tGS_ROLLUP" +
-      "\020\001\022\013\n\007GS_CUBE\020\002\"\366\001\n\023JQuickSortNodeProto\022" +
-      "Y\n\016order_by_items\030\001 \003(\0132A.com.github.pao" +
-      "haijiao.proto.JQuickSortNodeProto.OrderB" +
-      "yItemProto\022\027\n\017use_memory_sort\030\002 \001(\010\022\032\n\022m" +
-      "emory_limit_bytes\030\003 \001(\003\032O\n\020OrderByItemPr" +
-      "oto\022\023\n\013column_name\030\001 \001(\t\022\021\n\tascending\030\002 " +
-      "\001(\010\022\023\n\013nulls_first\030\003 \001(\010\"5\n\024JQuickLimitN" +
-      "odeProto\022\r\n\005limit\030\001 \001(\005\022\016\n\006offset\030\002 \001(\005\"" +
-      "\211\003\n\027JQuickExchangeNodeProto\022\023\n\013exchange_" +
-      "id\030\001 \001(\t\022K\n\rexchange_type\030\002 \001(\01624.com.gi" +
-      "thub.paohaijiao.proto.JQuickExchangeType" +
-      "Proto\022U\n\022partition_strategy\030\003 \001(\01629.com." +
-      "github.paohaijiao.proto.JQuickPartitionS" +
-      "trategyProto\022J\n\016partition_keys\030\004 \003(\01322.c" +
-      "om.github.paohaijiao.proto.JQuickExpress" +
-      "ionProto\022\023\n\013parallelism\030\005 \001(\005\022\027\n\017buffer_" +
-      "capacity\030\006 \001(\005\022\022\n\nbatch_size\030\007 \001(\005\022\023\n\013co" +
-      "mpression\030\010 \001(\010\022\022\n\ntimeout_ms\030\t \001(\005\"\353\003\n\034" +
-      "JQuickMemoryShuffleNodeProto\022\022\n\nshuffle_" +
-      "id\030\001 \001(\t\022U\n\022partition_strategy\030\002 \001(\01629.c" +
-      "om.github.paohaijiao.proto.JQuickPartiti" +
-      "onStrategyProto\022J\n\016partition_keys\030\003 \003(\0132" +
+      "Proto\022\020\n\010distinct\030\002 \001(\010\022\017\n\007is_star\030\003 \001(\010" +
+      "\032h\n\017SelectItemProto\022F\n\nexpression\030\001 \001(\0132" +
       "2.com.github.paohaijiao.proto.JQuickExpr" +
-      "essionProto\022\031\n\021output_partitions\030\004 \001(\005\022\035" +
-      "\n\025memory_buffer_size_mb\030\005 \001(\005\022\025\n\rspill_t" +
-      "o_disk\030\006 \001(\010\022\027\n\017spill_threshold\030\007 \001(\005\022o\n" +
-      "\024partition_worker_map\030\010 \003(\0132Q.com.github" +
-      ".paohaijiao.proto.JQuickMemoryShuffleNod" +
-      "eProto.PartitionWorkerMapEntry\0329\n\027Partit" +
-      "ionWorkerMapEntry\022\013\n\003key\030\001 \001(\005\022\r\n\005value\030" +
-      "\002 \001(\t:\0028\001\"~\n\025JQuickValuesNodeProto\0229\n\004ro" +
-      "ws\030\001 \003(\0132+.com.github.paohaijiao.proto.J" +
-      "QuickRowProto\022\024\n\014column_names\030\002 \003(\t\022\024\n\014c" +
-      "olumn_types\030\003 \003(\t\"\026\n\024JQuickEmptyNodeProt" +
-      "o\"\363\t\n\025JQuickWindowNodeProto\022`\n\020window_fu" +
-      "nctions\030\001 \003(\0132F.com.github.paohaijiao.pr" +
-      "oto.JQuickWindowNodeProto.WindowFunction" +
-      "Proto\032\332\001\n\023WindowFunctionProto\022\025\n\rfunctio" +
-      "n_name\030\001 \001(\t\022D\n\010argument\030\002 \001(\01322.com.git" +
-      "hub.paohaijiao.proto.JQuickExpressionPro" +
-      "to\022W\n\013window_spec\030\003 \001(\0132B.com.github.pao" +
-      "haijiao.proto.JQuickWindowNodeProto.Wind" +
-      "owSpecProto\022\r\n\005alias\030\004 \001(\t\032\210\002\n\017WindowSpe" +
-      "cProto\022J\n\016partition_keys\030\001 \003(\01322.com.git" +
-      "hub.paohaijiao.proto.JQuickExpressionPro" +
-      "to\022U\n\norder_keys\030\002 \003(\0132A.com.github.paoh" +
-      "aijiao.proto.JQuickSortNodeProto.OrderBy" +
-      "ItemProto\022R\n\005frame\030\003 \001(\0132C.com.github.pa" +
-      "ohaijiao.proto.JQuickWindowNodeProto.Win" +
-      "dowFrameProto\032\217\005\n\020WindowFrameProto\022a\n\nfr" +
-      "ame_type\030\001 \001(\0162M.com.github.paohaijiao.p" +
-      "roto.JQuickWindowNodeProto.WindowFramePr" +
-      "oto.FrameType\022d\n\nstart_type\030\002 \001(\0162P.com." +
-      "github.paohaijiao.proto.JQuickWindowNode" +
-      "Proto.WindowFrameProto.BoundaryType\022H\n\014s" +
-      "tart_offset\030\003 \001(\01322.com.github.paohaijia" +
-      "o.proto.JQuickExpressionProto\022b\n\010end_typ" +
-      "e\030\004 \001(\0162P.com.github.paohaijiao.proto.JQ" +
-      "uickWindowNodeProto.WindowFrameProto.Bou" +
-      "ndaryType\022F\n\nend_offset\030\005 \001(\01322.com.gith" +
+      "essionProto\022\r\n\005alias\030\002 \001(\t\"\334\005\n\027JQuickHas" +
+      "hJoinNodeProto\022C\n\tjoin_type\030\001 \001(\01620.com." +
+      "github.paohaijiao.proto.JQuickJoinTypePr" +
+      "oto\022E\n\tcondition\030\002 \001(\01322.com.github.paoh" +
+      "aijiao.proto.JQuickExpressionProto\022X\n\tjo" +
+      "in_keys\030\003 \003(\0132E.com.github.paohaijiao.pr" +
+      "oto.JQuickHashJoinNodeProto.JoinKeyPairP" +
+      "roto\022E\n\nbuild_side\030\004 \001(\01621.com.github.pa" +
+      "ohaijiao.proto.JQuickBuildSideProto\022N\n\014d" +
+      "istribution\030\005 \001(\01628.com.github.paohaijia" +
+      "o.proto.JQuickJoinDistributionProto\022P\n\017b" +
+      "uild_partition\030\006 \001(\01327.com.github.paohai" +
+      "jiao.proto.JQuickMemoryPartitionProto\022P\n" +
+      "\017probe_partition\030\007 \001(\01327.com.github.paoh" +
+      "aijiao.proto.JQuickMemoryPartitionProto\032" +
+      "\237\001\n\020JoinKeyPairProto\022D\n\010left_key\030\001 \001(\01322" +
+      ".com.github.paohaijiao.proto.JQuickExpre" +
+      "ssionProto\022E\n\tright_key\030\002 \001(\01322.com.gith" +
       "ub.paohaijiao.proto.JQuickExpressionProt" +
-      "o\",\n\tFrameType\022\016\n\nFRAME_ROWS\020\000\022\017\n\013FRAME_" +
-      "RANGE\020\001\"\215\001\n\014BoundaryType\022\035\n\031BOUND_UNBOUN" +
-      "DED_PRECEDING\020\000\022\023\n\017BOUND_PRECEDING\020\001\022\025\n\021" +
-      "BOUND_CURRENT_ROW\020\002\022\023\n\017BOUND_FOLLOWING\020\003" +
-      "\022\035\n\031BOUND_UNBOUNDED_FOLLOWING\020\004\"\315\001\n\033JQui" +
-      "ckSetOperationNodeProto\022P\n\016operation_typ" +
-      "e\030\001 \001(\01628.com.github.paohaijiao.proto.JQ" +
-      "uickSQLOperationTypeProto\022\020\n\010distinct\030\002 " +
-      "\001(\010\022J\n\010children\030\003 \003(\01328.com.github.paoha" +
-      "ijiao.proto.JQuickPhysicalPlanNodeProto\"" +
-      "\217\001\n\023JQuickTopNNodeProto\022Y\n\016order_by_item" +
-      "s\030\001 \003(\0132A.com.github.paohaijiao.proto.JQ" +
-      "uickSortNodeProto.OrderByItemProto\022\r\n\005li" +
-      "mit\030\002 \001(\005\022\016\n\006offset\030\003 \001(\005\"w\n\035JQuickRecur" +
-      "siveUnionNodeProto\022\020\n\010cte_name\030\001 \001(\t\022\024\n\014" +
-      "column_names\030\002 \003(\t\022\021\n\tunion_all\030\003 \001(\010\022\033\n" +
-      "\023max_recursion_depth\030\004 \001(\005\"\220\005\n\023JQuickFra" +
-      "gmentProto\022\023\n\013fragment_id\030\001 \001(\003\022B\n\004type\030" +
-      "\002 \001(\01624.com.github.paohaijiao.proto.JQui" +
-      "ckFragmentTypeProto\022F\n\004plan\030\003 \001(\01328.com." +
-      "github.paohaijiao.proto.JQuickPhysicalPl" +
-      "anNodeProto\022\032\n\022child_fragment_ids\030\004 \003(\003\022" +
-      "M\n\017output_exchange\030\005 \001(\01324.com.github.pa" +
-      "ohaijiao.proto.JQuickExchangeNodeProto\022M" +
-      "\n\017input_exchanges\030\006 \003(\01324.com.github.pao" +
-      "haijiao.proto.JQuickExchangeNodeProto\022\023\n" +
-      "\013parallelism\030\007 \001(\005\022\032\n\022assigned_worker_id" +
-      "\030\010 \001(\t\022P\n\017input_partition\030\t \001(\01327.com.gi" +
-      "thub.paohaijiao.proto.JQuickMemoryPartit" +
-      "ionProto\022Q\n\020output_partition\030\n \001(\01327.com" +
-      ".github.paohaijiao.proto.JQuickMemoryPar" +
-      "titionProto\022H\n\014data_streams\030\013 \003(\01322.com." +
-      "github.paohaijiao.proto.JQuickDataStream" +
-      "Proto\"\273\004\n\032JQuickDistributedPlanProto\022\017\n\007" +
-      "plan_id\030\001 \001(\t\022G\n\rroot_fragment\030\002 \001(\01320.c" +
-      "om.github.paohaijiao.proto.JQuickFragmen" +
-      "tProto\022\033\n\023default_parallelism\030\003 \001(\005\022Y\n\tf" +
-      "ragments\030\004 \003(\0132F.com.github.paohaijiao.p" +
-      "roto.JQuickDistributedPlanProto.Fragment" +
-      "sEntry\022\022\n\ncreated_at\030\005 \001(\003\022\020\n\010query_id\030\006" +
-      " \001(\t\022\032\n\022total_memory_bytes\030\007 \001(\003\022k\n\023work" +
-      "er_memory_quota\030\010 \003(\0132N.com.github.paoha" +
-      "ijiao.proto.JQuickDistributedPlanProto.W" +
-      "orkerMemoryQuotaEntry\032b\n\016FragmentsEntry\022" +
-      "\013\n\003key\030\001 \001(\003\022?\n\005value\030\002 \001(\01320.com.github" +
-      ".paohaijiao.proto.JQuickFragmentProto:\0028" +
-      "\001\0328\n\026WorkerMemoryQuotaEntry\022\013\n\003key\030\001 \001(\t" +
-      "\022\r\n\005value\030\002 \001(\003:\0028\001\"\220\004\n\030JQuickExecuteTas" +
-      "kRequest\022\017\n\007task_id\030\001 \001(\t\022\020\n\010query_id\030\002 " +
-      "\001(\t\022B\n\010fragment\030\003 \001(\01320.com.github.paoha" +
-      "ijiao.proto.JQuickFragmentProto\022\022\n\ntask_" +
-      "index\030\004 \001(\005\022\023\n\013total_tasks\030\005 \001(\005\022h\n\022sess" +
-      "ion_parameters\030\006 \003(\0132L.com.github.paohai" +
-      "jiao.proto.JQuickExecuteTaskRequest.Sess" +
-      "ionParametersEntry\022Q\n\020input_partitions\030\007" +
-      " \003(\01327.com.github.paohaijiao.proto.JQuic" +
-      "kMemoryPartitionProto\022Q\n\020output_partitio" +
-      "n\030\010 \001(\01327.com.github.paohaijiao.proto.JQ" +
-      "uickMemoryPartitionProto\022\032\n\022memory_limit" +
-      "_bytes\030\t \001(\003\0328\n\026SessionParametersEntry\022\013" +
-      "\n\003key\030\001 \001(\t\022\r\n\005value\030\002 \001(\t:\0028\001\"\376\003\n\031JQuic" +
-      "kExecuteTaskResponse\022\017\n\007task_id\030\001 \001(\t\022B\n" +
-      "\006status\030\002 \001(\01622.com.github.paohaijiao.pr" +
-      "oto.JQuickTaskStatusProto\022\025\n\rerror_messa" +
-      "ge\030\003 \001(\t\022D\n\013result_data\030\004 \001(\0132/.com.gith" +
-      "ub.paohaijiao.proto.JQuickDataSetProto\022N" +
-      "\n\017execution_stats\030\005 \001(\01325.com.github.pao" +
-      "haijiao.proto.JQuickPhysicalStatsProto\022\026" +
-      "\n\016processed_rows\030\006 \001(\003\022\031\n\021execution_time" +
-      "_ms\030\007 \001(\003\022\031\n\021memory_used_bytes\030\010 \001(\003\022]\n\014" +
-      "task_metrics\030\t \003(\0132G.com.github.paohaiji" +
-      "ao.proto.JQuickExecuteTaskResponse.TaskM" +
-      "etricsEntry\0322\n\020TaskMetricsEntry\022\013\n\003key\030\001" +
-      " \001(\t\022\r\n\005value\030\002 \001(\t:\0028\001\"\220\002\n\024JQuickDataCh" +
-      "unkProto\022\017\n\007task_id\030\001 \001(\t\022\020\n\010query_id\030\002 " +
-      "\001(\t\022\023\n\013chunk_index\030\003 \001(\003\022\017\n\007is_last\030\004 \001(" +
-      "\010\022=\n\004data\030\005 \001(\0132/.com.github.paohaijiao." +
-      "proto.JQuickDataSetProto\022\024\n\014partition_id" +
-      "\030\006 \001(\t\022\027\n\017compressed_size\030\007 \001(\003\022\025\n\rorigi" +
-      "nal_size\030\010 \001(\003\022\025\n\ris_compressed\030\t \001(\010\022\023\n" +
-      "\013sequence_id\030\n \001(\003\"\240\002\n\025JQuickWorkerInfoP" +
-      "roto\022\021\n\tworker_id\030\001 \001(\t\022\014\n\004host\030\002 \001(\t\022\014\n" +
-      "\004port\030\003 \001(\005\022\027\n\017max_parallelism\030\004 \001(\005\022\025\n\r" +
-      "current_tasks\030\005 \001(\005\022\021\n\tcpu_usage\030\006 \001(\001\022\024" +
-      "\n\014memory_usage\030\007 \001(\001\022\036\n\026available_memory" +
-      "_bytes\030\010 \001(\003\022\031\n\021used_memory_bytes\030\t \001(\003\022" +
-      "\017\n\007healthy\030\n \001(\010\022\026\n\016last_heartbeat\030\013 \001(\003" +
-      "\022\033\n\023local_partition_ids\030\014 \003(\t\"\355\001\n\031JQuick" +
-      "TaskAssignmentProto\022\017\n\007task_id\030\001 \001(\t\022B\n\010" +
-      "fragment\030\002 \001(\01320.com.github.paohaijiao.p" +
-      "roto.JQuickFragmentProto\022S\n\022assigned_par" +
-      "tition\030\003 \001(\01327.com.github.paohaijiao.pro" +
-      "to.JQuickMemoryPartitionProto\022\020\n\010priorit" +
-      "y\030\004 \001(\005\022\024\n\014memory_limit\030\005 \001(\003\"\374\001\n\026JQuick" +
-      "FetchDataRequest\022\030\n\020source_worker_id\030\001 \001" +
-      "(\t\022\030\n\020target_worker_id\030\002 \001(\t\022\024\n\014partitio" +
-      "n_id\030\003 \001(\t\022\023\n\013chunk_index\030\004 \001(\005\022\022\n\nchunk" +
-      "_size\030\005 \001(\005\022\030\n\020required_columns\030\006 \003(\t\022B\n" +
-      "\006filter\030\007 \001(\01322.com.github.paohaijiao.pr" +
-      "oto.JQuickExpressionProto\022\021\n\tstreaming\030\010" +
-      " \001(\010\"\302\001\n\027JQuickFetchDataResponse\022\024\n\014part" +
-      "ition_id\030\001 \001(\t\022\023\n\013chunk_index\030\002 \001(\005\022\017\n\007i" +
-      "s_last\030\003 \001(\010\022=\n\004data\030\004 \001(\0132/.com.github." +
-      "paohaijiao.proto.JQuickDataSetProto\022\027\n\017d" +
-      "ata_size_bytes\030\005 \001(\003\022\023\n\013from_memory\030\006 \001(",
-      "\010\"\253\002\n\030JQuickSubmitQueryRequest\022\020\n\010query_" +
-      "id\030\001 \001(\t\022\013\n\003sql\030\002 \001(\t\022Y\n\nparameters\030\003 \003(" +
-      "\0132E.com.github.paohaijiao.proto.JQuickSu" +
-      "bmitQueryRequest.ParametersEntry\022\033\n\023defa" +
-      "ult_parallelism\030\004 \001(\005\022E\n\007options\030\005 \001(\01324" +
-      ".com.github.paohaijiao.proto.JQuickQuery" +
-      "OptionsProto\0321\n\017ParametersEntry\022\013\n\003key\030\001" +
-      " \001(\t\022\r\n\005value\030\002 \001(\t:\0028\001\"\233\001\n\027JQuickQueryO" +
-      "ptionsProto\022\027\n\017timeout_seconds\030\001 \001(\005\022\027\n\017" +
-      "max_result_rows\030\002 \001(\005\022\027\n\017collect_metrics" +
-      "\030\003 \001(\010\022\027\n\017memory_limit_mb\030\004 \001(\003\022\034\n\024use_m" +
-      "emory_optimized\030\005 \001(\010\"\227\001\n\031JQuickSubmitQu" +
-      "eryResponse\022\020\n\010query_id\030\001 \001(\t\022\020\n\010accepte" +
-      "d\030\002 \001(\010\022\017\n\007message\030\003 \001(\t\022E\n\004plan\030\004 \001(\01327" +
+      "o\"\253\001\n\035JQuickNestedLoopJoinNodeProto\022C\n\tj" +
+      "oin_type\030\001 \001(\01620.com.github.paohaijiao.p" +
+      "roto.JQuickJoinTypeProto\022E\n\tcondition\030\002 " +
+      "\001(\01322.com.github.paohaijiao.proto.JQuick" +
+      "ExpressionProto\"\366\007\n\034JQuickHashAggregateN" +
+      "odeProto\022F\n\ngroup_keys\030\001 \003(\01322.com.githu" +
+      "b.paohaijiao.proto.JQuickExpressionProto" +
+      "\022d\n\naggregates\030\002 \003(\0132P.com.github.paohai" +
+      "jiao.proto.JQuickHashAggregateNodeProto." +
+      "AggregateFunctionProto\022L\n\020having_conditi" +
+      "on\030\003 \001(\01322.com.github.paohaijiao.proto.J" +
+      "QuickExpressionProto\022E\n\005stage\030\004 \001(\01626.co" +
+      "m.github.paohaijiao.proto.JQuickAggregat" +
+      "eStageProto\022a\n\rgrouping_sets\030\005 \003(\0132J.com" +
+      ".github.paohaijiao.proto.JQuickHashAggre" +
+      "gateNodeProto.GroupingSetProto\022\036\n\026use_me" +
+      "mory_partial_agg\030\006 \001(\010\032\220\002\n\026AggregateFunc" +
+      "tionProto\022\025\n\rfunction_name\030\001 \001(\t\022D\n\010argu" +
+      "ment\030\002 \001(\01322.com.github.paohaijiao.proto" +
+      ".JQuickExpressionProto\022\020\n\010distinct\030\003 \001(\010" +
+      "\022\r\n\005alias\030\004 \001(\t\022\025\n\ris_count_star\030\005 \001(\010\022\021" +
+      "\n\tseparator\030\006 \001(\t\022N\n\016internal_stage\030\007 \001(" +
+      "\01626.com.github.paohaijiao.proto.JQuickAg" +
+      "gregateStageProto\032\374\001\n\020GroupingSetProto\022@" +
+      "\n\004keys\030\001 \003(\01322.com.github.paohaijiao.pro" +
+      "to.JQuickExpressionProto\022h\n\004type\030\002 \001(\0162Z" +
+      ".com.github.paohaijiao.proto.JQuickHashA" +
+      "ggregateNodeProto.GroupingSetProto.Group" +
+      "ingSetType\"<\n\017GroupingSetType\022\r\n\tGS_SIMP" +
+      "LE\020\000\022\r\n\tGS_ROLLUP\020\001\022\013\n\007GS_CUBE\020\002\"\366\001\n\023JQu" +
+      "ickSortNodeProto\022Y\n\016order_by_items\030\001 \003(\013" +
+      "2A.com.github.paohaijiao.proto.JQuickSor" +
+      "tNodeProto.OrderByItemProto\022\027\n\017use_memor" +
+      "y_sort\030\002 \001(\010\022\032\n\022memory_limit_bytes\030\003 \001(\003" +
+      "\032O\n\020OrderByItemProto\022\023\n\013column_name\030\001 \001(" +
+      "\t\022\021\n\tascending\030\002 \001(\010\022\023\n\013nulls_first\030\003 \001(" +
+      "\010\"5\n\024JQuickLimitNodeProto\022\r\n\005limit\030\001 \001(\005" +
+      "\022\016\n\006offset\030\002 \001(\005\"\211\003\n\027JQuickExchangeNodeP" +
+      "roto\022\023\n\013exchange_id\030\001 \001(\t\022K\n\rexchange_ty" +
+      "pe\030\002 \001(\01624.com.github.paohaijiao.proto.J" +
+      "QuickExchangeTypeProto\022U\n\022partition_stra" +
+      "tegy\030\003 \001(\01629.com.github.paohaijiao.proto" +
+      ".JQuickPartitionStrategyProto\022J\n\016partiti" +
+      "on_keys\030\004 \003(\01322.com.github.paohaijiao.pr" +
+      "oto.JQuickExpressionProto\022\023\n\013parallelism" +
+      "\030\005 \001(\005\022\027\n\017buffer_capacity\030\006 \001(\005\022\022\n\nbatch" +
+      "_size\030\007 \001(\005\022\023\n\013compression\030\010 \001(\010\022\022\n\ntime" +
+      "out_ms\030\t \001(\005\"\353\003\n\034JQuickMemoryShuffleNode" +
+      "Proto\022\022\n\nshuffle_id\030\001 \001(\t\022U\n\022partition_s" +
+      "trategy\030\002 \001(\01629.com.github.paohaijiao.pr" +
+      "oto.JQuickPartitionStrategyProto\022J\n\016part" +
+      "ition_keys\030\003 \003(\01322.com.github.paohaijiao" +
+      ".proto.JQuickExpressionProto\022\031\n\021output_p" +
+      "artitions\030\004 \001(\005\022\035\n\025memory_buffer_size_mb" +
+      "\030\005 \001(\005\022\025\n\rspill_to_disk\030\006 \001(\010\022\027\n\017spill_t" +
+      "hreshold\030\007 \001(\005\022o\n\024partition_worker_map\030\010" +
+      " \003(\0132Q.com.github.paohaijiao.proto.JQuic" +
+      "kMemoryShuffleNodeProto.PartitionWorkerM" +
+      "apEntry\0329\n\027PartitionWorkerMapEntry\022\013\n\003ke" +
+      "y\030\001 \001(\005\022\r\n\005value\030\002 \001(\t:\0028\001\"~\n\025JQuickValu" +
+      "esNodeProto\0229\n\004rows\030\001 \003(\0132+.com.github.p" +
+      "aohaijiao.proto.JQuickRowProto\022\024\n\014column" +
+      "_names\030\002 \003(\t\022\024\n\014column_types\030\003 \003(\t\"\026\n\024JQ" +
+      "uickEmptyNodeProto\"\363\t\n\025JQuickWindowNodeP" +
+      "roto\022`\n\020window_functions\030\001 \003(\0132F.com.git" +
+      "hub.paohaijiao.proto.JQuickWindowNodePro" +
+      "to.WindowFunctionProto\032\332\001\n\023WindowFunctio" +
+      "nProto\022\025\n\rfunction_name\030\001 \001(\t\022D\n\010argumen" +
+      "t\030\002 \001(\01322.com.github.paohaijiao.proto.JQ" +
+      "uickExpressionProto\022W\n\013window_spec\030\003 \001(\013" +
+      "2B.com.github.paohaijiao.proto.JQuickWin" +
+      "dowNodeProto.WindowSpecProto\022\r\n\005alias\030\004 " +
+      "\001(\t\032\210\002\n\017WindowSpecProto\022J\n\016partition_key" +
+      "s\030\001 \003(\01322.com.github.paohaijiao.proto.JQ" +
+      "uickExpressionProto\022U\n\norder_keys\030\002 \003(\0132" +
+      "A.com.github.paohaijiao.proto.JQuickSort" +
+      "NodeProto.OrderByItemProto\022R\n\005frame\030\003 \001(" +
+      "\0132C.com.github.paohaijiao.proto.JQuickWi" +
+      "ndowNodeProto.WindowFrameProto\032\217\005\n\020Windo" +
+      "wFrameProto\022a\n\nframe_type\030\001 \001(\0162M.com.gi" +
+      "thub.paohaijiao.proto.JQuickWindowNodePr" +
+      "oto.WindowFrameProto.FrameType\022d\n\nstart_" +
+      "type\030\002 \001(\0162P.com.github.paohaijiao.proto" +
+      ".JQuickWindowNodeProto.WindowFrameProto." +
+      "BoundaryType\022H\n\014start_offset\030\003 \001(\01322.com" +
+      ".github.paohaijiao.proto.JQuickExpressio" +
+      "nProto\022b\n\010end_type\030\004 \001(\0162P.com.github.pa" +
+      "ohaijiao.proto.JQuickWindowNodeProto.Win" +
+      "dowFrameProto.BoundaryType\022F\n\nend_offset" +
+      "\030\005 \001(\01322.com.github.paohaijiao.proto.JQu" +
+      "ickExpressionProto\",\n\tFrameType\022\016\n\nFRAME" +
+      "_ROWS\020\000\022\017\n\013FRAME_RANGE\020\001\"\215\001\n\014BoundaryTyp" +
+      "e\022\035\n\031BOUND_UNBOUNDED_PRECEDING\020\000\022\023\n\017BOUN" +
+      "D_PRECEDING\020\001\022\025\n\021BOUND_CURRENT_ROW\020\002\022\023\n\017" +
+      "BOUND_FOLLOWING\020\003\022\035\n\031BOUND_UNBOUNDED_FOL" +
+      "LOWING\020\004\"\315\001\n\033JQuickSetOperationNodeProto" +
+      "\022P\n\016operation_type\030\001 \001(\01628.com.github.pa" +
+      "ohaijiao.proto.JQuickSQLOperationTypePro" +
+      "to\022\020\n\010distinct\030\002 \001(\010\022J\n\010children\030\003 \003(\01328" +
+      ".com.github.paohaijiao.proto.JQuickPhysi" +
+      "calPlanNodeProto\"\217\001\n\023JQuickTopNNodeProto" +
+      "\022Y\n\016order_by_items\030\001 \003(\0132A.com.github.pa" +
+      "ohaijiao.proto.JQuickSortNodeProto.Order" +
+      "ByItemProto\022\r\n\005limit\030\002 \001(\005\022\016\n\006offset\030\003 \001" +
+      "(\005\"w\n\035JQuickRecursiveUnionNodeProto\022\020\n\010c" +
+      "te_name\030\001 \001(\t\022\024\n\014column_names\030\002 \003(\t\022\021\n\tu" +
+      "nion_all\030\003 \001(\010\022\033\n\023max_recursion_depth\030\004 " +
+      "\001(\005\"\220\005\n\023JQuickFragmentProto\022\023\n\013fragment_" +
+      "id\030\001 \001(\003\022B\n\004type\030\002 \001(\01624.com.github.paoh" +
+      "aijiao.proto.JQuickFragmentTypeProto\022F\n\004" +
+      "plan\030\003 \001(\01328.com.github.paohaijiao.proto" +
+      ".JQuickPhysicalPlanNodeProto\022\032\n\022child_fr" +
+      "agment_ids\030\004 \003(\003\022M\n\017output_exchange\030\005 \001(" +
+      "\01324.com.github.paohaijiao.proto.JQuickEx" +
+      "changeNodeProto\022M\n\017input_exchanges\030\006 \003(\013" +
+      "24.com.github.paohaijiao.proto.JQuickExc" +
+      "hangeNodeProto\022\023\n\013parallelism\030\007 \001(\005\022\032\n\022a" +
+      "ssigned_worker_id\030\010 \001(\t\022P\n\017input_partiti" +
+      "on\030\t \001(\01327.com.github.paohaijiao.proto.J" +
+      "QuickMemoryPartitionProto\022Q\n\020output_part" +
+      "ition\030\n \001(\01327.com.github.paohaijiao.prot" +
+      "o.JQuickMemoryPartitionProto\022H\n\014data_str" +
+      "eams\030\013 \003(\01322.com.github.paohaijiao.proto" +
+      ".JQuickDataStreamProto\"\273\004\n\032JQuickDistrib" +
+      "utedPlanProto\022\017\n\007plan_id\030\001 \001(\t\022G\n\rroot_f" +
+      "ragment\030\002 \001(\01320.com.github.paohaijiao.pr" +
+      "oto.JQuickFragmentProto\022\033\n\023default_paral" +
+      "lelism\030\003 \001(\005\022Y\n\tfragments\030\004 \003(\0132F.com.gi" +
+      "thub.paohaijiao.proto.JQuickDistributedP" +
+      "lanProto.FragmentsEntry\022\022\n\ncreated_at\030\005 " +
+      "\001(\003\022\020\n\010query_id\030\006 \001(\t\022\032\n\022total_memory_by" +
+      "tes\030\007 \001(\003\022k\n\023worker_memory_quota\030\010 \003(\0132N" +
       ".com.github.paohaijiao.proto.JQuickDistr" +
-      "ibutedPlanProto\"E\n\030JQuickQueryStatusRequ" +
-      "est\022\020\n\010query_id\030\001 \001(\t\022\027\n\017include_details" +
-      "\030\002 \001(\010\"\344\003\n\031JQuickQueryStatusResponse\022\020\n\010" +
-      "query_id\030\001 \001(\t\022A\n\005state\030\002 \001(\01622.com.gith" +
-      "ub.paohaijiao.proto.JQuickQueryStateProt" +
-      "o\022\025\n\rerror_message\030\003 \001(\t\022\026\n\016rows_process" +
-      "ed\030\004 \001(\003\022\025\n\rrows_produced\030\005 \001(\003\022\031\n\021execu" +
-      "tion_time_ms\030\006 \001(\003\022\033\n\023progress_percentag" +
-      "e\030\007 \001(\001\022\031\n\021memory_used_bytes\030\010 \001(\003\022[\n\013ta" +
-      "sk_status\030\t \003(\0132F.com.github.paohaijiao." +
-      "proto.JQuickQueryStatusResponse.TaskStat" +
-      "usEntry\022I\n\007metrics\030\n \001(\01328.com.github.pa" +
-      "ohaijiao.proto.JQuickExecutionMetricsPro" +
-      "to\0321\n\017TaskStatusEntry\022\013\n\003key\030\001 \001(\t\022\r\n\005va" +
-      "lue\030\002 \001(\t:\0028\001\"\346\002\n\033JQuickExecutionMetrics" +
-      "Proto\022\023\n\013total_tasks\030\001 \001(\003\022\027\n\017completed_" +
-      "tasks\030\002 \001(\003\022\024\n\014failed_tasks\030\003 \001(\003\022\025\n\rrun" +
-      "ning_tasks\030\004 \001(\003\022\033\n\023data_shuffled_bytes\030" +
-      "\005 \001(\003\022\023\n\013cpu_time_ms\030\006 \001(\003\022\031\n\021peak_memor" +
-      "y_bytes\030\007 \001(\003\022g\n\020operator_metrics\030\010 \003(\0132" +
-      "M.com.github.paohaijiao.proto.JQuickExec" +
-      "utionMetricsProto.OperatorMetricsEntry\0326" +
-      "\n\024OperatorMetricsEntry\022\013\n\003key\030\001 \001(\t\022\r\n\005v" +
-      "alue\030\002 \001(\001:\0028\001\"<\n\030JQuickCancelQueryReque" +
-      "st\022\020\n\010query_id\030\001 \001(\t\022\016\n\006reason\030\002 \001(\t\"O\n\031" +
-      "JQuickCancelQueryResponse\022\020\n\010query_id\030\001 " +
-      "\001(\t\022\017\n\007success\030\002 \001(\010\022\017\n\007message\030\003 \001(\t\"h\n" +
-      "\026JQuickGetResultRequest\022\020\n\010query_id\030\001 \001(" +
-      "\t\022\020\n\010max_rows\030\002 \001(\005\022\016\n\006offset\030\003 \001(\005\022\032\n\022f" +
-      "etch_continuously\030\004 \001(\010\"|\n\024RegisterTable" +
-      "Request\022\022\n\ntable_name\030\001 \001(\t\022=\n\004data\030\002 \001(" +
-      "\0132/.com.github.paohaijiao.proto.JQuickDa" +
-      "taSetProto\022\021\n\toverwrite\030\003 \001(\010\"L\n\025Registe" +
-      "rTableResponse\022\017\n\007success\030\001 \001(\010\022\017\n\007messa" +
-      "ge\030\002 \001(\t\022\021\n\trow_count\030\003 \001(\003\"Z\n\026RegisterT" +
-      "ablesResponse\022\017\n\007success\030\001 \001(\010\022\030\n\020regist" +
-      "ered_count\030\002 \001(\005\022\025\n\rfailed_tables\030\003 \003(\t\"" +
-      "&\n\020DropTableRequest\022\022\n\ntable_name\030\001 \001(\t\"" +
-      "5\n\021DropTableResponse\022\017\n\007success\030\001 \001(\010\022\017\n" +
-      "\007message\030\002 \001(\t\"Y\n\027JQuickBroadcastRespons" +
-      "e\022\017\n\007success\030\001 \001(\010\022\025\n\rsuccess_count\030\002 \001(" +
-      "\005\022\026\n\016failed_workers\030\003 \003(\t*\250\001\n\034JQuickPart" +
-      "itionStrategyProto\022\022\n\016PARTITION_HASH\020\000\022\023" +
-      "\n\017PARTITION_RANGE\020\001\022\031\n\025PARTITION_ROUND_R" +
-      "OBIN\020\002\022\027\n\023PARTITION_BROADCAST\020\003\022\025\n\021PARTI" +
-      "TION_FORWARD\020\004\022\024\n\020PARTITION_CUSTOM\020\005*\340\001\n" +
-      "\031JQuickExpressionTypeProto\022\023\n\017EXPR_COLUM" +
-      "N_REF\020\000\022\020\n\014EXPR_LITERAL\020\001\022\021\n\rEXPR_FUNCTI" +
-      "ON\020\002\022\030\n\024EXPR_BINARY_OPERATOR\020\003\022\027\n\023EXPR_U" +
-      "NARY_OPERATOR\020\004\022\022\n\016EXPR_CASE_WHEN\020\005\022\021\n\rE" +
-      "XPR_SUBQUERY\020\006\022\013\n\007EXPR_IN\020\007\022\020\n\014EXPR_BETW" +
-      "EEN\020\010\022\020\n\014EXPR_IS_NULL\020\t*\243\002\n\031JQuickBinary" +
-      "OperatorProto\022\t\n\005OP_EQ\020\000\022\t\n\005OP_NE\020\001\022\t\n\005O" +
-      "P_LT\020\002\022\n\n\006OP_LTE\020\003\022\t\n\005OP_GT\020\004\022\n\n\006OP_GTE\020" +
-      "\005\022\n\n\006OP_AND\020\006\022\t\n\005OP_OR\020\007\022\013\n\007OP_LIKE\020\010\022\017\n" +
-      "\013OP_NOT_LIKE\020\t\022\t\n\005OP_IN\020\n\022\r\n\tOP_NOT_IN\020\013" +
-      "\022\013\n\007OP_PLUS\020\014\022\014\n\010OP_MINUS\020\r\022\017\n\013OP_MULTIP" +
-      "LY\020\016\022\r\n\tOP_DIVIDE\020\017\022\n\n\006OP_MOD\020\020\022\014\n\010OP_RE" +
-      "GEX\020\021\022\020\n\014OP_NOT_REGEX\020\022\022\014\n\010OP_EXIST\020\023*\203\001" +
-      "\n\030JQuickUnaryOperatorProto\022\020\n\014OP_UNARY_N" +
-      "OT\020\000\022\021\n\rOP_UNARY_PLUS\020\001\022\022\n\016OP_UNARY_MINU" +
-      "S\020\002\022\024\n\020OP_UNARY_IS_NULL\020\003\022\030\n\024OP_UNARY_IS" +
-      "_NOT_NULL\020\004*\201\001\n\023JQuickJoinTypeProto\022\016\n\nJ" +
-      "OIN_INNER\020\000\022\r\n\tJOIN_LEFT\020\001\022\016\n\nJOIN_RIGHT" +
-      "\020\002\022\r\n\tJOIN_FULL\020\003\022\016\n\nJOIN_CROSS\020\004\022\r\n\tJOI" +
-      "N_SEMI\020\005\022\r\n\tJOIN_ANTI\020\006*A\n\024JQuickBuildSi" +
-      "deProto\022\023\n\017BUILD_SIDE_LEFT\020\000\022\024\n\020BUILD_SI" +
-      "DE_RIGHT\020\001*}\n\033JQuickJoinDistributionProt" +
-      "o\022\023\n\017JOIN_DIST_LOCAL\020\000\022\025\n\021JOIN_DIST_SHUF" +
-      "FLE\020\001\022\027\n\023JOIN_DIST_BROADCAST\020\002\022\031\n\025JOIN_D" +
-      "IST_PARTITIONED\020\003*K\n\031JQuickAggregateStag" +
-      "eProto\022\017\n\013AGG_PARTIAL\020\000\022\r\n\tAGG_FINAL\020\001\022\016" +
-      "\n\nAGG_SINGLE\020\002*o\n\027JQuickExchangeTypeProt" +
-      "o\022\016\n\nEX_SHUFFLE\020\000\022\020\n\014EX_BROADCAST\020\001\022\r\n\tE" +
-      "X_GATHER\020\002\022\022\n\016EX_REPARTITION\020\003\022\017\n\013EX_PIP" +
-      "ELINE\020\004*b\n\033JQuickSQLOperationTypeProto\022\r" +
-      "\n\tSET_UNION\020\000\022\021\n\rSET_UNION_ALL\020\001\022\021\n\rSET_" +
-      "INTERSECT\020\002\022\016\n\nSET_EXCEPT\020\003*\\\n\027JQuickFra" +
-      "gmentTypeProto\022\023\n\017FRAGMENT_SOURCE\020\000\022\031\n\025F" +
-      "RAGMENT_INTERMEDIATE\020\001\022\021\n\rFRAGMENT_SINK\020" +
-      "\002*r\n\025JQuickTaskStatusProto\022\020\n\014TASK_PENDI" +
-      "NG\020\000\022\020\n\014TASK_RUNNING\020\001\022\020\n\014TASK_SUCCESS\020\002" +
-      "\022\017\n\013TASK_FAILED\020\003\022\022\n\016TASK_CANCELLED\020\004*\243\001" +
-      "\n\025JQuickQueryStateProto\022\021\n\rQUERY_PENDING" +
-      "\020\000\022\022\n\016QUERY_PLANNING\020\001\022\024\n\020QUERY_SCHEDULI" +
-      "NG\020\002\022\021\n\rQUERY_RUNNING\020\003\022\023\n\017QUERY_SUCCEED" +
-      "ED\020\004\022\020\n\014QUERY_FAILED\020\005\022\023\n\017QUERY_CANCELLE" +
-      "D\020\0062\364\002\n\022JQuickTableService\022v\n\rRegisterTa" +
-      "ble\0221.com.github.paohaijiao.proto.Regist" +
-      "erTableRequest\0322.com.github.paohaijiao.p" +
-      "roto.RegisterTableResponse\022z\n\016RegisterTa" +
-      "bles\0221.com.github.paohaijiao.proto.Regis" +
-      "terTableRequest\0323.com.github.paohaijiao." +
-      "proto.RegisterTablesResponse(\001\022j\n\tDropTa" +
-      "ble\022-.com.github.paohaijiao.proto.DropTa" +
-      "bleRequest\032..com.github.paohaijiao.proto" +
-      ".DropTableResponse2\306\010\n\031JQuickPhysicalPla" +
-      "nService\022|\n\013ExecuteTask\0225.com.github.pao" +
-      "haijiao.proto.JQuickExecuteTaskRequest\0326" +
-      ".com.github.paohaijiao.proto.JQuickExecu" +
-      "teTaskResponse\022\177\n\021ExecuteTaskStream\0225.co" +
+      "ibutedPlanProto.WorkerMemoryQuotaEntry\032b" +
+      "\n\016FragmentsEntry\022\013\n\003key\030\001 \001(\003\022?\n\005value\030\002" +
+      " \001(\01320.com.github.paohaijiao.proto.JQuic" +
+      "kFragmentProto:\0028\001\0328\n\026WorkerMemoryQuotaE" +
+      "ntry\022\013\n\003key\030\001 \001(\t\022\r\n\005value\030\002 \001(\003:\0028\001\"\220\004\n" +
+      "\030JQuickExecuteTaskRequest\022\017\n\007task_id\030\001 \001" +
+      "(\t\022\020\n\010query_id\030\002 \001(\t\022B\n\010fragment\030\003 \001(\01320" +
+      ".com.github.paohaijiao.proto.JQuickFragm" +
+      "entProto\022\022\n\ntask_index\030\004 \001(\005\022\023\n\013total_ta" +
+      "sks\030\005 \001(\005\022h\n\022session_parameters\030\006 \003(\0132L." +
+      "com.github.paohaijiao.proto.JQuickExecut" +
+      "eTaskRequest.SessionParametersEntry\022Q\n\020i" +
+      "nput_partitions\030\007 \003(\01327.com.github.paoha" +
+      "ijiao.proto.JQuickMemoryPartitionProto\022Q" +
+      "\n\020output_partition\030\010 \001(\01327.com.github.pa" +
+      "ohaijiao.proto.JQuickMemoryPartitionProt" +
+      "o\022\032\n\022memory_limit_bytes\030\t \001(\003\0328\n\026Session" +
+      "ParametersEntry\022\013\n\003key\030\001 \001(\t\022\r\n\005value\030\002 " +
+      "\001(\t:\0028\001\"\376\003\n\031JQuickExecuteTaskResponse\022\017\n" +
+      "\007task_id\030\001 \001(\t\022B\n\006status\030\002 \001(\01622.com.git" +
+      "hub.paohaijiao.proto.JQuickTaskStatusPro" +
+      "to\022\025\n\rerror_message\030\003 \001(\t\022D\n\013result_data" +
+      "\030\004 \001(\0132/.com.github.paohaijiao.proto.JQu" +
+      "ickDataSetProto\022N\n\017execution_stats\030\005 \001(\013" +
+      "25.com.github.paohaijiao.proto.JQuickPhy" +
+      "sicalStatsProto\022\026\n\016processed_rows\030\006 \001(\003\022" +
+      "\031\n\021execution_time_ms\030\007 \001(\003\022\031\n\021memory_use" +
+      "d_bytes\030\010 \001(\003\022]\n\014task_metrics\030\t \003(\0132G.co" +
       "m.github.paohaijiao.proto.JQuickExecuteT" +
-      "askRequest\0321.com.github.paohaijiao.proto" +
-      ".JQuickDataChunkProto0\001\022{\n\nCancelTask\0225." +
-      "com.github.paohaijiao.proto.JQuickCancel" +
-      "QueryRequest\0326.com.github.paohaijiao.pro" +
-      "to.JQuickCancelQueryResponse\022v\n\tHeartbea" +
-      "t\0223.com.github.paohaijiao.proto.JQuickHe" +
-      "artbeatRequest\0324.com.github.paohaijiao.p" +
-      "roto.JQuickHeartbeatResponse\022\205\001\n\016Registe" +
-      "rWorker\0228.com.github.paohaijiao.proto.JQ" +
-      "uickRegisterWorkerRequest\0329.com.github.p" +
-      "aohaijiao.proto.JQuickRegisterWorkerResp" +
-      "onse\022\232\001\n\025UpdateWorkerEndpoints\022?.com.git" +
-      "hub.paohaijiao.proto.JQuickUpdateWorkerE" +
-      "ndpointsRequest\032@.com.github.paohaijiao." +
-      "proto.JQuickUpdateWorkerEndpointsRespons" +
-      "e\022\221\001\n\022GetWorkerEndpoints\022<.com.github.pa" +
-      "ohaijiao.proto.JQuickGetWorkerEndpointsR" +
-      "equest\032=.com.github.paohaijiao.proto.JQu" +
-      "ickGetWorkerEndpointsResponse\022|\n\013WorkerL" +
-      "eave\0225.com.github.paohaijiao.proto.JQuic" +
-      "kWorkerLeaveRequest\0326.com.github.paohaij" +
-      "iao.proto.JQuickWorkerLeaveResponse2\213\003\n\035" +
-      "JQuickDataDistributionService\022r\n\010SendDat" +
-      "a\0221.com.github.paohaijiao.proto.JQuickDa" +
-      "taChunkProto\0321.com.github.paohaijiao.pro" +
-      "to.JQuickEmptyNodeProto(\001\022z\n\013ReceiveData" +
-      "\0223.com.github.paohaijiao.proto.JQuickFet" +
-      "chDataRequest\0324.com.github.paohaijiao.pr" +
-      "oto.JQuickFetchDataResponse0\001\022z\n\rBroadca" +
-      "stData\0221.com.github.paohaijiao.proto.JQu" +
-      "ickDataChunkProto\0324.com.github.paohaijia" +
-      "o.proto.JQuickBroadcastResponse(\0012\213\005\n\030JQ" +
-      "uickCoordinatorService\022|\n\013SubmitQuery\0225." +
-      "com.github.paohaijiao.proto.JQuickSubmit" +
-      "QueryRequest\0326.com.github.paohaijiao.pro" +
-      "to.JQuickSubmitQueryResponse\022\177\n\016GetQuery" +
-      "Status\0225.com.github.paohaijiao.proto.JQu" +
-      "ickQueryStatusRequest\0326.com.github.paoha" +
-      "ijiao.proto.JQuickQueryStatusResponse\022|\n" +
-      "\013CancelQuery\0225.com.github.paohaijiao.pro" +
-      "to.JQuickCancelQueryRequest\0326.com.github" +
-      ".paohaijiao.proto.JQuickCancelQueryRespo" +
-      "nse\022z\n\016GetQueryResult\0223.com.github.paoha" +
-      "ijiao.proto.JQuickGetResultRequest\0321.com" +
-      ".github.paohaijiao.proto.JQuickDataChunk" +
-      "Proto0\001\022v\n\tHeartbeat\0223.com.github.paohai" +
-      "jiao.proto.JQuickHeartbeatRequest\0324.com." +
-      "github.paohaijiao.proto.JQuickHeartbeatR" +
-      "esponseB8\n\033com.github.paohaijiao.protoB\027" +
-      "JQuickPhysicalPlanProtoP\001b\006proto3"
+      "askResponse.TaskMetricsEntry\0322\n\020TaskMetr" +
+      "icsEntry\022\013\n\003key\030\001 \001(\t\022\r\n\005value\030\002 \001(\t:\0028\001" +
+      "\"\220\002\n\024JQuickDataChunkProto\022\017\n\007task_id\030\001 \001" +
+      "(\t\022\020\n\010query_id\030\002 \001(\t\022\023\n\013chunk_index\030\003 \001(" +
+      "\003\022\017\n\007is_last\030\004 \001(\010\022=\n\004data\030\005 \001(\0132/.com.g" +
+      "ithub.paohaijiao.proto.JQuickDataSetProt" +
+      "o\022\024\n\014partition_id\030\006 \001(\t\022\027\n\017compressed_si" +
+      "ze\030\007 \001(\003\022\025\n\roriginal_size\030\010 \001(\003\022\025\n\ris_co" +
+      "mpressed\030\t \001(\010\022\023\n\013sequence_id\030\n \001(\003\"\240\002\n\025" +
+      "JQuickWorkerInfoProto\022\021\n\tworker_id\030\001 \001(\t" +
+      "\022\014\n\004host\030\002 \001(\t\022\014\n\004port\030\003 \001(\005\022\027\n\017max_para" +
+      "llelism\030\004 \001(\005\022\025\n\rcurrent_tasks\030\005 \001(\005\022\021\n\t" +
+      "cpu_usage\030\006 \001(\001\022\024\n\014memory_usage\030\007 \001(\001\022\036\n" +
+      "\026available_memory_bytes\030\010 \001(\003\022\031\n\021used_me" +
+      "mory_bytes\030\t \001(\003\022\017\n\007healthy\030\n \001(\010\022\026\n\016las" +
+      "t_heartbeat\030\013 \001(\003\022\033\n\023local_partition_ids" +
+      "\030\014 \003(\t\"\355\001\n\031JQuickTaskAssignmentProto\022\017\n\007" +
+      "task_id\030\001 \001(\t\022B\n\010fragment\030\002 \001(\01320.com.gi" +
+      "thub.paohaijiao.proto.JQuickFragmentProt" +
+      "o\022S\n\022assigned_partition\030\003 \001(\01327.com.gith" +
+      "ub.paohaijiao.proto.JQuickMemoryPartitio" +
+      "nProto\022\020\n\010priority\030\004 \001(\005\022\024\n\014memory_limit" +
+      "\030\005 \001(\003\"\374\001\n\026JQuickFetchDataRequest\022\030\n\020sou" +
+      "rce_worker_id\030\001 \001(\t\022\030\n\020target_worker_id\030" +
+      "\002 \001(\t\022\024\n\014partition_id\030\003 \001(\t\022\023\n\013chunk_ind" +
+      "ex\030\004 \001(\005\022\022\n\nchunk_size\030\005 \001(\005\022\030\n\020required" +
+      "_columns\030\006 \003(\t\022B\n\006filter\030\007 \001(\01322.com.git" +
+      "hub.paohaijiao.proto.JQuickExpressionPro" +
+      "to\022\021\n\tstreaming\030\010 \001(\010\"\302\001\n\027JQuickFetchDat" +
+      "aResponse\022\024\n\014partition_id\030\001 \001(\t\022\023\n\013chunk" +
+      "_index\030\002 \001(\005\022\017\n\007is_last\030\003 \001(\010\022=\n\004data\030\004 " +
+      "\001(\0132/.com.github.paohaijiao.proto.JQuick" +
+      "DataSetProto\022\027\n\017data_size_bytes\030\005 \001(\003\022\023\n",
+      "\013from_memory\030\006 \001(\010\"\253\002\n\030JQuickSubmitQuery" +
+      "Request\022\020\n\010query_id\030\001 \001(\t\022\013\n\003sql\030\002 \001(\t\022Y" +
+      "\n\nparameters\030\003 \003(\0132E.com.github.paohaiji" +
+      "ao.proto.JQuickSubmitQueryRequest.Parame" +
+      "tersEntry\022\033\n\023default_parallelism\030\004 \001(\005\022E" +
+      "\n\007options\030\005 \001(\01324.com.github.paohaijiao." +
+      "proto.JQuickQueryOptionsProto\0321\n\017Paramet" +
+      "ersEntry\022\013\n\003key\030\001 \001(\t\022\r\n\005value\030\002 \001(\t:\0028\001" +
+      "\"\233\001\n\027JQuickQueryOptionsProto\022\027\n\017timeout_" +
+      "seconds\030\001 \001(\005\022\027\n\017max_result_rows\030\002 \001(\005\022\027" +
+      "\n\017collect_metrics\030\003 \001(\010\022\027\n\017memory_limit_" +
+      "mb\030\004 \001(\003\022\034\n\024use_memory_optimized\030\005 \001(\010\"\227" +
+      "\001\n\031JQuickSubmitQueryResponse\022\020\n\010query_id" +
+      "\030\001 \001(\t\022\020\n\010accepted\030\002 \001(\010\022\017\n\007message\030\003 \001(" +
+      "\t\022E\n\004plan\030\004 \001(\01327.com.github.paohaijiao." +
+      "proto.JQuickDistributedPlanProto\"E\n\030JQui" +
+      "ckQueryStatusRequest\022\020\n\010query_id\030\001 \001(\t\022\027" +
+      "\n\017include_details\030\002 \001(\010\"\344\003\n\031JQuickQueryS" +
+      "tatusResponse\022\020\n\010query_id\030\001 \001(\t\022A\n\005state" +
+      "\030\002 \001(\01622.com.github.paohaijiao.proto.JQu" +
+      "ickQueryStateProto\022\025\n\rerror_message\030\003 \001(" +
+      "\t\022\026\n\016rows_processed\030\004 \001(\003\022\025\n\rrows_produc" +
+      "ed\030\005 \001(\003\022\031\n\021execution_time_ms\030\006 \001(\003\022\033\n\023p" +
+      "rogress_percentage\030\007 \001(\001\022\031\n\021memory_used_" +
+      "bytes\030\010 \001(\003\022[\n\013task_status\030\t \003(\0132F.com.g" +
+      "ithub.paohaijiao.proto.JQuickQueryStatus" +
+      "Response.TaskStatusEntry\022I\n\007metrics\030\n \001(" +
+      "\01328.com.github.paohaijiao.proto.JQuickEx" +
+      "ecutionMetricsProto\0321\n\017TaskStatusEntry\022\013" +
+      "\n\003key\030\001 \001(\t\022\r\n\005value\030\002 \001(\t:\0028\001\"\346\002\n\033JQuic" +
+      "kExecutionMetricsProto\022\023\n\013total_tasks\030\001 " +
+      "\001(\003\022\027\n\017completed_tasks\030\002 \001(\003\022\024\n\014failed_t" +
+      "asks\030\003 \001(\003\022\025\n\rrunning_tasks\030\004 \001(\003\022\033\n\023dat" +
+      "a_shuffled_bytes\030\005 \001(\003\022\023\n\013cpu_time_ms\030\006 " +
+      "\001(\003\022\031\n\021peak_memory_bytes\030\007 \001(\003\022g\n\020operat" +
+      "or_metrics\030\010 \003(\0132M.com.github.paohaijiao" +
+      ".proto.JQuickExecutionMetricsProto.Opera" +
+      "torMetricsEntry\0326\n\024OperatorMetricsEntry\022" +
+      "\013\n\003key\030\001 \001(\t\022\r\n\005value\030\002 \001(\001:\0028\001\"<\n\030JQuic" +
+      "kCancelQueryRequest\022\020\n\010query_id\030\001 \001(\t\022\016\n" +
+      "\006reason\030\002 \001(\t\"O\n\031JQuickCancelQueryRespon" +
+      "se\022\020\n\010query_id\030\001 \001(\t\022\017\n\007success\030\002 \001(\010\022\017\n" +
+      "\007message\030\003 \001(\t\"h\n\026JQuickGetResultRequest" +
+      "\022\020\n\010query_id\030\001 \001(\t\022\020\n\010max_rows\030\002 \001(\005\022\016\n\006" +
+      "offset\030\003 \001(\005\022\032\n\022fetch_continuously\030\004 \001(\010" +
+      "\"|\n\024RegisterTableRequest\022\022\n\ntable_name\030\001" +
+      " \001(\t\022=\n\004data\030\002 \001(\0132/.com.github.paohaiji" +
+      "ao.proto.JQuickDataSetProto\022\021\n\toverwrite" +
+      "\030\003 \001(\010\"L\n\025RegisterTableResponse\022\017\n\007succe" +
+      "ss\030\001 \001(\010\022\017\n\007message\030\002 \001(\t\022\021\n\trow_count\030\003" +
+      " \001(\003\"Z\n\026RegisterTablesResponse\022\017\n\007succes" +
+      "s\030\001 \001(\010\022\030\n\020registered_count\030\002 \001(\005\022\025\n\rfai" +
+      "led_tables\030\003 \003(\t\"&\n\020DropTableRequest\022\022\n\n" +
+      "table_name\030\001 \001(\t\"5\n\021DropTableResponse\022\017\n" +
+      "\007success\030\001 \001(\010\022\017\n\007message\030\002 \001(\t\"Y\n\027JQuic" +
+      "kBroadcastResponse\022\017\n\007success\030\001 \001(\010\022\025\n\rs" +
+      "uccess_count\030\002 \001(\005\022\026\n\016failed_workers\030\003 \003" +
+      "(\t*\250\001\n\034JQuickPartitionStrategyProto\022\022\n\016P" +
+      "ARTITION_HASH\020\000\022\023\n\017PARTITION_RANGE\020\001\022\031\n\025" +
+      "PARTITION_ROUND_ROBIN\020\002\022\027\n\023PARTITION_BRO" +
+      "ADCAST\020\003\022\025\n\021PARTITION_FORWARD\020\004\022\024\n\020PARTI" +
+      "TION_CUSTOM\020\005*\340\001\n\031JQuickExpressionTypePr" +
+      "oto\022\023\n\017EXPR_COLUMN_REF\020\000\022\020\n\014EXPR_LITERAL" +
+      "\020\001\022\021\n\rEXPR_FUNCTION\020\002\022\030\n\024EXPR_BINARY_OPE" +
+      "RATOR\020\003\022\027\n\023EXPR_UNARY_OPERATOR\020\004\022\022\n\016EXPR" +
+      "_CASE_WHEN\020\005\022\021\n\rEXPR_SUBQUERY\020\006\022\013\n\007EXPR_" +
+      "IN\020\007\022\020\n\014EXPR_BETWEEN\020\010\022\020\n\014EXPR_IS_NULL\020\t" +
+      "*\243\002\n\031JQuickBinaryOperatorProto\022\t\n\005OP_EQ\020" +
+      "\000\022\t\n\005OP_NE\020\001\022\t\n\005OP_LT\020\002\022\n\n\006OP_LTE\020\003\022\t\n\005O" +
+      "P_GT\020\004\022\n\n\006OP_GTE\020\005\022\n\n\006OP_AND\020\006\022\t\n\005OP_OR\020" +
+      "\007\022\013\n\007OP_LIKE\020\010\022\017\n\013OP_NOT_LIKE\020\t\022\t\n\005OP_IN" +
+      "\020\n\022\r\n\tOP_NOT_IN\020\013\022\013\n\007OP_PLUS\020\014\022\014\n\010OP_MIN" +
+      "US\020\r\022\017\n\013OP_MULTIPLY\020\016\022\r\n\tOP_DIVIDE\020\017\022\n\n\006" +
+      "OP_MOD\020\020\022\014\n\010OP_REGEX\020\021\022\020\n\014OP_NOT_REGEX\020\022" +
+      "\022\014\n\010OP_EXIST\020\023*\203\001\n\030JQuickUnaryOperatorPr" +
+      "oto\022\020\n\014OP_UNARY_NOT\020\000\022\021\n\rOP_UNARY_PLUS\020\001" +
+      "\022\022\n\016OP_UNARY_MINUS\020\002\022\024\n\020OP_UNARY_IS_NULL" +
+      "\020\003\022\030\n\024OP_UNARY_IS_NOT_NULL\020\004*\201\001\n\023JQuickJ" +
+      "oinTypeProto\022\016\n\nJOIN_INNER\020\000\022\r\n\tJOIN_LEF" +
+      "T\020\001\022\016\n\nJOIN_RIGHT\020\002\022\r\n\tJOIN_FULL\020\003\022\016\n\nJO" +
+      "IN_CROSS\020\004\022\r\n\tJOIN_SEMI\020\005\022\r\n\tJOIN_ANTI\020\006" +
+      "*A\n\024JQuickBuildSideProto\022\023\n\017BUILD_SIDE_L" +
+      "EFT\020\000\022\024\n\020BUILD_SIDE_RIGHT\020\001*}\n\033JQuickJoi" +
+      "nDistributionProto\022\023\n\017JOIN_DIST_LOCAL\020\000\022" +
+      "\025\n\021JOIN_DIST_SHUFFLE\020\001\022\027\n\023JOIN_DIST_BROA" +
+      "DCAST\020\002\022\031\n\025JOIN_DIST_PARTITIONED\020\003*K\n\031JQ" +
+      "uickAggregateStageProto\022\017\n\013AGG_PARTIAL\020\000" +
+      "\022\r\n\tAGG_FINAL\020\001\022\016\n\nAGG_SINGLE\020\002*o\n\027JQuic" +
+      "kExchangeTypeProto\022\016\n\nEX_SHUFFLE\020\000\022\020\n\014EX" +
+      "_BROADCAST\020\001\022\r\n\tEX_GATHER\020\002\022\022\n\016EX_REPART" +
+      "ITION\020\003\022\017\n\013EX_PIPELINE\020\004*b\n\033JQuickSQLOpe" +
+      "rationTypeProto\022\r\n\tSET_UNION\020\000\022\021\n\rSET_UN" +
+      "ION_ALL\020\001\022\021\n\rSET_INTERSECT\020\002\022\016\n\nSET_EXCE" +
+      "PT\020\003*\\\n\027JQuickFragmentTypeProto\022\023\n\017FRAGM" +
+      "ENT_SOURCE\020\000\022\031\n\025FRAGMENT_INTERMEDIATE\020\001\022" +
+      "\021\n\rFRAGMENT_SINK\020\002*r\n\025JQuickTaskStatusPr" +
+      "oto\022\020\n\014TASK_PENDING\020\000\022\020\n\014TASK_RUNNING\020\001\022" +
+      "\020\n\014TASK_SUCCESS\020\002\022\017\n\013TASK_FAILED\020\003\022\022\n\016TA" +
+      "SK_CANCELLED\020\004*\243\001\n\025JQuickQueryStateProto" +
+      "\022\021\n\rQUERY_PENDING\020\000\022\022\n\016QUERY_PLANNING\020\001\022" +
+      "\024\n\020QUERY_SCHEDULING\020\002\022\021\n\rQUERY_RUNNING\020\003" +
+      "\022\023\n\017QUERY_SUCCEEDED\020\004\022\020\n\014QUERY_FAILED\020\005\022" +
+      "\023\n\017QUERY_CANCELLED\020\0062\364\002\n\022JQuickTableServ" +
+      "ice\022v\n\rRegisterTable\0221.com.github.paohai" +
+      "jiao.proto.RegisterTableRequest\0322.com.gi" +
+      "thub.paohaijiao.proto.RegisterTableRespo" +
+      "nse\022z\n\016RegisterTables\0221.com.github.paoha" +
+      "ijiao.proto.RegisterTableRequest\0323.com.g" +
+      "ithub.paohaijiao.proto.RegisterTablesRes" +
+      "ponse(\001\022j\n\tDropTable\022-.com.github.paohai" +
+      "jiao.proto.DropTableRequest\032..com.github" +
+      ".paohaijiao.proto.DropTableResponse2\306\010\n\031" +
+      "JQuickPhysicalPlanService\022|\n\013ExecuteTask" +
+      "\0225.com.github.paohaijiao.proto.JQuickExe" +
+      "cuteTaskRequest\0326.com.github.paohaijiao." +
+      "proto.JQuickExecuteTaskResponse\022\177\n\021Execu" +
+      "teTaskStream\0225.com.github.paohaijiao.pro" +
+      "to.JQuickExecuteTaskRequest\0321.com.github" +
+      ".paohaijiao.proto.JQuickDataChunkProto0\001" +
+      "\022{\n\nCancelTask\0225.com.github.paohaijiao.p" +
+      "roto.JQuickCancelQueryRequest\0326.com.gith" +
+      "ub.paohaijiao.proto.JQuickCancelQueryRes" +
+      "ponse\022v\n\tHeartbeat\0223.com.github.paohaiji" +
+      "ao.proto.JQuickHeartbeatRequest\0324.com.gi" +
+      "thub.paohaijiao.proto.JQuickHeartbeatRes" +
+      "ponse\022\205\001\n\016RegisterWorker\0228.com.github.pa" +
+      "ohaijiao.proto.JQuickRegisterWorkerReque" +
+      "st\0329.com.github.paohaijiao.proto.JQuickR" +
+      "egisterWorkerResponse\022\232\001\n\025UpdateWorkerEn" +
+      "dpoints\022?.com.github.paohaijiao.proto.JQ" +
+      "uickUpdateWorkerEndpointsRequest\032@.com.g" +
+      "ithub.paohaijiao.proto.JQuickUpdateWorke" +
+      "rEndpointsResponse\022\221\001\n\022GetWorkerEndpoint" +
+      "s\022<.com.github.paohaijiao.proto.JQuickGe" +
+      "tWorkerEndpointsRequest\032=.com.github.pao" +
+      "haijiao.proto.JQuickGetWorkerEndpointsRe" +
+      "sponse\022|\n\013WorkerLeave\0225.com.github.paoha" +
+      "ijiao.proto.JQuickWorkerLeaveRequest\0326.c" +
+      "om.github.paohaijiao.proto.JQuickWorkerL" +
+      "eaveResponse2\213\003\n\035JQuickDataDistributionS" +
+      "ervice\022r\n\010SendData\0221.com.github.paohaiji" +
+      "ao.proto.JQuickDataChunkProto\0321.com.gith" +
+      "ub.paohaijiao.proto.JQuickEmptyNodeProto" +
+      "(\001\022z\n\013ReceiveData\0223.com.github.paohaijia" +
+      "o.proto.JQuickFetchDataRequest\0324.com.git" +
+      "hub.paohaijiao.proto.JQuickFetchDataResp" +
+      "onse0\001\022z\n\rBroadcastData\0221.com.github.pao" +
+      "haijiao.proto.JQuickDataChunkProto\0324.com" +
+      ".github.paohaijiao.proto.JQuickBroadcast" +
+      "Response(\0012\213\005\n\030JQuickCoordinatorService\022" +
+      "|\n\013SubmitQuery\0225.com.github.paohaijiao.p" +
+      "roto.JQuickSubmitQueryRequest\0326.com.gith" +
+      "ub.paohaijiao.proto.JQuickSubmitQueryRes" +
+      "ponse\022\177\n\016GetQueryStatus\0225.com.github.pao" +
+      "haijiao.proto.JQuickQueryStatusRequest\0326" +
+      ".com.github.paohaijiao.proto.JQuickQuery" +
+      "StatusResponse\022|\n\013CancelQuery\0225.com.gith" +
+      "ub.paohaijiao.proto.JQuickCancelQueryReq" +
+      "uest\0326.com.github.paohaijiao.proto.JQuic" +
+      "kCancelQueryResponse\022z\n\016GetQueryResult\0223" +
+      ".com.github.paohaijiao.proto.JQuickGetRe" +
+      "sultRequest\0321.com.github.paohaijiao.prot" +
+      "o.JQuickDataChunkProto0\001\022v\n\tHeartbeat\0223." +
+      "com.github.paohaijiao.proto.JQuickHeartb" +
+      "eatRequest\0324.com.github.paohaijiao.proto" +
+      ".JQuickHeartbeatResponseB8\n\033com.github.p" +
+      "aohaijiao.protoB\027JQuickPhysicalPlanProto" +
+      "P\001b\006proto3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
@@ -1213,7 +1214,7 @@ public final class JQuickPhysicalPlanProto {
     internal_static_com_github_paohaijiao_proto_JQuickProjectNodeProto_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_com_github_paohaijiao_proto_JQuickProjectNodeProto_descriptor,
-        new java.lang.String[] { "SelectItems", "Distinct", });
+        new java.lang.String[] { "SelectItems", "Distinct", "IsStar", });
     internal_static_com_github_paohaijiao_proto_JQuickProjectNodeProto_SelectItemProto_descriptor =
       internal_static_com_github_paohaijiao_proto_JQuickProjectNodeProto_descriptor.getNestedTypes().get(0);
     internal_static_com_github_paohaijiao_proto_JQuickProjectNodeProto_SelectItemProto_fieldAccessorTable = new
