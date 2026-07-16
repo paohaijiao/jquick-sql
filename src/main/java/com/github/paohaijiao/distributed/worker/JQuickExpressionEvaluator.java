@@ -219,7 +219,7 @@ public class JQuickExpressionEvaluator {
                 try {
                     return provider.invoke(args);
                 } catch (Exception e) {
-                    console.error("evaluefunction occurred exception",e);
+                    console.error("evaluate function occurred exception",e);
                 }
             }
         }
@@ -231,7 +231,8 @@ public class JQuickExpressionEvaluator {
         JAssert.notNull(functionName, "the function name  require not  null");
         Optional<JQuickMethodFunctionProvider> provider = functionManager.getInvoker(name);
         boolean exists=provider.isPresent();
-        JAssert.isTrue(exists, "the function name  not exists");
+        String msg=String.format("The function `%s` does not exist", name);
+        JAssert.isTrue(exists, msg);
         return provider.get().invoke(args);
     }
 

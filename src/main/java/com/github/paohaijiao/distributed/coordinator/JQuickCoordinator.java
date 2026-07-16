@@ -216,6 +216,7 @@ public class JQuickCoordinator {
                 }
             } else {
                 console.warn(String.format("Task failed - fragmentId: %d, error: %s", fragment.getFragmentId(), response.getErrorMessage()));
+                JAssert.throwNewException("The worker occured something wrong with  ["+response.getErrorMessage()+"]");
             }
         }
         

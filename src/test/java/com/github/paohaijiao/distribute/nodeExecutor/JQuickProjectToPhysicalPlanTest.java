@@ -364,16 +364,16 @@ public class JQuickProjectToPhysicalPlanTest {
     /**
      * 测试函数调用投影
      *
-     * SQL示例：SELECT id, UPPER(name) AS upper_name, LENGTH(email) AS email_len FROM users
+     * SQL示例：SELECT id, toUpper(name) AS upper_name, LENGTH(email) AS email_len FROM users
      */
     @Test
     public void testFunctionCallProjection() {
         JQuickTableScanNode usersScan = createTableScan("users", "u");
         List<JQuickProjectNode.SelectItem> items = new ArrayList<>();
         items.add(new JQuickProjectNode.SelectItem(new JQuickColumnRefExpression("id"), "id"));
-        JQuickFunctionCallExpression upperFunc = new JQuickFunctionCallExpression("UPPER", Collections.singletonList(new JQuickColumnRefExpression("name")));
+        JQuickFunctionCallExpression upperFunc = new JQuickFunctionCallExpression("toUpper", Collections.singletonList(new JQuickColumnRefExpression("name")));
         items.add(new JQuickProjectNode.SelectItem(upperFunc, "upper_name"));
-        JQuickFunctionCallExpression lengthFunc = new JQuickFunctionCallExpression("LENGTH", Collections.singletonList(new JQuickColumnRefExpression("email")));
+        JQuickFunctionCallExpression lengthFunc = new JQuickFunctionCallExpression("length", Collections.singletonList(new JQuickColumnRefExpression("email")));
         items.add(new JQuickProjectNode.SelectItem(lengthFunc, "email_len"));
         JQuickProjectNode projectNode = new JQuickProjectNode(items, usersScan);
         JQuickPhysicalPlanNode physicalPlan = generator.generate(projectNode);
