@@ -79,21 +79,31 @@ public class JQuickFragmenter {
      * 处理物理计划节点
      */
     private void processNode(JQuickPhysicalPlanNode node, JQuickFragment fragment, Set<JQuickPhysicalPlanNode> visited) {
+        processNode(node, fragment, visited, false);
+    }
+
+    /**
+     * 处理物理计划节点
+     * @param isInRecursiveUnion 是否在递归联合节点的子树中（此时不创建新 Fragment）
+     */
+    private void processNode(JQuickPhysicalPlanNode node, JQuickFragment fragment, Set<JQuickPhysicalPlanNode> visited, boolean isInRecursiveUnion) {
         if (node == null || visited.contains(node)) {
             return;
         }
         visited.add(node);
         nodeToFragment.put(node, fragment);
         List<JQuickPhysicalPlanNode> children = getChildren(node);
-        if (shouldCreateNewFragment(node)) {
+        boolean becomesRecursiveUnion = node instanceof JQuickRecursiveUnionPhysicalNode;
+        boolean stayInSameFragment = isInRecursiveUnion || becomesRecursiveUnion;
+        if (!stayInSameFragment && shouldCreateNewFragment(node)) {
             createNewFragmentForNode(node, fragment, children, visited);//将一个大查询拆解成多个可以独立并行执行的小任务单元
             return;
         }
         for (JQuickPhysicalPlanNode child : children) {
-            if (shouldBeSourceFragment(child)) {
+            if (!stayInSameFragment && shouldBeSourceFragment(child)) {
                 createSourceFragment(child, fragment, visited);
             } else {
-                processNode(child, fragment, visited);
+                processNode(child, fragment, visited, stayInSameFragment);
             }
         }
     }
@@ -103,6 +113,9 @@ public class JQuickFragmenter {
      */
     private boolean shouldCreateNewFragment(JQuickPhysicalPlanNode node) {
         if (node.getChildren().isEmpty()) {
+            return false;
+        }
+        if (node instanceof JQuickRecursiveUnionPhysicalNode) {
             return false;
         }
         // 数据源节点：必须创建 Fragment

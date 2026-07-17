@@ -177,10 +177,13 @@ public class JQuickNodeExecutor {
         console.info("executeTableScan - tableName: " + tableName + ", partitionInfo: " + (node.getPartitionInfo() != null ? "exists" : "null"));
         Set<String> requiredColumns = node.getRequiredColumns();
         JQuickDataSet data;
-        JQuickExecuteTaskRequest request = context.getRequest();
-        if (request.getInputPartitionsCount() > 0) {
+        // 优先检查 JQuickDataSourceManager 中是否有该表（支持 CTE 递归查询）
+        if (JQuickDataSourceManager.containsTable(tableName)) {
+            console.info("Reading from data source (CTE or registered table): " + tableName);
+            data = JQuickDataSourceManager.getTable(tableName);
+        } else if (context != null && context.getRequest() != null && context.getRequest().getInputPartitionsCount() > 0) {
             console.info("Reading from input partitions (distributed mode)");
-            data = readFromInputPartitions(tableName, request);
+            data = readFromInputPartitions(tableName, context.getRequest());
         } else if (node.getPartitionInfo() != null) {
             console.info("Reading from memory partition: " + tableName);
             data = readFromMemoryPartition(tableName);
@@ -850,22 +853,34 @@ public class JQuickNodeExecutor {
         }
         List<JQuickRow> workingRows = new ArrayList<>(result.getRows());
         int depth = 0;
+        String ctePartitionId = "cte_partition_" + node.getCteName();
         while (depth < node.getMaxRecursionDepth() && !workingRows.isEmpty()) {
-            JQuickDataSet newRows = executeNode(node.getRecursivePlan(), context);
-            List<JQuickRow> filteredRows = new ArrayList<>();
-            for (JQuickRow row : newRows.getRows()) {
-                String rowKey = createRowKey(row);
-                if (!seenRowKeys.contains(rowKey)) {
-                    filteredRows.add(row);
-                    seenRowKeys.add(rowKey);
+            JQuickDataSet workingDataSet = new JQuickDataSet(result.getColumns(), workingRows);
+            JQuickWorker.JQuickMemoryPartition ctePartition = new JQuickWorker.JQuickMemoryPartition(0, 1);
+            ctePartition.setPartitionId(ctePartitionId);
+            ctePartition.setData(workingDataSet);
+            worker.getMemoryPartitions().put(ctePartitionId, ctePartition);
+            JQuickDataSourceManager.registerOrReplace(node.getCteName(), workingDataSet);
+            try {
+                JQuickDataSet newRows = executeNode(node.getRecursivePlan(), context);
+                List<JQuickRow> filteredRows = new ArrayList<>();
+                for (JQuickRow row : newRows.getRows()) {
+                    String rowKey = createRowKey(row);
+                    if (!seenRowKeys.contains(rowKey)) {
+                        filteredRows.add(row);
+                        seenRowKeys.add(rowKey);
+                    }
                 }
+                if (filteredRows.isEmpty()) break;
+                List<JQuickRow> allRows = new ArrayList<>(result.getRows());
+                allRows.addAll(filteredRows);
+                result = new JQuickDataSet(result.getColumns(), allRows);
+                workingRows = filteredRows;
+                depth++;
+            } finally {
+                worker.getMemoryPartitions().remove(ctePartitionId);
+                JQuickDataSourceManager.removeTable(node.getCteName());
             }
-            if (filteredRows.isEmpty()) break;
-            List<JQuickRow> allRows = new ArrayList<>(result.getRows());
-            allRows.addAll(filteredRows);
-            result = new JQuickDataSet(result.getColumns(), allRows);
-            workingRows = filteredRows;
-            depth++;
         }
 
         return result;
