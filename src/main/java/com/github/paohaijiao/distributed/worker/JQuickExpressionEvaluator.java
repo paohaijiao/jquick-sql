@@ -110,9 +110,39 @@ public class JQuickExpressionEvaluator {
     public Object evaluateExpression(JQuickRow row, JQuickExpression expr) {
         if (expr == null) return null;
         if (expr instanceof JQuickColumnRefExpression) {
-            String rawColumnName = ((JQuickColumnRefExpression) expr).getColumnName();
+            JQuickColumnRefExpression colRef = (JQuickColumnRefExpression) expr;
+            String rawColumnName = colRef.getColumnName();
+            String tableAlias = colRef.getTableAlias();
             String resolvedColumnName = resolveColumnName(rawColumnName);
-            Object value = row.get(rawColumnName);
+            if (tableAlias != null) {
+                String qualifiedName = tableAlias + "." + rawColumnName;
+                Object value = row.get(qualifiedName);
+                if (value != null || row.containsKey(qualifiedName)) {
+                    return value;
+                }
+                value = row.get("outer_" + tableAlias + "_" + rawColumnName);
+                if (value != null || row.containsKey("outer_" + tableAlias + "_" + rawColumnName)) {
+                    return value;
+                }
+                value = row.get("outer_" + rawColumnName);
+                if (value != null || row.containsKey("outer_" + rawColumnName)) {
+                    return value;
+                }
+                value = row.get("outer_" + resolvedColumnName);
+                if (value != null || row.containsKey("outer_" + resolvedColumnName)) {
+                    return value;
+                }
+            }
+            
+            Object value = row.get("outer_" + rawColumnName);
+            if (value != null || row.containsKey("outer_" + rawColumnName)) {
+                return value;
+            }
+            value = row.get("outer_" + resolvedColumnName);
+            if (value != null || row.containsKey("outer_" + resolvedColumnName)) {
+                return value;
+            }
+            value = row.get(rawColumnName);
             if (value != null || row.containsKey(rawColumnName)) {
                 return value;
             }
@@ -125,7 +155,7 @@ public class JQuickExpressionEvaluator {
                     return entry.getValue();
                 }
             }
-            return row.get(((JQuickColumnRefExpression) expr).getColumnName());
+            return row.get(rawColumnName);
         } else if (expr instanceof JQuickLiteralExpression) {
             return ((JQuickLiteralExpression) expr).getValue();
         } else if (expr instanceof JQuickBinaryExpression) {
@@ -205,7 +235,7 @@ public class JQuickExpressionEvaluator {
         } else if (expr instanceof JQuickExistsExpression) {
             JQuickExistsExpression existsExpr = (JQuickExistsExpression) expr;
             JQuickSubqueryExpression subqueryExpr = existsExpr.getSubquery();
-            JQuickDataSet result = executeSubqueryPlan(subqueryExpr);
+            JQuickDataSet result = executeSubqueryPlan(subqueryExpr, row);
             return existsExpr.isNotExists() ? result.isEmpty() : !result.isEmpty();
         }
 
@@ -369,7 +399,7 @@ public class JQuickExpressionEvaluator {
 
     private Object evaluateSubquery(JQuickRow row, JQuickSubqueryExpression subquery) {
         try {
-            JQuickDataSet result = executeSubqueryPlan(subquery);
+            JQuickDataSet result = executeSubqueryPlan(subquery, row);
             JQuickSubqueryType type = subquery.getSubqueryType();
             if (type == JQuickSubqueryType.SCALAR) {
                 return evaluateScalarSubquery(result);
@@ -393,11 +423,11 @@ public class JQuickExpressionEvaluator {
         }
     }
 
-    private JQuickDataSet executeSubqueryPlan(JQuickSubqueryExpression subquery) {
+    private JQuickDataSet executeSubqueryPlan(JQuickSubqueryExpression subquery, JQuickRow parentRow) {
         JQuickPhysicalPlanNode physicalPlan = subquery.getPhysicalPlan();
         if (physicalPlan != null) {
             if (nodeExecutor != null) {
-                return nodeExecutor.executePhysicalPlan(physicalPlan);
+                return nodeExecutor.executePhysicalPlan(physicalPlan, parentRow);
             } else {
                 console.warn("JQuickNodeExecutor not set, cannot execute subquery");
                 return JQuickDataSet.builder().build();
@@ -415,7 +445,7 @@ public class JQuickExpressionEvaluator {
             return JQuickDataSet.builder().build();
         }
         if (nodeExecutor != null) {
-            return nodeExecutor.executePhysicalPlan(physicalPlan);
+            return nodeExecutor.executePhysicalPlan(physicalPlan, parentRow);
         } else {
             console.warn("JQuickNodeExecutor not set, cannot execute subquery");
             return JQuickDataSet.builder().build();

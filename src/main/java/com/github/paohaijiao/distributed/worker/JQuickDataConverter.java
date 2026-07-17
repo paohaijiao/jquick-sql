@@ -46,7 +46,7 @@ public class JQuickDataConverter {
         JQuickDataSetProto.Builder builder = JQuickDataSetProto.newBuilder();
         for (JQuickColumnMeta col : data.getColumns()) {
             builder.addColumns(JQuickColumnMetaProto.newBuilder().setName(col.getName())
-            .setTypeName(col.getType().getName()).setSource(col.getSource()).build());
+            .setTypeName(col.getType().getName()).setSource(null==col.getSource()?"":col.getSource()).build());
         }
         for (JQuickRow row : data.getRows()) {
             JQuickRowProto.Builder rowBuilder = JQuickRowProto.newBuilder();

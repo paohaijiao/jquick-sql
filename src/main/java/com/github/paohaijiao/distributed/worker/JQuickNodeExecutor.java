@@ -103,13 +103,44 @@ public class JQuickNodeExecutor {
      * 执行物理计划（用于子查询）
      */
     public JQuickDataSet executePhysicalPlan(JQuickPhysicalPlanNode node) {
-        Set<JQuickTableScanPhysicalNode> tableScans = collectTableScans(node);
+        return executePhysicalPlan(node, null);
+    }
+
+    /**
+     * 执行物理计划（用于相关子查询，传递外部行数据）
+     */
+    public JQuickDataSet executePhysicalPlan(JQuickPhysicalPlanNode node, JQuickRow parentRow) {
+        JQuickPhysicalPlanNode actualNode = node;
+        if (node instanceof JQuickExchangePhysicalNode) {
+            JQuickExchangePhysicalNode exchangeNode = (JQuickExchangePhysicalNode) node;
+            if (exchangeNode.getExchangeType() == JQuickExchangeType.SHUFFLE || 
+                exchangeNode.getExchangeType() == JQuickExchangeType.BROADCAST ||
+                exchangeNode.getExchangeType() == JQuickExchangeType.GATHER) {
+                if (exchangeNode.getChild() != null) {
+                    actualNode = exchangeNode.getChild();
+                }
+            }
+        }
+        
+        Set<JQuickTableScanPhysicalNode> tableScans = collectTableScans(actualNode);
         JQuickExecuteTaskRequest.Builder requestBuilder = JQuickExecuteTaskRequest.newBuilder()
                 .setQueryId("subquery")
                 .setTaskId("subquery_task_" + System.currentTimeMillis())
                 .setMemoryLimitBytes(1024 * 1024 * 1024);
         for (JQuickTableScanPhysicalNode tableScan : tableScans) {
             JQuickDataSet tableData = readFromDataSource(tableScan.getTableName());
+            if (parentRow != null) {
+                List<JQuickRow> filteredRows = new ArrayList<>();
+                for (JQuickRow row : tableData.getRows()) {
+                    JQuickRow mergedRow = new JQuickRow();
+                    mergedRow.putAll(row);
+                    for (String key : parentRow.keySet()) {
+                        mergedRow.put("outer_" + key, parentRow.get(key));
+                    }
+                    filteredRows.add(mergedRow);
+                }
+                tableData = new JQuickDataSet(tableData.getColumns(), filteredRows);
+            }
             JQuickMemoryPartitionProto partition = JQuickMemoryPartitionProto.newBuilder()
                     .setPartitionId("subquery_partition_" + tableScan.getTableName())
                     .setPartitionIndex(0)
@@ -120,7 +151,7 @@ public class JQuickNodeExecutor {
         }
         JQuickExecuteTaskRequest request = requestBuilder.build();
         JQuickWorker.JQuickTaskContext context = worker.new JQuickTaskContext(request.getTaskId(), request);
-        return executeNode(node, context);
+        return executeNode(actualNode, context);
     }
 
     private Set<JQuickTableScanPhysicalNode> collectTableScans(JQuickPhysicalPlanNode node) {

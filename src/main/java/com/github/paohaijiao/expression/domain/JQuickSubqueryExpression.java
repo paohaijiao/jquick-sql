@@ -19,6 +19,7 @@ import com.github.paohaijiao.context.JQuickExecutionContext;
 import com.github.paohaijiao.enums.JQuickSubqueryType;
 import com.github.paohaijiao.expression.JQuickExpression;
 import com.github.paohaijiao.logic.JQuickLogicalPlanNode;
+import com.github.paohaijiao.logic2physical.JQuickPhysicalPlanGenerator;
 import com.github.paohaijiao.physical.JQuickPhysicalPlanNode;
 import com.github.paohaijiao.statement.JQuickDataSet;
 import com.github.paohaijiao.statement.JQuickRow;
@@ -72,7 +73,14 @@ public class JQuickSubqueryExpression implements JQuickExpression {
     private JQuickSubqueryExpression(JQuickLogicalPlanNode subquery, JQuickPhysicalPlanNode physicalPlan, 
                                       JQuickSubqueryType type, JQuickExpression leftExpression, JQuickExpression rightExpression) {
         this.subquery = subquery;
-        this.physicalPlan = physicalPlan;
+        if (physicalPlan != null) {
+            this.physicalPlan = physicalPlan;
+        } else if (subquery != null) {
+            JQuickPhysicalPlanGenerator generator = new JQuickPhysicalPlanGenerator();
+            this.physicalPlan = generator.generate(subquery);
+        } else {
+            this.physicalPlan = null;
+        }
         this.type = type;
         this.leftExpression = leftExpression;
         this.rightExpression = rightExpression;
@@ -294,8 +302,12 @@ public class JQuickSubqueryExpression implements JQuickExpression {
 
 
     public JQuickLogicalPlanNode getSubquery() { return subquery; }
+
     public JQuickPhysicalPlanNode getPhysicalPlan() { return physicalPlan; }
+
     public JQuickSubqueryType getSubqueryType() { return type; }
+
     public JQuickExpression getLeftExpression() { return leftExpression; }
+
     public JQuickExpression getRightExpression() { return rightExpression; }
 }

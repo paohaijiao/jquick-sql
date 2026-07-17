@@ -384,6 +384,169 @@ public class JQuickProjectToPhysicalPlanTest {
     }
 
     /**
+     * 测试CASE WHEN表达式投影
+     *
+     * SQL示例：SELECT id, CASE WHEN score >= 60 THEN 'PASS' ELSE 'FAIL' END AS result FROM students
+     */
+    @Test
+    public void testCaseWhenProjection() {
+        JQuickTableScanNode studentsScan = createTableScan("students", "s");
+        JQuickBinaryExpression condition = new JQuickBinaryExpression(new JQuickColumnRefExpression("score"), new JQuickLiteralExpression(60), JQuickBinaryOperator.GE);
+        JQuickCaseWhenExpression caseWhenExpr = new JQuickCaseWhenExpression(Arrays.asList(condition), Arrays.asList(new JQuickLiteralExpression("PASS")), new JQuickLiteralExpression("FAIL"));
+        List<JQuickProjectNode.SelectItem> items = new ArrayList<>();
+        items.add(new JQuickProjectNode.SelectItem(new JQuickColumnRefExpression("id"), "id"));
+        items.add(new JQuickProjectNode.SelectItem(caseWhenExpr, "result"));
+        JQuickProjectNode projectNode = new JQuickProjectNode(items, studentsScan);
+        JQuickPhysicalPlanNode physicalPlan = generator.generate(projectNode);
+        JQuickDistributedPlan plan = new JQuickFragmenter(1).fragment(physicalPlan);
+        String queryId = "casewhen_project_test_" + System.currentTimeMillis();
+        JQuickDataSet result = coordinator.executeQueryWithPlan(queryId, plan);
+        result.printTable();
+    }
+    /**
+     * 测试：子查询表达式投影（标量子查询）
+     *
+     * SQL示例：SELECT u.id, u.name, (SELECT COUNT(*) FROM orders o WHERE o.user_id = u.id) AS order_count
+     *          FROM users u
+     */
+    @Test
+    public void testSubqueryExpressionAtomProjection() {
+        JQuickTableScanNode ordersScan = createTableScan("orders", "o");
+        JQuickBinaryExpression subqueryFilter = new JQuickBinaryExpression(
+                new JQuickColumnRefExpression("user_id", "o"),
+                new JQuickColumnRefExpression("id", "u"),
+                JQuickBinaryOperator.EQ
+        );
+        JQuickFilterNode filterNode = new JQuickFilterNode(subqueryFilter, ordersScan);
+        List<JQuickGroupByNode.AggregateItem> aggregates = new ArrayList<>();
+        aggregates.add(new JQuickGroupByNode.AggregateItem(null, "COUNT", "count", true));
+        JQuickGroupByNode countNode = new JQuickGroupByNode(new ArrayList<>(), aggregates, filterNode, null);
+        JQuickSubqueryExpression subqueryExpr = new JQuickSubqueryExpression(countNode);
+        JQuickTableScanNode usersScan = createTableScan("users", "u");
+        List<JQuickProjectNode.SelectItem> items = new ArrayList<>();
+        items.add(new JQuickProjectNode.SelectItem(new JQuickColumnRefExpression("id", "u"), "id"));
+        items.add(new JQuickProjectNode.SelectItem(new JQuickColumnRefExpression("name", "u"), "name"));
+        items.add(new JQuickProjectNode.SelectItem(subqueryExpr, "order_count"));
+        JQuickProjectNode projectNode = new JQuickProjectNode(items, usersScan);
+        JQuickPhysicalPlanNode physicalPlan = generator.generate(projectNode);
+        assertNotNull(physicalPlan);
+        assertEquals("Project", physicalPlan.getNodeType());
+        JQuickDistributedPlan plan = new JQuickFragmenter(1).fragment(physicalPlan);
+        String queryId = "casewhen_project_test_" + System.currentTimeMillis();
+        JQuickDataSet result = coordinator.executeQueryWithPlan(queryId, plan);
+        result.printTable();
+    }
+
+    /**
+     * 测试：CASE WHEN 表达式投影（多条件嵌套）
+     *
+     * SQL示例：SELECT id, CASE
+     *                      WHEN score >= 90 THEN 'A'
+     *                      WHEN score >= 80 THEN 'B'
+     *                      WHEN score >= 60 THEN 'C'
+     *                      ELSE 'D'
+     *                    END AS grade
+     *          FROM students
+     */
+    @Test
+    public void testCaseWhenExpressionAtomProjection() {
+        JQuickTableScanNode studentsScan = createTableScan("students");
+        List<JQuickExpression> conditions = new ArrayList<>();
+        List<JQuickExpression> results = new ArrayList<>();
+        conditions.add(new JQuickBinaryExpression(new JQuickColumnRefExpression("score"), new JQuickLiteralExpression(90), JQuickBinaryOperator.GE));
+        results.add(new JQuickLiteralExpression("A"));
+        conditions.add(new JQuickBinaryExpression(new JQuickColumnRefExpression("score"), new JQuickLiteralExpression(80), JQuickBinaryOperator.GE));
+        results.add(new JQuickLiteralExpression("B"));
+        conditions.add(new JQuickBinaryExpression(new JQuickColumnRefExpression("score"), new JQuickLiteralExpression(60), JQuickBinaryOperator.GE));
+        results.add(new JQuickLiteralExpression("C"));
+        JQuickCaseWhenExpression caseWhenExpr = new JQuickCaseWhenExpression(conditions, results, new JQuickLiteralExpression("D"));
+        List<JQuickProjectNode.SelectItem> items = new ArrayList<>();
+        items.add(new JQuickProjectNode.SelectItem(new JQuickColumnRefExpression("id"), "id"));
+        items.add(new JQuickProjectNode.SelectItem(caseWhenExpr, "grade"));
+        JQuickProjectNode projectNode = new JQuickProjectNode(items, studentsScan);
+        JQuickPhysicalPlanNode physicalPlan = generator.generate(projectNode);
+        assertNotNull(physicalPlan);
+        assertEquals("Project", physicalPlan.getNodeType());
+        JQuickDistributedPlan plan = new JQuickFragmenter(1).fragment(physicalPlan);
+        String queryId = "casewhen_project_test_" + System.currentTimeMillis();
+        JQuickDataSet result = coordinator.executeQueryWithPlan(queryId, plan);
+        result.printTable();
+    }
+
+    /**
+     * 测试：数学表达式投影（复杂算术运算）
+     *
+     * SQL示例：SELECT id, (salary * 1.1 + bonus) * (1 - tax_rate) AS net_salary
+     *          FROM employees
+     */
+    @Test
+    public void testMathExpressionAtomProjection() {
+        JQuickTableScanNode employeesScan = createTableScan("employees");
+        JQuickBinaryExpression salaryTimesRate = new JQuickBinaryExpression(
+                new JQuickColumnRefExpression("salary"),
+                new JQuickLiteralExpression(1.1),
+                JQuickBinaryOperator.MULTIPLY
+        );
+        JQuickBinaryExpression salaryPlusBonus = new JQuickBinaryExpression(
+                salaryTimesRate,
+                new JQuickColumnRefExpression("bonus"),
+                JQuickBinaryOperator.PLUS
+        );
+        JQuickBinaryExpression oneMinusTax = new JQuickBinaryExpression(
+                new JQuickLiteralExpression(1),
+                new JQuickColumnRefExpression("tax_rate"),
+                JQuickBinaryOperator.MINUS
+        );
+        JQuickBinaryExpression netSalary = new JQuickBinaryExpression(
+                salaryPlusBonus,
+                oneMinusTax,
+                JQuickBinaryOperator.MULTIPLY
+        );
+        List<JQuickProjectNode.SelectItem> items = new ArrayList<>();
+        items.add(new JQuickProjectNode.SelectItem(new JQuickColumnRefExpression("id"), "id"));
+        items.add(new JQuickProjectNode.SelectItem(netSalary, "net_salary"));
+        JQuickProjectNode projectNode = new JQuickProjectNode(items, employeesScan);
+        JQuickPhysicalPlanNode physicalPlan = generator.generate(projectNode);
+        assertNotNull(physicalPlan);
+        assertEquals("Project", physicalPlan.getNodeType());
+        JQuickDistributedPlan plan = new JQuickFragmenter(1).fragment(physicalPlan);
+        String queryId = "casewhen_project_test_" + System.currentTimeMillis();
+        JQuickDataSet result = coordinator.executeQueryWithPlan(queryId, plan);
+        result.printTable();
+    }
+
+    /**
+     * 测试：嵌套表达式投影（函数嵌套和表达式组合）
+     *
+     * SQL示例：SELECT id, UPPER(CONCAT(first_name, ' ', last_name)) AS full_name_upper,
+     *                 LENGTH(TRIM(email)) AS email_length
+     *          FROM users
+     */
+    @Test
+    public void testNestedExpressionAtomProjection() {
+        JQuickTableScanNode usersScan = createTableScan("users");
+        List<JQuickExpression> concatArgs = new ArrayList<>();
+        concatArgs.add(new JQuickColumnRefExpression("first_name"));
+        concatArgs.add(new JQuickLiteralExpression(" "));
+        concatArgs.add(new JQuickColumnRefExpression("last_name"));
+        JQuickFunctionCallExpression concatFunc = new JQuickFunctionCallExpression("CONCAT", concatArgs);
+        JQuickFunctionCallExpression upperFunc = new JQuickFunctionCallExpression("toUPPER", Collections.singletonList(concatFunc));
+        JQuickFunctionCallExpression trimFunc = new JQuickFunctionCallExpression("TRIM", Collections.singletonList(new JQuickColumnRefExpression("email")));
+        JQuickFunctionCallExpression lengthFunc = new JQuickFunctionCallExpression("LENGTH", Collections.singletonList(trimFunc));
+        List<JQuickProjectNode.SelectItem> items = new ArrayList<>();
+        items.add(new JQuickProjectNode.SelectItem(new JQuickColumnRefExpression("id"), "id"));
+        items.add(new JQuickProjectNode.SelectItem(upperFunc, "full_name_upper"));
+        items.add(new JQuickProjectNode.SelectItem(lengthFunc, "email_length"));
+        JQuickProjectNode projectNode = new JQuickProjectNode(items, usersScan);
+        JQuickPhysicalPlanNode physicalPlan = generator.generate(projectNode);
+        assertNotNull(physicalPlan);
+        assertEquals("Project", physicalPlan.getNodeType());
+        JQuickDistributedPlan plan = new JQuickFragmenter(1).fragment(physicalPlan);
+        String queryId = "casewhen_project_test_" + System.currentTimeMillis();
+        JQuickDataSet result = coordinator.executeQueryWithPlan(queryId, plan);
+        result.printTable();
+    }
+    /**
      * 测试JOIN投影
      *
      * SQL示例：SELECT u.id, u.name, o.order_date FROM users u JOIN orders o ON u.id = o.user_id
@@ -424,6 +587,7 @@ public class JQuickProjectToPhysicalPlanTest {
         result.printTable();
     }
 
+
     /**
      * 测试投影+排序
      *
@@ -460,26 +624,7 @@ public class JQuickProjectToPhysicalPlanTest {
         result.printTable();
     }
 
-    /**
-     * 测试CASE WHEN表达式投影
-     *
-     * SQL示例：SELECT id, CASE WHEN score >= 60 THEN 'PASS' ELSE 'FAIL' END AS result FROM students
-     */
-    @Test
-    public void testCaseWhenProjection() {
-        JQuickTableScanNode studentsScan = createTableScan("students", "s");
-        JQuickBinaryExpression condition = new JQuickBinaryExpression(new JQuickColumnRefExpression("score"), new JQuickLiteralExpression(60), JQuickBinaryOperator.GE);
-        JQuickCaseWhenExpression caseWhenExpr = new JQuickCaseWhenExpression(Arrays.asList(condition), Arrays.asList(new JQuickLiteralExpression("PASS")), new JQuickLiteralExpression("FAIL"));
-        List<JQuickProjectNode.SelectItem> items = new ArrayList<>();
-        items.add(new JQuickProjectNode.SelectItem(new JQuickColumnRefExpression("id"), "id"));
-        items.add(new JQuickProjectNode.SelectItem(caseWhenExpr, "result"));
-        JQuickProjectNode projectNode = new JQuickProjectNode(items, studentsScan);
-        JQuickPhysicalPlanNode physicalPlan = generator.generate(projectNode);
-        JQuickDistributedPlan plan = new JQuickFragmenter(1).fragment(physicalPlan);
-        String queryId = "casewhen_project_test_" + System.currentTimeMillis();
-        JQuickDataSet result = coordinator.executeQueryWithPlan(queryId, plan);
-        result.printTable();
-    }
+
 
     /**
      * 测试字符串拼接投影
