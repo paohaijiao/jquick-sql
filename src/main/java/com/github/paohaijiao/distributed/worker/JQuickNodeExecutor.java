@@ -64,25 +64,25 @@ public class JQuickNodeExecutor {
         if (node == null) {
             return JQuickDataSet.builder().build();
         }
-        if (node instanceof JQuickTableScanPhysicalNode) {
+        if (node instanceof JQuickTableScanPhysicalNode) {//1
             return executeTableScan((JQuickTableScanPhysicalNode) node, context);
-        } else if (node instanceof JQuickFilterPhysicalNode) {
+        } else if (node instanceof JQuickFilterPhysicalNode) {//2
             return executeFilter((JQuickFilterPhysicalNode) node, context);
-        } else if (node instanceof JQuickProjectPhysicalNode) {
+        } else if (node instanceof JQuickProjectPhysicalNode) {//3
             return executeProject((JQuickProjectPhysicalNode) node, context);
         } else if (node instanceof JQuickHashJoinPhysicalNode) {
             return executeHashJoin((JQuickHashJoinPhysicalNode) node, context);
         } else if (node instanceof JQuickNestedLoopJoinPhysicalNode) {
             return executeNestedLoopJoin((JQuickNestedLoopJoinPhysicalNode) node, context);
-        }else if (node instanceof JQuickTopNPhysicalNode) {//keep the high priority for the JQuickSortPhysicalNode
+        }else if (node instanceof JQuickTopNPhysicalNode) {
             return executeTopN((JQuickTopNPhysicalNode) node, context);
         } else if (node instanceof JQuickSortPhysicalNode) {
             return executeSort((JQuickSortPhysicalNode) node, context);
         } else if (node instanceof JQuickLimitPhysicalNode) {
             return executeLimit((JQuickLimitPhysicalNode) node, context);
-        }  else if (node instanceof JQuickWindowPhysicalNode) {
+        }  else if (node instanceof JQuickWindowPhysicalNode) {//4
             return executeWindow((JQuickWindowPhysicalNode) node, context);
-        } else if (node instanceof JQuickHashAggregatePhysicalNode) {
+        } else if (node instanceof JQuickHashAggregatePhysicalNode) {//5
             return executeHashAggregate((JQuickHashAggregatePhysicalNode) node, context);
         } else if (node instanceof JQuickExchangePhysicalNode) {
             return executeExchange((JQuickExchangePhysicalNode) node, context);
@@ -92,7 +92,7 @@ public class JQuickNodeExecutor {
             return executeValues((JQuickValuesPhysicalNode) node, context);
         } else if (node instanceof JQuickEmptyPhysicalNode) {
             return JQuickDataSet.builder().build();
-        } else if (node instanceof JQuickRecursiveUnionPhysicalNode) {
+        } else if (node instanceof JQuickRecursiveUnionPhysicalNode) {//6
             return executeRecursiveUnion((JQuickRecursiveUnionPhysicalNode) node, context);
         }
         throw new UnsupportedOperationException("Unknown node type: " + node.getNodeType());
@@ -640,7 +640,7 @@ public class JQuickNodeExecutor {
         int limit = node.getLimit();
         int offset = node.getOffset();
         if (offset >= rows.size()) {
-            return JQuickDataSet.builder().build();
+            return new JQuickDataSet(sorted.getColumns(), new ArrayList<>());
         }
         int endIndex = Math.min(offset + limit, rows.size());
         List<JQuickRow> limitedRows = rows.subList(offset, endIndex);
@@ -656,7 +656,7 @@ public class JQuickNodeExecutor {
         int limit = node.getLimit();
         int offset = node.getOffset();
         if (offset >= rows.size()) {
-            return JQuickDataSet.builder().build();
+            return new JQuickDataSet(input.getColumns(), new ArrayList<>());
         }
         int endIndex = Math.min(offset + limit, rows.size());
         List<JQuickRow> limitedRows = rows.subList(offset, endIndex);
