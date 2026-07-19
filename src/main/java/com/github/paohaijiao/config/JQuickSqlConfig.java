@@ -37,6 +37,8 @@ import java.util.concurrent.TimeUnit;
 @Data
 public class JQuickSqlConfig {
 
+    private int maxFileSize;
+
     private  String coordinatorId;
 
     private List<JQuickCoordinator.WorkerEndpoint> workers;
@@ -56,6 +58,7 @@ public class JQuickSqlConfig {
     private boolean enableVectorizedExecution;
 
     private int batchSize;
+
 
     private String clusterName;
 
@@ -140,6 +143,7 @@ public class JQuickSqlConfig {
         this.executionMode = "auto";
         this.enableAdaptiveParallelism = true;
         this.enableVectorizedExecution = true;
+        this.maxFileSize = 64 * 1024 * 1024;
         this.batchSize = 1000;
         this.clusterName = "jquick-cluster";
         this.serviceDiscoveryUrl = null;

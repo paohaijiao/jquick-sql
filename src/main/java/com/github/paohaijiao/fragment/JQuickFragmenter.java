@@ -40,7 +40,7 @@ public class JQuickFragmenter {
     private final Set<JQuickPhysicalPlanNode> processedSources = new HashSet<>();
 
     public JQuickFragmenter() {
-        this(4);
+        this(1);
     }
 
     public JQuickFragmenter(int defaultParallelism) {
@@ -60,7 +60,18 @@ public class JQuickFragmenter {
         fragmentIdGenerator.set(0);
         JQuickFragment rootFragment = createFragment(JQuickFragmentType.SINK, rootPlan, 1);
         currentFragment = rootFragment;
-        processNode(rootPlan, rootFragment, new HashSet<>());
+        Set<JQuickPhysicalPlanNode> visited = new HashSet<>();
+        visited.add(rootPlan);
+        nodeToFragment.put(rootPlan, rootFragment);
+        List<JQuickPhysicalPlanNode> children = getChildren(rootPlan);
+        boolean rootIsRecursiveUnion = rootPlan instanceof JQuickRecursiveUnionPhysicalNode;
+        for (JQuickPhysicalPlanNode child : children) {
+            if (!rootIsRecursiveUnion && shouldBeSourceFragment(child)) {
+                createSourceFragment(child, rootFragment, visited);
+            } else {
+                processNode(child, rootFragment, visited, rootIsRecursiveUnion);
+            }
+        }
         JQuickDistributedPlan plan = new JQuickDistributedPlan(rootFragment);
         plan.setDefaultParallelism(defaultParallelism);
         return plan;
@@ -122,9 +133,10 @@ public class JQuickFragmenter {
         if (node instanceof JQuickTableScanPhysicalNode || node instanceof JQuickValuesPhysicalNode) {
             return true;
         }
-        // 数据交换节点：必须创建 Fragment
+        // 数据交换节点：不创建新 Fragment，作为父节点的子节点
+        // ExchangePhysicalNode 是 Fragment 的输入边界，从 input partitions 读取数据
         if (node instanceof JQuickExchangePhysicalNode) {
-            return true;
+            return false;
         }
         // 集合操作节点：必须创建 Fragment
         if (node instanceof JQuickSetOperationPhysicalNode) {
@@ -221,7 +233,6 @@ public class JQuickFragmenter {
         if (node instanceof JQuickHashJoinPhysicalNode) {
             JQuickHashJoinPhysicalNode join = (JQuickHashJoinPhysicalNode) node;
             List<JQuickExpression> partitionKeys = extractJoinPartitionKeys(join);//让相同的 join key 落到同一个节点
-            // 按 join key 进行哈希分区
             return new JQuickExchangeNode(exchangeId, JQuickExchangeType.SHUFFLE, JQuickPartitionStrategy.HASH, partitionKeys, defaultParallelism);
         }
         if (node instanceof JQuickHashAggregatePhysicalNode) {
@@ -230,7 +241,6 @@ public class JQuickFragmenter {
             if (!groupKeys.isEmpty()) {//无 GROUP BY：全局聚合只需要一个结果，所以 GATHER 到一个节点
                 return new JQuickExchangeNode(exchangeId, JQuickExchangeType.SHUFFLE, JQuickPartitionStrategy.HASH, groupKeys, defaultParallelism);
             }
-            //有 GROUP BY：需要相同分组键的数据在一起，所以按分组键 HASH 分发
             return new JQuickExchangeNode(exchangeId, JQuickExchangeType.GATHER, JQuickPartitionStrategy.REPLICATE, (List<JQuickExpression>) null, 1);
         }
 

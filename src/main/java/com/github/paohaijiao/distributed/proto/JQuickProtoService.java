@@ -703,7 +703,7 @@ public class JQuickProtoService {
         switch (proto.getType()) {
             case EXPR_COLUMN_REF:
                 String type=typeConverterFactory.toType(proto.getValue(),String.class);
-                return new JQuickColumnRefExpression(type);
+                return null==type?null:new JQuickColumnRefExpression(type);
             case EXPR_LITERAL:
                 Object val=typeConverterFactory.fromAny(proto.getValue());
                 return new JQuickLiteralExpression(val);
@@ -954,11 +954,11 @@ public class JQuickProtoService {
                 for (JQuickProjectNodeProto.SelectItemProto itemProto : projectProto.getSelectItemsList()) {
                     selectItems.add(new JQuickProjectPhysicalNode.SelectItem(buildExpression(itemProto.getExpression()), itemProto.getAlias()));
                 }
-                return new JQuickProjectPhysicalNode(selectItems, children.size() > 0 ? children.get(0) : null, projectProto.getDistinct(), projectProto.getIsStar());
+                return new JQuickProjectPhysicalNode(selectItems, !children.isEmpty() ? children.get(0) : null, projectProto.getDistinct(), projectProto.getIsStar());
             case HASH_JOIN:
                 JQuickHashJoinNodeProto joinProto = proto.getHashJoin();
-                return new JQuickHashJoinPhysicalNode(convertJoinType(joinProto.getJoinType()), 
-                        children.size() > 0 ? children.get(0) : null, 
+                return new JQuickHashJoinPhysicalNode(convertJoinType(joinProto.getJoinType()),
+                        !children.isEmpty() ? children.get(0) : null,
                         children.size() > 1 ? children.get(1) : null, 
                         buildExpression(joinProto.getCondition()), new ArrayList<>(), 
                         joinProto.getBuildSide() == JQuickBuildSideProto.BUILD_SIDE_LEFT ? JQuickHashJoinPhysicalNode.BuildSide.LEFT : JQuickHashJoinPhysicalNode.BuildSide.RIGHT, 

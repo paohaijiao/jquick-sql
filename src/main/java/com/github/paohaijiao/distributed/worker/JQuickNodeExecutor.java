@@ -82,8 +82,7 @@ public class JQuickNodeExecutor {
             return executeLimit((JQuickLimitPhysicalNode) node, context);
         }  else if (node instanceof JQuickWindowPhysicalNode) {
             return executeWindow((JQuickWindowPhysicalNode) node, context);
-        }
-        else if (node instanceof JQuickHashAggregatePhysicalNode) {
+        } else if (node instanceof JQuickHashAggregatePhysicalNode) {
             return executeHashAggregate((JQuickHashAggregatePhysicalNode) node, context);
         } else if (node instanceof JQuickExchangePhysicalNode) {
             return executeExchange((JQuickExchangePhysicalNode) node, context);
@@ -99,12 +98,6 @@ public class JQuickNodeExecutor {
         throw new UnsupportedOperationException("Unknown node type: " + node.getNodeType());
     }
 
-    /**
-     * 执行物理计划（用于子查询）
-     */
-    public JQuickDataSet executePhysicalPlan(JQuickPhysicalPlanNode node) {
-        return executePhysicalPlan(node, null);
-    }
 
     /**
      * 执行物理计划（用于相关子查询，传递外部行数据）
@@ -177,13 +170,25 @@ public class JQuickNodeExecutor {
         console.info("executeTableScan - tableName: " + tableName + ", partitionInfo: " + (node.getPartitionInfo() != null ? "exists" : "null"));
         Set<String> requiredColumns = node.getRequiredColumns();
         JQuickDataSet data;
-        // 优先检查 JQuickDataSourceManager 中是否有该表（支持 CTE 递归查询）
-        if (JQuickDataSourceManager.containsTable(tableName)) {
+        boolean isSourceFragment = context != null && context.getRequest() != null && context.getRequest().getInputPartitionsCount() > 0;
+        if (isSourceFragment) {
+            JQuickDataSet partitionData = readFromInputPartitions(tableName, context.getRequest());
+            if (partitionData != null && !partitionData.isEmpty()) {
+                console.info("Reading from input partitions (source fragment): " + tableName + ", rows: " + partitionData.size());
+                data = partitionData;
+            } else if (node.getPartitionInfo() != null) {
+                console.info("Reading from memory partition: " + tableName);
+                data = readFromMemoryPartition(tableName);
+            } else if (JQuickDataSourceManager.containsTable(tableName)) {
+                console.info("Reading from data source (fallback): " + tableName);
+                data = JQuickDataSourceManager.getTable(tableName);
+            } else {
+                console.info("Reading from data source: " + tableName);
+                data = readFromDataSource(tableName);
+            }
+        } else if (JQuickDataSourceManager.containsTable(tableName)) {
             console.info("Reading from data source (CTE or registered table): " + tableName);
             data = JQuickDataSourceManager.getTable(tableName);
-        } else if (context != null && context.getRequest() != null && context.getRequest().getInputPartitionsCount() > 0) {
-            console.info("Reading from input partitions (distributed mode)");
-            data = readFromInputPartitions(tableName, context.getRequest());
         } else if (node.getPartitionInfo() != null) {
             console.info("Reading from memory partition: " + tableName);
             data = readFromMemoryPartition(tableName);
@@ -562,16 +567,20 @@ public class JQuickNodeExecutor {
      * 分组聚合
      */
     private JQuickDataSet executeGroupedAggregate(JQuickDataSet input, JQuickHashAggregatePhysicalNode node) {
-        Map<JQuickRow, List<JQuickRow>> groups = new HashMap<>();
+        Map<String, List<JQuickRow>> groups = new HashMap<>();
         for (JQuickRow row : input.getRows()) {
-            JQuickRow groupKey = extractGroupKey(row, node.getGroupKeys());
+            String groupKey = extractGroupKeyString(row, node.getGroupKeys());
             groups.computeIfAbsent(groupKey, k -> new ArrayList<>()).add(row);
         }
         List<JQuickRow> resultRows = new ArrayList<>();
-        for (Map.Entry<JQuickRow, List<JQuickRow>> entry : groups.entrySet()) {
+        for (Map.Entry<String, List<JQuickRow>> entry : groups.entrySet()) {
             JQuickRow aggregated = new JQuickRow();
-            for (Map.Entry<String, Object> keyEntry : entry.getKey().entrySet()) {
-                aggregated.put(keyEntry.getKey(), keyEntry.getValue());
+            JQuickRow firstRow = entry.getValue().get(0);
+            for (JQuickExpression keyExpr : node.getGroupKeys()) {
+                if (keyExpr instanceof JQuickColumnRefExpression) {
+                    String colName = ((JQuickColumnRefExpression) keyExpr).getColumnName();
+                    aggregated.put(colName, firstRow.get(colName));
+                }
             }
             for (JQuickHashAggregatePhysicalNode.AggregateFunction agg : node.getAggregates()) {
                 Object value = computeAggregate(entry.getValue(), agg);
@@ -581,11 +590,8 @@ public class JQuickNodeExecutor {
             resultRows.add(aggregated);
         }
         if (node.getHavingCondition() != null) {
-            resultRows = resultRows.stream()
-                    .filter(row -> expressionEvaluator.evaluatePredicate(row, node.getHavingCondition()))
-                    .collect(Collectors.toList());
+            resultRows = resultRows.stream().filter(row -> expressionEvaluator.evaluatePredicate(row, node.getHavingCondition())).collect(Collectors.toList());
         }
-        //构建聚合结果列元数据
         List<JQuickColumnMeta> columnMetas = buildColumnMetasForAggregate(node);
         return new JQuickDataSet(columnMetas, resultRows);
     }
@@ -962,6 +968,27 @@ public class JQuickNodeExecutor {
             return new JQuickDataSet(columns, allRows);
         }
         // SHUFFLE/BROADCAST Exchange: 发送数据到其他 Worker
+        // 但首先检查是否有 input partitions（Fragment 输入边界）
+        if (context != null && context.getRequest() != null && context.getRequest().getInputPartitionsCount() > 0) {
+            console.info("SHUFFLE Exchange: reading from input partitions (Fragment input boundary)");
+            List<JQuickRow> allRows = new ArrayList<>();
+            List<JQuickColumnMeta> columns = null;
+            for (JQuickMemoryPartitionProto partition : context.getRequest().getInputPartitionsList()) {
+                JQuickDataSet partitionData = dataConverter.convertFromProto(partition.getData());
+                if (partitionData != null && !partitionData.isEmpty()) {
+                    allRows.addAll(partitionData.getRows());
+                    if (columns == null) {
+                        columns = partitionData.getColumns();
+                    }
+                    console.info("Read " + partitionData.size() + " rows from input partition " + partition.getPartitionId());
+                }
+            }
+            if (!allRows.isEmpty() && columns != null) {
+                console.info("SHUFFLE Exchange: returning " + allRows.size() + " rows from input partitions");
+                return new JQuickDataSet(columns, allRows);
+            }
+            console.info("SHUFFLE Exchange: no data from input partitions, falling through to child execution");
+        }
         JQuickDataSet input = executeNode(node.getChild(), context);//获取数据
         console.info("Input data rows: " + input.size());
         if (input.isEmpty()) {
@@ -1099,10 +1126,31 @@ public class JQuickNodeExecutor {
         return key;
     }
 
+    private String extractGroupKeyString(JQuickRow row, List<JQuickExpression> groupKeys) {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < groupKeys.size(); i++) {
+            if (i > 0) sb.append("|");
+            JQuickExpression expr = groupKeys.get(i);
+            if (expr instanceof JQuickColumnRefExpression) {
+                String colName = ((JQuickColumnRefExpression) expr).getColumnName();
+                Object val = row.get(colName);
+                sb.append(val != null ? val.toString() : "null");
+            }
+        }
+        return sb.toString();
+    }
+
     private Object computeAggregate(List<JQuickRow> rows, JQuickHashAggregatePhysicalNode.AggregateFunction agg) {
         String funcName = agg.getFunctionName().toLowerCase();
+        JQuickHashAggregatePhysicalNode.AggregateStage stage = agg.getInternalStage();
         switch (funcName) {
             case "count":
+                if (stage == JQuickHashAggregatePhysicalNode.AggregateStage.FINAL) {
+                    return rows.stream().mapToLong(r -> {
+                        Object val = expressionEvaluator.evaluateExpression(r, agg.getArgument());
+                        return val instanceof Number ? ((Number) val).longValue() : 0L;
+                    }).sum();
+                }
                 if (agg.isDistinct()) {
                     return rows.stream()
                             .map(r -> expressionEvaluator.evaluateExpression(r, agg.getArgument()))
@@ -1110,11 +1158,28 @@ public class JQuickNodeExecutor {
                 }
                 return (long) rows.size();
             case "sum":
+                if (stage == JQuickHashAggregatePhysicalNode.AggregateStage.FINAL) {
+                    return rows.stream().mapToDouble(r -> {
+                        Object val = expressionEvaluator.evaluateExpression(r, agg.getArgument());
+                        return val instanceof Number ? ((Number) val).doubleValue() : 0.0;
+                    }).sum();
+                }
                 return rows.stream().mapToDouble(r -> {
                     Object val = expressionEvaluator.evaluateExpression(r, agg.getArgument());
                     return val instanceof Number ? ((Number) val).doubleValue() : 0.0;
                 }).sum();
             case "avg":
+                if (stage == JQuickHashAggregatePhysicalNode.AggregateStage.FINAL) {
+                    double sum = rows.stream().mapToDouble(r -> {
+                        Object val = r.get(agg.getAlias() + "_sum");
+                        return val instanceof Number ? ((Number) val).doubleValue() : 0.0;
+                    }).sum();
+                    long count = rows.stream().mapToLong(r -> {
+                        Object val = r.get(agg.getAlias() + "_count");
+                        return val instanceof Number ? ((Number) val).longValue() : 0L;
+                    }).sum();
+                    return count > 0 ? sum / count : 0.0;
+                }
                 return rows.stream().mapToDouble(r -> {
                     Object val = expressionEvaluator.evaluateExpression(r, agg.getArgument());
                     return val instanceof Number ? ((Number) val).doubleValue() : 0.0;
@@ -1125,6 +1190,16 @@ public class JQuickNodeExecutor {
                         .max((a, b) -> compareValues(a, b, false)).orElse(null);
             case "min":
                 return rows.stream().map(r -> expressionEvaluator.evaluateExpression(r, agg.getArgument())).min((a, b) -> compareValues(a, b, false)).orElse(null);
+            case "divide":
+                double divSum = rows.stream().mapToDouble(r -> {
+                    Object val = r.get(agg.getAlias() + "_sum");
+                    return val instanceof Number ? ((Number) val).doubleValue() : 0.0;
+                }).sum();
+                long divCount = rows.stream().mapToLong(r -> {
+                    Object val = r.get(agg.getAlias() + "_count");
+                    return val instanceof Number ? ((Number) val).longValue() : 0L;
+                }).sum();
+                return divCount > 0 ? divSum / divCount : 0.0;
             default:
                 List<Object> args = rows.stream().map(r -> expressionEvaluator.evaluateExpression(r, agg.getArgument())).collect(Collectors.toList());
                 return expressionEvaluator.evaluateFunction(funcName, args);

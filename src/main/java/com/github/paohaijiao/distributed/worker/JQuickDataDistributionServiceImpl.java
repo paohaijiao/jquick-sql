@@ -258,7 +258,7 @@ public class JQuickDataDistributionServiceImpl extends JQuickDataDistributionSer
     public CompletableFuture<Void> sendDataToWorker(String targetWorkerId, String host, int port, JQuickDataChunkProto chunk) {
         CompletableFuture<Void> future = new CompletableFuture<>();
         try {
-            ManagedChannel channel = ManagedChannelBuilder.forAddress(host, port).usePlaintext().build();
+            ManagedChannel channel = ManagedChannelBuilder.forAddress(host, port).usePlaintext().maxInboundMessageSize(64 * 1024 * 1024).build();
             JQuickDataDistributionServiceGrpc.JQuickDataDistributionServiceStub stub = JQuickDataDistributionServiceGrpc.newStub(channel);
             StreamObserver<JQuickDataChunkProto> requestObserver = stub.sendData(
                     new StreamObserver<JQuickEmptyNodeProto>() {

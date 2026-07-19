@@ -102,7 +102,13 @@ public class JQuickPhysicalPlanOptimizer {
             JQuickAggregateFunction aggFunc = JQuickAggregateFunction.valueOf(funcName);
             switch (aggFunc) {
                 case COUNT:
-                    partialAggs.add(new JQuickHashAggregatePhysicalNode.AggregateFunction("SUM", func.getArgument(), false, func.getAlias() + "_partial", func.isCountStar(), null, JQuickHashAggregatePhysicalNode.AggregateStage.PARTIAL));
+                    if (func.isCountStar()) {
+                        partialAggs.add(new JQuickHashAggregatePhysicalNode.AggregateFunction("COUNT", null, false, func.getAlias() + "_partial", true, null, JQuickHashAggregatePhysicalNode.AggregateStage.PARTIAL));
+                    } else if (func.isDistinct()) {
+                        partialAggs.add(new JQuickHashAggregatePhysicalNode.AggregateFunction("COUNT", func.getArgument(), true, func.getAlias() + "_partial", false, null, JQuickHashAggregatePhysicalNode.AggregateStage.PARTIAL));
+                    } else {
+                        partialAggs.add(new JQuickHashAggregatePhysicalNode.AggregateFunction("SUM", func.getArgument(), false, func.getAlias() + "_partial", false, null, JQuickHashAggregatePhysicalNode.AggregateStage.PARTIAL));
+                    }
                     break;
                 case SUM:
                     partialAggs.add(new JQuickHashAggregatePhysicalNode.AggregateFunction("SUM", func.getArgument(), false, func.getAlias(), false, null, JQuickHashAggregatePhysicalNode.AggregateStage.PARTIAL));
@@ -148,10 +154,34 @@ public class JQuickPhysicalPlanOptimizer {
                 continue;
             }
             JQuickAggregateFunction aggFunc = JQuickAggregateFunction.valueOf(funcName);
-            if (aggFunc == JQuickAggregateFunction.AVG) {
-                finalAggs.add(new JQuickHashAggregatePhysicalNode.AggregateFunction("DIVIDE", null, false, func.getAlias(), false, null, JQuickHashAggregatePhysicalNode.AggregateStage.FINAL));
-            } else {
-                finalAggs.add(func);
+            switch (aggFunc) {
+                case COUNT:
+                    finalAggs.add(new JQuickHashAggregatePhysicalNode.AggregateFunction(
+                            "SUM", new com.github.paohaijiao.expression.domain.JQuickColumnRefExpression(func.getAlias() + "_partial"),
+                            false, func.getAlias(), false, null, JQuickHashAggregatePhysicalNode.AggregateStage.FINAL));
+                    break;
+                case SUM:
+                    finalAggs.add(new JQuickHashAggregatePhysicalNode.AggregateFunction(
+                            "SUM", new com.github.paohaijiao.expression.domain.JQuickColumnRefExpression(func.getAlias()),
+                            false, func.getAlias(), false, null, JQuickHashAggregatePhysicalNode.AggregateStage.FINAL));
+                    break;
+                case AVG:
+                    finalAggs.add(new JQuickHashAggregatePhysicalNode.AggregateFunction("DIVIDE", null, false, func.getAlias(), false, null, JQuickHashAggregatePhysicalNode.AggregateStage.FINAL));
+                    break;
+                case MAX:
+                    finalAggs.add(new JQuickHashAggregatePhysicalNode.AggregateFunction(
+                            "MAX", new com.github.paohaijiao.expression.domain.JQuickColumnRefExpression(func.getAlias()),
+                            false, func.getAlias(), false, null, JQuickHashAggregatePhysicalNode.AggregateStage.FINAL));
+                    break;
+                case MIN:
+                    finalAggs.add(new JQuickHashAggregatePhysicalNode.AggregateFunction(
+                            "MIN", new com.github.paohaijiao.expression.domain.JQuickColumnRefExpression(func.getAlias()),
+                            false, func.getAlias(), false, null, JQuickHashAggregatePhysicalNode.AggregateStage.FINAL));
+                    break;
+                default:
+                    finalAggs.add(new JQuickHashAggregatePhysicalNode.AggregateFunction(
+                            func.getFunctionName(), func.getArgument(), func.isDistinct(), func.getAlias(),
+                            func.isCountStar(), func.getSeparator(), JQuickHashAggregatePhysicalNode.AggregateStage.FINAL));
             }
         }
         return new JQuickHashAggregatePhysicalNode(agg.getGroupKeys(), finalAggs, exchange, agg.getHavingCondition(), JQuickHashAggregatePhysicalNode.AggregateStage.FINAL);

@@ -281,6 +281,7 @@ public class JQuickPartitionManager {
             ManagedChannel channel = ManagedChannelBuilder
                     .forAddress(endpoint.getHost(), endpoint.getPort())
                     .usePlaintext()
+                    .maxInboundMessageSize(64 * 1024 * 1024)
                     .build();
             channelCache.put(endpoint.getWorkerId(), channel);
             worker.getWorkerChannels().put(endpoint.getIndex(), channel);

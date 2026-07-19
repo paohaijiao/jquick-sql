@@ -1,5 +1,6 @@
 package com.github.paohaijiao.distributed.worker;
 
+import com.github.paohaijiao.config.JQuickSqlConfig;
 import com.github.paohaijiao.console.JConsole;
 import com.github.paohaijiao.datasource.JQuickDataSourceManager;
 import com.github.paohaijiao.distributed.coordinator.JQuickCoordinator;
@@ -379,10 +380,12 @@ public class JQuickWorker {
      * 启动 Worker 服务
      */
     public void start() throws IOException {
+        JQuickSqlConfig config=new JQuickSqlConfig();
         JQuickPhysicalPlanServiceImpl planService = new JQuickPhysicalPlanServiceImpl(this);
         distributionService = new JQuickDataDistributionServiceImpl(this);
         tableService = new JQuickTableServiceImpl(dataConverter);
         server = ServerBuilder.forPort(port)
+                .maxInboundMessageSize(config.getMaxFileSize())
                 .addService(planService)
                 .addService(distributionService)
                 .addService(tableService)

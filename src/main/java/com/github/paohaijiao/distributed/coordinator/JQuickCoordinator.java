@@ -172,6 +172,17 @@ public class JQuickCoordinator {
         execution.setStatus(QueryExecution.QueryStatus.SCHEDULING);
         List<JQuickFragment> allFragments = collectAllFragments(rootFragment); //遍历所有 Fragment，调度执行
         List<JQuickFragment> sortedFragments = topologicalSort(allFragments); //按依赖关系排序（叶子节点先执行）
+        sortedFragments.stream().forEach(e->{
+            String msg="";
+            String input="";
+            for (int i = 0; i < e.getInputs().size(); i++) {
+                input+=e.getInputs().get(i).getExchangeId();
+            }
+            if(null!=e.getOutput()){
+                System.out.println("当前的输入是"+input+"输出是"+e.getOutput().getExchangeId());
+            }
+
+        });
         console.info("Fragment execution order: " + sortedFragments.stream().map(f -> f.getFragmentId() + "(" + f.getType() + ")").collect(Collectors.joining(" -> ")));
         execution.setStatus(QueryExecution.QueryStatus.RUNNING);
         for (JQuickFragment fragment : sortedFragments) {
@@ -455,6 +466,7 @@ public class JQuickCoordinator {
         ManagedChannel channel = workerChannels.computeIfAbsent(worker.getWorkerId(), k ->
                 ManagedChannelBuilder.forAddress(worker.getHost(), worker.getPort())
                         .usePlaintext()
+                        .maxInboundMessageSize(64 * 1024 * 1024)
                         .build()
         );
         return JQuickPhysicalPlanServiceGrpc.newBlockingStub(channel);
@@ -467,6 +479,7 @@ public class JQuickCoordinator {
         ManagedChannel channel = workerChannels.computeIfAbsent(worker.getWorkerId(), k ->
                 ManagedChannelBuilder.forAddress(worker.getHost(), worker.getPort())
                         .usePlaintext()
+                        .maxInboundMessageSize(64 * 1024 * 1024)
                         .build()
         );
         return JQuickPhysicalPlanServiceGrpc.newStub(channel);
