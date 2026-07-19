@@ -86,13 +86,13 @@ public class JQuickNodeExecutor {
             return executeHashAggregate((JQuickHashAggregatePhysicalNode) node, context);
         } else if (node instanceof JQuickExchangePhysicalNode) {
             return executeExchange((JQuickExchangePhysicalNode) node, context);
-        }else if (node instanceof JQuickSetOperationPhysicalNode) {
+        }else if (node instanceof JQuickSetOperationPhysicalNode) {//8
             return executeSetOperation((JQuickSetOperationPhysicalNode) node, context);
         } else if (node instanceof JQuickValuesPhysicalNode) {
             return executeValues((JQuickValuesPhysicalNode) node, context);
         } else if (node instanceof JQuickEmptyPhysicalNode) {
             return JQuickDataSet.builder().build();
-        } else if (node instanceof JQuickRecursiveUnionPhysicalNode) {//6
+        } else if (node instanceof JQuickRecursiveUnionPhysicalNode) {//9
             return executeRecursiveUnion((JQuickRecursiveUnionPhysicalNode) node, context);
         }
         throw new UnsupportedOperationException("Unknown node type: " + node.getNodeType());

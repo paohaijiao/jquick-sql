@@ -178,7 +178,9 @@ public class JQuickHashJoinPhysicalNodeTest {
      * 测试 INNER JOIN - 基本连接
      * 
      * 目的：验证 INNER JOIN 能够正确连接两个表
-     * 预期：只返回匹配的行
+     * SELECT *
+     * FROM employee
+     * INNER JOIN department ON employee.dept_id = department.dept_id;
      */
     @Test
     public void testInnerJoin_Basic() {
@@ -196,7 +198,7 @@ public class JQuickHashJoinPhysicalNodeTest {
         );
         JQuickWorker.JQuickTaskContext context = createTaskContext();
         JQuickDataSet result = nodeExecutor.executeNode(joinNode, context);
-        
+        result.printTable();
         assertNotNull("结果不应为 null", result);
         // employee 有 6 条，其中 Frank 的 dept_id 为 null
         // department 有 4 条，其中财务部没有员工
@@ -206,7 +208,10 @@ public class JQuickHashJoinPhysicalNodeTest {
 
     /**
      * 测试 INNER JOIN - 带条件
-     * 
+     * SELECT *
+     * FROM employee
+     * INNER JOIN department ON employee.dept_id = department.dept_id
+     * WHERE employee.salary > 8000;
      * 目的：验证 INNER JOIN 带额外过滤条件
      * 预期：返回满足连接条件和过滤条件的数据
      */
@@ -229,19 +234,18 @@ public class JQuickHashJoinPhysicalNodeTest {
                 JQuickHashJoinPhysicalNode.BuildSide.RIGHT,
                 JQuickHashJoinPhysicalNode.JoinDistribution.LOCAL
         );
-        
         JQuickWorker.JQuickTaskContext context = createTaskContext();
         JQuickDataSet result = nodeExecutor.executeNode(joinNode, context);
-        
+        result.printTable();
         assertNotNull("结果不应为 null", result);
-        // INNER JOIN 匹配 5 条，但 condition salary > 8000 过滤后只剩 3 条
-        // Bob(10000), Charlie(12000), David(9000) 满足条件
         assertEquals("带条件的 INNER JOIN 应该返回 3 条数据", 3, result.size());
     }
 
     /**
      * 测试 INNER JOIN - 多键连接
-     * 
+     * SELECT *
+     * FROM table1
+     * INNER JOIN table2 ON table1.key1 = table2.key1 AND table1.key2 = table2.key2;
      * 目的：验证多键连接的正确性
      * 预期：所有键都匹配才返回
      */
@@ -257,15 +261,12 @@ public class JQuickHashJoinPhysicalNodeTest {
         row1.put("key2", 1);
         row1.put("value1", "v1");
         table1Builder.addRow(row1);
-        
         JQuickRow row2 = new JQuickRow();
         row2.put("key1", "A");
         row2.put("key2", 2);
         row2.put("value1", "v2");
         table1Builder.addRow(row2);
-        
         JQuickDataSourceManager.registerTable("table1", table1Builder.build());
-        
         JQuickDataSet.Builder table2Builder = JQuickDataSet.builder();
         table2Builder.addColumn("key1", String.class, "table2");
         table2Builder.addColumn("key2", Integer.class, "table2");
@@ -308,14 +309,16 @@ public class JQuickHashJoinPhysicalNodeTest {
         
         JQuickWorker.JQuickTaskContext context = createTaskContext();
         JQuickDataSet result = nodeExecutor.executeNode(joinNode, context);
-        
+        result.printTable();
         assertNotNull("结果不应为 null", result);
         // 只有 key1='A' AND key2=1 匹配
         assertEquals("多键 INNER JOIN 应该返回 1 条数据", 1, result.size());
     }
     /**
      * 测试 LEFT JOIN - 基本连接
-     * 
+     * SELECT *
+     * FROM employee
+     * LEFT JOIN department ON employee.dept_id = department.dept_id;
      * 目的：验证 LEFT JOIN 能够正确返回左表所有行
      * 预期：左表所有行都返回，右表不匹配则为 null
      */
@@ -337,7 +340,7 @@ public class JQuickHashJoinPhysicalNodeTest {
         );
         JQuickWorker.JQuickTaskContext context = createTaskContext();
         JQuickDataSet result = nodeExecutor.executeNode(joinNode, context);
-        
+        result.printTable();
         assertNotNull("结果不应为 null", result);
         // employee 有 6 条，LEFT JOIN 应该返回 6 条
         assertEquals("LEFT JOIN 应该返回 6 条数据", 6, result.size());
@@ -354,7 +357,9 @@ public class JQuickHashJoinPhysicalNodeTest {
 
     /**
      * 测试 LEFT JOIN - 右表无匹配
-     * 
+     * SELECT *
+     * FROM left_table
+     * LEFT JOIN department ON left_table.id = department.dept_id;
      * 目的：验证 LEFT JOIN 在右表无匹配时的行为
      * 预期：左表行保留，右表列为 null
      */
@@ -386,7 +391,7 @@ public class JQuickHashJoinPhysicalNodeTest {
         
         JQuickWorker.JQuickTaskContext context = createTaskContext();
         JQuickDataSet result = nodeExecutor.executeNode(joinNode, context);
-        
+        result.printTable();
         assertNotNull("结果不应为 null", result);
         assertEquals("LEFT JOIN 应该返回 1 条数据", 1, result.size());
         assertNull("右表列应该为 null", result.getRows().get(0).get("dept_name"));
@@ -395,7 +400,9 @@ public class JQuickHashJoinPhysicalNodeTest {
 
     /**
      * 测试 RIGHT JOIN - 基本连接
-     * 
+     * SELECT *
+     * FROM employee
+     * RIGHT JOIN department ON employee.dept_id = department.dept_id;
      * 目的：验证 RIGHT JOIN 能够正确返回右表所有行
      * 预期：右表所有行都返回，左表不匹配则为 null
      */
@@ -437,7 +444,9 @@ public class JQuickHashJoinPhysicalNodeTest {
 
     /**
      * 测试 FULL JOIN - 基本连接
-     * 
+     * SELECT *
+     * FROM employee
+     * FULL JOIN department ON employee.dept_id = department.dept_id;
      * 目的：验证 FULL JOIN 能够返回两表所有行
      * 预期：两表所有行都返回，不匹配的用 null 填充
      */
@@ -469,7 +478,9 @@ public class JQuickHashJoinPhysicalNodeTest {
 
     /**
      * 测试 CROSS JOIN - 笛卡尔积
-     * 
+     * SELECT *
+     * FROM employee
+     * CROSS JOIN department;
      * 目的：验证 CROSS JOIN 能够正确计算笛卡尔积
      * 预期：返回两表的笛卡尔积
      */
@@ -496,7 +507,8 @@ public class JQuickHashJoinPhysicalNodeTest {
 
     /**
      * 测试 CROSS JOIN - 小表
-     * 
+     * SELECT *
+     * FROM small_table, department;
      * 目的：验证小表的 CROSS JOIN
      * 预期：正确计算笛卡尔积
      */
@@ -523,7 +535,9 @@ public class JQuickHashJoinPhysicalNodeTest {
 
     /**
      * 测试 BuildSide - LEFT
-     * 
+     * SELECT *
+     * FROM employee
+     * INNER JOIN department ON employee.dept_id = department.dept_id;
      * 目的：验证左表作为构建表的 JOIN
      * 预期：正确执行 JOIN
      */
@@ -554,7 +568,9 @@ public class JQuickHashJoinPhysicalNodeTest {
 
     /**
      * 测试 BuildSide - RIGHT
-     * 
+     * SELECT *
+     * FROM employee
+     * INNER JOIN department ON employee.dept_id = department.dept_id;
      * 目的：验证右表作为构建表的 JOIN
      * 预期：正确执行 JOIN
      */
@@ -586,7 +602,9 @@ public class JQuickHashJoinPhysicalNodeTest {
 
     /**
      * 测试空表 JOIN
-     * 
+     * SELECT *
+     * FROM empty_table
+     * INNER JOIN department ON empty_table.id = department.dept_id;
      * 目的：验证空表参与 JOIN 的行为
      * 预期：返回空结果或另一表的数据
      */
@@ -642,7 +660,9 @@ public class JQuickHashJoinPhysicalNodeTest {
 
     /**
      * 测试包含 null 值的 JOIN
-     * 
+     * SELECT *
+     * FROM employee
+     * INNER JOIN department ON employee.dept_id = department.dept_id;
      * 目的：验证 JOIN 键包含 null 值时的行为
      * 预期：null 值不参与匹配
      */
@@ -677,7 +697,9 @@ public class JQuickHashJoinPhysicalNodeTest {
 
     /**
      * 测试大数据量 JOIN
-     * 
+     * SELECT *
+     * FROM large_left
+     * INNER JOIN large_right ON large_left.key = large_right.key;
      * 目的：验证大数据量 JOIN 的性能
      * 预期：能够正确处理大数据量
      */
@@ -745,7 +767,9 @@ public class JQuickHashJoinPhysicalNodeTest {
 
     /**
      * 测试 LOCAL 分布
-     * 
+     * SELECT *
+     * FROM employee
+     * INNER JOIN department ON employee.dept_id = department.dept_id;
      * 目的：验证 LOCAL 分布的 JOIN
      * 预期：正确执行本地 JOIN
      */
@@ -776,7 +800,9 @@ public class JQuickHashJoinPhysicalNodeTest {
 
     /**
      * 测试 BROADCAST_HASH 分布
-     * 
+     * SELECT *
+     * FROM employee
+     * CROSS JOIN small_table;
      * 目的：验证广播 JOIN
      * 预期：正确执行广播 JOIN
      */
@@ -805,7 +831,10 @@ public class JQuickHashJoinPhysicalNodeTest {
 
     /**
      * 测试多表 JOIN
-     * 
+     * SELECT *
+     * FROM employee
+     * INNER JOIN department ON employee.dept_id = department.dept_id
+     * INNER JOIN project ON employee.emp_id = project.leader_id;
      * 目的：验证多表连接的正确性
      * 预期：正确执行多表 JOIN
      */
