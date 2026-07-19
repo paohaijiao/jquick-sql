@@ -74,11 +74,11 @@ public class JQuickNodeExecutor {
             return executeHashJoin((JQuickHashJoinPhysicalNode) node, context);
         } else if (node instanceof JQuickNestedLoopJoinPhysicalNode) {
             return executeNestedLoopJoin((JQuickNestedLoopJoinPhysicalNode) node, context);
-        }else if (node instanceof JQuickTopNPhysicalNode) {
+        }else if (node instanceof JQuickTopNPhysicalNode) {//7
             return executeTopN((JQuickTopNPhysicalNode) node, context);
-        } else if (node instanceof JQuickSortPhysicalNode) {
+        } else if (node instanceof JQuickSortPhysicalNode) {//6
             return executeSort((JQuickSortPhysicalNode) node, context);
-        } else if (node instanceof JQuickLimitPhysicalNode) {
+        } else if (node instanceof JQuickLimitPhysicalNode) {//5
             return executeLimit((JQuickLimitPhysicalNode) node, context);
         }  else if (node instanceof JQuickWindowPhysicalNode) {//4
             return executeWindow((JQuickWindowPhysicalNode) node, context);
