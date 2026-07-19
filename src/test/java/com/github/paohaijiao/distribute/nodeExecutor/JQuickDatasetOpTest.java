@@ -272,8 +272,8 @@ public class JQuickDatasetOpTest {
      */
     @Test
     public void testUnionOperation() {
-        JQuickProjectNode leftQuery = createProjectWithFilter("users", "status", "active", "id", "name");
-        JQuickProjectNode rightQuery = createProjectWithFilter("users", "status", "pending", "id", "name");
+        JQuickProjectNode leftQuery = createProjectWithFilter("users", "status", "active", "id", "name","status");
+        JQuickProjectNode rightQuery = createProjectWithFilter("users", "status", "pending", "id", "name","status");
         JQuickSetOperationNode unionNode = new JQuickSetOperationNode(JQuickSQLOperationType.UNION, leftQuery, rightQuery);
         // 执行查询（使用创建好的计划，而不是让 Coordinator 重新切分）
         JQuickFragmenter fragmenter = new JQuickFragmenter(1);
@@ -297,12 +297,12 @@ public class JQuickDatasetOpTest {
      */
     @Test
     public void testUnionAllOperation() {
-        JQuickProjectNode leftQuery = createProjectWithFilter("users", "age", 18, "id", "name");
+        JQuickProjectNode leftQuery = createProjectWithFilter("users", "age", 18, "id", "name","age");
         JQuickFilterNode filter = (JQuickFilterNode) leftQuery.getChild();
         JQuickBinaryExpression newPredicate = new JQuickBinaryExpression(new JQuickColumnRefExpression("age"), new JQuickLiteralExpression(30), JQuickBinaryOperator.GT);
         JQuickFilterNode newFilter = new JQuickFilterNode(newPredicate, ((JQuickFilterNode) filter).getChild());
         JQuickProjectNode leftQueryModified = new JQuickProjectNode(leftQuery.getSelectItems(), newFilter, leftQuery.isDistinct());
-        JQuickProjectNode rightQuery = createProjectWithFilter("users", "age", 18, "id", "name");
+        JQuickProjectNode rightQuery = createProjectWithFilter("users", "age", 18, "id", "name","age");
         JQuickFilterNode rightFilter = (JQuickFilterNode) rightQuery.getChild();
         JQuickBinaryExpression rightPredicate = new JQuickBinaryExpression(new JQuickColumnRefExpression("age"), new JQuickLiteralExpression(22), JQuickBinaryOperator.LE);
         JQuickFilterNode newRightFilter = new JQuickFilterNode(rightPredicate, rightFilter.getChild());
