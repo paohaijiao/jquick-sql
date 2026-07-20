@@ -1,7 +1,21 @@
 # JQuick-SQL
 
 A lightweight SQL parser and distributed query engine built on ANTLR4, supporting standard SQL syntax and various OLAP operations.
+## Architecture
 
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    JQuickSQL Engine                         │
+├─────────────────────────────────────────────────────────────┤
+│  SQL Input → Parser → AST → Logical Plan → Optimizer       │
+│                                           ↓                 │
+│                              Physical Plan → Fragmenter    │
+│                                           ↓                 │
+│                           Coordinator → Workers (gRPC)      │
+│                                           ↓                 │
+│                              Result → DataSet              │
+└─────────────────────────────────────────────────────────────┘
+```
 ## Features
 
 - ✅ SQL Parser based on ANTLR4
@@ -289,21 +303,7 @@ JQuickSQL sql = JQuickSQL.builder()
     .build();
 ```
 
-## Architecture
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    JQuickSQL Engine                         │
-├─────────────────────────────────────────────────────────────┤
-│  SQL Input → Parser → AST → Logical Plan → Optimizer       │
-│                                           ↓                 │
-│                              Physical Plan → Fragmenter    │
-│                                           ↓                 │
-│                           Coordinator → Workers (gRPC)      │
-│                                           ↓                 │
-│                              Result → DataSet              │
-└─────────────────────────────────────────────────────────────┘
-```
 
 ## Supported SQL Features
 
