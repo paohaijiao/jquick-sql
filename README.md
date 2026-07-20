@@ -60,7 +60,17 @@ JQuickSQL 是一个轻量级 SQL 查询引擎，支持异构数据库,文件,res
 | 11 | `AggregatePushdownRule` | 聚合下推 | 高级优化 |
 | 12 | `SimplifyExpressionRule` | 表达式简化 | 高级优化 |
 | 13 | `DistributionOptimizationRule` | 分布优化 | 分布优化 |
+JQuickSQL sql = JQuickSQL.embedded();
+sql.registerTable("users",
+Arrays.asList(new JQuickColumnMeta("id", Integer.class, "users"),
+new JQuickColumnMeta("name", String.class, "users")),
+Arrays.asList(createRow("id", 1, "name", "Alice"),
+createRow("id", 2, "name", "Bob")));
 
+JQuickDataSet result = sql.execute("SELECT name FROM users WHERE id > 1");
+result.printTable();
+
+sql.shutdown();
 # **捐献 ☕**
 
 感谢您使用这个开源项目！它完全免费并将持续维护，但开发者确实需要您的支持。
