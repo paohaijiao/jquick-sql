@@ -4,17 +4,20 @@ A lightweight SQL parser and distributed query engine , supporting standard SQL 
 ## Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                    JQuickSQL Engine                         │
-├─────────────────────────────────────────────────────────────┤
-│  SQL Input → Parser → AST → Logical Plan → Optimizer       │
-│                                           ↓                 │
-│                              Physical Plan → Fragmenter    │
-│                                           ↓                 │
-│                           Coordinator → Workers (gRPC)      │
-│                                           ↓                 │
-│                              Result → DataSet              │
-└─────────────────────────────────────────────────────────────┘
+┌───────────────────────────────────────────────────────────────────────────────┐
+│                           JQuickSQL Engine                                   │
+├───────────────────────────────────────────────────────────────────────────────┤
+│  SQL Input → Parser → AST → Logical Plan → Optimizer → Physical Plan        │
+│                                                                              │
+│                              ↓                                               │
+│                        Fragmenter                                            │
+│                                                                              │
+│                              ↓                                               │
+│                   Coordinator → Workers (gRPC)                              │
+│                                                                              │
+│                              ↓                                               │
+│                        Result → DataSet                                     │
+└───────────────────────────────────────────────────────────────────────────────┘
 ```
 ## Features
 
