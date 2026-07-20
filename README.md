@@ -67,44 +67,40 @@ sql.shutdown();
 
 ### 1. Simple Query
 **Input Data**
-| id | name    | age | status   |
-|----|---------|-----|----------|
-| 1  | Alice   | 25  | active   |
-| 2  | Bob     | 30  | active   |
-| 3  | Charlie | 20  | pending  |
-| 4  | David   | 35  | inactive |
-| 5  | Eve     | 28  | active   |
+
+| id | name    | age | status   | enable | addr       | birthday   |
+|----|---------|-----|----------|--------|------------|------------|
+| 1  | Alice   | 25  | active   | true   | beijing    | 2020-04-09 |
+| 2  | Bob     | 30  | active   | true   | shanghai   | 1991-08-09 |
+| 3  | Charlie | 20  | pending  | false  | chengdu    | 1988-07-12 |
+| 4  | David   | 35  | inactive | true   | xian       | 1955-11-29 |
+| 5  | Eve     | 28  | active   | true   | chongqing  | 2003-07-12 |
+| 6  | Martin  | 30  | active   | true   | guangzhou  | 1978-06-30 |
 
 **SQL Code**
 ```sql
-SELECT id, name FROM users
+SELECT id, name,age, status,enable,addr,birthday FROM users
 ```
 **Output Data**
 
-| id | name    |
-|----|---------|
-| 1  | Alice   |
-| 2  | Bob     |
-| 3  | Charlie |
-| 4  | David   |
-| 5  | Eve     |
+| id | name    | age | status   | enable | addr      | birthday                 |
+|----|---------|-----|----------|--------|-----------|--------------------------|
+| 1  | Alice   | 25  | active   | true   | beijing   | 2020-04-08T16:00:00Z     |
+| 2  | Bob     | 30  | active   | true   | shanghai  | 1991-08-08T15:00:00Z     |
+| 3  | Charlie | 20  | pending  | false  | chengdu   | 1988-07-11T15:00:00Z     |
+| 4  | David   | 35  | inactive | true   | xian      | 1955-11-28T16:00:00Z     |
+| 5  | Eve     | 28  | active   | true   | chongqing | 2003-07-11T16:00:00Z     |
+| 6  | Martin  | 30  | active   | true   | guangzhou | 1978-06-29T16:00:00Z     |
 
 ---
 
 ### 2. Filter Query
-
 **Input Data**
 
-| id | name    | age | status   |
-|----|---------|-----|----------|
-| 1  | Alice   | 25  | active   |
-| 2  | Bob     | 30  | active   |
-| 3  | Charlie | 20  | pending  |
-| 4  | David   | 35  | inactive |
-| 5  | Eve     | 28  | active   |
+
 
 **SQL Code**
-
+### 2.1 Filter With Equal 
 ```sql
 SELECT * FROM users WHERE status = 'active'
 ```

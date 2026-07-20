@@ -13,8 +13,9 @@
  *
  * Copyright (c) [2025-2099] Martin (goudingcheng@gmail.com)
  */
-package com.github.paohaijiao.engine;
+package com.github.paohaijiao.demo.where;
 
+import com.github.paohaijiao.engine.JQuickSQL;
 import com.github.paohaijiao.statement.JQuickColumnMeta;
 import com.github.paohaijiao.statement.JQuickDataSet;
 import com.github.paohaijiao.statement.JQuickRow;
@@ -22,7 +23,10 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 
 public class JQuickSQLTest {
@@ -31,7 +35,7 @@ public class JQuickSQLTest {
 
     @BeforeClass
     public static void setUpClass() {
-        sql = JQuickSQL.embedded(3);
+        sql = JQuickSQL.embedded();
         registerTestData();
     }
 
@@ -41,21 +45,33 @@ public class JQuickSQLTest {
             sql.shutdown();
         }
     }
-
+    private static Date getDate(String date)  {
+        try {
+            SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
+            return formatter.parse(date);
+        }catch (ParseException e) {
+            e.printStackTrace();
+            return new Date();
+        }
+    }
     private static void registerTestData() {
         List<JQuickColumnMeta> userColumns = Arrays.asList(
                 new JQuickColumnMeta("id", Integer.class, "users"),
                 new JQuickColumnMeta("name", String.class, "users"),
                 new JQuickColumnMeta("age", Integer.class, "users"),
-                new JQuickColumnMeta("status", String.class, "users")
+                new JQuickColumnMeta("status", String.class, "users"),
+                new JQuickColumnMeta("enable", String.class, "users"),
+                new JQuickColumnMeta("addr", String.class, "users"),
+                new JQuickColumnMeta("birthday", Date.class, "users")
         );
 
         List<JQuickRow> userRows = Arrays.asList(
-                createRow("id", 1, "name", "Alice", "age", 25, "status", "active"),
-                createRow("id", 2, "name", "Bob", "age", 30, "status", "active"),
-                createRow("id", 3, "name", "Charlie", "age", 20, "status", "pending"),
-                createRow("id", 4, "name", "David", "age", 35, "status", "inactive"),
-                createRow("id", 5, "name", "Eve", "age", 28, "status", "active")
+                createRow("id", 1, "name", "Alice", "age", 25, "status", "active","enable",true,"addr","beijing","birthday",getDate("2020-04-09")),
+                createRow("id", 2, "name", "Bob", "age", 30, "status", "active","enable",true,"addr","shanghai","birthday",getDate("1991-08-09")),
+                createRow("id", 3, "name", "Charlie", "age", 20, "status", "pending","enable",false,"addr","chengdu","birthday",getDate("1988-07-12")),
+                createRow("id", 4, "name", "David", "age", 35, "status", "inactive","enable",true,"addr","xian","birthday",getDate("1955-11-29")),
+                createRow("id", 5, "name", "Eve", "age", 28, "status", "active","enable",true,"addr","chongqing","birthday",getDate("2003-07-12")),
+                createRow("id", 6, "name", "Martin", "age", 30, "status", "active","enable",true,"addr","guangzhou","birthday",getDate("1978-06-30"))
         );
 
         sql.registerTable("users", userColumns, userRows);
@@ -87,7 +103,7 @@ public class JQuickSQLTest {
     @Test
     public void testSimpleQuery() {//pass
         System.out.println("=== testSimpleQuery ===");
-        JQuickDataSet result = sql.execute("SELECT id, name FROM users");
+        JQuickDataSet result = sql.execute("SELECT id, name,age, status,enable,addr,birthday FROM users");
         result.printTable();
         System.out.println("Rows: " + result.size());
     }
