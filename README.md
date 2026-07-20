@@ -1,6 +1,6 @@
 # JQuick-SQL
 
-A lightweight SQL parser and distributed query engine built on ANTLR4, supporting standard SQL syntax and various OLAP operations.
+A lightweight SQL parser and distributed query engine , supporting standard SQL syntax and various OLAP operations.
 ## Architecture
 
 ```
@@ -18,7 +18,7 @@ A lightweight SQL parser and distributed query engine built on ANTLR4, supportin
 ```
 ## Features
 
-- ✅ SQL Parser based on ANTLR4
+- ✅ SQL Parser 
 - ✅ Logical and Physical Query Plan
 - ✅ Query Optimization (predicate pushdown, projection pushdown, join reorder, etc.)
 - ✅ Distributed Query Execution (Coordinator-Worker architecture)
