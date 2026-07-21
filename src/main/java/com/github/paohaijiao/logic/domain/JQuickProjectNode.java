@@ -99,6 +99,11 @@ public class JQuickProjectNode implements JQuickLogicalPlanNode {
             this.alias = alias != null ? alias : generateAlias(expression);
             this.isStar = false;
         }
+        public SelectItem(JQuickExpression expression, boolean isStar,String alias) {
+            this.expression = expression;
+            this.alias = alias != null ? alias : generateAlias(expression);
+            this.isStar = isStar;
+        }
 
         private SelectItem(boolean isStar) {
             this.expression = null;

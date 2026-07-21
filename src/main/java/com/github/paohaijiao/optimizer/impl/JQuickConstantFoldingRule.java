@@ -46,7 +46,7 @@ public class JQuickConstantFoldingRule extends JQuickRecursiveOptimizerRule impl
             List<JQuickProjectNode.SelectItem> newItems = new ArrayList<>();
             for (JQuickProjectNode.SelectItem item : project.getSelectItems()) {
                 JQuickExpression folded = foldConstants(item.getExpression());
-                newItems.add(new JQuickProjectNode.SelectItem(folded, item.getAlias()));
+                newItems.add(new JQuickProjectNode.SelectItem(folded,item.isStar(), item.getAlias()));
             }
             return new JQuickProjectNode(newItems, project.getChild(), project.isDistinct());
         }

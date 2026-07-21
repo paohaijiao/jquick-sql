@@ -96,6 +96,22 @@ SELECT id, name,age, status,enable,addr,birthday FROM users
 | 6  | Martin  | 30  | active   | true   | guangzhou | 1978-06-29T16:00:00Z     |
 
 ---
+**SQL Code**
+```sql
+SELECT * FROM users
+```
+**Output Data**
+
+| id | name    | age | status   | enable | addr      | birthday                 |
+|----|---------|-----|----------|--------|-----------|--------------------------|
+| 1  | Alice   | 25  | active   | true   | beijing   | 2020-04-08T16:00:00Z     |
+| 2  | Bob     | 30  | active   | true   | shanghai  | 1991-08-08T15:00:00Z     |
+| 3  | Charlie | 20  | pending  | false  | chengdu   | 1988-07-11T15:00:00Z     |
+| 4  | David   | 35  | inactive | true   | xian      | 1955-11-28T16:00:00Z     |
+| 5  | Eve     | 28  | active   | true   | chongqing | 2003-07-11T16:00:00Z     |
+| 6  | Martin  | 30  | active   | true   | guangzhou | 1978-06-29T16:00:00Z     |
+
+
 
 ## API Reference
 

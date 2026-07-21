@@ -90,10 +90,11 @@ public class JQuickProjectionPushdownRule implements JQuickOptimizerRule {
         if (child instanceof JQuickTableScanNode) {
             JQuickTableScanNode scan = (JQuickTableScanNode) child;
             Set<String> actualRequiredColumns = extractActualColumns(project.getSelectItems(), requiredColumns);
-            return new JQuickProjectNode(project.getSelectItems(),
-                    new JQuickTableScanNode(scan.getTableName(), scan.getAlias(), actualRequiredColumns.isEmpty() ? null : actualRequiredColumns, scan.getFilterPredicate()),
-                    project.isDistinct()
-            );
+            boolean selectAll=false;
+            if(!project.getSelectItems().isEmpty()&&project.getSelectItems().get(0).isStar() ){
+                selectAll=true;
+            }
+            return new JQuickProjectNode(project.getSelectItems(), new JQuickTableScanNode(scan.getTableName(), scan.getAlias(), selectAll||actualRequiredColumns.isEmpty() ? null : actualRequiredColumns, scan.getFilterPredicate()), project.isDistinct());
         } else if (child instanceof JQuickProjectNode) {
             JQuickProjectNode childProject = (JQuickProjectNode) child;
             Map<String, JQuickExpression> innerExprMap = new HashMap<>();
