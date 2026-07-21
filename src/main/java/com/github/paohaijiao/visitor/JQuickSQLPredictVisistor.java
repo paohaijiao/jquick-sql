@@ -260,7 +260,8 @@ public class JQuickSQLPredictVisistor extends JQuickSQLValueVisistor {
         JQuickPredicateNode predicate = (JQuickPredicateNode) visit(ctx.predicate(0));
         boolean not = ctx.NOT() != null;
         JQuickPredicateNode pattern = (JQuickPredicateNode) visit(ctx.predicate(1));
-        return new JQuickPredicateNode(predicate, not, pattern);
+        JQuickPredicateNode.PredicateSubType subType= JQuickPredicateNode.PredicateSubType.LIKE;
+        return new JQuickPredicateNode(predicate, not, pattern,subType);
     }
 
     @Override

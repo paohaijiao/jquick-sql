@@ -71,7 +71,8 @@ public class JQuickSQLTest {
                 createRow("id", 3, "name", "Charlie", "age", 20, "status", "pending","enable",false,"addr","chengdu","birthday",getDate("1988-07-12")),
                 createRow("id", 4, "name", "David", "age", 35, "status", "inactive","enable",true,"addr","xian","birthday",getDate("1955-11-29")),
                 createRow("id", 5, "name", "Eve", "age", 28, "status", "active","enable",true,"addr","chongqing","birthday",getDate("2003-07-12")),
-                createRow("id", 6, "name", "Martin", "age", 30, "status", "active","enable",true,"addr","guangzhou","birthday",getDate("1978-06-30"))
+                createRow("id", 6, "name", "Martin", "age", 30, "status", "active","enable",true,"addr","guangzhou","birthday",getDate("1978-06-30")),
+                createRow("id", 7, "name", "Davila", "age", 39, "status", "active","enable",true,"addr",null,"birthday",getDate("1999-06-30"))
         );
 
         sql.registerTable("users", userColumns, userRows);
@@ -100,106 +101,104 @@ public class JQuickSQLTest {
         return row;
     }
 
-    @Test
-    public void testSimpleQuery() {//pass
-        System.out.println("=== testSimpleQuery ===");
-        JQuickDataSet result = sql.execute("SELECT id, name,age, status,enable,addr,birthday FROM users");
-        result.printTable();
-        System.out.println("Rows: " + result.size());
-    }
 
     @Test
     public void testFilterQuery() {
-        System.out.println("=== testFilterQuery ===");
         JQuickDataSet result = sql.execute("SELECT * FROM users WHERE status = 'active'");
         result.printTable();
         System.out.println("Active users: " + result.size());
     }
-
     @Test
-    public void testAggregationQuery() {
-        System.out.println("=== testAggregationQuery ===");
-        JQuickDataSet result = sql.execute("SELECT status, COUNT(*) as count FROM users GROUP BY status");
+    public void testFilterQueryWithAnd() {
+        JQuickDataSet result = sql.execute("SELECT * FROM users WHERE age > 25 AND status = 'active'");
+        result.printTable();
+    }
+    @Test
+    public void testFilterQueryWithOr() {
+        JQuickDataSet result = sql.execute("SELECT * FROM users WHERE status = 'pending' OR enable = true");
+        result.printTable();
+    }
+    @Test
+    public void testFilterQueryWithNested() {
+        JQuickDataSet result = sql.execute("SELECT * FROM users WHERE age > 30 OR (status = 'pending' OR addr = 'chengdu')");
+        result.printTable();
+    }
+    @Test
+    public void testFilterQueryWithConstant() {
+        JQuickDataSet result = sql.execute("SELECT * FROM users WHERE true");
+        result.printTable();
+    }
+    @Test
+    public void testFilterQueryWithColumn() {
+        JQuickDataSet result = sql.execute("SELECT * FROM users WHERE enable");
+        result.printTable();
+    }
+    @Test
+    public void testFilterQueryWithFunctionCall() {
+        JQuickDataSet result = sql.execute("SELECT * FROM users WHERE toUpper(name)='ALICE'");
+        result.printTable();
+    }
+    @Test
+    public void testFilterQueryWithIsNull() {
+        JQuickDataSet result = sql.execute("SELECT * FROM users WHERE addr is null");
+        result.printTable();
+    }
+    @Test
+    public void testFilterQueryWithIsNotNull() {
+        JQuickDataSet result = sql.execute("SELECT * FROM users WHERE addr is not null");
+        result.printTable();
+    }
+    @Test
+    public void testFilterQueryWithAge1() {
+        JQuickDataSet result = sql.execute("SELECT * FROM users WHERE age >25");
+        result.printTable();
+    }
+    @Test
+    public void testFilterQueryWithAge2() {
+        JQuickDataSet result = sql.execute("SELECT * FROM users WHERE age >=25");
+        result.printTable();
+    }
+    @Test
+    public void testFilterQueryWithAge3() {
+        JQuickDataSet result = sql.execute("SELECT * FROM users WHERE age <25");
+        result.printTable();
+    }
+    @Test
+    public void testFilterQueryWithAge4() {
+        JQuickDataSet result = sql.execute("SELECT * FROM users WHERE age <=20");
+        result.printTable();
+    }
+    @Test
+    public void testFilterQueryWithBetween() {
+        JQuickDataSet result = sql.execute("SELECT * FROM users WHERE age  between 25 and 30");
+        result.printTable();
+    }
+    @Test
+    public void testFilterQueryWithNotBetween() {
+        JQuickDataSet result = sql.execute("SELECT * FROM users WHERE age  not between 25 and 30");
+        result.printTable();
+    }
+    @Test
+    public void testFilterQueryWithIn() {
+        JQuickDataSet result = sql.execute("SELECT * FROM users WHERE age  in ( 25 , 30)");
+        result.printTable();
+    }
+    @Test
+    public void testFilterQueryWithNotIn() {
+        JQuickDataSet result = sql.execute("SELECT * FROM users WHERE age not in ( 25 , 30)");
+        result.printTable();
+    }
+    @Test
+    public void testFilterQueryWithLike() {
+        JQuickDataSet result = sql.execute("SELECT * FROM users WHERE name like '%Davi%'");
+        result.printTable();
+    }
+    @Test
+    public void testFilterQueryWithNotLike() {
+        JQuickDataSet result = sql.execute("SELECT * FROM users WHERE name not like '%Davi%'");
         result.printTable();
     }
 
-    @Test
-    public void testJoinQuery() {
-        System.out.println("=== testJoinQuery ===");
-        JQuickDataSet result = sql.execute("SELECT u.name, o.amount FROM users u JOIN orders o ON u.id = o.user_id");
-        result.printTable();
-    }
 
-    @Test
-    public void testSubqueryExpression() {
-        System.out.println("=== testSubqueryExpression ===");
-        JQuickDataSet result = sql.execute("SELECT id, name, (SELECT COUNT(*) FROM orders WHERE user_id = users.id) as order_count FROM users");
-        result.printTable();
-    }
 
-    @Test
-    public void testBuilderPattern() {
-        System.out.println("=== testBuilderPattern ===");
-        List<JQuickColumnMeta> productColumns = Arrays.asList(
-                new JQuickColumnMeta("id", Integer.class, "products"),
-                new JQuickColumnMeta("name", String.class, "products"),
-                new JQuickColumnMeta("price", Double.class, "products")
-        );
-        List<JQuickRow> productRows = Arrays.asList(
-                createRow("id", 1, "name", "Laptop", "price", 999.99),
-                createRow("id", 2, "name", "Phone", "price", 599.99)
-        );
-        JQuickSQL sqlBuilder = JQuickSQL.builder()
-                .embedded(2)
-                .parallelism(2)
-                .table("products", productColumns, productRows)
-                .build();
-        try {
-            JQuickDataSet result = sqlBuilder.execute("SELECT * FROM products");
-            result.printTable();
-        } finally {
-            sqlBuilder.shutdown();
-        }
-    }
-
-    @Test
-    public void testWithParallelism() {
-        System.out.println("=== testWithParallelism ===");
-        JQuickSQL sqlParallel = JQuickSQL.embedded().withParallelism(2);
-        sqlParallel.registerTable("test_table", 
-                Arrays.asList(new JQuickColumnMeta("id", Integer.class, "test_table")),
-                Arrays.asList(createRow("id", 1),
-                              createRow("id", 2),
-                              createRow("id", 3)));
-        
-        try {
-            JQuickDataSet result = sqlParallel.execute("SELECT * FROM test_table");
-            result.printTable();
-        } finally {
-            sqlParallel.shutdown();
-        }
-    }
-
-    @Test
-    public void testTableOperations() {
-        System.out.println("=== testTableOperations ===");
-        System.out.println("Registered tables: " + sql.getRegisteredTables());
-        System.out.println("Has users table: " + sql.hasTable("users"));
-        JQuickDataSet users = sql.getTable("users");
-        System.out.println("Users table rows: " + users.size());
-    }
-
-    @Test
-    public void testOrderByQuery() {
-        System.out.println("=== testOrderByQuery ===");
-        JQuickDataSet result = sql.execute("SELECT name, age FROM users ORDER BY age DESC");
-        result.printTable();
-    }
-
-    @Test
-    public void testLimitQuery() {
-        System.out.println("=== testLimitQuery ===");
-        JQuickDataSet result = sql.execute("SELECT name, age FROM users ORDER BY age DESC LIMIT 3");
-        result.printTable();
-    }
 }

@@ -29,6 +29,7 @@ import com.github.paohaijiao.physical.JQuickPhysicalPlanNode;
 import com.github.paohaijiao.statement.JQuickDataSet;
 import com.github.paohaijiao.statement.JQuickRow;
 
+import java.math.BigDecimal;
 import java.util.*;
 
 /**
@@ -210,6 +211,16 @@ public class JQuickExpressionEvaluator {
             boolean found = false;
             for (JQuickExpression rightExpr : in.getRightList()) {
                 Object right = evaluateExpression(row, rightExpr);
+                if (right != null && right instanceof Number&&left != null && left instanceof Number) {
+                    BigDecimal leftBd = new BigDecimal(left.toString());
+                    BigDecimal rightBd = new BigDecimal(right.toString());
+                    boolean equal = leftBd.compareTo(rightBd) == 0;
+                    if (equal) {
+                        found = true;
+                        break;
+                    }
+
+                }
                 if (Objects.equals(left, right)) {
                     found = true;
                     break;
