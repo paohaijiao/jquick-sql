@@ -18,7 +18,7 @@
         <lombok.version>1.18.30</lombok.version>
         <rest.assured.version>2.3.3</rest.assured.version>
         <jquick.grpc.version>1.4.0</jquick.grpc.version>
-        <function.version>1.1.0</function.version>
+        <function.version>1.4.0</function.version>
         <protobuf.version>3.21.12</protobuf.version>
         <grpc.version>1.80.0</grpc.version>
         <protobuf.maven.plugin.version>0.6.1</protobuf.maven.plugin.version>
