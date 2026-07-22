@@ -90,11 +90,12 @@ public class JQuickProjectionPushdownRule implements JQuickOptimizerRule {
         if (child instanceof JQuickTableScanNode) {
             JQuickTableScanNode scan = (JQuickTableScanNode) child;
             Set<String> actualRequiredColumns = extractActualColumns(project.getSelectItems(), requiredColumns);
+            Set<String> columnNames = removeTableAliasPrefix(actualRequiredColumns, scan.getAlias());
             boolean selectAll=false;
             if(!project.getSelectItems().isEmpty()&&project.getSelectItems().get(0).isStar() ){
                 selectAll=true;
             }
-            return new JQuickProjectNode(project.getSelectItems(), new JQuickTableScanNode(scan.getTableName(), scan.getAlias(), selectAll||actualRequiredColumns.isEmpty() ? null : actualRequiredColumns, scan.getFilterPredicate()), project.isDistinct());
+            return new JQuickProjectNode(project.getSelectItems(), new JQuickTableScanNode(scan.getTableName(), scan.getAlias(), selectAll||columnNames.isEmpty() ? null : columnNames, scan.getFilterPredicate()), project.isDistinct());
         } else if (child instanceof JQuickProjectNode) {
             JQuickProjectNode childProject = (JQuickProjectNode) child;
             Map<String, JQuickExpression> innerExprMap = new HashMap<>();
@@ -120,8 +121,13 @@ public class JQuickProjectionPushdownRule implements JQuickOptimizerRule {
             if (join.getCondition() != null) {
                 allRequired.addAll(join.getCondition().getReferencedColumns());
             }
-            Set<String> leftColumns = extractColumnsFromNode(join.getLeft(), allRequired);
-            Set<String> rightColumns = extractColumnsFromNode(join.getRight(), allRequired);
+            
+            String leftAlias = getTableAlias(join.getLeft());
+            String rightAlias = getTableAlias(join.getRight());
+            
+            Set<String> leftColumns = extractColumnsForTable(allRequired, leftAlias);
+            Set<String> rightColumns = extractColumnsForTable(allRequired, rightAlias);
+            
             JQuickLogicalPlanNode newLeft = pushdownToNode(join.getLeft(), leftColumns);
             JQuickLogicalPlanNode newRight = pushdownToNode(join.getRight(), rightColumns);
             JQuickJoinNode newJoin = new JQuickJoinNode(join.getJoinType(), newLeft, newRight, join.getCondition());
@@ -160,37 +166,49 @@ public class JQuickProjectionPushdownRule implements JQuickOptimizerRule {
     }
 
     /**
-     * 从节点中提取需要的列（递归提取）
+     * 获取表的别名
      */
-    private Set<String> extractColumnsFromNode(JQuickLogicalPlanNode node, Set<String> requiredColumns) {
-        Set<String> result = new HashSet<>(requiredColumns);
-        if (node instanceof JQuickProjectNode) {
-            JQuickProjectNode project = (JQuickProjectNode) node;
-            Map<String, JQuickExpression> aliasToExpr = new HashMap<>();
-            for (JQuickProjectNode.SelectItem item : project.getSelectItems()) {
-                aliasToExpr.put(item.getAlias(), item.getExpression());
-            }
-            Set<String> newRequired = new HashSet<>();
-            for (String col : requiredColumns) {
-                JQuickExpression expr = aliasToExpr.get(col);
-                if (expr != null) {
-                    newRequired.addAll(expr.getReferencedColumns());
-                } else {
-                    newRequired.add(col);
-                }
-            }
-            result = newRequired;
+    private String getTableAlias(JQuickLogicalPlanNode node) {
+        if (node instanceof JQuickTableScanNode) {
+            return ((JQuickTableScanNode) node).getAlias();
+        } else if (node instanceof JQuickProjectNode) {
+            return getTableAlias(((JQuickProjectNode) node).getChild());
         } else if (node instanceof JQuickJoinNode) {
-            JQuickJoinNode join = (JQuickJoinNode) node;
-            Set<String> leftRequired = extractColumnsFromNode(join.getLeft(), requiredColumns);
-            Set<String> rightRequired = extractColumnsFromNode(join.getRight(), requiredColumns);
-            result.addAll(leftRequired);
-            result.addAll(rightRequired);
-            if (join.getCondition() != null) {
-                result.addAll(join.getCondition().getReferencedColumns());
+            return null;
+        }
+        return null;
+    }
+
+    /**
+     * 根据表别名提取该表需要的列（移除别名前缀）
+     */
+    private Set<String> extractColumnsForTable(Set<String> allColumns, String tableAlias) {
+        Set<String> result = new HashSet<>();
+        for (String col : allColumns) {
+            if (col.startsWith(tableAlias + ".")) {
+                result.add(col.substring(tableAlias.length() + 1));
+            } else if (tableAlias == null && !col.contains(".")) {
+                result.add(col);
             }
         }
+        return result;
+    }
 
+    /**
+     * 移除列名中的表别名前缀
+     */
+    private Set<String> removeTableAliasPrefix(Set<String> columns, String tableAlias) {
+        Set<String> result = new HashSet<>();
+        if (tableAlias == null) {
+            return columns;
+        }
+        for (String col : columns) {
+            if (col.startsWith(tableAlias + ".")) {
+                result.add(col.substring(tableAlias.length() + 1));
+            } else {
+                result.add(col);
+            }
+        }
         return result;
     }
 
@@ -198,9 +216,12 @@ public class JQuickProjectionPushdownRule implements JQuickOptimizerRule {
      * 将需要的列下推到节点
      */
     private JQuickLogicalPlanNode pushdownToNode(JQuickLogicalPlanNode node, Set<String> requiredColumns) {
+        String tableAlias = getTableAlias(node);
+        
         if (node instanceof JQuickTableScanNode) {
             JQuickTableScanNode scan = (JQuickTableScanNode) node;
-            return new JQuickTableScanNode(scan.getTableName(), scan.getAlias(), requiredColumns.isEmpty() ? null : requiredColumns, scan.getFilterPredicate());
+            Set<String> columnNames = removeTableAliasPrefix(requiredColumns, tableAlias);
+            return new JQuickTableScanNode(scan.getTableName(), scan.getAlias(), columnNames.isEmpty() ? null : columnNames, scan.getFilterPredicate());
         } else if (node instanceof JQuickProjectNode) {
             JQuickProjectNode project = (JQuickProjectNode) node;
             List<JQuickProjectNode.SelectItem> filtered = new ArrayList<>();
@@ -210,12 +231,20 @@ public class JQuickProjectionPushdownRule implements JQuickOptimizerRule {
                 aliasToExpr.put(item.getAlias(), item.getExpression());
             }
             for (String col : requiredColumns) {
-                JQuickExpression expr = aliasToExpr.get(col);
+                String unprefixedCol = tableAlias != null && col.startsWith(tableAlias + ".") 
+                        ? col.substring(tableAlias.length() + 1) : col;
+                JQuickExpression expr = aliasToExpr.get(unprefixedCol);
                 if (expr != null) {
                     for (JQuickProjectNode.SelectItem item : project.getSelectItems()) {
-                        if (item.getAlias().equals(col)) {
+                        if (item.getAlias().equals(unprefixedCol)) {
                             filtered.add(item);
-                            newRequired.addAll(expr.getReferencedColumns());
+                            if (tableAlias != null) {
+                                for (String ref : expr.getReferencedColumns()) {
+                                    newRequired.add(tableAlias + "." + ref);
+                                }
+                            } else {
+                                newRequired.addAll(expr.getReferencedColumns());
+                            }
                             break;
                         }
                     }
@@ -237,8 +266,13 @@ public class JQuickProjectionPushdownRule implements JQuickOptimizerRule {
             if (join.getCondition() != null) {
                 joinRequired.addAll(join.getCondition().getReferencedColumns());
             }
-            Set<String> leftColumns = extractColumnsFromNode(join.getLeft(), joinRequired);
-            Set<String> rightColumns = extractColumnsFromNode(join.getRight(), joinRequired);
+            
+            String leftAlias = getTableAlias(join.getLeft());
+            String rightAlias = getTableAlias(join.getRight());
+            
+            Set<String> leftColumns = extractColumnsForTable(joinRequired, leftAlias);
+            Set<String> rightColumns = extractColumnsForTable(joinRequired, rightAlias);
+            
             JQuickLogicalPlanNode newLeft = pushdownToNode(join.getLeft(), leftColumns);
             JQuickLogicalPlanNode newRight = pushdownToNode(join.getRight(), rightColumns);
             return new JQuickJoinNode(join.getJoinType(), newLeft, newRight, join.getCondition());

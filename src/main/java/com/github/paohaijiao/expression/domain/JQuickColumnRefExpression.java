@@ -56,7 +56,8 @@ public class JQuickColumnRefExpression implements JQuickExpression {
 
     @Override
     public List<String> getReferencedColumns() {
-        return Collections.singletonList(columnName);
+        String fullName = tableAlias != null ? tableAlias + "." + columnName : columnName;
+        return Collections.singletonList(fullName);
     }
 
     @Override

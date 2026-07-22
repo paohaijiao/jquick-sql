@@ -308,7 +308,6 @@ public class JQuickNodeExecutor {
             node.getJoinKeys() == null || node.getJoinKeys().isEmpty()) {
             return executeCrossJoin(node, context);
         }
-        
         JQuickPhysicalPlanNode buildSide = node.getBuildSide() == JQuickHashJoinPhysicalNode.BuildSide.LEFT ? node.getLeft() : node.getRight();
         JQuickPhysicalPlanNode probeSide = node.getBuildSide() == JQuickHashJoinPhysicalNode.BuildSide.LEFT ? node.getRight() : node.getLeft();
         List<JQuickPhysicalColumn> leftSchema = node.getLeft().getOutputSchema();
@@ -332,14 +331,11 @@ public class JQuickNodeExecutor {
         expressionEvaluator.setAliasContext(aliasToTable, columnAliasToActual);
         try {
         JQuickDataSet buildData = executeNode(buildSide, context);
-        // 构建表使用正确的键：如果 buildSide = LEFT，使用左键；如果 buildSide = RIGHT，使用右键
         boolean useLeftKeyForBuild = node.getBuildSide() == JQuickHashJoinPhysicalNode.BuildSide.LEFT;
         Map<Object, List<JQuickRow>> hashTable = buildHashTable(buildData, node, useLeftKeyForBuild);
-        // 记录构建表中哪些行被匹配了（用于 RIGHT JOIN 和 FULL JOIN）
         Set<JQuickRow> matchedBuildRows = new HashSet<>();
         JQuickDataSet probeData = executeNode(probeSide, context);
         List<JQuickRow> resultRows = new ArrayList<>();
-        // 探测表使用与构建表相反的键
         boolean useLeftKeyForProbe = !useLeftKeyForBuild;
         for (JQuickRow probeRow : probeData.getRows()) {
             Object joinKey = extractJoinKey(probeRow, node, useLeftKeyForProbe);
