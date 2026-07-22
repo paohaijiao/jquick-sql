@@ -138,7 +138,7 @@ public class JQuickPredicatePushdownRuleTest {
         JQuickTableScanNode orders = new JQuickTableScanNode("orders", "o");
         JQuickTableScanNode customers = new JQuickTableScanNode("customers", "c");
         JQuickExpression joinCondition = binary(column("o.customer_id"), column("c.id"), JQuickBinaryOperator.EQ);
-        JQuickJoinNode join = new JQuickJoinNode(JQuickJoinType.INNER, orders, customers, joinCondition);
+        JQuickJoinNode join = new JQuickJoinNode(JQuickJoinType.INNER, orders, customers, joinCondition,null);
         JQuickExpression predicate = binary(column("o.amount"), literal(1000), JQuickBinaryOperator.GT);
         JQuickFilterNode filter = new JQuickFilterNode(predicate, join);
         JQuickLogicalPlanNode result = rule.optimize(filter);

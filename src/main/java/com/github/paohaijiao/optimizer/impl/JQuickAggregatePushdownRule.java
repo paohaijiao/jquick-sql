@@ -85,7 +85,7 @@ public class JQuickAggregatePushdownRule implements JQuickOptimizerRule {
      */
     private JQuickLogicalPlanNode pushToLeft(JQuickGroupByNode groupBy, JQuickJoinNode join) {
         JQuickGroupByNode leftAgg = new JQuickGroupByNode(copyGroupKeys(groupBy.getGroupKeys()), copyAggregateItems(groupBy.getAggregateItems()), join.getLeft(), copyHaving(groupBy.getHavingCondition()));
-        return new JQuickJoinNode(JQuickJoinType.INNER, leftAgg, join.getRight(), copyCondition(join.getCondition()));
+        return new JQuickJoinNode(JQuickJoinType.INNER, leftAgg, join.getRight(), copyCondition(join.getCondition()),join.getJoinKeys());
     }
 
     /**
@@ -93,7 +93,7 @@ public class JQuickAggregatePushdownRule implements JQuickOptimizerRule {
      */
     private JQuickLogicalPlanNode pushToRight(JQuickGroupByNode groupBy, JQuickJoinNode join) {
         JQuickGroupByNode rightAgg = new JQuickGroupByNode(copyGroupKeys(groupBy.getGroupKeys()), copyAggregateItems(groupBy.getAggregateItems()), join.getRight(), copyHaving(groupBy.getHavingCondition()));
-        return new JQuickJoinNode(JQuickJoinType.INNER, join.getLeft(), rightAgg, copyCondition(join.getCondition()));
+        return new JQuickJoinNode(JQuickJoinType.INNER, join.getLeft(), rightAgg, copyCondition(join.getCondition()),join.getJoinKeys());
     }
 
     /**

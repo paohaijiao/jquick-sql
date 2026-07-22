@@ -158,7 +158,7 @@ public class JQuickFilterMergeRuleTest {
         JQuickTableScanNode orders = new JQuickTableScanNode("orders", "o");
         JQuickTableScanNode customers = new JQuickTableScanNode("customers", "c");
         JQuickExpression joinCondition = binary(column("o.customer_id"), column("c.id"), JQuickBinaryOperator.EQ);
-        JQuickJoinNode join = new JQuickJoinNode(JQuickJoinType.INNER, orders, customers, joinCondition);
+        JQuickJoinNode join = new JQuickJoinNode(JQuickJoinType.INNER, orders, customers, joinCondition,null);
         // 内层 Filter: c.status = 'VIP'
         JQuickExpression innerPredicate = binary(column("c.status"), literal("VIP"), JQuickBinaryOperator.EQ);
         JQuickFilterNode innerFilter = new JQuickFilterNode(innerPredicate, join);

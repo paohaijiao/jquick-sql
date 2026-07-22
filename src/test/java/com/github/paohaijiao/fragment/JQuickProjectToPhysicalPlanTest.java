@@ -218,7 +218,7 @@ public class JQuickProjectToPhysicalPlanTest {
         JQuickTableScanNode usersScan = createTableScan("users", "u");
         JQuickTableScanNode ordersScan = createTableScan("orders", "o");
         JQuickBinaryExpression joinCondition = new JQuickBinaryExpression(new JQuickColumnRefExpression("u.id"), new JQuickColumnRefExpression("o.user_id"), JQuickBinaryOperator.EQ);
-        JQuickJoinNode joinNode = new JQuickJoinNode(com.github.paohaijiao.enums.JQuickJoinType.INNER, usersScan, ordersScan, joinCondition);
+        JQuickJoinNode joinNode = new JQuickJoinNode(com.github.paohaijiao.enums.JQuickJoinType.INNER, usersScan, ordersScan, joinCondition,null);
         List<JQuickProjectNode.SelectItem> items = new ArrayList<>();
         items.add(new JQuickProjectNode.SelectItem(new JQuickColumnRefExpression("u.id"), "id"));
         items.add(new JQuickProjectNode.SelectItem(new JQuickColumnRefExpression("u.name"), "name"));

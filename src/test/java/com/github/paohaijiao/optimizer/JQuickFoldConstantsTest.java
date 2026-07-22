@@ -474,7 +474,7 @@ public class JQuickFoldConstantsTest {
         JQuickExpression subtract = binary(literal(10), literal(5), JQuickBinaryOperator.MINUS);
         JQuickExpression rightExpr = binary(column("t2.value"), subtract, JQuickBinaryOperator.MINUS);
         JQuickExpression joinCondition = binary(column("t1.value"), rightExpr, JQuickBinaryOperator.EQ);
-        JQuickJoinNode join = new JQuickJoinNode(JQuickJoinType.INNER, new JQuickTableScanNode("table1", "t1"), new JQuickTableScanNode("table2", "t2"), joinCondition);
+        JQuickJoinNode join = new JQuickJoinNode(JQuickJoinType.INNER, new JQuickTableScanNode("table1", "t1"), new JQuickTableScanNode("table2", "t2"), joinCondition,null);
         JQuickLogicalPlanNode result = rule.optimize(join);
         assertTrue(result instanceof JQuickJoinNode);
         JQuickJoinNode resultJoin = (JQuickJoinNode) result;

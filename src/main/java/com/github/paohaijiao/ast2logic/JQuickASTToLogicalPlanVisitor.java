@@ -219,12 +219,14 @@ public class JQuickASTToLogicalPlanVisitor {
         JQuickLogicalPlanNode right = visit(join.getTableNameItem());
         JQuickJoinType joinType = join.getJoinType();
         JQuickExpression condition = null;
+        List<JQuickJoinNode.JoinKey> joinKeys = new ArrayList<>();
         if (join.hasOnCondition()) {
             JQuickExpression leftExpr = new JQuickColumnRefExpression(join.getLeftColumn().getColumnName(), join.getLeftColumn().getTableAlias());
             JQuickExpression rightExpr = new JQuickColumnRefExpression(join.getRightColumn().getColumnName(), join.getRightColumn().getTableAlias());
             condition = new JQuickBinaryExpression(leftExpr, rightExpr, JQuickBinaryOperator.EQ);
+            joinKeys.add(new JQuickJoinNode.JoinKey(leftExpr, rightExpr));
         }
-        return new JQuickJoinNode(joinType, left, right, condition);
+        return new JQuickJoinNode(joinType, left, right, condition, joinKeys);
     }
 
     /**

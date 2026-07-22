@@ -248,7 +248,7 @@ public class JQuickFilterConditionTest {
         JQuickProjectNode anchorProject = new JQuickProjectNode(anchorItems, anchorFilter);
         JQuickTableScanNode employeeScanRecursive = createTableScan("employee", "e");
         JQuickTableScanNode cteRef = createTableScan("org_hierarchy", "h");
-        JQuickJoinNode recursiveJoin = new JQuickJoinNode(JQuickJoinType.INNER, employeeScanRecursive, cteRef, createEqualityCondition("e.manager_id", "h.id"));
+        JQuickJoinNode recursiveJoin = new JQuickJoinNode(JQuickJoinType.INNER, employeeScanRecursive, cteRef, createEqualityCondition("e.manager_id", "h.id"),null);
         JQuickBinaryExpression levelPlusOne = new JQuickBinaryExpression(new JQuickColumnRefExpression("h.level"), new JQuickLiteralExpression(1), JQuickBinaryOperator.PLUS);
         List<JQuickProjectNode.SelectItem> recursiveItems = new ArrayList<>();
         recursiveItems.add(new JQuickProjectNode.SelectItem(new JQuickColumnRefExpression("e.id"), "id"));

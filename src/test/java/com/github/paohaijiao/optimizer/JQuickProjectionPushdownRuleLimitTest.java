@@ -146,7 +146,7 @@ public class JQuickProjectionPushdownRuleLimitTest {
         JQuickTableScanNode orders = new JQuickTableScanNode("orders", "o");
         JQuickTableScanNode customers = new JQuickTableScanNode("customers", "c");
         JQuickExpression joinCondition = binary(column("o.customer_id"), column("c.id"), JQuickBinaryOperator.EQ);
-        JQuickJoinNode join = new JQuickJoinNode(JQuickJoinType.INNER, orders, customers, joinCondition);
+        JQuickJoinNode join = new JQuickJoinNode(JQuickJoinType.INNER, orders, customers, joinCondition,null);
         JQuickLimitNode limit = new JQuickLimitNode(10, join);
         JQuickLogicalPlanNode result = rule.optimize(limit);
         assertTrue(result instanceof JQuickLimitNode);

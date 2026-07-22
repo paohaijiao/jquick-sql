@@ -62,7 +62,7 @@ public class JQuickJoinReorderRule implements JQuickOptimizerRule {
     private JQuickLogicalPlanNode rebuildNode(JQuickLogicalPlanNode node, List<JQuickLogicalPlanNode> newChildren) {
         if (node instanceof JQuickJoinNode) {
             JQuickJoinNode join = (JQuickJoinNode) node;
-            return new JQuickJoinNode(join.getJoinType(), newChildren.get(0), newChildren.get(1), join.getCondition());
+            return new JQuickJoinNode(join.getJoinType(), newChildren.get(0), newChildren.get(1), join.getCondition(),join.getJoinKeys());
         }
         if (node instanceof JQuickProjectNode) {
             JQuickProjectNode project = (JQuickProjectNode) node;
@@ -217,7 +217,7 @@ public class JQuickJoinReorderRule implements JQuickOptimizerRule {
             String leftId = extractNodeId(result);
             String rightId = extractNodeId(right);
             JQuickExpression condition = graph.findCondition(leftId, rightId);
-            result = new JQuickJoinNode(JQuickJoinType.INNER, result, right, condition);
+            result = new JQuickJoinNode(JQuickJoinType.INNER, result, right, condition,null);
         }
         return result;
     }

@@ -331,10 +331,13 @@ public class JQuickNodeExecutor {
         expressionEvaluator.setAliasContext(aliasToTable, columnAliasToActual);
         try {
         JQuickDataSet buildData = executeNode(buildSide, context);
+        console.info("HashJoin - buildData size: " + buildData.size());
         boolean useLeftKeyForBuild = node.getBuildSide() == JQuickHashJoinPhysicalNode.BuildSide.LEFT;
         Map<Object, List<JQuickRow>> hashTable = buildHashTable(buildData, node, useLeftKeyForBuild);
-        Set<JQuickRow> matchedBuildRows = new HashSet<>();
+        console.info("HashJoin - hashTable size: " + hashTable.size());
+        Set<String> matchedBuildRowKeys = new HashSet<>();
         JQuickDataSet probeData = executeNode(probeSide, context);
+        console.info("HashJoin - probeData size: " + probeData.size());
         List<JQuickRow> resultRows = new ArrayList<>();
         boolean useLeftKeyForProbe = !useLeftKeyForBuild;
         for (JQuickRow probeRow : probeData.getRows()) {
@@ -346,7 +349,7 @@ public class JQuickNodeExecutor {
                     if (joined != null) {
                         if (node.getCondition() == null || expressionEvaluator.evaluatePredicate(joined, node.getCondition())) {
                             resultRows.add(joined);
-                            matchedBuildRows.add(buildRow);
+                            matchedBuildRowKeys.add(generateRowKey(buildRow));
                         }
                     }
                 }
@@ -359,21 +362,15 @@ public class JQuickNodeExecutor {
                 }
             }
         }
-        // 处理 RIGHT JOIN 和 FULL JOIN：返回构建表中没有被匹配的行
         if (node.getJoinType() == com.github.paohaijiao.enums.JQuickJoinType.RIGHT || node.getJoinType() == com.github.paohaijiao.enums.JQuickJoinType.FULL) {
             for (List<JQuickRow> buildRows : hashTable.values()) {
                 for (JQuickRow buildRow : buildRows) {
-                    if (!matchedBuildRows.contains(buildRow)) {
-                        // 构建表行没有被匹配，返回构建表行（探测表为 null）
-                        // 注意：当 buildSide = RIGHT 时，构建表是右表，探测表是左表
-                        // joinRows(leftRow, rightRow, joinType, leftIsBuild)
-                        // 如果 buildSide = RIGHT，则 leftIsBuild = false，buildRow 是右表行
+                    String buildRowKey = generateRowKey(buildRow);
+                    if (!matchedBuildRowKeys.contains(buildRowKey)) {
                         JQuickRow joined;
                         if (node.getBuildSide() == JQuickHashJoinPhysicalNode.BuildSide.RIGHT) {
-                            // 右表是构建表，buildRow 是右表行，左表为 null
                             joined = joinRows(null, buildRow, node.getJoinType(), false);
                         } else {
-                            // 左表是构建表，buildRow 是左表行，右表为 null
                             joined = joinRows(buildRow, null, node.getJoinType(), true);
                         }
                         if (joined != null) {
@@ -385,6 +382,7 @@ public class JQuickNodeExecutor {
                 }
             }
         }
+        console.info("HashJoin - resultRows size: " + resultRows.size());
         List<JQuickColumnMeta> columnMetas = convertPhysicalColumnsToMeta(dataConverter.buildOutputSchema(node));
         return new JQuickDataSet(columnMetas, resultRows);
         } finally {
@@ -532,18 +530,20 @@ public class JQuickNodeExecutor {
                 List<Object> compositeKey = new ArrayList<>();
                 for (JQuickHashJoinPhysicalNode.JoinKeyPair keyPair : joinKeys) {
                     JQuickExpression keyExpr = useLeftKey ? keyPair.getLeftKey() : keyPair.getRightKey();
-                    Object keyValue = expressionEvaluator.evaluateExpression(row, keyExpr);
+                    Object keyValue = evaluateJoinKeyExpression(row, keyExpr);
                     compositeKey.add(keyValue);
                 }
                 key = compositeKey;
             } else {
                 JQuickExpression keyExpr = useLeftKey ? joinKeys.get(0).getLeftKey() : joinKeys.get(0).getRightKey();
-                key = expressionEvaluator.evaluateExpression(row, keyExpr);
+                key = evaluateJoinKeyExpression(row, keyExpr);
             }
+            console.info("buildHashTable - row keys: " + row.keySet() + ", extracted key: " + key);
             if (key != null) {
                 hashTable.computeIfAbsent(key, k -> new ArrayList<>()).add(row);
             }
         }
+        console.info("buildHashTable - final hashTable: " + hashTable.keySet());
         return hashTable;
     }
 
@@ -1151,16 +1151,49 @@ public class JQuickNodeExecutor {
         if (joinKeys.size() == 1) {
             JQuickHashJoinPhysicalNode.JoinKeyPair keyPair = joinKeys.get(0);
             JQuickExpression keyExpr = useLeftKey ? keyPair.getLeftKey() : keyPair.getRightKey();
-            return expressionEvaluator.evaluateExpression(row, keyExpr);
+            Object key = evaluateJoinKeyExpression(row, keyExpr);
+            console.info("extractJoinKey - useLeftKey: " + useLeftKey + ", row keys: " + row.keySet() + ", keyExpr: " + keyExpr + ", extracted key: " + key);
+            return key;
         } else {
             List<Object> compositeKey = new ArrayList<>();
             for (JQuickHashJoinPhysicalNode.JoinKeyPair keyPair : joinKeys) {
                 JQuickExpression keyExpr = useLeftKey ? keyPair.getLeftKey() : keyPair.getRightKey();
-                Object keyValue = expressionEvaluator.evaluateExpression(row, keyExpr);
+                Object keyValue = evaluateJoinKeyExpression(row, keyExpr);
                 compositeKey.add(keyValue);
             }
             return compositeKey;
         }
+    }
+
+    /**
+     * 评估 JOIN 键表达式，正确处理表别名
+     */
+    private Object evaluateJoinKeyExpression(JQuickRow row, JQuickExpression keyExpr) {
+        if (keyExpr instanceof JQuickColumnRefExpression) {
+            JQuickColumnRefExpression colRef = (JQuickColumnRefExpression) keyExpr;
+            String rawColumnName = colRef.getColumnName();
+            String tableAlias = colRef.getTableAlias();
+            
+            String[] possibleNames = new String[]{
+                tableAlias + "." + rawColumnName,
+                rawColumnName,
+                "left." + rawColumnName,
+                "right." + rawColumnName
+            };
+            
+            for (String name : possibleNames) {
+                if (row.containsKey(name)) {
+                    return row.get(name);
+                }
+            }
+            
+            for (String key : row.keySet()) {
+                if (key.endsWith("." + rawColumnName) || key.equalsIgnoreCase(rawColumnName)) {
+                    return row.get(key);
+                }
+            }
+        }
+        return expressionEvaluator.evaluateExpression(row, keyExpr);
     }
 
     private JQuickRow extractGroupKey(JQuickRow row, List<JQuickExpression> groupKeys) {

@@ -84,7 +84,7 @@ public class JQuickJoinReorderRuleTest {
         JQuickTableScanNode orders = new JQuickTableScanNode("orders", "o");
         JQuickTableScanNode customers = new JQuickTableScanNode("customers", "c");
         JQuickExpression joinCondition = binary(column("o.customer_id"), column("c.id"), JQuickBinaryOperator.EQ);
-        JQuickJoinNode join = new JQuickJoinNode(JQuickJoinType.INNER, orders, customers, joinCondition);
+        JQuickJoinNode join = new JQuickJoinNode(JQuickJoinType.INNER, orders, customers, joinCondition,null);
         JQuickLogicalPlanNode result = rule.optimize(join);
         assertTrue(result instanceof JQuickJoinNode);
         JQuickJoinNode resultJoin = (JQuickJoinNode) result;
@@ -103,7 +103,7 @@ public class JQuickJoinReorderRuleTest {
         JQuickExpression filterPredicate = binary(column("c.status"), literal("VIP"), JQuickBinaryOperator.EQ);
         JQuickFilterNode customersFilter = new JQuickFilterNode(filterPredicate, new JQuickTableScanNode("customers", "c"));
         JQuickExpression joinCondition = binary(column("o.customer_id"), column("c.id"), JQuickBinaryOperator.EQ);
-        JQuickJoinNode join = new JQuickJoinNode(JQuickJoinType.INNER, orders, customersFilter, joinCondition);
+        JQuickJoinNode join = new JQuickJoinNode(JQuickJoinType.INNER, orders, customersFilter, joinCondition,null);
         JQuickLogicalPlanNode result = rule.optimize(join);
         System.out.println(result);
     }
@@ -117,7 +117,7 @@ public class JQuickJoinReorderRuleTest {
         JQuickFilterNode ordersFilter = new JQuickFilterNode(filterPredicate, new JQuickTableScanNode("orders", "o"));
         JQuickTableScanNode customers = new JQuickTableScanNode("customers", "c");
         JQuickExpression joinCondition = binary(column("o.customer_id"), column("c.id"), JQuickBinaryOperator.EQ);
-        JQuickJoinNode join = new JQuickJoinNode(JQuickJoinType.INNER, ordersFilter, customers, joinCondition);
+        JQuickJoinNode join = new JQuickJoinNode(JQuickJoinType.INNER, ordersFilter, customers, joinCondition,null);
         JQuickLogicalPlanNode result = rule.optimize(join);
         System.out.println(result);
     }
@@ -133,7 +133,7 @@ public class JQuickJoinReorderRuleTest {
         JQuickExpression customerFilter = binary(column("c.status"), literal("VIP"), JQuickBinaryOperator.EQ);
         JQuickFilterNode customersFilter = new JQuickFilterNode(customerFilter, new JQuickTableScanNode("customers", "c"));
         JQuickExpression joinCondition = binary(column("o.customer_id"), column("c.id"), JQuickBinaryOperator.EQ);
-        JQuickJoinNode join = new JQuickJoinNode(JQuickJoinType.INNER, ordersFilter, customersFilter, joinCondition);
+        JQuickJoinNode join = new JQuickJoinNode(JQuickJoinType.INNER, ordersFilter, customersFilter, joinCondition,null);
         JQuickLogicalPlanNode result = rule.optimize(join);
         assertTrue(result instanceof JQuickJoinNode);
         JQuickJoinNode resultJoin = (JQuickJoinNode) result;
@@ -154,8 +154,8 @@ public class JQuickJoinReorderRuleTest {
         JQuickFilterNode customersFilter = new JQuickFilterNode(customerFilter, new JQuickTableScanNode("customers", "c"));
         JQuickExpression joinCond1 = binary(column("o.customer_id"), column("c.id"), JQuickBinaryOperator.EQ);
         JQuickExpression joinCond2 = binary(column("o.product_id"), column("p.id"), JQuickBinaryOperator.EQ);
-        JQuickJoinNode join1 = new JQuickJoinNode(JQuickJoinType.INNER, orders, customersFilter, joinCond1);
-        JQuickJoinNode join2 = new JQuickJoinNode(JQuickJoinType.INNER, join1, products, joinCond2);
+        JQuickJoinNode join1 = new JQuickJoinNode(JQuickJoinType.INNER, orders, customersFilter, joinCond1,null);
+        JQuickJoinNode join2 = new JQuickJoinNode(JQuickJoinType.INNER, join1, products, joinCond2,null);
         JQuickLogicalPlanNode result = rule.optimize(join2);
         assertTrue(result instanceof JQuickJoinNode);
         assertNotNull(result);

@@ -128,13 +128,27 @@ public class JQuickPhysicalPlanGenerator implements JQuickLogicalPlanVisitor {
         JQuickPhysicalPlanNode rightPhysical = logicalToPhysical.get(node.getRight());
         JQuickPhysicalPlanNode physicalNode;
         if (isHashJoinApplicable(node)) {
-            List<JQuickHashJoinPhysicalNode.JoinKeyPair> joinKeys = extractJoinKeys(node.getCondition());
+            List<JQuickHashJoinPhysicalNode.JoinKeyPair> joinKeyPairs = convertJoinKeys(node.getJoinKeys());
+            if (joinKeyPairs.isEmpty()) {
+                joinKeyPairs = extractJoinKeys(node.getCondition());
+            }
             JQuickHashJoinPhysicalNode.BuildSide buildSide = determineBuildSide(leftPhysical, rightPhysical);
-            physicalNode = new JQuickHashJoinPhysicalNode(node.getJoinType(), leftPhysical, rightPhysical, node.getCondition(), joinKeys, buildSide, JQuickHashJoinPhysicalNode.JoinDistribution.SHUFFLE_HASH);
+            physicalNode = new JQuickHashJoinPhysicalNode(node.getJoinType(), leftPhysical, rightPhysical, node.getCondition(), joinKeyPairs, buildSide, JQuickHashJoinPhysicalNode.JoinDistribution.SHUFFLE_HASH);
         } else {
             physicalNode = new JQuickNestedLoopJoinPhysicalNode(node.getJoinType(), leftPhysical, rightPhysical, node.getCondition());
         }
         logicalToPhysical.put(node, physicalNode);
+    }
+
+    private List<JQuickHashJoinPhysicalNode.JoinKeyPair> convertJoinKeys(List<JQuickJoinNode.JoinKey> joinKeys) {
+        List<JQuickHashJoinPhysicalNode.JoinKeyPair> result = new ArrayList<>();
+        if (joinKeys == null || joinKeys.isEmpty()) {
+            return result;
+        }
+        for (JQuickJoinNode.JoinKey key : joinKeys) {
+            result.add(new JQuickHashJoinPhysicalNode.JoinKeyPair(key.getLeftKey(), key.getRightKey()));
+        }
+        return result;
     }
 
     @Override

@@ -67,7 +67,7 @@ public class JQuickConstantFoldingRule extends JQuickRecursiveOptimizerRule impl
         else if (node instanceof JQuickJoinNode) {
             JQuickJoinNode join = (JQuickJoinNode) node;
             JQuickExpression folded = join.getCondition() != null ? foldConstants(join.getCondition()) : null;
-            return new JQuickJoinNode(join.getJoinType(), join.getLeft(), join.getRight(), folded);
+            return new JQuickJoinNode(join.getJoinType(), join.getLeft(), join.getRight(), folded,join.getJoinKeys());
         }
         else if (node instanceof JQuickWindowNode) {
             JQuickWindowNode window = (JQuickWindowNode) node;

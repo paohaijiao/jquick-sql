@@ -251,7 +251,7 @@ public class JQuickProjectionMergeRuleTest {
         JQuickTableScanNode orders = new JQuickTableScanNode("orders", "o");
         JQuickTableScanNode customers = new JQuickTableScanNode("customers", "c");
         JQuickExpression joinCondition = binary(column("o.customer_id"), column("c.id"), JQuickBinaryOperator.EQ);
-        JQuickJoinNode join = new JQuickJoinNode(JQuickJoinType.INNER, orders, customers, joinCondition);
+        JQuickJoinNode join = new JQuickJoinNode(JQuickJoinType.INNER, orders, customers, joinCondition,null);
         JQuickProjectNode.SelectItem nameItem1 = new JQuickProjectNode.SelectItem(column("o.name"), "name");
         JQuickProjectNode.SelectItem priceItem = new JQuickProjectNode.SelectItem(column("o.price"), "price");
         JQuickProjectNode innerProject = new JQuickProjectNode(Arrays.asList(nameItem1, priceItem), join);

@@ -41,11 +41,30 @@ public class JQuickJoinNode implements JQuickLogicalPlanNode {
 
     private final JQuickExpression condition;
 
-    public JQuickJoinNode(JQuickJoinType joinType, JQuickLogicalPlanNode left, JQuickLogicalPlanNode right, JQuickExpression condition) {
+    private final List<JoinKey> joinKeys;
+
+    public static class JoinKey {
+
+        private final JQuickExpression leftKey;
+
+        private final JQuickExpression rightKey;
+
+        public JoinKey(JQuickExpression leftKey, JQuickExpression rightKey) {
+            this.leftKey = leftKey;
+            this.rightKey = rightKey;
+        }
+
+        public JQuickExpression getLeftKey() { return leftKey; }
+
+        public JQuickExpression getRightKey() { return rightKey; }
+    }
+
+    public JQuickJoinNode(JQuickJoinType joinType, JQuickLogicalPlanNode left, JQuickLogicalPlanNode right, JQuickExpression condition, List<JoinKey> joinKeys) {
         this.joinType = joinType;
         this.left = left;
         this.right = right;
         this.condition = condition;
+        this.joinKeys = joinKeys != null ? new ArrayList<>(joinKeys) : new ArrayList<>();
     }
 
     @Override
@@ -73,8 +92,15 @@ public class JQuickJoinNode implements JQuickLogicalPlanNode {
 
     @Override
     public JQuickLogicalPlanNode clone() {
+        List<JoinKey> clonedKeys = new ArrayList<>();
+        if (joinKeys != null) {
+            for (JoinKey key : joinKeys) {
+                clonedKeys.add(new JoinKey(key.leftKey.clone(), key.rightKey.clone()));
+            }
+        }
         return new JQuickJoinNode(joinType, left.clone(), right.clone(),
-                condition != null ? condition.clone() : null);
+                condition != null ? condition.clone() : null,
+                clonedKeys.isEmpty() ? null : clonedKeys);
     }
 
     public JQuickJoinType getJoinType() { return joinType; }
@@ -84,4 +110,6 @@ public class JQuickJoinNode implements JQuickLogicalPlanNode {
     public JQuickLogicalPlanNode getRight() { return right; }
 
     public JQuickExpression getCondition() { return condition; }
+
+    public List<JoinKey> getJoinKeys() { return joinKeys; }
 }

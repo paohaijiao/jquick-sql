@@ -63,7 +63,7 @@ public class JQuickProjectionPushdownRule implements JQuickOptimizerRule {
         }
         if (node instanceof JQuickJoinNode) {
             JQuickJoinNode join = (JQuickJoinNode) node;
-            return new JQuickJoinNode(join.getJoinType(), newChildren.get(0), newChildren.get(1), join.getCondition());
+            return new JQuickJoinNode(join.getJoinType(), newChildren.get(0), newChildren.get(1), join.getCondition(),join.getJoinKeys());
         }
         return node;
     }
@@ -130,7 +130,7 @@ public class JQuickProjectionPushdownRule implements JQuickOptimizerRule {
             
             JQuickLogicalPlanNode newLeft = pushdownToNode(join.getLeft(), leftColumns);
             JQuickLogicalPlanNode newRight = pushdownToNode(join.getRight(), rightColumns);
-            JQuickJoinNode newJoin = new JQuickJoinNode(join.getJoinType(), newLeft, newRight, join.getCondition());
+            JQuickJoinNode newJoin = new JQuickJoinNode(join.getJoinType(), newLeft, newRight, join.getCondition(),join.getJoinKeys());
             return new JQuickProjectNode(project.getSelectItems(), newJoin, project.isDistinct());
         }
 
@@ -275,7 +275,7 @@ public class JQuickProjectionPushdownRule implements JQuickOptimizerRule {
             
             JQuickLogicalPlanNode newLeft = pushdownToNode(join.getLeft(), leftColumns);
             JQuickLogicalPlanNode newRight = pushdownToNode(join.getRight(), rightColumns);
-            return new JQuickJoinNode(join.getJoinType(), newLeft, newRight, join.getCondition());
+            return new JQuickJoinNode(join.getJoinType(), newLeft, newRight, join.getCondition(),join.getJoinKeys());
         }
         return node;
     }

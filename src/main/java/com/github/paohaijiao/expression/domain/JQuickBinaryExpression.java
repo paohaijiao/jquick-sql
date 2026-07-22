@@ -77,7 +77,6 @@ public class JQuickBinaryExpression implements JQuickExpression {
         boolean needParen = needParentheses();
         String leftSql = left.toSql();
         String rightSql = right.toSql();
-
         if (needParen) {
             return "(" + leftSql + " " + operator.getSymbol() + " " + rightSql + ")";
         }
@@ -85,7 +84,6 @@ public class JQuickBinaryExpression implements JQuickExpression {
     }
 
     private boolean needParentheses() {
-        // 检查是否需要添加括号来保证运算优先级
         if (left instanceof JQuickBinaryExpression) {
             JQuickBinaryExpression leftBinary = (JQuickBinaryExpression) left;
             if (leftBinary.operator.getPrecedence() < this.operator.getPrecedence()) {
@@ -107,6 +105,8 @@ public class JQuickBinaryExpression implements JQuickExpression {
     }
 
     public JQuickExpression getLeft() { return left; }
+
     public JQuickExpression getRight() { return right; }
+
     public JQuickBinaryOperator getOperator() { return operator; }
 }

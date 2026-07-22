@@ -233,14 +233,14 @@ public class JQuickFilterConditionTest {
         JQuickProjectNode anchorProject = new JQuickProjectNode(anchorItems, anchorFilter);
         JQuickTableScanNode employeeScanRecursive = createTableScan("employee", "e");
         JQuickTableScanNode cteRef = createTableScan("org_hierarchy", "h");
-        JQuickJoinNode recursiveJoin = new JQuickJoinNode(JQuickJoinType.INNER, employeeScanRecursive, cteRef, createEqualityCondition("e.manager_id", "h.id"));
+//        JQuickJoinNode recursiveJoin = new JQuickJoinNode(JQuickJoinType.INNER, employeeScanRecursive, cteRef, createEqualityCondition("e.manager_id", "h.id"),"e.manager_id");
         JQuickBinaryExpression levelPlusOne = new JQuickBinaryExpression(new JQuickColumnRefExpression("h.level"), new JQuickLiteralExpression(1), JQuickBinaryOperator.PLUS);
         List<JQuickProjectNode.SelectItem> recursiveItems = new ArrayList<>();
         recursiveItems.add(new JQuickProjectNode.SelectItem(new JQuickColumnRefExpression("e.id"), "id"));
         recursiveItems.add(new JQuickProjectNode.SelectItem(new JQuickColumnRefExpression("e.name"), "name"));
         recursiveItems.add(new JQuickProjectNode.SelectItem(new JQuickColumnRefExpression("e.manager_id"), "manager_id"));
         recursiveItems.add(new JQuickProjectNode.SelectItem(levelPlusOne, "level"));
-        JQuickProjectNode recursiveProject = new JQuickProjectNode(recursiveItems, recursiveJoin);
+        JQuickProjectNode recursiveProject = new JQuickProjectNode(recursiveItems, null);
         List<String> columnNames = Arrays.asList("id", "name", "manager_id", "level");
         JQuickRecursiveUnionNode recursiveUnion = new JQuickRecursiveUnionNode("org_hierarchy", columnNames, anchorProject, recursiveProject, true);
         JQuickTableScanNode cteFinalRef = createTableScan("org_hierarchy");

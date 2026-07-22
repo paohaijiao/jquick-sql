@@ -76,7 +76,7 @@ public class JQuickLimitPushdownRule implements JQuickOptimizerRule {
         }
         if (node instanceof JQuickJoinNode) {
             JQuickJoinNode join = (JQuickJoinNode) node;
-            return new JQuickJoinNode(join.getJoinType(), newChildren.get(0), newChildren.get(1), join.getCondition());
+            return new JQuickJoinNode(join.getJoinType(), newChildren.get(0), newChildren.get(1), join.getCondition(),join.getJoinKeys());
         }
         return node;
     }
@@ -125,7 +125,7 @@ public class JQuickLimitPushdownRule implements JQuickOptimizerRule {
         JQuickJoinType joinType = join.getJoinType();
         if (joinType == JQuickJoinType.INNER || joinType == JQuickJoinType.LEFT) {
             JQuickLimitNode newLeftLimit = new JQuickLimitNode(limit.getLimit(), limit.getOffset(), join.getLeft());
-            JQuickJoinNode newJoin = new JQuickJoinNode(joinType, newLeftLimit, join.getRight(), join.getCondition());
+            JQuickJoinNode newJoin = new JQuickJoinNode(joinType, newLeftLimit, join.getRight(), join.getCondition(),join.getJoinKeys());
             return new JQuickLimitNode(limit.getLimit(), limit.getOffset(), newJoin);
         }
         return limit;

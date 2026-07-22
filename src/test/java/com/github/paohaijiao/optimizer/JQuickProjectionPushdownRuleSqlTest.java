@@ -161,7 +161,7 @@ public class JQuickProjectionPushdownRuleSqlTest {
         JQuickTableScanNode orders = new JQuickTableScanNode("orders", "o");
         JQuickTableScanNode customers = new JQuickTableScanNode("customers", "c");
         JQuickExpression joinCondition = binary(column("o.customer_id"), column("c.id"), JQuickBinaryOperator.EQ);
-        JQuickJoinNode join = new JQuickJoinNode(JQuickJoinType.INNER, orders, customers, joinCondition);
+        JQuickJoinNode join = new JQuickJoinNode(JQuickJoinType.INNER, orders, customers, joinCondition,null);
         JQuickProjectNode.SelectItem orderIdItem = new JQuickProjectNode.SelectItem(column("o.order_id"), "order_id");
         JQuickProjectNode.SelectItem amountItem = new JQuickProjectNode.SelectItem(column("o.amount"), "amount");
         JQuickProjectNode project = new JQuickProjectNode(Arrays.asList(orderIdItem, amountItem), join);
