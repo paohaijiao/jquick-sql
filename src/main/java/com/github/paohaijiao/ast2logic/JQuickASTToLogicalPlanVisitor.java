@@ -344,7 +344,7 @@ public class JQuickASTToLogicalPlanVisitor {
         List<JQuickExpression> conditions = new ArrayList<>();
         List<JQuickExpression> results = new ArrayList<>();
         if (node.isSimpleCase()) {
-            // 简单 CASE: CASE caseBase WHEN value1 THEN result1 ...
+            //  CASE: CASE caseBase WHEN value1 THEN result1 ...
             JQuickExpression caseBaseExpr = visitExpression(node.getCaseBase());
             for (JQuickCaseWhenNode.WhenClause whenClause : node.getWhenClauses()) {
                 JQuickExpression whenValue = visitPredicate(whenClause.getCondition());
@@ -354,7 +354,7 @@ public class JQuickASTToLogicalPlanVisitor {
                 results.add(result);
             }
         } else {
-            // 搜索 CASE: CASE WHEN condition1 THEN result1 ...
+            // CASE: CASE WHEN condition1 THEN result1 ...
             for (JQuickCaseWhenNode.WhenClause whenClause : node.getWhenClauses()) {
                 JQuickExpression condition = visitPredicate(whenClause.getCondition());
                 conditions.add(condition);
@@ -475,7 +475,7 @@ public class JQuickASTToLogicalPlanVisitor {
             case REGEXP:
                 JQuickExpression regexpTarget = visitPredicate(node.getRegexpPredicate());
                 JQuickExpression regexpPattern = visitPredicate(node.getRegexpPattern());
-                JQuickBinaryOperator regexpOp = node.isLikeNot() ? JQuickBinaryOperator.NOT_REGEX : JQuickBinaryOperator.REGEX;
+                JQuickBinaryOperator regexpOp = node.isRegexpNot() ? JQuickBinaryOperator.NOT_REGEX : JQuickBinaryOperator.REGEX;
                 return new JQuickBinaryExpression(regexpTarget, regexpPattern, regexpOp);
             case EXISTS:
                 JQuickExpression existsExpr = visitExpression(node.getExistsExpression());

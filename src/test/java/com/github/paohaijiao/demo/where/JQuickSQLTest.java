@@ -198,6 +198,22 @@ public class JQuickSQLTest {
         JQuickDataSet result = sql.execute("SELECT * FROM users WHERE name not like '%Davi%'");
         result.printTable();
     }
+    @Test
+    public void testRegexQuery() {
+        JQuickDataSet result1 = sql.execute("SELECT * FROM users WHERE name REGEXP '^A.*'");
+        System.out.println("=== REGEX 1 (name REGEXP '^A') ===");
+        result1.printTable();
+        System.out.println("结果数量: " + result1.size());
+        System.out.println();
+    }
+    @Test
+    public void testNotRegexQuery() {
+        JQuickDataSet result1 = sql.execute("SELECT * FROM users WHERE name not REGEXP '^A.*'");
+        System.out.println("=== REGEX 1 (name REGEXP '^A') ===");
+        result1.printTable();
+        System.out.println("结果数量: " + result1.size());
+        System.out.println();
+    }
 
 
 
