@@ -214,6 +214,17 @@ public class JQuickSQLTest {
         System.out.println("结果数量: " + result1.size());
         System.out.println();
     }
+    @Test
+    public void testExistsQuery() {
+        JQuickDataSet result1 = sql.execute(
+                "SELECT * FROM users u WHERE EXISTS (" +
+                        "   SELECT 1 FROM orders o WHERE o.user_id = u.id" +
+                        ")"
+        );
+        System.out.println("=== EXISTS (有订单的用户) ===");
+        result1.printTable();
+
+    }
 
 
 
