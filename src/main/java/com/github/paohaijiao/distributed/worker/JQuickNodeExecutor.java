@@ -5,6 +5,7 @@ import com.github.paohaijiao.datasource.JQuickDataSourceManager;
 import com.github.paohaijiao.distributed.proto.JQuickProtoService;
 import com.github.paohaijiao.enums.JQuickExchangeType;
 import com.github.paohaijiao.expression.JQuickExpression;
+import com.github.paohaijiao.expression.domain.JQuickBinaryExpression;
 import com.github.paohaijiao.expression.domain.JQuickColumnRefExpression;
 import com.github.paohaijiao.expression.domain.JQuickFunctionCallExpression;
 import com.github.paohaijiao.expression.domain.JQuickLiteralExpression;
@@ -590,10 +591,62 @@ public class JQuickNodeExecutor {
             resultRows.add(aggregated);
         }
         if (node.getHavingCondition() != null) {
-            resultRows = resultRows.stream().filter(row -> expressionEvaluator.evaluatePredicate(row, node.getHavingCondition())).collect(Collectors.toList());
+            Map<String, String> aggToAlias = new HashMap<>();
+            for (JQuickHashAggregatePhysicalNode.AggregateFunction agg : node.getAggregates()) {
+                StringBuilder sig = new StringBuilder();
+                sig.append(agg.getFunctionName().toUpperCase()).append("(");
+                if (agg.getArgument() != null) {
+                    if (agg.getArgument() instanceof JQuickColumnRefExpression) {
+                        sig.append(((JQuickColumnRefExpression) agg.getArgument()).getColumnName());
+                    } else {
+                        sig.append(agg.getArgument().toString());
+                    }
+                } else if (agg.isCountStar()) {
+                    sig.append("*");
+                }
+                sig.append(")");
+                aggToAlias.put(sig.toString(), agg.getAlias() != null ? agg.getAlias() : agg.getFunctionName());
+            }
+            JQuickExpression resolvedHaving = resolveAggRefs(node.getHavingCondition(), aggToAlias);
+            resultRows = resultRows.stream().filter(row -> expressionEvaluator.evaluatePredicate(row, resolvedHaving)).collect(Collectors.toList());
         }
         List<JQuickColumnMeta> columnMetas = buildColumnMetasForAggregate(node);
         return new JQuickDataSet(columnMetas, resultRows);
+    }
+
+    /**
+     * 将 HAVING 条件中的聚合函数引用替换为列别名
+     */
+    private JQuickExpression resolveAggRefs(JQuickExpression expr, Map<String, String> aggToAlias) {
+        if (expr instanceof JQuickFunctionCallExpression) {
+            JQuickFunctionCallExpression func = (JQuickFunctionCallExpression) expr;
+            StringBuilder sig = new StringBuilder();
+            sig.append(func.getFunctionName().toUpperCase()).append("(");
+            if (func.isStarArg()) {
+                sig.append("*");
+            } else if (func.getArguments() != null && !func.getArguments().isEmpty()) {
+                JQuickExpression arg = func.getArguments().get(0);
+                if (arg instanceof JQuickColumnRefExpression) {
+                    sig.append(((JQuickColumnRefExpression) arg).getColumnName());
+                } else {
+                    sig.append(arg.toString());
+                }
+            }
+            sig.append(")");
+            String alias = aggToAlias.get(sig.toString());
+            if (alias != null) {
+                return new JQuickColumnRefExpression(alias);
+            }
+            return expr;
+        } else if (expr instanceof JQuickBinaryExpression) {
+            JQuickBinaryExpression binary = (JQuickBinaryExpression) expr;
+            return new JQuickBinaryExpression(
+                resolveAggRefs(binary.getLeft(), aggToAlias),
+                resolveAggRefs(binary.getRight(), aggToAlias),
+                binary.getOperator()
+            );
+        }
+        return expr;
     }
 
     /**

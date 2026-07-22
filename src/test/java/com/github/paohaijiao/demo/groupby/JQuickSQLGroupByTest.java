@@ -118,10 +118,9 @@ public class JQuickSQLGroupByTest {
                 "SELECT status, COUNT(age) as count, AVG(age) as avg_age " +
                         "FROM users " +
                         "GROUP BY status " +
-                        "HAVING COUNT(age) > 1 " +
+                        "HAVING COUNT(age) >=1 " +
                         "ORDER BY count DESC"
         );
-        System.out.println("=== GROUP BY status HAVING COUNT(*) > 1 ORDER BY count DESC ===");
         result1.printTable();
     }
 
