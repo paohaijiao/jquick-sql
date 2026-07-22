@@ -586,6 +586,16 @@ public class JQuickProtoService {
         }
     }
 
+    public JQuickHashJoinPhysicalNode.JoinDistribution convertJoinDistribution(JQuickJoinDistributionProto proto) {
+        switch (proto) {
+            case JOIN_DIST_LOCAL: return JQuickHashJoinPhysicalNode.JoinDistribution.LOCAL;
+            case JOIN_DIST_SHUFFLE: return JQuickHashJoinPhysicalNode.JoinDistribution.SHUFFLE_HASH;
+            case JOIN_DIST_BROADCAST: return JQuickHashJoinPhysicalNode.JoinDistribution.BROADCAST_HASH;
+            case JOIN_DIST_PARTITIONED: return JQuickHashJoinPhysicalNode.JoinDistribution.PARTITIONED;
+            default: return JQuickHashJoinPhysicalNode.JoinDistribution.LOCAL;
+        }
+    }
+
     public JQuickAggregateStageProto convertAggregateStageToProto(JQuickHashAggregatePhysicalNode.AggregateStage stage) {
         switch (stage) {
             case PARTIAL: return JQuickAggregateStageProto.AGG_PARTIAL;
@@ -957,12 +967,21 @@ public class JQuickProtoService {
                 return new JQuickProjectPhysicalNode(selectItems, !children.isEmpty() ? children.get(0) : null, projectProto.getDistinct(), projectProto.getIsStar());
             case HASH_JOIN:
                 JQuickHashJoinNodeProto joinProto = proto.getHashJoin();
+                // 反序列化 joinKeys
+                List<JQuickHashJoinPhysicalNode.JoinKeyPair> joinKeys = new ArrayList<>();
+                for (JQuickHashJoinNodeProto.JoinKeyPairProto keyPairProto : joinProto.getJoinKeysList()) {
+                    joinKeys.add(new JQuickHashJoinPhysicalNode.JoinKeyPair(
+                            buildExpression(keyPairProto.getLeftKey()),
+                            buildExpression(keyPairProto.getRightKey())
+                    ));
+                }
                 return new JQuickHashJoinPhysicalNode(convertJoinType(joinProto.getJoinType()),
                         !children.isEmpty() ? children.get(0) : null,
                         children.size() > 1 ? children.get(1) : null, 
-                        buildExpression(joinProto.getCondition()), new ArrayList<>(), 
+                        buildExpression(joinProto.getCondition()),
+                        joinKeys,
                         joinProto.getBuildSide() == JQuickBuildSideProto.BUILD_SIDE_LEFT ? JQuickHashJoinPhysicalNode.BuildSide.LEFT : JQuickHashJoinPhysicalNode.BuildSide.RIGHT, 
-                        JQuickHashJoinPhysicalNode.JoinDistribution.LOCAL);
+                        convertJoinDistribution(joinProto.getDistribution()));
             case EXCHANGE:
                 JQuickExchangeNodeProto exchangeProto = proto.getExchange();
                 return new JQuickExchangePhysicalNode(convertExchangeType(exchangeProto.getExchangeType()), 

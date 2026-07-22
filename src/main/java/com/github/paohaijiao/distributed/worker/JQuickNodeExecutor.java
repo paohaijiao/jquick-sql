@@ -304,7 +304,6 @@ public class JQuickNodeExecutor {
      * 执行 Hash Join
      */
     private JQuickDataSet executeHashJoin(JQuickHashJoinPhysicalNode node, JQuickWorker.JQuickTaskContext context) {
-        // 处理 CROSS JOIN：没有连接键，直接计算笛卡尔积
         if (node.getJoinType() == com.github.paohaijiao.enums.JQuickJoinType.CROSS || 
             node.getJoinKeys() == null || node.getJoinKeys().isEmpty()) {
             return executeCrossJoin(node, context);
