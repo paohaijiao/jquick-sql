@@ -1210,32 +1210,21 @@ public class JQuickNodeExecutor {
         String funcName = wf.getFunctionName().toLowerCase();
         List<JQuickRow> allRows = data.getRows();
         int currentIdx = allRows.indexOf(currentRow);
-        
-        // 获取窗口规范
         JQuickWindowPhysicalNode.WindowSpec windowSpec = wf.getWindowSpec();
         List<JQuickRow> windowRows;
-        
         if (windowSpec != null && windowSpec.getPartitionKeys() != null && !windowSpec.getPartitionKeys().isEmpty()) {
-            // 按分区键分组
             windowRows = getPartitionRows(allRows, currentRow, windowSpec);
         } else {
             windowRows = allRows;
         }
-        
-        // 如果有排序键，先对窗口内的行进行排序
         if (windowSpec != null && windowSpec.getOrderKeys() != null && !windowSpec.getOrderKeys().isEmpty()) {
             windowRows = sortWindowRows(windowRows, windowSpec);
         }
-        
-        // 找到当前行在窗口中的位置
         int windowIdx = windowRows.indexOf(currentRow);
-        
-        // 排名函数
         switch (funcName) {
             case "row_number":
                 return (long) (windowIdx + 1);
             case "rank":
-                // 计算排名（考虑跳跃）
                 Object currentOrderValue = getOrderValue(windowRows.get(windowIdx), windowSpec);
                 int rank = 1;
                 for (int i = 0; i < windowIdx; i++) {
@@ -1266,7 +1255,6 @@ public class JQuickNodeExecutor {
                     return expressionEvaluator.evaluateExpression(windowRows.get(windowIdx - 1), wf.getArgument());
                 }
                 return null;
-            // 聚合函数
             case "count":
                 return (long) windowRows.size();
             case "sum":
@@ -1326,7 +1314,6 @@ public class JQuickNodeExecutor {
                 }
                 return minVal;
             default:
-                // 其他函数，尝试通过 expressionEvaluator 调用
                 List<Object> args = new ArrayList<>();
                 if (wf.getArgument() != null) {
                     args.add(expressionEvaluator.evaluateExpression(currentRow, wf.getArgument()));

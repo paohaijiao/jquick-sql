@@ -13,7 +13,7 @@
  *
  * Copyright (c) [2025-2099] Martin (goudingcheng@gmail.com)
  */
-package com.github.paohaijiao.demo.where;
+package com.github.paohaijiao.demo.orderBy;
 
 import com.github.paohaijiao.engine.JQuickSQL;
 import com.github.paohaijiao.statement.JQuickColumnMeta;
@@ -29,7 +29,7 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
-public class JQuickSQLTest {
+public class JQuickSQLOrderByTest {
 
     private static JQuickSQL sql;
 
@@ -103,127 +103,40 @@ public class JQuickSQLTest {
 
 
     @Test
-    public void testFilterQuery() {
-        JQuickDataSet result = sql.execute("SELECT * FROM users WHERE status = 'active'");
-        result.printTable();
-        System.out.println("Active users: " + result.size());
-    }
-    @Test
-    public void testFilterQueryWithAnd() {
-        JQuickDataSet result = sql.execute("SELECT * FROM users WHERE age > 25 AND status = 'active'");
-        result.printTable();
-    }
-    @Test
-    public void testFilterQueryWithOr() {
-        JQuickDataSet result = sql.execute("SELECT * FROM users WHERE status = 'pending' OR enable = true");
-        result.printTable();
-    }
-    @Test
-    public void testFilterQueryWithNested() {
-        JQuickDataSet result = sql.execute("SELECT * FROM users WHERE age > 30 OR (status = 'pending' OR addr = 'chengdu')");
-        result.printTable();
-    }
-    @Test
-    public void testFilterQueryWithConstant() {
-        JQuickDataSet result = sql.execute("SELECT * FROM users WHERE true");
-        result.printTable();
-    }
-    @Test
-    public void testFilterQueryWithColumn() {
-        JQuickDataSet result = sql.execute("SELECT * FROM users WHERE enable");
-        result.printTable();
-    }
-    @Test
-    public void testFilterQueryWithFunctionCall() {
-        JQuickDataSet result = sql.execute("SELECT * FROM users WHERE toUpper(name)='ALICE'");
-        result.printTable();
-    }
-    @Test
-    public void testFilterQueryWithIsNull() {
-        JQuickDataSet result = sql.execute("SELECT * FROM users WHERE addr is null");
-        result.printTable();
-    }
-    @Test
-    public void testFilterQueryWithIsNotNull() {
-        JQuickDataSet result = sql.execute("SELECT * FROM users WHERE addr is not null");
-        result.printTable();
-    }
-    @Test
-    public void testFilterQueryWithAge1() {
-        JQuickDataSet result = sql.execute("SELECT * FROM users WHERE age >25");
-        result.printTable();
-    }
-    @Test
-    public void testFilterQueryWithAge2() {
-        JQuickDataSet result = sql.execute("SELECT * FROM users WHERE age >=25");
-        result.printTable();
-    }
-    @Test
-    public void testFilterQueryWithAge3() {
-        JQuickDataSet result = sql.execute("SELECT * FROM users WHERE age <25");
-        result.printTable();
-    }
-    @Test
-    public void testFilterQueryWithAge4() {
-        JQuickDataSet result = sql.execute("SELECT * FROM users WHERE age <=20");
-        result.printTable();
-    }
-    @Test
-    public void testFilterQueryWithBetween() {
-        JQuickDataSet result = sql.execute("SELECT * FROM users WHERE age  between 25 and 30");
-        result.printTable();
-    }
-    @Test
-    public void testFilterQueryWithNotBetween() {
-        JQuickDataSet result = sql.execute("SELECT * FROM users WHERE age  not between 25 and 30");
-        result.printTable();
-    }
-    @Test
-    public void testFilterQueryWithIn() {
-        JQuickDataSet result = sql.execute("SELECT * FROM users WHERE age  in ( 25 , 30)");
-        result.printTable();
-    }
-    @Test
-    public void testFilterQueryWithNotIn() {
-        JQuickDataSet result = sql.execute("SELECT * FROM users WHERE age not in ( 25 , 30)");
-        result.printTable();
-    }
-    @Test
-    public void testFilterQueryWithLike() {
-        JQuickDataSet result = sql.execute("SELECT * FROM users WHERE name like '%Davi%'");
-        result.printTable();
-    }
-    @Test
-    public void testFilterQueryWithNotLike() {
-        JQuickDataSet result = sql.execute("SELECT * FROM users WHERE name not like '%Davi%'");
-        result.printTable();
-    }
-    @Test
-    public void testRegexQuery() {
-        JQuickDataSet result1 = sql.execute("SELECT * FROM users WHERE name REGEXP '^A.*'");
-        System.out.println("=== REGEX 1 (name REGEXP '^A') ===");
+    public void testOrderByQueryASC() {
+        JQuickDataSet result1 = sql.execute("SELECT * FROM users ORDER BY age ASC");
         result1.printTable();
-        System.out.println("结果数量: " + result1.size());
-        System.out.println();
     }
     @Test
-    public void testNotRegexQuery() {
-        JQuickDataSet result1 = sql.execute("SELECT * FROM users WHERE name not REGEXP '^A.*'");
-        System.out.println("=== REGEX 1 (name REGEXP '^A') ===");
-        result1.printTable();
-        System.out.println("结果数量: " + result1.size());
-        System.out.println();
+    public void testOrderByQueryDesc() {
+        JQuickDataSet result2 = sql.execute("SELECT * FROM users ORDER BY age DESC");
+        System.out.println("=== ORDER BY age DESC ===");
+        result2.printTable();
     }
     @Test
-    public void testExistsQuery() {
+    public void testOrderByMutipleFields() {
+        JQuickDataSet result3 = sql.execute("SELECT * FROM users ORDER BY status ASC, age DESC");
+        System.out.println("=== ORDER BY status ASC, age DESC ===");
+        result3.printTable();
+    }
+    @Test
+    public void testOrderByMutipleFields1() {
+        JQuickDataSet result4 = sql.execute("SELECT * FROM users ORDER BY enable DESC, age ASC");
+        System.out.println("=== ORDER BY enable DESC, age ASC ===");
+        result4.printTable();
+    }
+    @Test
+    public void testOrderByCaseWhen() {
         JQuickDataSet result1 = sql.execute(
-                "SELECT * FROM users u WHERE EXISTS (" +
-                        "   SELECT 1 FROM orders o WHERE o.user_id = u.id" +
-                        ")"
+                "SELECT * FROM users ORDER BY " +
+                        "CASE status " +
+                        "   WHEN 'active' THEN 1 " +
+                        "   WHEN 'pending' THEN 2 " +
+                        "   WHEN 'inactive' THEN 3 " +
+                        "   ELSE 4 " +
+                        "END  desc"
         );
-        System.out.println("=== EXISTS (有订单的用户) ===");
         result1.printTable();
-
     }
 
 

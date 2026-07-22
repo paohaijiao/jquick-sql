@@ -13,7 +13,7 @@
  *
  * Copyright (c) [2025-2099] Martin (goudingcheng@gmail.com)
  */
-package com.github.paohaijiao.demo.project;
+package com.github.paohaijiao.demo.limitClause;
 
 import com.github.paohaijiao.engine.JQuickSQL;
 import com.github.paohaijiao.statement.JQuickColumnMeta;
@@ -29,7 +29,7 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
-public class JQuickSQLProjectTest {
+public class JQuickSQLLimitTest {
 
     private static JQuickSQL sql;
 
@@ -71,7 +71,8 @@ public class JQuickSQLProjectTest {
                 createRow("id", 3, "name", "Charlie", "age", 20, "status", "pending","enable",false,"addr","chengdu","birthday",getDate("1988-07-12")),
                 createRow("id", 4, "name", "David", "age", 35, "status", "inactive","enable",true,"addr","xian","birthday",getDate("1955-11-29")),
                 createRow("id", 5, "name", "Eve", "age", 28, "status", "active","enable",true,"addr","chongqing","birthday",getDate("2003-07-12")),
-                createRow("id", 6, "name", "Martin", "age", 30, "status", "active","enable",true,"addr","guangzhou","birthday",getDate("1978-06-30"))
+                createRow("id", 6, "name", "Martin", "age", 30, "status", "active","enable",true,"addr","guangzhou","birthday",getDate("1978-06-30")),
+                createRow("id", 7, "name", "Davila", "age", 39, "status", "active","enable",true,"addr",null,"birthday",getDate("1999-06-30"))
         );
 
         sql.registerTable("users", userColumns, userRows);
@@ -101,62 +102,22 @@ public class JQuickSQLProjectTest {
     }
 
 
+    @Test
+    public void testLimit() {
+        JQuickDataSet result1 = sql.execute("SELECT * FROM users LIMIT 3");
+        result1.printTable();
+    }
+    @Test
+    public void testLimitOffSet() {
+        JQuickDataSet result1 = sql.execute("SELECT * FROM users LIMIT  2, 3");
+        result1.printTable();
+    }
+    @Test
+    public void testLimitOffSetWithOrderBy() {
+        JQuickDataSet result1 = sql.execute("SELECT * FROM users order by age asc LIMIT  0, 3");
+        result1.printTable();
+    }
 
-    @Test
-    public void testSimpleQueryWithStar() {
-        JQuickDataSet result = sql.execute("SELECT * FROM users ");
-        result.printTable();
-        System.out.println("Active users: " + result.size());
-    }
-    @Test
-    public void testSimpleQuery() {
-        JQuickDataSet result = sql.execute("SELECT id, name,age, status,enable,addr,birthday FROM users");
-        result.printTable();
-        System.out.println("Rows: " + result.size());
-    }
-    @Test
-    public void testSimpleQueryWithFunction() {//pass
-        JQuickDataSet result = sql.execute("SELECT id, toUpper(name) as upperName,age, status,enable,addr,birthday FROM users");
-        result.printTable();
-    }
-    @Test
-    public void testSimpleQueryWithConstant() {//pass
-        JQuickDataSet result = sql.execute("SELECT id, name as upperName,(age+1)*3 as age, status,enable,addr,birthday FROM users");
-        result.printTable();
-    }
-    @Test
-    public void testCaseWhenSimple() {
-        JQuickDataSet result = sql.execute(
-                "SELECT id, name, age, " +
-                        "CASE WHEN age >= 30 THEN '中年' " +
-                        "     WHEN age >= 20 THEN '青年' " +
-                        "     ELSE '少年' END AS age_group " +
-                        "FROM users"
-        );
-        result.printTable();
-    }
-    @Test
-    public void testSimpleQueryWithDistinct() {//pass
-        JQuickDataSet result = sql.execute("SELECT distinct age FROM users");
-        result.printTable();
-    }
-    @Test
-    public void testSimpleQueryWithNonExpresssion() {//pass
-        JQuickDataSet result = sql.execute("SELECT id, toUpper(name) as upperName,age, status,!enable,addr,birthday FROM users");
-        result.printTable();
-    }
-    @Test
-    public void testSimpleQueryWithConst() {//pass
-        JQuickDataSet result = sql.execute("SELECT 0 as index,id, toUpper(name) as upperName,age, status,!enable,addr,birthday FROM users");
-        result.printTable();
-    }
-    @Test
-    public void testSubqueryInSelectScalar() {
-        JQuickDataSet result = sql.execute(
-                "SELECT id, name, age, " +
-                        "(SELECT count(id) FROM orders WHERE orders.user_id = users.id) AS order_count " +
-                        "FROM users"
-        );
-        result.printTable();
-    }
+
+
 }

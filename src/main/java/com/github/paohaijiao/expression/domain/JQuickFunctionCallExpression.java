@@ -379,7 +379,7 @@ public class JQuickFunctionCallExpression implements JQuickExpression {
 
     @Override
     public boolean isConstant() {
-        return arguments.stream().allMatch(JQuickExpression::isConstant);
+        return false;
     }
 
     @Override
