@@ -76,21 +76,6 @@ public class JQuickSQLGroupByTest {
         );
 
         sql.registerTable("users", userColumns, userRows);
-
-        List<JQuickColumnMeta> orderColumns = Arrays.asList(
-                new JQuickColumnMeta("id", Integer.class, "orders"),
-                new JQuickColumnMeta("user_id", Integer.class, "orders"),
-                new JQuickColumnMeta("amount", Double.class, "orders")
-        );
-
-        List<JQuickRow> orderRows = Arrays.asList(
-                createRow("id", 101, "user_id", 1, "amount", 100.0),
-                createRow("id", 102, "user_id", 1, "amount", 200.0),
-                createRow("id", 103, "user_id", 2, "amount", 150.0),
-                createRow("id", 104, "user_id", 3, "amount", 300.0)
-        );
-
-        sql.registerTable("orders", orderColumns, orderRows);
     }
 
     private static JQuickRow createRow(Object... keyValues) {
@@ -118,7 +103,7 @@ public class JQuickSQLGroupByTest {
                 "SELECT status, COUNT(age) as count, AVG(age) as avg_age " +
                         "FROM users " +
                         "GROUP BY status " +
-                        "HAVING COUNT(age) >=1 " +
+                        "HAVING COUNT(age) >1 " +
                         "ORDER BY count DESC"
         );
         result1.printTable();

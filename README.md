@@ -44,10 +44,12 @@ A lightweight SQL parser and distributed query engine , supporting standard SQL 
 ```
 
 ### Basic Usage
+## Supported SQL Features
+
 
 ```java
 // Create embedded SQL engine
-JQuickSQL sql = JQuickSQL.embedded(3);
+JQuickSQL sql = JQuickSQL.embedded();
 // Register test data
 List<JQuickColumnMeta> columns = Arrays.asList(
     new JQuickColumnMeta("id", Integer.class, "users"),
@@ -68,7 +70,23 @@ sql.shutdown();
 
 ## SQL Examples
 
-### 1. project Query
+| Feature | Status |
+|---------|--------|
+| SELECT | ✅ |
+| WHERE | ✅ |
+| ORDER BY | ✅ |
+| LIMIT / OFFSET | ✅ |
+| GROUP BY | ✅ |
+| HAVING | ✅ |
+| JOIN (INNER/LEFT/RIGHT/FULL) | ✅ |
+| CROSS JOIN | ✅ |
+| UNION / UNION ALL | ✅ |
+| Aggregation (COUNT/SUM/AVG/MIN/MAX) | ✅ |
+| Recursive CTE | ✅ |
+| Subquery | ✅ |
+| Functions | ✅ |
+
+### 1. SELECT Query
 **Input Data**
 
 | id | name | age | status | enable | addr | birthday |
@@ -224,7 +242,7 @@ SELECT 0 as index,id, toUpper(name) as upperName,age, status,!enable,addr,birthd
 [2026-07-23 11:27:41.670] [INFO] +-------+----+-----------+-----+----------+------------+-----------+----------------------+
 [2026-07-23 11:27:41.670] [INFO] Total: 6 rows
 ```
-### 2. filter Query
+### 2. WHERE Query
 **Input Data**
 
 | id | name | age | status | enable | addr | birthday |
@@ -503,6 +521,203 @@ SELECT * FROM users u WHERE EXISTS (   SELECT 1 FROM orders o WHERE o.user_id = 
 [2026-07-23 12:13:18.994] [INFO] +----+---------+-----+---------+--------+----------+----------------------+
 [2026-07-23 12:13:18.994] [INFO] Total: 3 rows
 ```
+### 3. ORDER BY Query
+**Input Data**
+
+| id | name | age | status | enable | addr | birthday |
+|----|------|-----|--------|--------|------|----------|
+| 1 | Alice | 25 | active | true | beijing | 2020-04-09 |
+| 2 | Bob | 30 | active | true | shanghai | 1991-08-09 |
+| 3 | Charlie | 20 | pending | false | chengdu | 1988-07-12 |
+| 4 | David | 35 | inactive | true | xian | 1955-11-29 |
+| 5 | Eve | 28 | active | true | chongqing | 2003-07-12 |
+| 6 | Martin | 30 | active | true | guangzhou | 1978-06-30 |
+| 7 | Davila | 39 | active | true | null | 1999-06-30 |
+
+#### 3.1
+**SQL Code**
+```sql
+SELECT * FROM users ORDER BY age ASC
+```
+```log
+[2026-07-23 16:53:29.684] [INFO] +----+---------+-----+----------+--------+-----------+----------------------+
+[2026-07-23 16:53:29.684] [INFO] | id | name    | age | status   | enable | addr      | birthday             |
+[2026-07-23 16:53:29.684] [INFO] +----+---------+-----+----------+--------+-----------+----------------------+
+[2026-07-23 16:53:29.684] [INFO] | 3  | Charlie | 20  | pending  | false  | chengdu   | 1988-07-11T15:00:00Z |
+[2026-07-23 16:53:29.684] [INFO] | 1  | Alice   | 25  | active   | true   | beijing   | 2020-04-08T16:00:00Z |
+[2026-07-23 16:53:29.684] [INFO] | 5  | Eve     | 28  | active   | true   | chongqing | 2003-07-11T16:00:00Z |
+[2026-07-23 16:53:29.684] [INFO] | 2  | Bob     | 30  | active   | true   | shanghai  | 1991-08-08T15:00:00Z |
+[2026-07-23 16:53:29.685] [INFO] | 6  | Martin  | 30  | active   | true   | guangzhou | 1978-06-29T16:00:00Z |
+[2026-07-23 16:53:29.685] [INFO] | 4  | David   | 35  | inactive | true   | xian      | 1955-11-28T16:00:00Z |
+[2026-07-23 16:53:29.685] [INFO] | 7  | Davila  | 39  | active   | true   | null      | 1999-06-29T16:00:00Z |
+[2026-07-23 16:53:29.685] [INFO] +----+---------+-----+----------+--------+-----------+----------------------+
+[2026-07-23 16:53:29.685] [INFO] Total: 7 rows
+```
+
+#### 3.2
+**SQL Code**
+```sql
+SELECT * FROM users ORDER BY age DESC
+```
+```log
+[2026-07-23 16:54:29.749] [INFO] +----+---------+-----+----------+--------+-----------+----------------------+
+[2026-07-23 16:54:29.749] [INFO] | id | name    | age | status   | enable | addr      | birthday             |
+[2026-07-23 16:54:29.749] [INFO] +----+---------+-----+----------+--------+-----------+----------------------+
+[2026-07-23 16:54:29.749] [INFO] | 7  | Davila  | 39  | active   | true   | null      | 1999-06-29T16:00:00Z |
+[2026-07-23 16:54:29.749] [INFO] | 4  | David   | 35  | inactive | true   | xian      | 1955-11-28T16:00:00Z |
+[2026-07-23 16:54:29.750] [INFO] | 2  | Bob     | 30  | active   | true   | shanghai  | 1991-08-08T15:00:00Z |
+[2026-07-23 16:54:29.750] [INFO] | 6  | Martin  | 30  | active   | true   | guangzhou | 1978-06-29T16:00:00Z |
+[2026-07-23 16:54:29.750] [INFO] | 5  | Eve     | 28  | active   | true   | chongqing | 2003-07-11T16:00:00Z |
+[2026-07-23 16:54:29.750] [INFO] | 1  | Alice   | 25  | active   | true   | beijing   | 2020-04-08T16:00:00Z |
+[2026-07-23 16:54:29.750] [INFO] | 3  | Charlie | 20  | pending  | false  | chengdu   | 1988-07-11T15:00:00Z |
+[2026-07-23 16:54:29.750] [INFO] +----+---------+-----+----------+--------+-----------+----------------------+
+[2026-07-23 16:54:29.750] [INFO] Total: 7 rows
+```
+
+#### 3.3
+**SQL Code**
+```sql
+SELECT * FROM users ORDER BY status ASC, age DESC
+```
+```log
+[2026-07-23 16:55:13.550] [INFO] +----+---------+-----+----------+--------+-----------+----------------------+
+[2026-07-23 16:55:13.550] [INFO] | id | name    | age | status   | enable | addr      | birthday             |
+[2026-07-23 16:55:13.550] [INFO] +----+---------+-----+----------+--------+-----------+----------------------+
+[2026-07-23 16:55:13.550] [INFO] | 7  | Davila  | 39  | active   | true   | null      | 1999-06-29T16:00:00Z |
+[2026-07-23 16:55:13.550] [INFO] | 2  | Bob     | 30  | active   | true   | shanghai  | 1991-08-08T15:00:00Z |
+[2026-07-23 16:55:13.550] [INFO] | 6  | Martin  | 30  | active   | true   | guangzhou | 1978-06-29T16:00:00Z |
+[2026-07-23 16:55:13.550] [INFO] | 5  | Eve     | 28  | active   | true   | chongqing | 2003-07-11T16:00:00Z |
+[2026-07-23 16:55:13.550] [INFO] | 1  | Alice   | 25  | active   | true   | beijing   | 2020-04-08T16:00:00Z |
+[2026-07-23 16:55:13.551] [INFO] | 4  | David   | 35  | inactive | true   | xian      | 1955-11-28T16:00:00Z |
+[2026-07-23 16:55:13.551] [INFO] | 3  | Charlie | 20  | pending  | false  | chengdu   | 1988-07-11T15:00:00Z |
+[2026-07-23 16:55:13.551] [INFO] +----+---------+-----+----------+--------+-----------+----------------------+
+[2026-07-23 16:55:13.551] [INFO] Total: 7 rows
+```
+#### 3.4
+**SQL Code**
+```sql
+SELECT * FROM users ORDER BY enable DESC, age ASC
+```
+```log
+[2026-07-23 16:56:03.295] [INFO] +----+---------+-----+----------+--------+-----------+----------------------+
+[2026-07-23 16:56:03.295] [INFO] | id | name    | age | status   | enable | addr      | birthday             |
+[2026-07-23 16:56:03.295] [INFO] +----+---------+-----+----------+--------+-----------+----------------------+
+[2026-07-23 16:56:03.295] [INFO] | 1  | Alice   | 25  | active   | true   | beijing   | 2020-04-08T16:00:00Z |
+[2026-07-23 16:56:03.296] [INFO] | 5  | Eve     | 28  | active   | true   | chongqing | 2003-07-11T16:00:00Z |
+[2026-07-23 16:56:03.296] [INFO] | 2  | Bob     | 30  | active   | true   | shanghai  | 1991-08-08T15:00:00Z |
+[2026-07-23 16:56:03.296] [INFO] | 6  | Martin  | 30  | active   | true   | guangzhou | 1978-06-29T16:00:00Z |
+[2026-07-23 16:56:03.296] [INFO] | 4  | David   | 35  | inactive | true   | xian      | 1955-11-28T16:00:00Z |
+[2026-07-23 16:56:03.296] [INFO] | 7  | Davila  | 39  | active   | true   | null      | 1999-06-29T16:00:00Z |
+[2026-07-23 16:56:03.296] [INFO] | 3  | Charlie | 20  | pending  | false  | chengdu   | 1988-07-11T15:00:00Z |
+[2026-07-23 16:56:03.296] [INFO] +----+---------+-----+----------+--------+-----------+----------------------+
+[2026-07-23 16:56:03.296] [INFO] Total: 7 rows
+```
+
+### 4. LIMIT OFFSET Query
+**Input Data**
+
+| id | name | age | status | enable | addr | birthday |
+|----|------|-----|--------|--------|------|----------|
+| 1 | Alice | 25 | active | true | beijing | 2020-04-09 |
+| 2 | Bob | 30 | active | true | shanghai | 1991-08-09 |
+| 3 | Charlie | 20 | pending | false | chengdu | 1988-07-12 |
+| 4 | David | 35 | inactive | true | xian | 1955-11-29 |
+| 5 | Eve | 28 | active | true | chongqing | 2003-07-12 |
+| 6 | Martin | 30 | active | true | guangzhou | 1978-06-30 |
+| 7 | Davila | 39 | active | true | null | 1999-06-30 |
+
+
+#### 4.1
+**SQL Code**
+```sql
+SELECT * FROM users LIMIT 3
+```
+```log
+[2026-07-23 16:59:29.806] [INFO] +----+---------+-----+---------+--------+----------+----------------------+
+[2026-07-23 16:59:29.806] [INFO] | id | name    | age | status  | enable | addr     | birthday             |
+[2026-07-23 16:59:29.807] [INFO] +----+---------+-----+---------+--------+----------+----------------------+
+[2026-07-23 16:59:29.807] [INFO] | 1  | Alice   | 25  | active  | true   | beijing  | 2020-04-08T16:00:00Z |
+[2026-07-23 16:59:29.807] [INFO] | 2  | Bob     | 30  | active  | true   | shanghai | 1991-08-08T15:00:00Z |
+[2026-07-23 16:59:29.807] [INFO] | 3  | Charlie | 20  | pending | false  | chengdu  | 1988-07-11T15:00:00Z |
+[2026-07-23 16:59:29.807] [INFO] +----+---------+-----+---------+--------+----------+----------------------+
+[2026-07-23 16:59:29.807] [INFO] Total: 3 rows
+```
+
+#### 4.2
+**SQL Code**
+```sql
+SELECT * FROM users LIMIT  2, 3
+```
+```log
+[2026-07-23 17:00:04.403] [INFO] +----+------+-----+--------+--------+-----------+----------------------+
+[2026-07-23 17:00:04.403] [INFO] | id | name | age | status | enable | addr      | birthday             |
+[2026-07-23 17:00:04.403] [INFO] +----+------+-----+--------+--------+-----------+----------------------+
+[2026-07-23 17:00:04.403] [INFO] | 5  | Eve  | 28  | active | true   | chongqing | 2003-07-11T16:00:00Z |
+[2026-07-23 17:00:04.403] [INFO] +----+------+-----+--------+--------+-----------+----------------------+
+[2026-07-23 17:00:04.403] [INFO] Total: 1 rows
+```
+
+#### 4.3
+**SQL Code**
+```sql
+SELECT * FROM users order by age asc LIMIT  0, 3
+```
+```log
+[2026-07-23 17:00:32.950] [INFO] +----+---------+-----+---------+--------+-----------+----------------------+
+[2026-07-23 17:00:32.950] [INFO] | id | name    | age | status  | enable | addr      | birthday             |
+[2026-07-23 17:00:32.950] [INFO] +----+---------+-----+---------+--------+-----------+----------------------+
+[2026-07-23 17:00:32.951] [INFO] | 3  | Charlie | 20  | pending | false  | chengdu   | 1988-07-11T15:00:00Z |
+[2026-07-23 17:00:32.951] [INFO] | 1  | Alice   | 25  | active  | true   | beijing   | 2020-04-08T16:00:00Z |
+[2026-07-23 17:00:32.951] [INFO] | 5  | Eve     | 28  | active  | true   | chongqing | 2003-07-11T16:00:00Z |
+[2026-07-23 17:00:32.951] [INFO] +----+---------+-----+---------+--------+-----------+----------------------+
+[2026-07-23 17:00:32.951] [INFO] Total: 3 rows
+```
+
+### 5. Group by/Having  Query
+**Input Data**
+
+| id | name | age | status | enable | addr | birthday |
+|----|------|-----|--------|--------|------|----------|
+| 1 | Alice | 25 | active | true | beijing | 2020-04-09 |
+| 2 | Bob | 30 | active | true | shanghai | 1991-08-09 |
+| 3 | Charlie | 20 | pending | false | chengdu | 1988-07-12 |
+| 4 | David | 35 | inactive | true | xian | 1955-11-29 |
+| 5 | Eve | 28 | active | true | chongqing | 2003-07-12 |
+| 6 | Martin | 30 | active | true | guangzhou | 1978-06-30 |
+| 7 | Davila | 39 | active | true | null | 1999-06-30 |
+
+
+#### 5.1
+**SQL Code**
+```sql
+SELECT status, COUNT(*) as count, AVG(age) as avg_age FROM users GROUP BY status ORDER BY status
+```
+```log
+[2026-07-23 17:02:47.779] [INFO] +----------+-------+---------+
+[2026-07-23 17:02:47.780] [INFO] | status   | count | avg_age |
+[2026-07-23 17:02:47.780] [INFO] +----------+-------+---------+
+[2026-07-23 17:02:47.780] [INFO] | active   | 5     | 30.4    |
+[2026-07-23 17:02:47.780] [INFO] | inactive | 1     | 35.0    |
+[2026-07-23 17:02:47.780] [INFO] | pending  | 1     | 20.0    |
+[2026-07-23 17:02:47.780] [INFO] +----------+-------+---------+
+[2026-07-23 17:02:47.780] [INFO] Total: 3 rows
+```
+#### 5.2
+**SQL Code**
+```sql
+ SELECT status, COUNT(age) as count, AVG(age) as avg_age FROM users GROUP BY status HAVING COUNT(age) >1 ORDER BY count DESC
+```
+```log
+[2026-07-23 17:04:55.056] [INFO] +--------+-------+---------+
+[2026-07-23 17:04:55.056] [INFO] | status | count | avg_age |
+[2026-07-23 17:04:55.056] [INFO] +--------+-------+---------+
+[2026-07-23 17:04:55.056] [INFO] | active | 5     | 30.4    |
+[2026-07-23 17:04:55.056] [INFO] +--------+-------+---------+
+[2026-07-23 17:04:55.056] [INFO] Total: 1 rows
+```
+
+
+
 ## API Reference
 
 ### JQuickSQL
@@ -530,23 +745,7 @@ JQuickSQL sql = JQuickSQL.builder()
 
 
 
-## Supported SQL Features
 
-| Feature | Status |
-|---------|--------|
-| SELECT | ✅ |
-| WHERE | ✅ |
-| GROUP BY | ✅ |
-| HAVING | ✅ |
-| ORDER BY | ✅ |
-| LIMIT / OFFSET | ✅ |
-| JOIN (INNER/LEFT/RIGHT/FULL) | ✅ |
-| CROSS JOIN | ✅ |
-| UNION / UNION ALL | ✅ |
-| Aggregation (COUNT/SUM/AVG/MIN/MAX) | ✅ |
-| Recursive CTE | ✅ |
-| Subquery | ✅ |
-| Functions | ✅ |
 
 ## License
 
