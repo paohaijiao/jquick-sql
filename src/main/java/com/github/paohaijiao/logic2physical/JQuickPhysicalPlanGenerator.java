@@ -16,6 +16,7 @@
 package com.github.paohaijiao.logic2physical;
 
 import com.github.paohaijiao.enums.JQuickBinaryOperator;
+import com.github.paohaijiao.enums.JQuickJoinType;
 import com.github.paohaijiao.expression.JQuickExpression;
 import com.github.paohaijiao.expression.domain.JQuickBinaryExpression;
 import com.github.paohaijiao.logic.JQuickLogicalPlanNode;
@@ -127,9 +128,9 @@ public class JQuickPhysicalPlanGenerator implements JQuickLogicalPlanVisitor {
         JQuickPhysicalPlanNode leftPhysical = logicalToPhysical.get(node.getLeft());
         JQuickPhysicalPlanNode rightPhysical = logicalToPhysical.get(node.getRight());
         JQuickPhysicalPlanNode physicalNode;
-        if (isHashJoinApplicable(node)) {
+        if (node.getJoinType() == JQuickJoinType.CROSS || isHashJoinApplicable(node)) {
             List<JQuickHashJoinPhysicalNode.JoinKeyPair> joinKeyPairs = convertJoinKeys(node.getJoinKeys());
-            if (joinKeyPairs.isEmpty()) {
+            if (joinKeyPairs.isEmpty() && node.getCondition() != null) {
                 joinKeyPairs = extractJoinKeys(node.getCondition());
             }
             JQuickHashJoinPhysicalNode.BuildSide buildSide = determineBuildSide(leftPhysical, rightPhysical);

@@ -4,6 +4,7 @@ import com.github.paohaijiao.distributed.worker.JQuickExpressionEvaluator;
 import com.github.paohaijiao.enums.JQuickJoinType;
 import com.github.paohaijiao.expression.JQuickExpression;
 import com.github.paohaijiao.physical.node.JQuickHashJoinPhysicalNode;
+import com.github.paohaijiao.statement.JQuickColumnMeta;
 import com.github.paohaijiao.statement.JQuickDataSet;
 import com.github.paohaijiao.statement.JQuickRow;
 
@@ -41,20 +42,19 @@ public class JQuickCrossJoinHandler extends JQuickAbstractJoinHandler {
             return buildResultDataSet(resultRows, leftData, rightData);
         }
         
-        List<JQuickRow> leftRows = leftData.getRows();
-        List<JQuickRow> rightRows = rightData.getRows();
+        List<JQuickRow> leftRows = deduplicateRows(leftData.getRows(), leftData.getColumns());
+        List<JQuickRow> rightRows = deduplicateRows(rightData.getRows(), rightData.getColumns());
         
-        Set<String> seenRows = new LinkedHashSet<>();
+        console.info("CROSS JOIN: original leftRows=" + leftData.getRows().size() + 
+                    ", deduplicated leftRows=" + leftRows.size() +
+                    ", original rightRows=" + rightData.getRows().size() +
+                    ", deduplicated rightRows=" + rightRows.size());
         
         for (JQuickRow leftRow : leftRows) {
             for (JQuickRow rightRow : rightRows) {
                 JQuickRow joined = joinRows(leftRow, rightRow);
                 if (joined != null && evaluateCondition(joined, condition)) {
-                    String rowKey = buildRowKey(joined);
-                    if (!seenRows.contains(rowKey)) {
-                        seenRows.add(rowKey);
-                        resultRows.add(joined);
-                    }
+                    resultRows.add(joined);
                 }
             }
         }
@@ -65,11 +65,26 @@ public class JQuickCrossJoinHandler extends JQuickAbstractJoinHandler {
         return buildResultDataSet(resultRows, leftData, rightData);
     }
     
-    private String buildRowKey(JQuickRow row) {
+    private List<JQuickRow> deduplicateRows(List<JQuickRow> rows, List<JQuickColumnMeta> columns) {
+        Set<String> seen = new LinkedHashSet<>();
+        List<JQuickRow> result = new ArrayList<>();
+        for (JQuickRow row : rows) {
+            String key = buildRowKey(row, columns);
+            if (!seen.contains(key)) {
+                seen.add(key);
+                result.add(row);
+            }
+        }
+        return result;
+    }
+    
+    private String buildRowKey(JQuickRow row, List<JQuickColumnMeta> columns) {
         StringBuilder key = new StringBuilder();
-        for (String col : row.keySet()) {
+        for (JQuickColumnMeta col : columns) {
             if (key.length() > 0) key.append("|");
-            key.append(col).append("=").append(row.get(col));
+            String colName = col.getName();
+            Object value = row.get(colName);
+            key.append(colName).append("=").append(value);
         }
         return key.toString();
     }
