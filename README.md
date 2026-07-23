@@ -85,21 +85,19 @@ sql.shutdown();
 
 ## SQL Examples
 
-| Feature | Status |
-|---------|--------|
-| SELECT | ✅ |
-| WHERE | ✅ |
-| ORDER BY | ✅ |
-| LIMIT / OFFSET | ✅ |
-| GROUP BY | ✅ |
-| HAVING | ✅ |
-| JOIN (INNER/LEFT/RIGHT/FULL) | ✅ |
-| CROSS JOIN | ✅ |
-| UNION / UNION ALL | ✅ |
-| Aggregation (COUNT/SUM/AVG/MIN/MAX) | ✅ |
-| Recursive CTE | ✅ |
-| Subquery | ✅ |
-| Functions | ✅ |
+| Feature                                 | Status |
+|-----------------------------------------|--------|
+| SELECT                                  | ✅ |
+| WHERE                                   | ✅ |
+| ORDER BY                                | ✅ |
+| LIMIT / OFFSET                          | ✅ |
+| GROUP BY/HAVING                         | ✅ |
+| JOIN (INNER/LEFT/RIGHT/FULL/CROSS JOIN) | ✅ |
+| UNION / UNION ALL                       | ✅ |
+| Aggregation (COUNT/SUM/AVG/MIN/MAX)     | ✅ |
+| Recursive CTE                           | ✅ |
+| Subquery                                | ✅ |
+| Functions                               | ✅ |
 
 ### 1. SELECT Query
 **Input Data**
@@ -731,7 +729,124 @@ SELECT status, COUNT(*) as count, AVG(age) as avg_age FROM users GROUP BY status
 [2026-07-23 17:04:55.056] [INFO] Total: 1 rows
 ```
 
+### 6. JOIN (INNER/LEFT/RIGHT/FULL/CROSS JOIN)  Query
+**Input Data**
 
+#### users 表
+
+| id | name | age | status | enable | addr | birthday |
+|----|------|-----|--------|--------|------|----------|
+| 1 | Alice | 25 | active | true | beijing | 2020-04-09 |
+| 2 | Bob | 30 | active | true | shanghai | 1991-08-09 |
+| 3 | Charlie | 20 | pending | false | chengdu | 1988-07-12 |
+| 4 | David | 35 | inactive | true | xian | 1955-11-29 |
+| 5 | Eve | 28 | active | true | chongqing | 2003-07-12 |
+| 6 | Martin | 30 | active | true | guangzhou | 1978-06-30 |
+| 7 | Davila | 39 | active | true | null | 1999-06-30 |
+
+#### orders 表
+
+| id | user_id    | amount   |
+|----|------------|----------|
+| 101 | 1          | 100.0    |
+| 102 | 1          | 200.0    |
+| 103 | 2          | 150.0    |
+| 104 | 3          | 300.0    |
+
+
+#### 6.1
+**SQL Code**
+```sql
+SELECT u.id, u.name, u.age, o.id as order_id, o.amount FROM users u INNER JOIN orders o ON u.id = o.user_id
+```
+```log
+[2026-07-23 22:26:39.908] [INFO] +------+---------+-------+----------+----------+
+[2026-07-23 22:26:39.909] [INFO] | u.id | u.name  | u.age | order_id | o.amount |
+[2026-07-23 22:26:39.909] [INFO] +------+---------+-------+----------+----------+
+[2026-07-23 22:26:39.909] [INFO] | 1    | Alice   | 25    | 1        | 100.0    |
+[2026-07-23 22:26:39.909] [INFO] | 1    | Alice   | 25    | 1        | 200.0    |
+[2026-07-23 22:26:39.909] [INFO] | 2    | Bob     | 30    | 2        | 150.0    |
+[2026-07-23 22:26:39.910] [INFO] | 3    | Charlie | 20    | 3        | 300.0    |
+[2026-07-23 22:26:39.910] [INFO] +------+---------+-------+----------+----------+
+[2026-07-23 22:26:39.910] [INFO] Total: 4 rows
+```
+#### 6.2
+**SQL Code**
+```sql
+ SELECT u.name, u.age, u.status, o.id as order_id, o.amount FROM users u INNER JOIN orders o ON u.id = o.user_id WHERE u.status = 'active' AND o.amount >= 150
+
+```
+```log
+[2026-07-23 22:27:57.249] [INFO] +--------+-------+----------+----------+----------+
+[2026-07-23 22:27:57.249] [INFO] | u.name | u.age | u.status | order_id | o.amount |
+[2026-07-23 22:27:57.249] [INFO] +--------+-------+----------+----------+----------+
+[2026-07-23 22:27:57.250] [INFO] | Alice  | 25    | active   | 1        | 200.0    |
+[2026-07-23 22:27:57.250] [INFO] | Bob    | 30    | active   | 2        | 150.0    |
+[2026-07-23 22:27:57.250] [INFO] +--------+-------+----------+----------+----------+
+[2026-07-23 22:27:57.251] [INFO] Total: 2 rows
+```
+
+#### 6.3
+**SQL Code**
+```sql
+ SELECT u.id, u.name, u.age, o.id as order_id, o.amount FROM users u LEFT JOIN orders o ON u.id = o.user_id
+
+```
+```log
+[2026-07-23 22:28:58.433] [INFO] +------+---------+-------+----------+----------+
+[2026-07-23 22:28:58.434] [INFO] | u.id | u.name  | u.age | order_id | o.amount |
+[2026-07-23 22:28:58.434] [INFO] +------+---------+-------+----------+----------+
+[2026-07-23 22:28:58.434] [INFO] | 1    | Alice   | 25    | 1        | 100.0    |
+[2026-07-23 22:28:58.434] [INFO] | 1    | Alice   | 25    | 1        | 200.0    |
+[2026-07-23 22:28:58.434] [INFO] | 2    | Bob     | 30    | 2        | 150.0    |
+[2026-07-23 22:28:58.435] [INFO] | 3    | Charlie | 20    | 3        | 300.0    |
+[2026-07-23 22:28:58.435] [INFO] | 4    | David   | 35    | 4        | null     |
+[2026-07-23 22:28:58.435] [INFO] | 5    | Eve     | 28    | 5        | null     |
+[2026-07-23 22:28:58.435] [INFO] | 6    | Martin  | 30    | 6        | null     |
+[2026-07-23 22:28:58.435] [INFO] | 7    | Davila  | 39    | 7        | null     |
+[2026-07-23 22:28:58.435] [INFO] +------+---------+-------+----------+----------+
+[2026-07-23 22:28:58.436] [INFO] Total: 8 rows
+```
+
+#### 6.4
+**SQL Code**
+```sql
+ SELECT u.id, u.name, u.age, o.id as order_id, o.amount FROM users u RIGHT JOIN orders o ON u.id = o.user_id
+
+```
+```log
+[2026-07-23 22:30:04.935] [INFO] +------+---------+-------+----------+----------+
+[2026-07-23 22:30:04.935] [INFO] | u.id | u.name  | u.age | order_id | o.amount |
+[2026-07-23 22:30:04.935] [INFO] +------+---------+-------+----------+----------+
+[2026-07-23 22:30:04.935] [INFO] | 1    | Alice   | 25    | 1        | 100.0    |
+[2026-07-23 22:30:04.935] [INFO] | 1    | Alice   | 25    | 1        | 200.0    |
+[2026-07-23 22:30:04.935] [INFO] | 2    | Bob     | 30    | 2        | 150.0    |
+[2026-07-23 22:30:04.935] [INFO] | 3    | Charlie | 20    | 3        | 300.0    |
+[2026-07-23 22:30:04.936] [INFO] +------+---------+-------+----------+----------+
+[2026-07-23 22:30:04.936] [INFO] Total: 4 rows
+```
+
+#### 6.5
+**SQL Code**
+```sql
+ SELECT u.id, u.name, u.age, o.id as order_id, o.amount FROM users u FULL JOIN orders o ON u.id = o.user_id
+
+```
+```log
+[2026-07-23 22:31:13.677] [INFO] +------+---------+-------+----------+----------+
+[2026-07-23 22:31:13.679] [INFO] | u.id | u.name  | u.age | order_id | o.amount |
+[2026-07-23 22:31:13.679] [INFO] +------+---------+-------+----------+----------+
+[2026-07-23 22:31:13.679] [INFO] | 1    | Alice   | 25    | 1        | 100.0    |
+[2026-07-23 22:31:13.680] [INFO] | 1    | Alice   | 25    | 1        | 200.0    |
+[2026-07-23 22:31:13.680] [INFO] | 2    | Bob     | 30    | 2        | 150.0    |
+[2026-07-23 22:31:13.680] [INFO] | 3    | Charlie | 20    | 3        | 300.0    |
+[2026-07-23 22:31:13.681] [INFO] | 4    | David   | 35    | 4        | null     |
+[2026-07-23 22:31:13.681] [INFO] | 5    | Eve     | 28    | 5        | null     |
+[2026-07-23 22:31:13.681] [INFO] | 6    | Martin  | 30    | 6        | null     |
+[2026-07-23 22:31:13.682] [INFO] | 7    | Davila  | 39    | 7        | null     |
+[2026-07-23 22:31:13.682] [INFO] +------+---------+-------+----------+----------+
+[2026-07-23 22:31:13.682] [INFO] Total: 8 rows
+```
 
 ## API Reference
 
