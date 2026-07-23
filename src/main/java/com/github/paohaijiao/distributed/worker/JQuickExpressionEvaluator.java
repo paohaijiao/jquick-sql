@@ -115,12 +115,26 @@ public class JQuickExpressionEvaluator {
             String rawColumnName = colRef.getColumnName();
             String tableAlias = colRef.getTableAlias();
             String resolvedColumnName = resolveColumnName(rawColumnName);
+            
+            // 1. 尝试带表别名的列名（如 u.id）
             if (tableAlias != null) {
                 String qualifiedName = tableAlias + "." + rawColumnName;
                 Object value = row.get(qualifiedName);
                 if (value != null || row.containsKey(qualifiedName)) {
                     return value;
                 }
+                
+                // 2. 将表别名映射到 left/right（JOIN 场景）
+                if (aliasToTableMap.containsKey(tableAlias)) {
+                    String tablePrefix = aliasToTableMap.get(tableAlias);
+                    String prefixedName = tablePrefix + "." + rawColumnName;
+                    value = row.get(prefixedName);
+                    if (value != null || row.containsKey(prefixedName)) {
+                        return value;
+                    }
+                }
+                
+                // 3. 外连接场景
                 value = row.get("outer_" + tableAlias + "_" + rawColumnName);
                 if (value != null || row.containsKey("outer_" + tableAlias + "_" + rawColumnName)) {
                     return value;
@@ -135,6 +149,7 @@ public class JQuickExpressionEvaluator {
                 }
             }
             
+            // 4. 外连接场景
             Object value = row.get("outer_" + rawColumnName);
             if (value != null || row.containsKey("outer_" + rawColumnName)) {
                 return value;
@@ -143,6 +158,8 @@ public class JQuickExpressionEvaluator {
             if (value != null || row.containsKey("outer_" + resolvedColumnName)) {
                 return value;
             }
+            
+            // 5. 不带前缀的列名
             value = row.get(rawColumnName);
             if (value != null || row.containsKey(rawColumnName)) {
                 return value;
@@ -151,6 +168,18 @@ public class JQuickExpressionEvaluator {
             if (value != null || row.containsKey(resolvedColumnName)) {
                 return value;
             }
+            
+            // 6. 尝试 left/right 前缀（兼容 JOIN 场景）
+            value = row.get("left." + rawColumnName);
+            if (value != null || row.containsKey("left." + rawColumnName)) {
+                return value;
+            }
+            value = row.get("right." + rawColumnName);
+            if (value != null || row.containsKey("right." + rawColumnName)) {
+                return value;
+            }
+            
+            // 7. 模糊匹配
             for (Map.Entry<String, Object> entry : row.entrySet()) {
                 if (entry.getKey().equalsIgnoreCase(rawColumnName) || entry.getKey().equalsIgnoreCase(resolvedColumnName)) {
                     return entry.getValue();

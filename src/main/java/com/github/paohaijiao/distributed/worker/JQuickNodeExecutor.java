@@ -15,6 +15,8 @@ import com.github.paohaijiao.physical.node.*;
 import com.github.paohaijiao.proto.JQuickExecuteTaskRequest;
 import com.github.paohaijiao.proto.JQuickFragmentProto;
 import com.github.paohaijiao.proto.JQuickMemoryPartitionProto;
+import com.github.paohaijiao.distributed.worker.join.JQuickJoinHandler;
+import com.github.paohaijiao.distributed.worker.join.JQuickJoinHandlerFactory;
 import com.github.paohaijiao.statement.JQuickColumnMeta;
 import com.github.paohaijiao.statement.JQuickDataSet;
 import com.github.paohaijiao.statement.JQuickRow;
@@ -39,6 +41,8 @@ public class JQuickNodeExecutor {
 
     private final JQuickProtoService jQuickprotoService;
 
+    private final JQuickJoinHandlerFactory joinHandlerFactory;
+
 
     public JQuickNodeExecutor(JQuickWorker worker, JQuickExpressionEvaluator expressionEvaluator, JQuickPartitionManager partitionManager, JQuickDataConverter dataConverter) {
         this.worker = worker;
@@ -46,6 +50,7 @@ public class JQuickNodeExecutor {
         this.partitionManager = partitionManager;
         this.dataConverter = dataConverter;
         this.jQuickprotoService = new JQuickProtoService();
+        this.joinHandlerFactory = new JQuickJoinHandlerFactory(expressionEvaluator);
     }
 
     /**
@@ -171,21 +176,30 @@ public class JQuickNodeExecutor {
         console.info("executeTableScan - tableName: " + tableName + ", partitionInfo: " + (node.getPartitionInfo() != null ? "exists" : "null"));
         Set<String> requiredColumns = node.getRequiredColumns();
         JQuickDataSet data;
-        boolean isSourceFragment = context != null && context.getRequest() != null && context.getRequest().getInputPartitionsCount() > 0;
-        if (isSourceFragment) {
+        
+        // 优先从输入分区读取数据（适用于 SOURCE 和 INTERMEDIATE Fragment）
+        if (context != null && context.getRequest() != null && context.getRequest().getInputPartitionsCount() > 0) {
+            // 1. 尝试按表名查找分区（subquery_partition_xxx 格式）
             JQuickDataSet partitionData = readFromInputPartitions(tableName, context.getRequest());
             if (partitionData != null && !partitionData.isEmpty()) {
-                console.info("Reading from input partitions (source fragment): " + tableName + ", rows: " + partitionData.size());
+                console.info("Reading from input partitions (by table name): " + tableName + ", rows: " + partitionData.size());
                 data = partitionData;
-            } else if (node.getPartitionInfo() != null) {
-                console.info("Reading from memory partition: " + tableName);
-                data = readFromMemoryPartition(tableName);
-            } else if (JQuickDataSourceManager.containsTable(tableName)) {
-                console.info("Reading from data source (fallback): " + tableName);
-                data = JQuickDataSourceManager.getTable(tableName);
             } else {
-                console.info("Reading from data source: " + tableName);
-                data = readFromDataSource(tableName);
+                // 2. INTERMEDIATE Fragment：尝试读取任意输入分区
+                partitionData = readFromAnyInputPartition(context.getRequest());
+                if (partitionData != null && !partitionData.isEmpty()) {
+                    console.info("Reading from input partitions (INTERMEDIATE fragment): " + tableName + ", rows: " + partitionData.size());
+                    data = partitionData;
+                } else if (node.getPartitionInfo() != null) {
+                    console.info("Reading from memory partition: " + tableName);
+                    data = readFromMemoryPartition(tableName);
+                } else if (JQuickDataSourceManager.containsTable(tableName)) {
+                    console.info("Reading from data source (fallback): " + tableName);
+                    data = JQuickDataSourceManager.getTable(tableName);
+                } else {
+                    console.info("Reading from data source: " + tableName);
+                    data = readFromDataSource(tableName);
+                }
             }
         } else if (JQuickDataSourceManager.containsTable(tableName)) {
             console.info("Reading from data source (CTE or registered table): " + tableName);
@@ -233,6 +247,20 @@ public class JQuickNodeExecutor {
             }
         }
         console.warn("readFromInputPartitions - no data found for table: " + tableName);
+        return JQuickDataSet.builder().build();
+    }
+    
+    /**
+     * 读取任意输入分区数据（适用于 INTERMEDIATE Fragment）
+     */
+    private JQuickDataSet readFromAnyInputPartition(JQuickExecuteTaskRequest request) {
+        for (JQuickMemoryPartitionProto partition : request.getInputPartitionsList()) {
+            if (partition.hasData()) {
+                JQuickDataSet partitionData = dataConverter.convertFromProto(partition.getData());
+                console.info("readFromAnyInputPartition - reading from partition: " + partition.getPartitionId() + ", rows: " + partitionData.size());
+                return partitionData;
+            }
+        }
         return JQuickDataSet.builder().build();
     }
     /**
@@ -304,92 +332,142 @@ public class JQuickNodeExecutor {
      * 执行 Hash Join
      */
     private JQuickDataSet executeHashJoin(JQuickHashJoinPhysicalNode node, JQuickWorker.JQuickTaskContext context) {
-        if (node.getJoinType() == com.github.paohaijiao.enums.JQuickJoinType.CROSS || 
-            node.getJoinKeys() == null || node.getJoinKeys().isEmpty()) {
-            return executeCrossJoin(node, context);
-        }
-        JQuickPhysicalPlanNode buildSide = node.getBuildSide() == JQuickHashJoinPhysicalNode.BuildSide.LEFT ? node.getLeft() : node.getRight();
-        JQuickPhysicalPlanNode probeSide = node.getBuildSide() == JQuickHashJoinPhysicalNode.BuildSide.LEFT ? node.getRight() : node.getLeft();
-        List<JQuickPhysicalColumn> leftSchema = node.getLeft().getOutputSchema();
-        List<JQuickPhysicalColumn> rightSchema = node.getRight().getOutputSchema();
-        Map<String, String> aliasToTable = new HashMap<>();
-        Map<String, String> columnAliasToActual = new HashMap<>();
-        String leftAlias = extractTableAlias(node.getLeft());
-        String rightAlias = extractTableAlias(node.getRight());
-        if (leftAlias != null) {
-            aliasToTable.put(leftAlias, "left");
-            for (JQuickPhysicalColumn col : leftSchema) {
-                columnAliasToActual.put(leftAlias + "." + col.getName(), col.getName());
-            }
-        }
-        if (rightAlias != null) {
-            aliasToTable.put(rightAlias, "right");
-            for (JQuickPhysicalColumn col : rightSchema) {
-                columnAliasToActual.put(rightAlias + "." + col.getName(), col.getName());
-            }
-        }
-        expressionEvaluator.setAliasContext(aliasToTable, columnAliasToActual);
+        setupAliasContext(node);
         try {
-        JQuickDataSet buildData = executeNode(buildSide, context);
-        console.info("HashJoin - buildData size: " + buildData.size());
-        boolean useLeftKeyForBuild = node.getBuildSide() == JQuickHashJoinPhysicalNode.BuildSide.LEFT;
-        Map<Object, List<JQuickRow>> hashTable = buildHashTable(buildData, node, useLeftKeyForBuild);
-        console.info("HashJoin - hashTable size: " + hashTable.size());
-        Set<String> matchedBuildRowKeys = new HashSet<>();
-        JQuickDataSet probeData = executeNode(probeSide, context);
-        console.info("HashJoin - probeData size: " + probeData.size());
-        List<JQuickRow> resultRows = new ArrayList<>();
-        boolean useLeftKeyForProbe = !useLeftKeyForBuild;
-        for (JQuickRow probeRow : probeData.getRows()) {
-            Object joinKey = extractJoinKey(probeRow, node, useLeftKeyForProbe);
-            List<JQuickRow> matchingRows = hashTable.get(joinKey);
-            if (matchingRows != null) {
-                for (JQuickRow buildRow : matchingRows) {
-                    JQuickRow joined = joinRows(probeRow, buildRow, node.getJoinType(), node.getBuildSide() == JQuickHashJoinPhysicalNode.BuildSide.LEFT);
-                    if (joined != null) {
-                        if (node.getCondition() == null || expressionEvaluator.evaluatePredicate(joined, node.getCondition())) {
-                            resultRows.add(joined);
-                            matchedBuildRowKeys.add(generateRowKey(buildRow));
-                        }
-                    }
-                }
-            } else if (node.getJoinType() == com.github.paohaijiao.enums.JQuickJoinType.LEFT || node.getJoinType() == com.github.paohaijiao.enums.JQuickJoinType.FULL) {
-                JQuickRow joined = joinRows(probeRow, null, node.getJoinType(), true);
-                if (joined != null) {
-                    if (node.getCondition() == null || expressionEvaluator.evaluatePredicate(joined, node.getCondition())) {
-                        resultRows.add(joined);
-                    }
+            JQuickDataSet leftData = null;
+            JQuickDataSet rightData = null;
+            if (context != null && context.getRequest() != null && context.getRequest().getInputPartitionsCount() > 0) {
+                List<JQuickMemoryPartitionProto> inputPartitions = context.getRequest().getInputPartitionsList();
+                if (inputPartitions.size() >= 2) {
+                    leftData = dataConverter.convertFromProto(inputPartitions.get(0).getData());
+                    rightData = dataConverter.convertFromProto(inputPartitions.get(1).getData());
+                } else if (inputPartitions.size() == 1) {
+                    leftData = dataConverter.convertFromProto(inputPartitions.get(0).getData());
                 }
             }
-        }
-        if (node.getJoinType() == com.github.paohaijiao.enums.JQuickJoinType.RIGHT || node.getJoinType() == com.github.paohaijiao.enums.JQuickJoinType.FULL) {
-            for (List<JQuickRow> buildRows : hashTable.values()) {
-                for (JQuickRow buildRow : buildRows) {
-                    String buildRowKey = generateRowKey(buildRow);
-                    if (!matchedBuildRowKeys.contains(buildRowKey)) {
-                        JQuickRow joined;
-                        if (node.getBuildSide() == JQuickHashJoinPhysicalNode.BuildSide.RIGHT) {
-                            joined = joinRows(null, buildRow, node.getJoinType(), false);
-                        } else {
-                            joined = joinRows(buildRow, null, node.getJoinType(), true);
-                        }
-                        if (joined != null) {
-                            if (node.getCondition() == null || expressionEvaluator.evaluatePredicate(joined, node.getCondition())) {
-                                resultRows.add(joined);
-                            }
-                        }
-                    }
-                }
+            if (leftData == null || leftData.isEmpty()) {
+                leftData = executeNode(node.getLeft(), context);
             }
-        }
-        console.info("HashJoin - resultRows size: " + resultRows.size());
-        List<JQuickColumnMeta> columnMetas = convertPhysicalColumnsToMeta(dataConverter.buildOutputSchema(node));
-        return new JQuickDataSet(columnMetas, resultRows);
+            if (rightData == null || rightData.isEmpty()) {
+                rightData = executeNode(node.getRight(), context);
+            }
+            JQuickJoinHandler handler = joinHandlerFactory.getHandler(node.getJoinType());
+            boolean buildLeft = node.getBuildSide() == JQuickHashJoinPhysicalNode.BuildSide.LEFT;
+            JQuickDataSet result = handler.join(leftData, rightData, node.getJoinKeys(), node.getCondition(), buildLeft);
+            List<JQuickColumnMeta> columnMetas = convertPhysicalColumnsToMeta(dataConverter.buildOutputSchema(node));
+            return new JQuickDataSet(columnMetas, result.getRows());
         } finally {
             expressionEvaluator.clearAliasContext();
         }
     }
 
+    /**
+     * 设置表别名上下文，用于表达式求值器解析带别名的列引用
+     */
+    private void setupAliasContext(JQuickHashJoinPhysicalNode node) {
+        Map<String, String> aliasToTable = new HashMap<>();
+        Map<String, String> columnAliasToActual = new HashMap<>();
+        
+        String leftAlias = extractTableAlias(node.getLeft());
+        String rightAlias = extractTableAlias(node.getRight());
+        
+        if (leftAlias != null) {
+            aliasToTable.put(leftAlias, "left");
+            for (JQuickPhysicalColumn col : node.getLeft().getOutputSchema()) {
+                columnAliasToActual.put(leftAlias + "." + col.getName(), col.getName());
+            }
+        }
+        if (rightAlias != null) {
+            aliasToTable.put(rightAlias, "right");
+            for (JQuickPhysicalColumn col : node.getRight().getOutputSchema()) {
+                columnAliasToActual.put(rightAlias + "." + col.getName(), col.getName());
+            }
+        }
+        
+        expressionEvaluator.setAliasContext(aliasToTable, columnAliasToActual);
+    }
+    
+    /**
+     * 探测阶段：遍历探测表，查找匹配的构建表行
+     */
+    private void probeAndMatch(JQuickHashJoinPhysicalNode node, JQuickDataSet probeData, 
+                                Map<Object, List<JQuickRow>> hashTable, boolean buildLeft,
+                                Set<JQuickRow> matchedBuildRows, List<JQuickRow> resultRows) {
+        boolean useLeftKeyForProbe = !buildLeft;
+        
+        for (JQuickRow probeRow : probeData.getRows()) {
+            Object joinKey = extractJoinKey(probeRow, node, useLeftKeyForProbe);
+            console.info("probeAndMatch - probe row keys: " + probeRow.keySet() + ", joinKey: " + joinKey);
+            List<JQuickRow> matchingRows = hashTable.get(joinKey);
+            
+            if (matchingRows != null) {
+                console.info("probeAndMatch - found " + matchingRows.size() + " matching rows");
+                // 找到匹配行：合并并应用条件过滤
+                for (JQuickRow buildRow : matchingRows) {
+                    // joinRows(leftRow, rightRow, joinType, leftIsBuild)
+                    // buildLeft=true: buildRow是左表行，probeRow是右表行
+                    // buildLeft=false: buildRow是右表行，probeRow是左表行
+                    JQuickRow leftRow = buildLeft ? buildRow : probeRow;
+                    JQuickRow rightRow = buildLeft ? probeRow : buildRow;
+                    JQuickRow joined = joinRows(leftRow, rightRow, node.getJoinType(), buildLeft);
+                    if (joined != null && (node.getCondition() == null || 
+                        expressionEvaluator.evaluatePredicate(joined, node.getCondition()))) {
+                        resultRows.add(joined);
+                        matchedBuildRows.add(buildRow);
+                    } else if (joined != null && node.getCondition() != null) {
+                        console.info("probeAndMatch - condition failed for joined row");
+                    }
+                }
+            } else if (node.getJoinType() == com.github.paohaijiao.enums.JQuickJoinType.LEFT || 
+                       node.getJoinType() == com.github.paohaijiao.enums.JQuickJoinType.FULL) {
+                // 左连接/全连接：探测表行无匹配，输出探测表行（构建表为null）
+                // buildLeft=false时，probeRow是左表行
+                JQuickRow leftRow = buildLeft ? null : probeRow;
+                JQuickRow rightRow = buildLeft ? probeRow : null;
+                JQuickRow joined = joinRows(leftRow, rightRow, node.getJoinType(), !buildLeft);
+                if (joined != null && (node.getCondition() == null || 
+                    expressionEvaluator.evaluatePredicate(joined, node.getCondition()))) {
+                    resultRows.add(joined);
+                }
+            }
+        }
+        console.info("probeAndMatch - resultRows size: " + resultRows.size());
+    }
+    
+    /**
+     * 处理外连接中未匹配的构建表行
+     */
+    private void handleUnmatchedBuildRows(JQuickHashJoinPhysicalNode node, 
+                                          Map<Object, List<JQuickRow>> hashTable,
+                                          Set<JQuickRow> matchedBuildRows, List<JQuickRow> resultRows) {
+        if (node.getJoinType() != com.github.paohaijiao.enums.JQuickJoinType.RIGHT && 
+            node.getJoinType() != com.github.paohaijiao.enums.JQuickJoinType.FULL) {
+            return;
+        }
+        
+        boolean buildLeft = node.getBuildSide() == JQuickHashJoinPhysicalNode.BuildSide.LEFT;
+        
+        for (List<JQuickRow> buildRows : hashTable.values()) {
+            for (JQuickRow buildRow : buildRows) {
+                if (!matchedBuildRows.contains(buildRow)) {
+                    // 构建表行无匹配，输出构建表行（探测表为null）
+                    JQuickRow joined;
+                    if (buildLeft) {
+                        // 左表是构建表
+                        joined = joinRows(buildRow, null, node.getJoinType(), true);
+                    } else {
+                        // 右表是构建表
+                        joined = joinRows(null, buildRow, node.getJoinType(), false);
+                    }
+                    if (joined != null && (node.getCondition() == null || 
+                        expressionEvaluator.evaluatePredicate(joined, node.getCondition()))) {
+                        resultRows.add(joined);
+                    }
+                }
+            }
+        }
+    }
+    
     /**
      * 执行 Nested Loop Join
      */
@@ -523,27 +601,15 @@ public class JQuickNodeExecutor {
     private Map<Object, List<JQuickRow>> buildHashTable(JQuickDataSet data, JQuickHashJoinPhysicalNode node, boolean useLeftKey) {
         Map<Object, List<JQuickRow>> hashTable = new HashMap<>();
         List<JQuickHashJoinPhysicalNode.JoinKeyPair> joinKeys = node.getJoinKeys();
-        boolean isCompositeKey = joinKeys.size() > 1;
         for (JQuickRow row : data.getRows()) {
-            Object key;
-            if (isCompositeKey) {
-                List<Object> compositeKey = new ArrayList<>();
-                for (JQuickHashJoinPhysicalNode.JoinKeyPair keyPair : joinKeys) {
-                    JQuickExpression keyExpr = useLeftKey ? keyPair.getLeftKey() : keyPair.getRightKey();
-                    Object keyValue = evaluateJoinKeyExpression(row, keyExpr);
-                    compositeKey.add(keyValue);
-                }
-                key = compositeKey;
-            } else {
-                JQuickExpression keyExpr = useLeftKey ? joinKeys.get(0).getLeftKey() : joinKeys.get(0).getRightKey();
-                key = evaluateJoinKeyExpression(row, keyExpr);
-            }
-            console.info("buildHashTable - row keys: " + row.keySet() + ", extracted key: " + key);
+            Object key = extractJoinKeyDirect(row, joinKeys, useLeftKey);
             if (key != null) {
                 hashTable.computeIfAbsent(key, k -> new ArrayList<>()).add(row);
+            } else {
+                console.warn("buildHashTable - null join key for row: " + row.keySet());
             }
         }
-        console.info("buildHashTable - final hashTable: " + hashTable.keySet());
+        console.info("buildHashTable - hashTable size: " + hashTable.size());
         return hashTable;
     }
 
@@ -1146,53 +1212,64 @@ public class JQuickNodeExecutor {
     }
 
     private Object extractJoinKey(JQuickRow row, JQuickHashJoinPhysicalNode node, boolean useLeftKey) {
-        List<JQuickHashJoinPhysicalNode.JoinKeyPair> joinKeys = node.getJoinKeys();
-        if (joinKeys.isEmpty()) return null;
-        if (joinKeys.size() == 1) {
-            JQuickHashJoinPhysicalNode.JoinKeyPair keyPair = joinKeys.get(0);
-            JQuickExpression keyExpr = useLeftKey ? keyPair.getLeftKey() : keyPair.getRightKey();
-            Object key = evaluateJoinKeyExpression(row, keyExpr);
-            console.info("extractJoinKey - useLeftKey: " + useLeftKey + ", row keys: " + row.keySet() + ", keyExpr: " + keyExpr + ", extracted key: " + key);
-            return key;
-        } else {
-            List<Object> compositeKey = new ArrayList<>();
-            for (JQuickHashJoinPhysicalNode.JoinKeyPair keyPair : joinKeys) {
-                JQuickExpression keyExpr = useLeftKey ? keyPair.getLeftKey() : keyPair.getRightKey();
-                Object keyValue = evaluateJoinKeyExpression(row, keyExpr);
-                compositeKey.add(keyValue);
-            }
-            return compositeKey;
-        }
+        return extractJoinKeyDirect(row, node.getJoinKeys(), useLeftKey);
     }
 
     /**
-     * 评估 JOIN 键表达式，正确处理表别名
+     * 直接提取 JOIN 键，对于简单列引用直接从行中获取值
      */
-    private Object evaluateJoinKeyExpression(JQuickRow row, JQuickExpression keyExpr) {
+    private Object extractJoinKeyDirect(JQuickRow row, List<JQuickHashJoinPhysicalNode.JoinKeyPair> joinKeys, boolean useLeftKey) {
+        if (joinKeys.isEmpty()) return null;
+        
+        // 组合键
+        if (joinKeys.size() > 1) {
+            List<Object> compositeKey = new ArrayList<>();
+            for (JQuickHashJoinPhysicalNode.JoinKeyPair keyPair : joinKeys) {
+                compositeKey.add(getJoinKeyValue(row, keyPair, useLeftKey));
+            }
+            return compositeKey;
+        }
+        
+        // 单键
+        return getJoinKeyValue(row, joinKeys.get(0), useLeftKey);
+    }
+    
+    /**
+     * 获取单个 JOIN 键值
+     */
+    private Object getJoinKeyValue(JQuickRow row, JQuickHashJoinPhysicalNode.JoinKeyPair keyPair, boolean useLeftKey) {
+        JQuickExpression keyExpr = useLeftKey ? keyPair.getLeftKey() : keyPair.getRightKey();
+        
+        // 简单列引用：直接从行中获取
         if (keyExpr instanceof JQuickColumnRefExpression) {
             JQuickColumnRefExpression colRef = (JQuickColumnRefExpression) keyExpr;
-            String rawColumnName = colRef.getColumnName();
+            String colName = colRef.getColumnName();
             String tableAlias = colRef.getTableAlias();
             
-            String[] possibleNames = new String[]{
-                tableAlias + "." + rawColumnName,
-                rawColumnName,
-                "left." + rawColumnName,
-                "right." + rawColumnName
-            };
-            
-            for (String name : possibleNames) {
-                if (row.containsKey(name)) {
-                    return row.get(name);
-                }
+            // 1. 尝试带原始表别名前缀的列（如 "u.id"）
+            if (tableAlias != null && row.containsKey(tableAlias + "." + colName)) {
+                return row.get(tableAlias + "." + colName);
             }
-            
+            // 2. 优先查找不带前缀的列（单表数据）
+            if (row.containsKey(colName)) {
+                return row.get(colName);
+            }
+            // 3. 尝试带 left/right 前缀的列
+            if (row.containsKey("left." + colName)) {
+                return row.get("left." + colName);
+            }
+            if (row.containsKey("right." + colName)) {
+                return row.get("right." + colName);
+            }
+            // 4. 模糊匹配：查找以列名结尾的键（兼容各种前缀）
             for (String key : row.keySet()) {
-                if (key.endsWith("." + rawColumnName) || key.equalsIgnoreCase(rawColumnName)) {
+                if (key.endsWith("." + colName)) {
                     return row.get(key);
                 }
             }
         }
+        
+        // 复杂表达式：使用表达式求值器
         return expressionEvaluator.evaluateExpression(row, keyExpr);
     }
 
@@ -1466,13 +1543,23 @@ public class JQuickNodeExecutor {
 
     private JQuickRow joinRows(JQuickRow leftRow, JQuickRow rightRow, com.github.paohaijiao.enums.JQuickJoinType joinType, boolean leftIsBuild) {
         JQuickRow result = new JQuickRow();
-        if (leftIsBuild) {
-            if (leftRow != null) result.putAll(leftRow);
-            if (rightRow != null) result.putAll(rightRow);
-        } else {
-            if (rightRow != null) result.putAll(rightRow);
-            if (leftRow != null) result.putAll(leftRow);
+        // 添加不带前缀的列（保持向后兼容）
+        if (leftRow != null) result.putAll(leftRow);
+        if (rightRow != null) result.putAll(rightRow);
+        // 添加带前缀的列（用于区分同名列）
+        if (leftRow != null) {
+            for (Map.Entry<String, Object> entry : leftRow.entrySet()) {
+                result.put("left." + entry.getKey(), entry.getValue());
+            }
         }
+        if (rightRow != null) {
+            for (Map.Entry<String, Object> entry : rightRow.entrySet()) {
+                result.put("right." + entry.getKey(), entry.getValue());
+            }
+        }
+        console.info("joinRows - left keys: " + (leftRow != null ? leftRow.keySet() : "null") 
+                + ", right keys: " + (rightRow != null ? rightRow.keySet() : "null")
+                + ", result keys: " + result.keySet());
         return result;
     }
 

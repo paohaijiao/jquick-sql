@@ -115,9 +115,57 @@ public class JQuickSQLJoinTest {
         JQuickDataSet result2 = sql.execute(
                 "SELECT u.name, u.age, u.status, o.id as order_id, o.amount " +
                         "FROM users u INNER JOIN orders o ON u.id = o.user_id " +
-                        "WHERE u.status = 'active' AND o.amount > 150"
+                        "WHERE u.status = 'active' AND o.amount >= 150"
         );
         result2.printTable();
+    }
+
+    @Test
+    public void testLeftJoin() {
+        // 测试基本的 LEFT JOIN
+        JQuickDataSet result1 = sql.execute(
+                "SELECT u.id, u.name, u.age, o.id as order_id, o.amount " +
+                        "FROM users u LEFT JOIN orders o ON u.id = o.user_id"
+        );
+        result1.printTable();
+        JQuickDataSet result2 = sql.execute(
+                "SELECT u.name, u.age, u.status, u.addr, o.id, o.amount " +
+                        "FROM users u LEFT JOIN orders o ON u.id = o.user_id"
+        );
+        result2.printTable();
+    }
+
+    @Test
+    public void testRightJoin() {
+        JQuickDataSet result1 = sql.execute(
+                "SELECT u.id, u.name, u.age, o.id as order_id, o.amount " +
+                        "FROM users u RIGHT JOIN orders o ON u.id = o.user_id"
+        );
+        result1.printTable();
+    }
+    @Test
+    public void testFullJoin() {
+        // 测试 FULL JOIN（如果支持）
+        // 注意：FULL JOIN 返回左表和右表的所有行，匹配的行合并，不匹配的用 NULL 填充
+        try {
+            JQuickDataSet result1 = sql.execute(
+                    "SELECT u.id, u.name, u.age, o.id as order_id, o.amount " +
+                            "FROM users u FULL JOIN orders o ON u.id = o.user_id"
+            );
+            result1.printTable();
+        } catch (Exception e) {
+            System.out.println("FULL JOIN 不支持: " + e.getMessage());
+            System.out.println();
+        }
+
+    }
+    @Test
+    public void testCrossJoin() {
+        JQuickDataSet result1 = sql.execute(
+                "SELECT u.name, u.age, o.id, o.amount " +
+                        "FROM users u CROSS JOIN orders o"
+        );
+        result1.printTable();
     }
 
 

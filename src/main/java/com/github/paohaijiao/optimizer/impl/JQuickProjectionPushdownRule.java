@@ -121,6 +121,17 @@ public class JQuickProjectionPushdownRule implements JQuickOptimizerRule {
             if (join.getCondition() != null) {
                 allRequired.addAll(join.getCondition().getReferencedColumns());
             }
+            // 必须包含 JOIN 键列，否则 HashJoin 无法执行连接
+            if (join.getJoinKeys() != null) {
+                for (JQuickJoinNode.JoinKey joinKey : join.getJoinKeys()) {
+                    if (joinKey.getLeftKey() != null) {
+                        allRequired.addAll(joinKey.getLeftKey().getReferencedColumns());
+                    }
+                    if (joinKey.getRightKey() != null) {
+                        allRequired.addAll(joinKey.getRightKey().getReferencedColumns());
+                    }
+                }
+            }
             
             String leftAlias = getTableAlias(join.getLeft());
             String rightAlias = getTableAlias(join.getRight());
