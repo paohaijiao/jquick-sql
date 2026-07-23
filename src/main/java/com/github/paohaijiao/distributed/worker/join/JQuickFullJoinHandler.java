@@ -31,38 +31,45 @@ public class JQuickFullJoinHandler extends JQuickAbstractJoinHandler {
         }
         List<JQuickRow> resultRows = new ArrayList<>();
         Map<Object, List<JQuickRow>> hashTableRight = buildHashTable(rightData, joinKeys, false);
-        Set<JQuickRow> matchedRightRows = new HashSet<>();
+        Set<String> matchedRightRowKeys = new HashSet<>();
         for (JQuickRow leftRow : leftData.getRows()) {
             Object joinKey = extractJoinKey(leftRow, joinKeys, true);
             List<JQuickRow> matchingRows = hashTableRight.get(joinKey);
-            boolean foundMatch = false;
+            int matchCount = 0;
             if (matchingRows != null) {
                 for (JQuickRow rightRow : matchingRows) {
                     JQuickRow joined = joinRows(leftRow, rightRow);
                     if (evaluateCondition(joined, condition)) {
                         resultRows.add(joined);
-                        matchedRightRows.add(rightRow);
-                        foundMatch = true;
+                        matchedRightRowKeys.add(generateRowKey(rightRow));
+                        matchCount++;
                     }
                 }
             }
-            if (!foundMatch) { // 左表行无匹配：输出左表行（右表列为 NULL）
+            if (matchCount == 0) {
                 JQuickRow joined = joinRows(leftRow, null);
-                if (evaluateCondition(joined, condition)) {
-                    resultRows.add(joined);
-                }
+                resultRows.add(joined);
             }
         }
-        for (JQuickRow rightRow : rightData.getRows()) { // 第二步：处理右表未匹配行
-            if (!matchedRightRows.contains(rightRow)) {
+        for (JQuickRow rightRow : rightData.getRows()) {
+            if (!matchedRightRowKeys.contains(generateRowKey(rightRow))) {
                 JQuickRow joined = joinRows(null, rightRow);
-                if (evaluateCondition(joined, condition)) {
-                    resultRows.add(joined);
-                }
+                resultRows.add(joined);
             }
         }
 
         return buildResultDataSet(resultRows, leftData, rightData);
+    }
+
+    private String generateRowKey(JQuickRow row) {
+        StringBuilder sb = new StringBuilder();
+        List<String> sortedKeys = new ArrayList<>(row.keySet());
+        Collections.sort(sortedKeys);
+        for (String key : sortedKeys) {
+            if (sb.length() > 0) sb.append("|");
+            sb.append(key).append("=").append(row.get(key));
+        }
+        return sb.toString();
     }
 
     /**
@@ -70,32 +77,26 @@ public class JQuickFullJoinHandler extends JQuickAbstractJoinHandler {
      */
     private JQuickDataSet executeCartesianProduct(JQuickDataSet leftData, JQuickDataSet rightData, JQuickExpression condition) {
         List<JQuickRow> resultRows = new ArrayList<>();
-        Set<JQuickRow> matchedRightRows = new HashSet<>();
+        Set<String> matchedRightRowKeys = new HashSet<>();
         for (JQuickRow leftRow : leftData.getRows()) {
             boolean foundMatch = false;
             for (JQuickRow rightRow : rightData.getRows()) {
                 JQuickRow joined = joinRows(leftRow, rightRow);
                 if (evaluateCondition(joined, condition)) {
                     resultRows.add(joined);
-                    matchedRightRows.add(rightRow);
+                    matchedRightRowKeys.add(generateRowKey(rightRow));
                     foundMatch = true;
                 }
             }
-            // 左表行无匹配：输出左表行（右表列为 NULL）
             if (!foundMatch) {
                 JQuickRow joined = joinRows(leftRow, null);
-                if (evaluateCondition(joined, condition)) {
-                    resultRows.add(joined);
-                }
+                resultRows.add(joined);
             }
         }
-        // 处理右表未匹配行
         for (JQuickRow rightRow : rightData.getRows()) {
-            if (!matchedRightRows.contains(rightRow)) {
+            if (!matchedRightRowKeys.contains(generateRowKey(rightRow))) {
                 JQuickRow joined = joinRows(null, rightRow);
-                if (evaluateCondition(joined, condition)) {
-                    resultRows.add(joined);
-                }
+                resultRows.add(joined);
             }
         }
 
