@@ -28,9 +28,6 @@ public class JQuickLeftJoinHandler extends JQuickAbstractJoinHandler {
 
     @Override
     public JQuickDataSet join(JQuickDataSet leftData, JQuickDataSet rightData, List<JQuickHashJoinPhysicalNode.JoinKeyPair> joinKeys, JQuickExpression condition, boolean buildLeft) {
-        // LEFT JOIN 忽略 buildLeft 参数（优化器推荐的构建侧）
-        // 必须固定以右表为构建表，左表为探测表，才能保证左表所有行都被保留
-        // 如果使用左表作为构建表，无法在探测阶段处理左表未匹配的行
         if (joinKeys == null || joinKeys.isEmpty()) {
             return executeCartesianProduct(leftData, rightData, condition);
         }
@@ -49,11 +46,9 @@ public class JQuickLeftJoinHandler extends JQuickAbstractJoinHandler {
                     }
                 }
             }
-            if (!foundMatch) {   // 左表行无匹配：输出左表行（右表列为 NULL）
+            if (!foundMatch) {
                 JQuickRow joined = joinRows(leftRow, null);
-                if (evaluateCondition(joined, condition)) {
-                    resultRows.add(joined);
-                }
+                resultRows.add(joined);
             }
         }
 
@@ -74,11 +69,9 @@ public class JQuickLeftJoinHandler extends JQuickAbstractJoinHandler {
                     foundMatch = true;
                 }
             }
-            if (!foundMatch) { // 左表行无匹配：输出左表行（右表列为 NULL）
+            if (!foundMatch) {
                 JQuickRow joined = joinRows(leftRow, null);
-                if (evaluateCondition(joined, condition)) {
-                    resultRows.add(joined);
-                }
+                resultRows.add(joined);
             }
         }
 

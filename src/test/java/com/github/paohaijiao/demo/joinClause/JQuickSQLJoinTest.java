@@ -122,7 +122,6 @@ public class JQuickSQLJoinTest {
 
     @Test
     public void testLeftJoin() {
-        // 测试基本的 LEFT JOIN
         JQuickDataSet result1 = sql.execute(
                 "SELECT u.id, u.name, u.age, o.id as order_id, o.amount " +
                         "FROM users u LEFT JOIN orders o ON u.id = o.user_id"
