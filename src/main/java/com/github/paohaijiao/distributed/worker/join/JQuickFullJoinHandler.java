@@ -71,7 +71,6 @@ public class JQuickFullJoinHandler extends JQuickAbstractJoinHandler {
     private JQuickDataSet executeCartesianProduct(JQuickDataSet leftData, JQuickDataSet rightData, JQuickExpression condition) {
         List<JQuickRow> resultRows = new ArrayList<>();
         Set<JQuickRow> matchedRightRows = new HashSet<>();
-
         for (JQuickRow leftRow : leftData.getRows()) {
             boolean foundMatch = false;
             for (JQuickRow rightRow : rightData.getRows()) {
@@ -90,7 +89,6 @@ public class JQuickFullJoinHandler extends JQuickAbstractJoinHandler {
                 }
             }
         }
-
         // 处理右表未匹配行
         for (JQuickRow rightRow : rightData.getRows()) {
             if (!matchedRightRows.contains(rightRow)) {

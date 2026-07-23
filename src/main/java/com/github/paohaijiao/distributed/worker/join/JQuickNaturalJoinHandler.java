@@ -26,6 +26,15 @@ public class JQuickNaturalJoinHandler extends JQuickAbstractJoinHandler {
         return JQuickJoinType.NATURAL;
     }
 
+    /**
+     * NATURAL JOIN 可以使用优化器推荐的构建侧
+     * 因为 NATURAL JOIN 语义上等同于 INNER JOIN（自动检测同名列）
+     */
+    @Override
+    protected boolean shouldUseBuildSideOptimization() {
+        return true;
+    }
+
     @Override
     public JQuickDataSet join(JQuickDataSet leftData, JQuickDataSet rightData, List<JQuickHashJoinPhysicalNode.JoinKeyPair> joinKeys, JQuickExpression condition, boolean buildLeft) {
         List<JQuickHashJoinPhysicalNode.JoinKeyPair> naturalJoinKeys = detectNaturalJoinKeys(leftData, rightData); // NATURAL JOIN 自动检测同名列作为 JOIN 键

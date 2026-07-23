@@ -1,6 +1,18 @@
 # JQuick-SQL
 
 A lightweight SQL parser and distributed query engine , supporting standard SQL syntax and various OLAP operations.
+
+<div align="center">
+
+[![GitHub Stars](https://img.shields.io/github/stars/paohaijiao/jquick-sql?style=flat-square)](https://github.com/paohaijiao/jquick-sql/stargazers)
+[![GitHub Forks](https://img.shields.io/github/forks/paohaijiao/jquick-sql?style=flat-square)](https://github.com/paohaijiao/jquick-sql/forks)
+[![GitHub Issues](https://img.shields.io/github/issues/paohaijiao/jquick-sql?style=flat-square)](https://github.com/paohaijiao/jquick-sql/issues)
+[![License](https://img.shields.io/github/license/paohaijiao/jquick-sql?style=flat-square)](LICENSE)
+[![Java Version](https://img.shields.io/badge/Java-8+-blue?style=flat-square)](https://www.oracle.com/java/)
+[![Maven Central](https://img.shields.io/maven-central/v/com.github.paohaijiao/jquick-sql?style=flat-square)](https://search.maven.org/search?q=jquick-sql)
+
+</div>
+
 ## Architecture
 
 ```

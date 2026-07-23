@@ -26,12 +26,13 @@ public class JQuickRightJoinHandler extends JQuickAbstractJoinHandler {
 
     @Override
     public JQuickDataSet join(JQuickDataSet leftData, JQuickDataSet rightData, List<JQuickHashJoinPhysicalNode.JoinKeyPair> joinKeys, JQuickExpression condition, boolean buildLeft) {
-        if (joinKeys == null || joinKeys.isEmpty()) { // 没有 JOIN 键：执行笛卡尔积（右表所有行都保留）
+        // RIGHT JOIN 忽略 buildLeft 参数（优化器推荐的构建侧）
+        // 必须固定以左表为构建表，右表为探测表，才能保证右表所有行都被保留
+        // 如果使用右表作为构建表，无法在探测阶段处理右表未匹配的行
+        if (joinKeys == null || joinKeys.isEmpty()) {
             return executeCartesianProduct(leftData, rightData, condition);
         }
         List<JQuickRow> resultRows = new ArrayList<>();
-        // RIGHT JOIN 总是以左表为构建表，右表为探测表
-        // 这样可以保留右表的所有行
         Map<Object, List<JQuickRow>> hashTable = buildHashTable(leftData, joinKeys, true);
         Set<JQuickRow> matchedLeftRows = new HashSet<>();
         for (JQuickRow rightRow : rightData.getRows()) {

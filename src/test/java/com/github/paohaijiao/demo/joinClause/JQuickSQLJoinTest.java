@@ -128,11 +128,6 @@ public class JQuickSQLJoinTest {
                         "FROM users u LEFT JOIN orders o ON u.id = o.user_id"
         );
         result1.printTable();
-        JQuickDataSet result2 = sql.execute(
-                "SELECT u.name, u.age, u.status, u.addr, o.id, o.amount " +
-                        "FROM users u LEFT JOIN orders o ON u.id = o.user_id"
-        );
-        result2.printTable();
     }
 
     @Test

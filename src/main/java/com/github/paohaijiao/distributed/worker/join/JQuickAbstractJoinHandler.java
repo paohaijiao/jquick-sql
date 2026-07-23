@@ -53,11 +53,21 @@ public abstract class JQuickAbstractJoinHandler implements JQuickJoinHandler {
     }
 
     /**
+     * 判断是否应该使用 buildSide 优化
+     * 默认返回 false，只有 INNER/NATURAL JOIN 才使用优化器推荐的构建侧
+     * 外连接（LEFT/RIGHT/FULL）必须按语义固定构建侧和探测侧
+     *
+     * @return true 如果可以使用优化器推荐的构建侧
+     */
+    protected boolean shouldUseBuildSideOptimization() {
+        return false;
+    }
+
+    /**
      * 获取单个 JOIN 键值
      */
     private Object getJoinKeyValue(JQuickRow row, JQuickHashJoinPhysicalNode.JoinKeyPair keyPair, boolean useLeftKey) {
         JQuickExpression keyExpr = useLeftKey ? keyPair.getLeftKey() : keyPair.getRightKey();
-
         if (keyExpr instanceof JQuickColumnRefExpression) {
             JQuickColumnRefExpression colRef = (JQuickColumnRefExpression) keyExpr;
             String colName = colRef.getColumnName();

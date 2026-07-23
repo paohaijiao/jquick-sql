@@ -353,7 +353,7 @@ public class JQuickNodeExecutor {
             }
             JQuickJoinHandler handler = joinHandlerFactory.getHandler(node.getJoinType());
             boolean buildLeft = node.getBuildSide() == JQuickHashJoinPhysicalNode.BuildSide.LEFT;
-            JQuickDataSet result = handler.join(leftData, rightData, node.getJoinKeys(), node.getCondition(), buildLeft);
+            JQuickDataSet result = handler.join(leftData, rightData, node.getJoinKeys(),node.getCondition(), buildLeft);
             List<JQuickColumnMeta> columnMetas = convertPhysicalColumnsToMeta(dataConverter.buildOutputSchema(node));
             return new JQuickDataSet(columnMetas, result.getRows());
         } finally {

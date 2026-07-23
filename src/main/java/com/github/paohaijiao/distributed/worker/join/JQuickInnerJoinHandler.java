@@ -26,6 +26,15 @@ public class JQuickInnerJoinHandler extends JQuickAbstractJoinHandler {
         return JQuickJoinType.INNER;
     }
 
+    /**
+     * INNER JOIN 可以使用优化器推荐的构建侧
+     * 因为 INNER JOIN 的语义不依赖于构建侧和探测侧的选择
+     */
+    @Override
+    protected boolean shouldUseBuildSideOptimization() {
+        return true;
+    }
+
     @Override
     public JQuickDataSet join(JQuickDataSet leftData, JQuickDataSet rightData, List<JQuickHashJoinPhysicalNode.JoinKeyPair> joinKeys, JQuickExpression condition, boolean buildLeft) {
         if (joinKeys == null || joinKeys.isEmpty()) {
