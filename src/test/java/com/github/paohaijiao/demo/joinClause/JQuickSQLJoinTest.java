@@ -139,8 +139,6 @@ public class JQuickSQLJoinTest {
     }
     @Test
     public void testFullJoin() {
-        // 测试 FULL JOIN（如果支持）
-        // 注意：FULL JOIN 返回左表和右表的所有行，匹配的行合并，不匹配的用 NULL 填充
         try {
             JQuickDataSet result1 = sql.execute(
                     "SELECT u.id, u.name, u.age, o.id as order_id, o.amount " +
