@@ -159,6 +159,14 @@ public class JQuickSQLJoinTest {
         );
         result1.printTable();
     }
+    @Test
+    public void testNATURALJoin() {
+        JQuickDataSet result1 = sql.execute(
+                "SELECT u.name, u.age, o.id, o.amount " +
+                        "FROM users u NATURAL JOIN orders o"
+        );
+        result1.printTable();
+    }
 
 
 

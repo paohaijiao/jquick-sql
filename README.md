@@ -59,6 +59,41 @@ A lightweight SQL parser and distributed query engine , supporting standard SQL 
 ```
 
 ### Basic Usage
+
+## Data Source Integration
+JQuick-SQL, combined with **JQuick-Connector**, enables you to integrate external data into `JQuickDataSet`, which can then be transformed and processed using JQuick-SQL's query engine.
+
+> **Connector Project:** [paohaijiao/jquick-connector](https://github.com/paohaijiao/jquick-connector)
+>
+> **Maven Dependency:**
+> ```xml
+> <dependency>
+>     <groupId>io.github.paohaijiao</groupId>
+>     <artifactId>jquick-connector</artifactId>
+>     <version>${latest.version}</version>
+> </dependency>
+> ```
+
+### Load from MySQL Database
+```sql
+-- Define a virtual table 'users' that queries a MySQL table
+SELECT
+    field(id) -> id:Integer,
+        field(name) -> name:String,
+        field(age) -> age:Integer,
+        field(status) -> status:String,
+        field(enable) -> enable:Boolean,
+        field(addr) -> addr:String,
+        field(birthday) -> birthday:Date
+FROM MYSQL(
+        url: 'jdbc:mysql://localhost:3306/mydb',
+        username: 'root',
+        password: 'password',
+       sql: 'SELECT * FROM users',
+       driver: 'com.mysql.jdbc.Driver'
+     );
+```
+
 ## Supported SQL Features
 
 
@@ -910,6 +945,21 @@ SELECT u.name, u.age, o.id, o.amount FROM users u CROSS JOIN orders o
 [2026-07-24 08:53:28.328] [INFO] +---------+-------+------+----------+
 [2026-07-24 08:53:28.328] [INFO] Total: 28 rows
 ```
+
+#### 6.8
+**SQL Code**
+```sql
+SELECT u.name, u.age, o.id, o.amount FROM users u NATURAL JOIN orders o
+
+```
+```log
+[2026-07-24 14:02:03.903] [INFO] +--------+-------+------+----------+
+[2026-07-24 14:02:03.903] [INFO] | u.name | u.age | o.id | o.amount |
+[2026-07-24 14:02:03.903] [INFO] +--------+-------+------+----------+
+[2026-07-24 14:02:03.903] [INFO] +--------+-------+------+----------+
+[2026-07-24 14:02:03.903] [INFO] Total: 0 rows
+```
+
 
 ## API Reference
 

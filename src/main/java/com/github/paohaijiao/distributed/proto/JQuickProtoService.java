@@ -568,6 +568,7 @@ public class JQuickProtoService {
             case CROSS: return JQuickJoinTypeProto.JOIN_CROSS;
             case SEMI: return JQuickJoinTypeProto.JOIN_SEMI;
             case ANTI: return JQuickJoinTypeProto.JOIN_ANTI;
+            case NATURAL: return JQuickJoinTypeProto.JOIN_NATURAL;
             default: return JQuickJoinTypeProto.JOIN_INNER;
         }
     }
@@ -824,15 +825,17 @@ public class JQuickProtoService {
     public com.github.paohaijiao.enums.JQuickJoinType convertJoinType(JQuickJoinTypeProto proto) {
         switch (proto) {
             case JOIN_INNER:
-                return com.github.paohaijiao.enums.JQuickJoinType.INNER;
+                return JQuickJoinType.INNER;
             case JOIN_LEFT:
-                return com.github.paohaijiao.enums.JQuickJoinType.LEFT;
+                return JQuickJoinType.LEFT;
             case JOIN_RIGHT:
-                return com.github.paohaijiao.enums.JQuickJoinType.RIGHT;
+                return JQuickJoinType.RIGHT;
             case JOIN_FULL:
-                return com.github.paohaijiao.enums.JQuickJoinType.FULL;
+                return  JQuickJoinType.FULL;
+            case JOIN_NATURAL:
+                return JQuickJoinType.NATURAL;
             default:
-                return com.github.paohaijiao.enums.JQuickJoinType.INNER;
+                return JQuickJoinType.INNER;
         }
     }
 

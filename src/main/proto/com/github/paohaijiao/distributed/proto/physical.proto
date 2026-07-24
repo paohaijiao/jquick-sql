@@ -320,7 +320,7 @@ message JQuickProjectNodeProto {
 // Join 类型
 enum JQuickJoinTypeProto {
   JOIN_INNER = 0; JOIN_LEFT = 1; JOIN_RIGHT = 2;
-  JOIN_FULL = 3; JOIN_CROSS = 4; JOIN_SEMI = 5; JOIN_ANTI = 6;
+  JOIN_FULL = 3; JOIN_CROSS = 4; JOIN_SEMI = 5; JOIN_ANTI = 6;JOIN_NATURAL = 7;
 }
 
 enum JQuickBuildSideProto { BUILD_SIDE_LEFT = 0; BUILD_SIDE_RIGHT = 1; }

@@ -3,6 +3,8 @@ package com.github.paohaijiao.distributed.worker;
 import com.github.paohaijiao.console.JConsole;
 import com.github.paohaijiao.datasource.JQuickDataSourceManager;
 import com.github.paohaijiao.distributed.proto.JQuickProtoService;
+import com.github.paohaijiao.distributed.worker.join.JQuickJoinHandler;
+import com.github.paohaijiao.distributed.worker.join.JQuickJoinHandlerFactory;
 import com.github.paohaijiao.enums.JQuickExchangeType;
 import com.github.paohaijiao.expression.JQuickExpression;
 import com.github.paohaijiao.expression.domain.JQuickBinaryExpression;
@@ -15,8 +17,6 @@ import com.github.paohaijiao.physical.node.*;
 import com.github.paohaijiao.proto.JQuickExecuteTaskRequest;
 import com.github.paohaijiao.proto.JQuickFragmentProto;
 import com.github.paohaijiao.proto.JQuickMemoryPartitionProto;
-import com.github.paohaijiao.distributed.worker.join.JQuickJoinHandler;
-import com.github.paohaijiao.distributed.worker.join.JQuickJoinHandlerFactory;
 import com.github.paohaijiao.statement.JQuickColumnMeta;
 import com.github.paohaijiao.statement.JQuickDataSet;
 import com.github.paohaijiao.statement.JQuickRow;
@@ -272,27 +272,7 @@ public class JQuickNodeExecutor {
         context.addProcessedRows(input.size());
         return result;
     }
-    /**
-     * 从 Fragment 中提取列元数据
-     */
-    private List<JQuickColumnMeta> extractColumnMetasFromFragment(JQuickFragmentProto fragment) {
-        try {
-            JQuickPhysicalPlanNode rootNode = jQuickprotoService.buildPhysicalNode(fragment.getPlan());
-            if (rootNode != null) {
-                List<JQuickPhysicalColumn> outputSchema = rootNode.getOutputSchema();
-                if (outputSchema != null && !outputSchema.isEmpty()) {
-                    List<JQuickColumnMeta> metas = new ArrayList<>();
-                    for (JQuickPhysicalColumn col : outputSchema) {
-                        metas.add(new JQuickColumnMeta(col.getName(), col.getType() != null ? col.getType() : Object.class, col.getSourceTable() != null ? col.getSourceTable() : ""));
-                    }
-                    return metas;
-                }
-            }
-        } catch (Exception e) {
-            console.warn("Failed to extract column metas from fragment: " + e.getMessage());
-        }
-        return null;
-    }
+
 
     /**
      * 执行 Project
@@ -388,231 +368,18 @@ public class JQuickNodeExecutor {
     }
     
     /**
-     * 探测阶段：遍历探测表，查找匹配的构建表行
-     */
-    private void probeAndMatch(JQuickHashJoinPhysicalNode node, JQuickDataSet probeData, 
-                                Map<Object, List<JQuickRow>> hashTable, boolean buildLeft,
-                                Set<JQuickRow> matchedBuildRows, List<JQuickRow> resultRows) {
-        boolean useLeftKeyForProbe = !buildLeft;
-        
-        for (JQuickRow probeRow : probeData.getRows()) {
-            Object joinKey = extractJoinKey(probeRow, node, useLeftKeyForProbe);
-            console.info("probeAndMatch - probe row keys: " + probeRow.keySet() + ", joinKey: " + joinKey);
-            List<JQuickRow> matchingRows = hashTable.get(joinKey);
-            
-            if (matchingRows != null) {
-                console.info("probeAndMatch - found " + matchingRows.size() + " matching rows");
-                // 找到匹配行：合并并应用条件过滤
-                for (JQuickRow buildRow : matchingRows) {
-                    // joinRows(leftRow, rightRow, joinType, leftIsBuild)
-                    // buildLeft=true: buildRow是左表行，probeRow是右表行
-                    // buildLeft=false: buildRow是右表行，probeRow是左表行
-                    JQuickRow leftRow = buildLeft ? buildRow : probeRow;
-                    JQuickRow rightRow = buildLeft ? probeRow : buildRow;
-                    JQuickRow joined = joinRows(leftRow, rightRow, node.getJoinType(), buildLeft);
-                    if (joined != null && (node.getCondition() == null || 
-                        expressionEvaluator.evaluatePredicate(joined, node.getCondition()))) {
-                        resultRows.add(joined);
-                        matchedBuildRows.add(buildRow);
-                    } else if (joined != null && node.getCondition() != null) {
-                        console.info("probeAndMatch - condition failed for joined row");
-                    }
-                }
-            } else if (node.getJoinType() == com.github.paohaijiao.enums.JQuickJoinType.LEFT || 
-                       node.getJoinType() == com.github.paohaijiao.enums.JQuickJoinType.FULL) {
-                // 左连接/全连接：探测表行无匹配，输出探测表行（构建表为null）
-                // buildLeft=false时，probeRow是左表行
-                JQuickRow leftRow = buildLeft ? null : probeRow;
-                JQuickRow rightRow = buildLeft ? probeRow : null;
-                JQuickRow joined = joinRows(leftRow, rightRow, node.getJoinType(), !buildLeft);
-                if (joined != null && (node.getCondition() == null || 
-                    expressionEvaluator.evaluatePredicate(joined, node.getCondition()))) {
-                    resultRows.add(joined);
-                }
-            }
-        }
-        console.info("probeAndMatch - resultRows size: " + resultRows.size());
-    }
-    
-    /**
-     * 处理外连接中未匹配的构建表行
-     */
-    private void handleUnmatchedBuildRows(JQuickHashJoinPhysicalNode node, 
-                                          Map<Object, List<JQuickRow>> hashTable,
-                                          Set<JQuickRow> matchedBuildRows, List<JQuickRow> resultRows) {
-        if (node.getJoinType() != com.github.paohaijiao.enums.JQuickJoinType.RIGHT && 
-            node.getJoinType() != com.github.paohaijiao.enums.JQuickJoinType.FULL) {
-            return;
-        }
-        
-        boolean buildLeft = node.getBuildSide() == JQuickHashJoinPhysicalNode.BuildSide.LEFT;
-        
-        for (List<JQuickRow> buildRows : hashTable.values()) {
-            for (JQuickRow buildRow : buildRows) {
-                if (!matchedBuildRows.contains(buildRow)) {
-                    // 构建表行无匹配，输出构建表行（探测表为null）
-                    JQuickRow joined;
-                    if (buildLeft) {
-                        // 左表是构建表
-                        joined = joinRows(buildRow, null, node.getJoinType(), true);
-                    } else {
-                        // 右表是构建表
-                        joined = joinRows(null, buildRow, node.getJoinType(), false);
-                    }
-                    if (joined != null && (node.getCondition() == null || 
-                        expressionEvaluator.evaluatePredicate(joined, node.getCondition()))) {
-                        resultRows.add(joined);
-                    }
-                }
-            }
-        }
-    }
-    
-    /**
      * 执行 Nested Loop Join
+     * 采用 JQuickJoinHandler 来实现所有 JOIN 类型的处理
      */
     private JQuickDataSet executeNestedLoopJoin(JQuickNestedLoopJoinPhysicalNode node, JQuickWorker.JQuickTaskContext context) {
         JQuickDataSet leftData = executeNode(node.getLeft(), context);
         JQuickDataSet rightData = executeNode(node.getRight(), context);
-        List<JQuickRow> resultRows = new ArrayList<>();
-        
-        // 对于 CROSS JOIN，没有条件，直接计算笛卡尔积
-        if (node.getCondition() == null) {
-            for (JQuickRow leftRow : leftData.getRows()) {
-                for (JQuickRow rightRow : rightData.getRows()) {
-                    JQuickRow joined = joinRows(leftRow, rightRow, node.getJoinType(), true);
-                    if (joined != null) {
-                        resultRows.add(joined);
-                    }
-                }
-            }
-        } else {
-            // 对于有条件的 JOIN，需要在连接前评估条件
-            // 使用临时行来评估条件，避免列名冲突
-            
-            // 对于 RIGHT JOIN 和 FULL JOIN，需要跟踪哪些右表行找到了匹配
-            Set<JQuickRow> matchedRightRows = new HashSet<>();
-            
-            // 设置列名别名上下文，以便表达式求值器能正确解析列名
-            Map<String, String> aliasToTable = new HashMap<>();
-            aliasToTable.put("left", "left");
-            aliasToTable.put("right", "right");
-            
-            Map<String, String> columnAliasToActual = new HashMap<>();
-            for (String col : leftData.getColumns().stream().map(c -> c.getName()).collect(Collectors.toList())) {
-                columnAliasToActual.put("left." + col, col);
-            }
-            for (String col : rightData.getColumns().stream().map(c -> c.getName()).collect(Collectors.toList())) {
-                columnAliasToActual.put("right." + col, col);
-            }
-            
-            expressionEvaluator.setAliasContext(aliasToTable, columnAliasToActual);
-            
-            try {
-            for (JQuickRow leftRow : leftData.getRows()) {
-                boolean foundMatch = false;
-                for (JQuickRow rightRow : rightData.getRows()) {
-                    // 创建临时行用于评估条件
-                    JQuickRow tempRow = new JQuickRow();
-                    // 添加左右表的所有列
-                    // 首先添加左表列
-                    for (Map.Entry<String, Object> entry : leftRow.entrySet()) {
-                        tempRow.put("left." + entry.getKey(), entry.getValue());
-                        tempRow.put(entry.getKey(), entry.getValue()); // 保留原始列名，优先使用
-                    }
-                    // 然后添加右表列，如果有冲突则不覆盖原始列名
-                    for (Map.Entry<String, Object> entry : rightRow.entrySet()) {
-                        tempRow.put("right." + entry.getKey(), entry.getValue());
-                        // 只在左表没有该列时添加原始列名，避免覆盖
-                        if (!tempRow.containsKey(entry.getKey())) {
-                            tempRow.put(entry.getKey(), entry.getValue());
-                        }
-                    }
-                    
-                    // 评估条件
-                    if (expressionEvaluator.evaluatePredicate(tempRow, node.getCondition())) {
-                        JQuickRow joined = joinRows(leftRow, rightRow, node.getJoinType(), true);
-                        if (joined != null) {
-                            resultRows.add(joined);
-                            foundMatch = true;
-                            matchedRightRows.add(rightRow);
-                        }
-                    }
-                }
-                
-                // 对于 LEFT JOIN 和 FULL JOIN，如果左表行没有找到匹配，添加左表行（右表列为 null）
-                if (!foundMatch && (node.getJoinType() == com.github.paohaijiao.enums.JQuickJoinType.LEFT || 
-                                    node.getJoinType() == com.github.paohaijiao.enums.JQuickJoinType.FULL)) {
-                    JQuickRow joined = joinRows(leftRow, null, node.getJoinType(), true);
-                    if (joined != null) {
-                        resultRows.add(joined);
-                    }
-                }
-            }
-            
-            // 对于 RIGHT JOIN 和 FULL JOIN，添加没有匹配的右表行（左表列为 null）
-            if (node.getJoinType() == com.github.paohaijiao.enums.JQuickJoinType.RIGHT || 
-                node.getJoinType() == com.github.paohaijiao.enums.JQuickJoinType.FULL) {
-                for (JQuickRow rightRow : rightData.getRows()) {
-                    if (!matchedRightRows.contains(rightRow)) {
-                        JQuickRow joined = joinRows(null, rightRow, node.getJoinType(), true);
-                        if (joined != null) {
-                            resultRows.add(joined);
-                        }
-                    }
-                }
-            }
-            } finally {
-                expressionEvaluator.clearAliasContext();
-            }
-        }
-        
-        // 合并左右两侧的列元数据
-        List<JQuickColumnMeta> columnMetas = new ArrayList<>();
-        columnMetas.addAll(leftData.getColumns());
-        columnMetas.addAll(rightData.getColumns());
-        return new JQuickDataSet(columnMetas, resultRows);
+        console.info("executeNestedLoopJoin - joinType: " + node.getJoinType() + ", condition: " + node.getCondition());
+        JQuickJoinHandler handler = joinHandlerFactory.getHandler(node.getJoinType());
+        JQuickDataSet result = handler.join(leftData, rightData, null, node.getCondition(), true);
+        console.info("executeNestedLoopJoin - result rows: " + result.size());
+        return result;
     }
-
-    /**
-     * 执行 CROSS JOIN（笛卡尔积）
-     */
-    private JQuickDataSet executeCrossJoin(JQuickHashJoinPhysicalNode node, JQuickWorker.JQuickTaskContext context) {
-        JQuickDataSet leftData = executeNode(node.getLeft(), context);
-        JQuickDataSet rightData = executeNode(node.getRight(), context);
-        List<JQuickRow> resultRows = new ArrayList<>();
-        for (JQuickRow leftRow : leftData.getRows()) {
-            for (JQuickRow rightRow : rightData.getRows()) {
-                JQuickRow joined = joinRows(leftRow, rightRow, node.getJoinType(), true);
-                if (joined != null) {
-                    if (node.getCondition() == null || expressionEvaluator.evaluatePredicate(joined, node.getCondition())) {
-                        resultRows.add(joined);
-                    }
-                }
-            }
-        }
-        List<JQuickColumnMeta> columnMetas = convertPhysicalColumnsToMeta(dataConverter.buildOutputSchema(node));
-        return new JQuickDataSet(columnMetas, resultRows);
-    }
-
-    /**
-     * 构建哈希表
-     */
-    private Map<Object, List<JQuickRow>> buildHashTable(JQuickDataSet data, JQuickHashJoinPhysicalNode node, boolean useLeftKey) {
-        Map<Object, List<JQuickRow>> hashTable = new HashMap<>();
-        List<JQuickHashJoinPhysicalNode.JoinKeyPair> joinKeys = node.getJoinKeys();
-        for (JQuickRow row : data.getRows()) {
-            Object key = extractJoinKeyDirect(row, joinKeys, useLeftKey);
-            if (key != null) {
-                hashTable.computeIfAbsent(key, k -> new ArrayList<>()).add(row);
-            } else {
-                console.warn("buildHashTable - null join key for row: " + row.keySet());
-            }
-        }
-        console.info("buildHashTable - hashTable size: " + hashTable.size());
-        return hashTable;
-    }
-
     /**
      * 执行 Hash Aggregate
      */
@@ -720,7 +487,6 @@ public class JQuickNodeExecutor {
             String alias = agg.getAlias() != null ? agg.getAlias() : agg.getFunctionName();
             result.put(alias, value);
         }
-        //构建聚合结果列元数据
         List<JQuickColumnMeta> columnMetas = buildColumnMetasForAggregate(node);
         return new JQuickDataSet(columnMetas, Collections.singletonList(result));
     }
@@ -804,7 +570,6 @@ public class JQuickNodeExecutor {
     private JQuickDataSet executeSetOperation(JQuickSetOperationPhysicalNode node, JQuickWorker.JQuickTaskContext context) {
         JQuickDataSet leftData;
         JQuickDataSet rightData;
-        
         // 如果 children 为空（分布式场景），从 inputPartitions 读取数据
         if (node.getLeft() == null || node.getRight() == null) {
             JQuickExecuteTaskRequest request = context.getRequest();
@@ -813,7 +578,6 @@ public class JQuickNodeExecutor {
                 leftData = datasets.get(0);
                 rightData = datasets.get(1);
             } else if (datasets.size() == 1) {
-                // 同一个数据集作为左右
                 leftData = datasets.get(0);
                 rightData = datasets.get(0);
             } else {
@@ -824,7 +588,6 @@ public class JQuickNodeExecutor {
             leftData = executeNode(node.getLeft(), context);
             rightData = executeNode(node.getRight(), context);
         }
-        
         List<JQuickRow> resultRows;
         switch (node.getOperationType()) {
             case UNION:
@@ -1539,28 +1302,6 @@ public class JQuickNodeExecutor {
         }
         // 返回第一个排序键的值
         return row.get(windowSpec.getOrderKeys().get(0).getColumnName());
-    }
-
-    private JQuickRow joinRows(JQuickRow leftRow, JQuickRow rightRow, com.github.paohaijiao.enums.JQuickJoinType joinType, boolean leftIsBuild) {
-        JQuickRow result = new JQuickRow();
-        // 添加不带前缀的列（保持向后兼容）
-        if (leftRow != null) result.putAll(leftRow);
-        if (rightRow != null) result.putAll(rightRow);
-        // 添加带前缀的列（用于区分同名列）
-        if (leftRow != null) {
-            for (Map.Entry<String, Object> entry : leftRow.entrySet()) {
-                result.put("left." + entry.getKey(), entry.getValue());
-            }
-        }
-        if (rightRow != null) {
-            for (Map.Entry<String, Object> entry : rightRow.entrySet()) {
-                result.put("right." + entry.getKey(), entry.getValue());
-            }
-        }
-        console.info("joinRows - left keys: " + (leftRow != null ? leftRow.keySet() : "null") 
-                + ", right keys: " + (rightRow != null ? rightRow.keySet() : "null")
-                + ", result keys: " + result.keySet());
-        return result;
     }
 
     private JQuickDataSet applyFilter(JQuickDataSet data, JQuickExpression predicate) {

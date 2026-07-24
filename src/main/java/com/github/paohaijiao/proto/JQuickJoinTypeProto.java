@@ -40,6 +40,11 @@ public enum JQuickJoinTypeProto
    * <code>JOIN_ANTI = 6;</code>
    */
   JOIN_ANTI(6),
+  /**
+   * <code>JOIN_NATURAL = 7;</code>
+   */
+  JOIN_NATURAL(7),
+
   UNRECOGNIZED(-1),
   ;
 
@@ -71,6 +76,10 @@ public enum JQuickJoinTypeProto
    * <code>JOIN_ANTI = 6;</code>
    */
   public static final int JOIN_ANTI_VALUE = 6;
+  /**
+   * <code>JOIN_NATURAL = 7;</code>
+   */
+  public static final int JOIN_NATURAL_VALUE = 7;
 
 
   public final int getNumber() {
@@ -104,6 +113,7 @@ public enum JQuickJoinTypeProto
       case 4: return JOIN_CROSS;
       case 5: return JOIN_SEMI;
       case 6: return JOIN_ANTI;
+      case 7: return JOIN_NATURAL;
       default: return null;
     }
   }

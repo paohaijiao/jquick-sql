@@ -3,7 +3,6 @@ package com.github.paohaijiao.distributed.worker.join;
 import com.github.paohaijiao.distributed.worker.JQuickExpressionEvaluator;
 import com.github.paohaijiao.enums.JQuickJoinType;
 import com.github.paohaijiao.expression.JQuickExpression;
-import com.github.paohaijiao.expression.domain.JQuickColumnRefExpression;
 import com.github.paohaijiao.physical.node.JQuickHashJoinPhysicalNode;
 import com.github.paohaijiao.statement.JQuickColumnMeta;
 import com.github.paohaijiao.statement.JQuickDataSet;
@@ -27,34 +26,47 @@ public class JQuickNaturalJoinHandler extends JQuickAbstractJoinHandler {
     }
 
     /**
-     * NATURAL JOIN 可以使用优化器推荐的构建侧
-     * 因为 NATURAL JOIN 语义上等同于 INNER JOIN（自动检测同名列）
+     * NATURAL JOIN 的核心逻辑：按照同名列进行 INNER JOIN
+     * 无论是否有 JOIN 键，都按照 NATURAL JOIN 的语义进行处理
      */
     @Override
-    protected boolean shouldUseBuildSideOptimization() {
-        return true;
-    }
-
-    @Override
     public JQuickDataSet join(JQuickDataSet leftData, JQuickDataSet rightData, List<JQuickHashJoinPhysicalNode.JoinKeyPair> joinKeys, JQuickExpression condition, boolean buildLeft) {
-        List<JQuickHashJoinPhysicalNode.JoinKeyPair> naturalJoinKeys = detectNaturalJoinKeys(leftData, rightData); // NATURAL JOIN 自动检测同名列作为 JOIN 键
-        if (naturalJoinKeys.isEmpty()) { // 如果没有同名列，执行笛卡尔积
-            return executeCartesianProduct(leftData, rightData, condition);
+        console.info("========== JQuickNaturalJoinHandler.join() called ==========");
+        Set<String> leftColumnSet = extractColumnNames(leftData);
+        Set<String> rightColumnSet = extractColumnNames(rightData);
+        console.info("NATURAL JOIN - left columns: " + leftColumnSet);
+        console.info("NATURAL JOIN - right columns: " + rightColumnSet);
+        Set<String> commonColumns = new HashSet<>(leftColumnSet);
+        commonColumns.retainAll(rightColumnSet);
+        console.info("NATURAL JOIN - common columns: " + commonColumns);
+        if (commonColumns.isEmpty()) {
+            console.warn("NATURAL JOIN - no common columns found, returning empty result");
+            return buildResultDataSet(new ArrayList<>(), leftData, rightData);
         }
-        List<JQuickRow> resultRows = new ArrayList<>(); // 使用 Hash Join 算法（INNER JOIN 语义）
-        // 确定构建侧和探测侧
-        JQuickDataSet buildData = buildLeft ? leftData : rightData;
-        JQuickDataSet probeData = buildLeft ? rightData : leftData;
-        Map<Object, List<JQuickRow>> hashTable = buildHashTable(buildData, naturalJoinKeys, buildLeft);    // 构建哈希表
-        boolean useLeftKeyForProbe = !buildLeft;   // 探测匹配
-        for (JQuickRow probeRow : probeData.getRows()) {
-            Object joinKey = extractJoinKey(probeRow, naturalJoinKeys, useLeftKeyForProbe);
-            List<JQuickRow> matchingRows = hashTable.get(joinKey);
-            if (matchingRows != null) {
-                for (JQuickRow buildRow : matchingRows) {
-                    JQuickRow leftRow = buildLeft ? buildRow : probeRow;
-                    JQuickRow rightRow = buildLeft ? probeRow : buildRow;
-                    JQuickRow joined = joinRowsWithNaturalMerge(leftRow, rightRow);  // NATURAL JOIN 合并相同名称的列（只保留一个）
+        List<JQuickRow> resultRows = new ArrayList<>();
+        // NATURAL JOIN 语义：按照同名列进行 INNER JOIN
+        // 遍历左表和右表，找到同名列值相等的行
+        for (JQuickRow leftRow : leftData.getRows()) {
+            for (JQuickRow rightRow : rightData.getRows()) {
+                // 检查所有同名列的值是否相等
+                boolean match = true;
+                for (String colName : commonColumns) {
+                    Object leftValue = getRowValue(leftRow, colName);
+                    Object rightValue = getRowValue(rightRow, colName);
+                    console.info("NATURAL JOIN - comparing column '" + colName + "': left=" + leftValue + ", right=" + rightValue);
+                    if (leftValue == null || rightValue == null) {// 任一值为 null 则不匹配
+                        match = false;
+                        break;
+                    }
+                    // 值不相等则不匹配
+                    if (!leftValue.equals(rightValue)) {
+                        match = false;
+                        break;
+                    }
+                }
+                
+                if (match) {
+                    JQuickRow joined = mergeRows(leftRow, rightRow, commonColumns);
                     if (evaluateCondition(joined, condition)) {
                         resultRows.add(joined);
                     }
@@ -62,72 +74,112 @@ public class JQuickNaturalJoinHandler extends JQuickAbstractJoinHandler {
             }
         }
 
+        console.info("NATURAL JOIN - result rows: " + resultRows.size());
         return buildResultDataSet(resultRows, leftData, rightData);
     }
 
+    @Override
+    protected boolean shouldUseBuildSideOptimization() {
+        return false;
+    }
+
+    @Override
+    public Map<Object, List<JQuickRow>> buildHashTable(JQuickDataSet data, List<JQuickHashJoinPhysicalNode.JoinKeyPair> joinKeys, boolean useLeftKey) {
+        return new HashMap<>();
+    }
+
+    @Override
+    public Object extractJoinKey(JQuickRow row, List<JQuickHashJoinPhysicalNode.JoinKeyPair> joinKeys, boolean useLeftKey) {
+        return null;
+    }
+
     /**
-     * 检测 NATURAL JOIN 的 JOIN 键（同名列）
+     * 从数据集中提取列名集合（不区分大小写）
      */
-    private List<JQuickHashJoinPhysicalNode.JoinKeyPair> detectNaturalJoinKeys(JQuickDataSet leftData, JQuickDataSet rightData) {
-        List<JQuickHashJoinPhysicalNode.JoinKeyPair> joinKeys = new ArrayList<>();
-        Set<String> leftColumnNames = new HashSet<>();        // 获取左右表的列名集合
-        for (JQuickColumnMeta col : leftData.getColumns()) {
-            leftColumnNames.add(col.getName());
+    private Set<String> extractColumnNames(JQuickDataSet data) {
+        Set<String> columnNames = new HashSet<>();
+        for (JQuickColumnMeta col : data.getColumns()) {
+            String name = col.getName();
+            // 去除表前缀，只保留纯列名
+            int dotIndex = name.lastIndexOf('.');
+            if (dotIndex >= 0) {
+                name = name.substring(dotIndex + 1);
+            }
+            columnNames.add(name.toLowerCase());
         }
-        Set<String> rightColumnNames = new HashSet<>();
-        for (JQuickColumnMeta col : rightData.getColumns()) {
-            rightColumnNames.add(col.getName());
+        return columnNames;
+    }
+
+    /**
+     * 从行中获取指定列的值（不区分大小写）
+     */
+    private Object getRowValue(JQuickRow row, String colName) {
+        String lowerColName = colName.toLowerCase();
+        
+        // 1. 直接使用原始列名
+        if (row.containsKey(colName)) {
+            return row.get(colName);
         }
-        for (String colName : leftColumnNames) {  // 查找同名列
-            if (rightColumnNames.contains(colName)) {
-                JQuickColumnRefExpression leftKey = new JQuickColumnRefExpression(null, colName);
-                JQuickColumnRefExpression rightKey = new JQuickColumnRefExpression(null, colName);
-                joinKeys.add(new JQuickHashJoinPhysicalNode.JoinKeyPair(leftKey, rightKey));
+        
+        // 2. 使用小写列名
+        if (row.containsKey(lowerColName)) {
+            return row.get(lowerColName);
+        }
+        
+        // 3. 遍历所有键，查找匹配的列（不区分大小写）
+        for (String key : row.keySet()) {
+            String pureName = key;
+            int dotIndex = key.lastIndexOf('.');
+            if (dotIndex >= 0) {
+                pureName = key.substring(dotIndex + 1);
+            }
+            if (pureName.toLowerCase().equals(lowerColName)) {
+                return row.get(key);
             }
         }
-
-        return joinKeys;
+        
+        console.warn("NATURAL JOIN - getRowValue: column '" + colName + "' not found in row keys: " + row.keySet());
+        return null;
     }
 
     /**
      * NATURAL JOIN 合并行（相同名称的列只保留一个）
      */
-    private JQuickRow joinRowsWithNaturalMerge(JQuickRow leftRow, JQuickRow rightRow) {
+    private JQuickRow mergeRows(JQuickRow leftRow, JQuickRow rightRow, Set<String> commonColumns) {
         JQuickRow result = new JQuickRow();
-        if (leftRow != null) {   // 添加左表列（作为基准）
-            for (Map.Entry<String, Object> entry : leftRow.entrySet()) {// 跳过带前缀的列
-                if (!entry.getKey().startsWith("left.") && !entry.getKey().startsWith("right.")) {
-                    result.put(entry.getKey(), entry.getValue());
+        
+        // 添加左表列
+        if (leftRow != null) {
+            for (Map.Entry<String, Object> entry : leftRow.entrySet()) {
+                String key = entry.getKey();
+                String pureKey = key;
+                int dotIndex = key.lastIndexOf('.');
+                if (dotIndex >= 0) {
+                    pureKey = key.substring(dotIndex + 1);
+                }
+                // 使用纯列名作为键
+                if (!result.containsKey(pureKey)) {
+                    result.put(pureKey, entry.getValue());
                 }
             }
         }
-        if (rightRow != null) { // 添加右表列（跳过与左表同名的列）
+        
+        // 添加右表列（跳过与左表同名的列）
+        if (rightRow != null) {
             for (Map.Entry<String, Object> entry : rightRow.entrySet()) {
-                // 跳过带前缀的列和已存在的列
-                if (!entry.getKey().startsWith("left.") && !entry.getKey().startsWith("right.")
-                        && !result.containsKey(entry.getKey())) {
-                    result.put(entry.getKey(), entry.getValue());
+                String key = entry.getKey();
+                String pureKey = key;
+                int dotIndex = key.lastIndexOf('.');
+                if (dotIndex >= 0) {
+                    pureKey = key.substring(dotIndex + 1);
+                }
+                // 使用纯列名作为键，跳过已存在的列
+                if (!result.containsKey(pureKey)) {
+                    result.put(pureKey, entry.getValue());
                 }
             }
         }
-
+        
         return result;
-    }
-
-    /**
-     * 执行笛卡尔积（无同名列时）
-     */
-    private JQuickDataSet executeCartesianProduct(JQuickDataSet leftData, JQuickDataSet rightData, JQuickExpression condition) {
-        List<JQuickRow> resultRows = new ArrayList<>();
-        for (JQuickRow leftRow : leftData.getRows()) {
-            for (JQuickRow rightRow : rightData.getRows()) {
-                JQuickRow joined = joinRowsWithNaturalMerge(leftRow, rightRow);
-                if (evaluateCondition(joined, condition)) {
-                    resultRows.add(joined);
-                }
-            }
-        }
-
-        return buildResultDataSet(resultRows, leftData, rightData);
     }
 }
