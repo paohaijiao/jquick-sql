@@ -315,9 +315,9 @@ public class JQuickExpressionEvaluator {
         }
         switch (operator) {
             case EQ:
-                return Objects.equals(left, right);
+                return compareValues(left, right, false) == 0;
             case NE:
-                return !Objects.equals(left, right);
+                return compareValues(left, right, false) != 0;
             case GT:
                 return compareValues(left, right, false) > 0;
             case LT:

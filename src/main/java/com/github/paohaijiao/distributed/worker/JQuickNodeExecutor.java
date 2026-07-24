@@ -185,20 +185,28 @@ public class JQuickNodeExecutor {
                 console.info("Reading from input partitions (by table name): " + tableName + ", rows: " + partitionData.size());
                 data = partitionData;
             } else {
-                // 2. INTERMEDIATE Fragment：尝试读取任意输入分区
-                partitionData = readFromAnyInputPartition(context.getRequest());
-                if (partitionData != null && !partitionData.isEmpty()) {
-                    console.info("Reading from input partitions (INTERMEDIATE fragment): " + tableName + ", rows: " + partitionData.size());
-                    data = partitionData;
-                } else if (node.getPartitionInfo() != null) {
-                    console.info("Reading from memory partition: " + tableName);
-                    data = readFromMemoryPartition(tableName);
-                } else if (JQuickDataSourceManager.containsTable(tableName)) {
-                    console.info("Reading from data source (fallback): " + tableName);
-                    data = JQuickDataSourceManager.getTable(tableName);
+                // 2. 尝试从内存分区读取（subquery_partition_xxx 格式）- 优先于 readFromAnyInputPartition
+                String subqueryPartitionId = "subquery_partition_" + tableName;
+                JQuickDataSet memoryData = readFromMemoryPartition(subqueryPartitionId);
+                if (memoryData != null && !memoryData.isEmpty()) {
+                    console.info("Reading from memory partition (subquery): " + subqueryPartitionId + ", rows: " + memoryData.size());
+                    data = memoryData;
                 } else {
-                    console.info("Reading from data source: " + tableName);
-                    data = readFromDataSource(tableName);
+                    // 3. INTERMEDIATE Fragment：尝试读取任意输入分区
+                    partitionData = readFromAnyInputPartition(context.getRequest());
+                    if (partitionData != null && !partitionData.isEmpty()) {
+                        console.info("Reading from input partitions (INTERMEDIATE fragment): " + tableName + ", rows: " + partitionData.size());
+                        data = partitionData;
+                    } else if (node.getPartitionInfo() != null) {
+                        console.info("Reading from memory partition: " + tableName);
+                        data = readFromMemoryPartition(tableName);
+                    } else if (JQuickDataSourceManager.containsTable(tableName)) {
+                        console.info("Reading from data source (fallback): " + tableName);
+                        data = JQuickDataSourceManager.getTable(tableName);
+                    } else {
+                        console.info("Reading from data source: " + tableName);
+                        data = readFromDataSource(tableName);
+                    }
                 }
             }
         } else if (JQuickDataSourceManager.containsTable(tableName)) {
@@ -347,10 +355,8 @@ public class JQuickNodeExecutor {
     private void setupAliasContext(JQuickHashJoinPhysicalNode node) {
         Map<String, String> aliasToTable = new HashMap<>();
         Map<String, String> columnAliasToActual = new HashMap<>();
-        
         String leftAlias = extractTableAlias(node.getLeft());
         String rightAlias = extractTableAlias(node.getRight());
-        
         if (leftAlias != null) {
             aliasToTable.put(leftAlias, "left");
             for (JQuickPhysicalColumn col : node.getLeft().getOutputSchema()) {
@@ -363,7 +369,6 @@ public class JQuickNodeExecutor {
                 columnAliasToActual.put(rightAlias + "." + col.getName(), col.getName());
             }
         }
-        
         expressionEvaluator.setAliasContext(aliasToTable, columnAliasToActual);
     }
     
@@ -570,19 +575,48 @@ public class JQuickNodeExecutor {
     private JQuickDataSet executeSetOperation(JQuickSetOperationPhysicalNode node, JQuickWorker.JQuickTaskContext context) {
         JQuickDataSet leftData;
         JQuickDataSet rightData;
-        // 如果 children 为空（分布式场景），从 inputPartitions 读取数据
-        if (node.getLeft() == null || node.getRight() == null) {
-            JQuickExecuteTaskRequest request = context.getRequest();
-            List<JQuickDataSet> datasets = readFromInputPartitionsForSetOperation(request);
-            if (datasets.size() >= 2) {
-                leftData = datasets.get(0);
-                rightData = datasets.get(1);
-            } else if (datasets.size() == 1) {
-                leftData = datasets.get(0);
-                rightData = datasets.get(0);
-            } else {
-                leftData = JQuickDataSet.builder().build();
-                rightData = JQuickDataSet.builder().build();
+        boolean hasInputPartitions = context != null && context.getRequest() != null && context.getRequest().getInputPartitionsCount() > 0;
+        if (hasInputPartitions) {
+            List<JQuickMemoryPartitionProto> inputPartitions = context.getRequest().getInputPartitionsList();
+            Set<JQuickTableScanPhysicalNode> leftTableScans = collectTableScans(node.getLeft());
+            Set<JQuickTableScanPhysicalNode> rightTableScans = collectTableScans(node.getRight());
+            
+            // 先执行左分支
+            if (inputPartitions.size() >= 1) {
+                JQuickDataSet leftPartitionData = dataConverter.convertFromProto(inputPartitions.get(0).getData());
+                for (JQuickTableScanPhysicalNode ts : leftTableScans) {
+                    String partitionId = "subquery_partition_" + ts.getTableName();
+                    JQuickWorker.JQuickMemoryPartition partition = new JQuickWorker.JQuickMemoryPartition(0, 1);
+                    partition.setPartitionId(partitionId);
+                    partition.setData(leftPartitionData);
+                    worker.getMemoryPartitions().put(partitionId, partition);
+                }
+            }
+            leftData = executeNode(node.getLeft(), context);
+            
+            // 清理左分支数据
+            for (JQuickTableScanPhysicalNode ts : leftTableScans) {
+                String partitionId = "subquery_partition_" + ts.getTableName();
+                worker.getMemoryPartitions().remove(partitionId);
+            }
+            
+            // 再执行右分支
+            if (inputPartitions.size() >= 2) {
+                JQuickDataSet rightPartitionData = dataConverter.convertFromProto(inputPartitions.get(1).getData());
+                for (JQuickTableScanPhysicalNode ts : rightTableScans) {
+                    String partitionId = "subquery_partition_" + ts.getTableName();
+                    JQuickWorker.JQuickMemoryPartition partition = new JQuickWorker.JQuickMemoryPartition(0, 1);
+                    partition.setPartitionId(partitionId);
+                    partition.setData(rightPartitionData);
+                    worker.getMemoryPartitions().put(partitionId, partition);
+                }
+            }
+            rightData = executeNode(node.getRight(), context);
+            
+            // 清理右分支数据
+            for (JQuickTableScanPhysicalNode ts : rightTableScans) {
+                String partitionId = "subquery_partition_" + ts.getTableName();
+                worker.getMemoryPartitions().remove(partitionId);
             }
         } else {
             leftData = executeNode(node.getLeft(), context);
@@ -591,7 +625,6 @@ public class JQuickNodeExecutor {
         List<JQuickRow> resultRows;
         switch (node.getOperationType()) {
             case UNION:
-                // 使用基于内容的比较实现去重
                 resultRows = unionWithContentComparison(leftData.getRows(), rightData.getRows());
                 break;
             case UNION_ALL:
