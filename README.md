@@ -55,7 +55,7 @@ Optimization and distributed execution capabilities.
 <dependency>
     <groupId>io.github.paohaijiao</groupId>
     <artifactId>jquick-sql</artifactId>
-    <version>2.0.0</version>
+    <version>${latest.version}</version>
 </dependency>
 ```
 
