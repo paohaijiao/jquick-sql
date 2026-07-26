@@ -127,6 +127,8 @@ sql.shutdown();
 | 6 | Martin | 30 | active | true | guangzhou | 1978-06-30 |
 
 #### 1.1 
+> Returns all columns and rows from the `users` table. Useful for viewing the complete dataset.
+
 **SQL Code**
 ```sql
 SELECT * FROM users
@@ -146,6 +148,8 @@ SELECT * FROM users
 ```
 ---
 #### 1.2
+>  Returns only the specified columns (`id`, `name`, `age`, `status`, `enable`, `addr`) from the `users` table
+
 **SQL Code**
 ```sql
 SELECT id, name,age, status,enable,addr FROM users
@@ -164,6 +168,8 @@ SELECT id, name,age, status,enable,addr FROM users
 ```
 
 #### 1.3
+> Built-in functions like `toUpper()` are provided by [**jquick-transform-function**](https://github.com/paohaijiao/jquick-transform-function) and can be extended via <span style="color:red"> **SPI**</span>.(Service Provider Interface).
+
 **SQL Code**
 ```sql
 SELECT id, toUpper(name) as upperName,age, status,enable,addr,birthday FROM users
@@ -182,6 +188,8 @@ SELECT id, toUpper(name) as upperName,age, status,enable,addr,birthday FROM user
 ```
 
 #### 1.4
+>Supports nested arithmetic expressions, e.g., (age + 1) * 3 on the age column, and aliases name as upperName.
+
 **SQL Code**
 ```sql
 SELECT id, name as upperName,(age+1)*3 as age, status,enable,addr,birthday FROM users
@@ -200,6 +208,8 @@ SELECT id, name as upperName,(age+1)*3 as age, status,enable,addr,birthday FROM 
 ```
 
 #### 1.5
+> Supports CASE WHEN conditional expressions to categorize age into groups.
+
 **SQL Code**
 ```sql
 SELECT id, name, age, CASE WHEN age >= 30 THEN '中年'      WHEN age >= 20 THEN '青年'      ELSE '少年' END AS age_group FROM users
@@ -218,6 +228,8 @@ SELECT id, name, age, CASE WHEN age >= 30 THEN '中年'      WHEN age >= 20 THEN
 ```
 
 #### 1.6
+>Returns distinct  values from the users table, removing duplicates.
+
 **SQL Code**
 ```sql
 SELECT distinct age FROM users
@@ -235,6 +247,8 @@ SELECT distinct age FROM users
 [2026-07-23 11:25:44.641] [INFO] Total: 5 rows
 ```
 #### 1.7
+>Supports  express '!' conduct boolean negation (e.g., !enable).
+
 **SQL Code**
 ```sql
 SELECT id, toUpper(name) as upperName,age, status,!enable,addr,birthday FROM users
@@ -253,6 +267,8 @@ SELECT id, toUpper(name) as upperName,age, status,!enable,addr,birthday FROM use
 [2026-07-23 11:26:55.090] [INFO] Total: 6 rows
 ```
 #### 1.8
+> Supports constant expressions (e.g., 0 as index, 'hello' as greeting, 1 + 1 as two) as fields in the SELECT clause.
+
 **SQL Code**
 ```sql
 SELECT 0 as index,id, toUpper(name) as upperName,age, status,!enable,addr,birthday FROM users
@@ -271,6 +287,11 @@ SELECT 0 as index,id, toUpper(name) as upperName,age, status,!enable,addr,birthd
 [2026-07-23 11:27:41.670] [INFO] Total: 6 rows
 ```
 ### 2. WHERE Query
+>Filters rows based on specified conditions. Supports comparison operators (=, >, >=, <, <=, <>), 
+> logical operators (AND, OR, NOT), NULL checks (IS NULL, IS NOT NULL), range queries (BETWEEN), 
+> Set membership (IN), Pattern Matching (LIKE), regular expressions (REGEXP), and subqueries (EXISTS).
+
+
 **Input Data**
 
 | id | name | age | status | enable | addr | birthday |
@@ -284,6 +305,8 @@ SELECT 0 as index,id, toUpper(name) as upperName,age, status,!enable,addr,birthd
 | 7 | Davila | 39 | active | true | null | 1999-06-30 |
 
 #### 2.1 
+> WHERE column = value — Filters rows based on an equality condition, e.g., status = 'active'.
+
 **SQL Code**
 ```sql
 SELECT * FROM users WHERE status = 'active'
@@ -301,6 +324,9 @@ SELECT * FROM users WHERE status = 'active'
 [2026-07-23 11:32:33.878] [INFO] Total: 5 rows
 ```
 #### 2.2
+>WHERE condition1 AND condition2 — Filters rows using multiple conditions with logical AND. 
+> This query returns active users with age greater than 25.
+
 **SQL Code**
 ```sql
 SELECT * FROM users WHERE age > 25 AND status = 'active'
@@ -318,6 +344,9 @@ SELECT * FROM users WHERE age > 25 AND status = 'active'
 ```
 
 #### 2.3
+>WHERE condition1 OR condition2 — Filters rows using logical OR. 
+> This query returns users who are either pending or enabled.
+> 
 **SQL Code**
 ```sql
 SELECT * FROM users WHERE status = 'pending' OR enable = true
@@ -338,6 +367,10 @@ SELECT * FROM users WHERE status = 'pending' OR enable = true
 ```
 
 #### 2.4
+>WHERE condition OR (condition OR condition) — Supports nested parentheses for complex logical grouping. This query
+> returns users who are older than 30, or have status 'pending', or live in 'chengdu'.
+>
+
 **SQL Code**
 ```sql
 SELECT * FROM users WHERE age > 30 OR (status = 'pending' OR addr = 'chengdu')
@@ -354,6 +387,9 @@ SELECT * FROM users WHERE age > 30 OR (status = 'pending' OR addr = 'chengdu')
 ```
 
 #### 2.5
+>WHERE true — Filters rows with a constant boolean condition. This query returns all rows from the users table.
+
+
 **SQL Code**
 ```sql
 SELECT * FROM users WHERE true
@@ -374,6 +410,8 @@ SELECT * FROM users WHERE true
 ```
 
 #### 2.6
+> WHERE column — Filters rows where the boolean column evaluates to true. This query returns all enabled users.
+
 **SQL Code**
 ```sql
 SELECT * FROM users WHERE enable
@@ -394,6 +432,8 @@ SELECT * FROM users WHERE enable
 
 
 #### 2.7
+>WHERE function(column) = value — Supports function calls in filter conditions. This query converts name to uppercase and returns the user whose name is 'ALICE'.
+
 **SQL Code**
 ```sql
 SELECT * FROM users WHERE toUpper(name)='ALICE'
@@ -408,6 +448,8 @@ SELECT * FROM users WHERE toUpper(name)='ALICE'
 ```
 
 #### 2.8
+>WHERE column IS NULL — Filters rows where a column is NULL. This query returns users whose addr is missing.
+
 **SQL Code**
 ```sql
 SELECT * FROM users WHERE addr is null
@@ -421,6 +463,8 @@ SELECT * FROM users WHERE addr is null
 [2026-07-23 11:38:36.946] [INFO] Total: 1 rows
 ```
 #### 2.9
+>WHERE column IS NOT NULL — Filters rows where a column is not NULL. This query returns users whose addr has a value.
+
 **SQL Code**
 ```sql
 SELECT * FROM users WHERE addr is not null
@@ -439,6 +483,8 @@ SELECT * FROM users WHERE addr is not null
 ```
 
 #### 2.10
+>WHERE column > value — Filters rows using a comparison operator (>, >=, <, <=, =, <>). This query returns users older than 25.
+
 **SQL Code**
 ```sql
 SELECT * FROM users WHERE age >25
@@ -457,6 +503,8 @@ SELECT * FROM users WHERE age >25
 ```
 
 #### 2.10
+> WHERE column BETWEEN min AND max — Filters rows within a range . This query returns users with age between 25 and 30.
+
 **SQL Code**
 ```sql
 SELECT * FROM users WHERE age  between 25 and 30
@@ -474,6 +522,8 @@ SELECT * FROM users WHERE age  between 25 and 30
 ```
 
 #### 2.11
+> WHERE column IN (value1, value2, ...) — Filters rows matching any value in a list. This query returns users with age 25 or 30.
+
 **SQL Code**
 ```sql
 SELECT * FROM users WHERE age  in ( 25 , 30)
@@ -490,6 +540,7 @@ SELECT * FROM users WHERE age  in ( 25 , 30)
 ```
 
 #### 2.12
+> WHERE column NOT IN (value1, value2, ...) — Filters rows that do not match any value in a list. This query returns users whose age is neither 25 nor 30.
 **SQL Code**
 ```sql
 SELECT * FROM users WHERE age not in ( 25 , 30)
@@ -507,6 +558,8 @@ SELECT * FROM users WHERE age not in ( 25 , 30)
 ```
 
 #### 2.13
+> WHERE column LIKE pattern or WHERE column NOT LIKE pattern — Filters rows using pattern matching with wildcards (% for any sequence, _ for a single character). This query returns users whose name contains 'Davi'.
+
 **SQL Code**
 ```sql
 SELECT * FROM users WHERE name like '%Davi%'
@@ -522,6 +575,8 @@ SELECT * FROM users WHERE name like '%Davi%'
 ```
 
 #### 2.14
+> WHERE column REGEXP pattern or WHERE column NOT REGEXP pattern — Filters rows using regular expression matching. This query returns users whose name starts with 'A'.
+
 **SQL Code**
 ```sql
 SELECT * FROM users WHERE name REGEXP '^A.*'
@@ -536,6 +591,8 @@ SELECT * FROM users WHERE name REGEXP '^A.*'
 ```
 
 #### 2.15
+> WHERE EXISTS (subquery) — Filters rows based on the existence of matching records in a subquery. This query returns users who have at least one order.
+
 **SQL Code**
 ```sql
 SELECT * FROM users u WHERE EXISTS (   SELECT 1 FROM orders o WHERE o.user_id = u.id)
@@ -564,6 +621,8 @@ SELECT * FROM users u WHERE EXISTS (   SELECT 1 FROM orders o WHERE o.user_id = 
 | 7 | Davila | 39 | active | true | null | 1999-06-30 |
 
 #### 3.1
+> ORDER BY column ASC — Sorts results by the specified column in ascending order. This query returns all users sorted by age from youngest to oldest.
+
 **SQL Code**
 ```sql
 SELECT * FROM users ORDER BY age ASC
@@ -584,6 +643,8 @@ SELECT * FROM users ORDER BY age ASC
 ```
 
 #### 3.2
+> ORDER BY column DESC — Sorts results by the specified column in descending order. This query returns all users sorted by age from oldest to youngest.
+
 **SQL Code**
 ```sql
 SELECT * FROM users ORDER BY age DESC
@@ -604,6 +665,8 @@ SELECT * FROM users ORDER BY age DESC
 ```
 
 #### 3.3
+> ORDER BY column1 ASC, column2 DESC — Sorts results by multiple columns with different sort directions. This query sorts users by status ascending, then by age descending within the same status group.
+
 **SQL Code**
 ```sql
 SELECT * FROM users ORDER BY status ASC, age DESC
@@ -623,6 +686,8 @@ SELECT * FROM users ORDER BY status ASC, age DESC
 [2026-07-23 16:55:13.551] [INFO] Total: 7 rows
 ```
 #### 3.4
+>ORDER BY column1 DESC, column2 ASC — Sorts results by multiple columns with different sort directions. This query sorts users by enable descending, then by age ascending within the same group.
+
 **SQL Code**
 ```sql
 SELECT * FROM users ORDER BY enable DESC, age ASC
@@ -657,6 +722,8 @@ SELECT * FROM users ORDER BY enable DESC, age ASC
 
 
 #### 4.1
+> LIMIT n — Limits the number of rows returned. This query returns the first 3 rows from the users table.
+
 **SQL Code**
 ```sql
 SELECT * FROM users LIMIT 3
@@ -673,6 +740,8 @@ SELECT * FROM users LIMIT 3
 ```
 
 #### 4.2
+> LIMIT offset, limit — Skips the specified number of rows (offset) before returning the result (limit). This query skips the first 2 rows and returns the next 3 rows from the users table.
+
 **SQL Code**
 ```sql
 SELECT * FROM users LIMIT  2, 3
@@ -687,6 +756,8 @@ SELECT * FROM users LIMIT  2, 3
 ```
 
 #### 4.3
+>ORDER BY ... LIMIT offset, limit — Sorts the result first, then applies the pagination. This query orders users by age ascending and returns the first 3 rows.
+
 **SQL Code**
 ```sql
 SELECT * FROM users order by age asc LIMIT  0, 3
@@ -717,6 +788,8 @@ SELECT * FROM users order by age asc LIMIT  0, 3
 
 
 #### 5.1
+>GROUP BY column, aggregate_function(column) — Groups rows by a specified column and applies aggregate functions (COUNT, AVG, SUM, MIN, MAX) on each group, combined with ORDER BY. This query groups users by status, calculates the count and average age per group, and orders the results by status.
+
 **SQL Code**
 ```sql
 SELECT status, COUNT(*) as count, AVG(age) as avg_age FROM users GROUP BY status ORDER BY status
@@ -732,6 +805,10 @@ SELECT status, COUNT(*) as count, AVG(age) as avg_age FROM users GROUP BY status
 [2026-07-23 17:02:47.780] [INFO] Total: 3 rows
 ```
 #### 5.2
+>GROUP BY ... HAVING condition ORDER BY ... — Groups rows, filters groups using HAVING (with aggregate functions),
+> and sorts results. This query groups users by status, counts and averages ages per group, keeps only
+> groups with more than 1 user, and orders by count descending.
+
 **SQL Code**
 ```sql
  SELECT status, COUNT(age) as count, AVG(age) as avg_age FROM users GROUP BY status HAVING COUNT(age) >1 ORDER BY count DESC
@@ -771,6 +848,8 @@ SELECT status, COUNT(*) as count, AVG(age) as avg_age FROM users GROUP BY status
 
 
 #### 6.1
+>INNER JOIN table ON condition — Returns only rows with matching keys in both tables. This query returns users who have orders, along with their order details.
+
 **SQL Code**
 ```sql
 SELECT u.id, u.name, u.age, o.id as order_id, o.amount FROM users u INNER JOIN orders o ON u.id = o.user_id
@@ -787,6 +866,8 @@ SELECT u.id, u.name, u.age, o.id as order_id, o.amount FROM users u INNER JOIN o
 [2026-07-23 22:26:39.910] [INFO] Total: 4 rows
 ```
 #### 6.2
+>INNER JOIN ... ON condition WHERE condition — Combines rows from multiple tables based on a matching condition, then applies additional filters. This query returns active users with orders of at least 150.
+
 **SQL Code**
 ```sql
  SELECT u.name, u.age, u.status, o.id as order_id, o.amount FROM users u INNER JOIN orders o ON u.id = o.user_id WHERE u.status = 'active' AND o.amount >= 150
@@ -803,6 +884,8 @@ SELECT u.id, u.name, u.age, o.id as order_id, o.amount FROM users u INNER JOIN o
 ```
 
 #### 6.3
+>LEFT JOIN table ON condition — Returns all rows from the left table, with matching rows from the right table (or NULL if no match). This query returns all users, along with their orders if they exist.
+
 **SQL Code**
 ```sql
  SELECT u.id, u.name, u.age, o.id as order_id, o.amount FROM users u LEFT JOIN orders o ON u.id = o.user_id
@@ -825,6 +908,8 @@ SELECT u.id, u.name, u.age, o.id as order_id, o.amount FROM users u INNER JOIN o
 ```
 
 #### 6.4
+>RIGHT JOIN table ON condition — Returns all rows from the right table, with matching rows from the left table (or NULL if no match). This query returns all orders, along with user details if they exist.
+
 **SQL Code**
 ```sql
  SELECT u.id, u.name, u.age, o.id as order_id, o.amount FROM users u RIGHT JOIN orders o ON u.id = o.user_id
@@ -843,6 +928,8 @@ SELECT u.id, u.name, u.age, o.id as order_id, o.amount FROM users u INNER JOIN o
 ```
 
 #### 6.5
+>FULL JOIN table ON condition — Returns all rows from both tables, with matching rows joined and NULL for non-matching sides. This query returns all users and all orders, matching them where a relationship exists.
+
 **SQL Code**
 ```sql
  SELECT u.id, u.name, u.age, o.id as order_id, o.amount FROM users u FULL JOIN orders o ON u.id = o.user_id
@@ -864,6 +951,8 @@ SELECT u.id, u.name, u.age, o.id as order_id, o.amount FROM users u INNER JOIN o
 [2026-07-23 22:31:13.682] [INFO] Total: 8 rows
 ```
 #### 6.6
+>FULL JOIN table ON condition — Returns all rows from both tables, with matching rows joined and NULL for non-matching sides. This query returns all users and all orders, matching them where a relationship exists.
+
 **SQL Code**
 ```sql
 SELECT u.id, u.name, u.age, o.id as order_id, o.amount FROM users u FULL JOIN orders o ON u.id = o.user_id
@@ -886,6 +975,8 @@ SELECT u.id, u.name, u.age, o.id as order_id, o.amount FROM users u FULL JOIN or
 ```
 
 #### 6.7
+>CROSS JOIN table — Returns the Cartesian product of both tables (all row combinations). This query pairs every user with every order.
+
 **SQL Code**
 ```sql
 SELECT u.name, u.age, o.id, o.amount FROM users u CROSS JOIN orders o
@@ -928,6 +1019,8 @@ SELECT u.name, u.age, o.id, o.amount FROM users u CROSS JOIN orders o
 ```
 
 #### 6.8
+>NATURAL JOIN table — Automatically joins tables on columns with the same name. This query joins users and orders on all common column names (e.g., id), returning only rows with matching values.
+
 **SQL Code**
 ```sql
 SELECT u.name, u.age, o.id, o.amount FROM users u NATURAL JOIN orders o
@@ -943,6 +1036,8 @@ SELECT u.name, u.age, o.id, o.amount FROM users u NATURAL JOIN orders o
 
 #### 7 UNION/ MINUS/INTERSECT Query
 ##### 7.1
+>SELECT ... UNION SELECT ... — Combines results from two queries and removes duplicates. This query returns users older than 25 or with status 'active'.
+
 **SQL Code**
 ```sql
 SELECT name, age, status FROM users WHERE age > 25 
@@ -963,6 +1058,8 @@ SELECT name, age, status FROM users WHERE status = 'active'
 [2026-07-26 12:59:08.825] [INFO] Total: 6 rows
 ```
 ##### 7.2
+>SELECT ... MINUS SELECT ... — Returns rows from the first query that are not present in the second query. This query returns users aged 25 or older who are not active.
+
 **SQL Code**
 ```sql
 SELECT name, age, status FROM users WHERE age >= 25 
@@ -981,6 +1078,8 @@ SELECT name, age, status FROM users WHERE status = 'active'
 ```
 
 ##### 7.3
+>SELECT ... INTERSECT SELECT ... — Returns rows that are present in both queries. This query returns users who are both aged 25 or older and have status 'active'.
+
 **SQL Code**
 ```sql
 SELECT name, age, status FROM users WHERE age >= 25 
