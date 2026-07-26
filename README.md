@@ -961,22 +961,61 @@ SELECT u.name, u.age, o.id, o.amount FROM users u NATURAL JOIN orders o
 [2026-07-24 14:02:03.903] [INFO] Total: 0 rows
 ```
 
-#### 7
+#### 7 UNION/ MINUS/INTERSECT Query
+##### 7.1
 **SQL Code**
 ```sql
-SELECT name, age,status FROM users WHERE age > 25 UNION SELECT name, age,status FROM users WHERE status = 'active'
+SELECT name, age, status FROM users WHERE age > 25 
+UNION 
+SELECT name, age, status FROM users WHERE status = 'active'
 ```
 ```log
-[2026-07-26 11:36:31.432] [INFO] +--------+-----+----------+
-[2026-07-26 11:36:31.433] [INFO] | name   | age | status   |
-[2026-07-26 11:36:31.433] [INFO] +--------+-----+----------+
-[2026-07-26 11:36:31.433] [INFO] | Bob    | 30  | active   |
-[2026-07-26 11:36:31.433] [INFO] | David  | 35  | inactive |
-[2026-07-26 11:36:31.434] [INFO] | Eve    | 28  | active   |
-[2026-07-26 11:36:31.434] [INFO] | Martin | 30  | active   |
-[2026-07-26 11:36:31.434] [INFO] | Alice  | 25  | active   |
-[2026-07-26 11:36:31.434] [INFO] +--------+-----+----------+
-[2026-07-26 11:36:31.434] [INFO] Total: 5 rows
+[2026-07-26 12:59:08.817] [INFO] +-------+-----+----------+
+[2026-07-26 12:59:08.819] [INFO] | name  | age | status   |
+[2026-07-26 12:59:08.819] [INFO] +-------+-----+----------+
+[2026-07-26 12:59:08.823] [INFO] | Bob   | 30  | active   |
+[2026-07-26 12:59:08.823] [INFO] | David | 35  | inactive |
+[2026-07-26 12:59:08.824] [INFO] | Eve   | 28  | active   |
+[2026-07-26 12:59:08.824] [INFO] | Frank | 30  | pending  |
+[2026-07-26 12:59:08.825] [INFO] | Alice | 32  | pending  |
+[2026-07-26 12:59:08.825] [INFO] | Alice | 25  | active   |
+[2026-07-26 12:59:08.825] [INFO] +-------+-----+----------+
+[2026-07-26 12:59:08.825] [INFO] Total: 6 rows
+```
+##### 7.2
+**SQL Code**
+```sql
+SELECT name, age, status FROM users WHERE age >= 25 
+    MINUS                                
+SELECT name, age, status FROM users WHERE status = 'active'
+```
+```log
+[2026-07-26 13:03:04.755] [INFO] +-------+-----+----------+
+[2026-07-26 13:03:04.755] [INFO] | name  | age | status   |
+[2026-07-26 13:03:04.755] [INFO] +-------+-----+----------+
+[2026-07-26 13:03:04.755] [INFO] | David | 35  | inactive |
+[2026-07-26 13:03:04.755] [INFO] | Frank | 30  | pending  |
+[2026-07-26 13:03:04.755] [INFO] | Alice | 32  | pending  |
+[2026-07-26 13:03:04.755] [INFO] +-------+-----+----------+
+[2026-07-26 13:03:04.755] [INFO] Total: 3 rows
+```
+
+##### 7.3
+**SQL Code**
+```sql
+SELECT name, age, status FROM users WHERE age >= 25 
+   INTERSECT 
+SELECT name, age, status FROM users WHERE status = 'active'
+```
+```log
+[2026-07-26 13:09:45.576] [INFO] +-------+-----+--------+
+[2026-07-26 13:09:45.577] [INFO] | name  | age | status |
+[2026-07-26 13:09:45.578] [INFO] +-------+-----+--------+
+[2026-07-26 13:09:45.580] [INFO] | Alice | 25  | active |
+[2026-07-26 13:09:45.581] [INFO] | Bob   | 30  | active |
+[2026-07-26 13:09:45.582] [INFO] | Eve   | 28  | active |
+[2026-07-26 13:09:45.582] [INFO] +-------+-----+--------+
+[2026-07-26 13:09:45.583] [INFO] Total: 3 rows
 ```
 
 ## API Reference

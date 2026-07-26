@@ -675,18 +675,20 @@ public class JQuickNodeExecutor {
     }
     
     /**
-     * 使用基于内容的比较实现 INTERSECT
+     * 使用基于内容的比较实现 INTERSECT（去重）
      */
     private List<JQuickRow> intersectWithContentComparison(List<JQuickRow> leftRows, List<JQuickRow> rightRows) {
         Set<String> rightKeys = new HashSet<>();
         for (JQuickRow row : rightRows) {
             rightKeys.add(generateRowKey(row));
         }
+        Set<String> seenKeys = new HashSet<>();
         List<JQuickRow> result = new ArrayList<>();
         for (JQuickRow row : leftRows) {
             String key = generateRowKey(row);
-            if (rightKeys.contains(key)) {
+            if (rightKeys.contains(key) && !seenKeys.contains(key)) {
                 result.add(row);
+                seenKeys.add(key);
             }
         }
         return result;
