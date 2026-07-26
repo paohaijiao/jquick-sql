@@ -1,6 +1,7 @@
 # JQuick-SQL
 
-A lightweight SQL parser and distributed query engine , supporting standard SQL syntax and various OLAP operations.
+JQuick-SQL is a lightweight distributed SQL query engine for Java applications, providing SQL parsing, query planning,
+Optimization and distributed execution capabilities.
 
 <div align="center">
 
