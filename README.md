@@ -1096,6 +1096,112 @@ SELECT name, age, status FROM users WHERE status = 'active'
 [2026-07-26 13:09:45.582] [INFO] +-------+-----+--------+
 [2026-07-26 13:09:45.583] [INFO] Total: 3 rows
 ```
+### 8. JAggregation (COUNT/SUM/AVG/MIN/MAX)
+**Input Data**
+
+#### users 表
+| id | name | age | status | enable | addr | birthday | salary |
+|----|------|-----|--------|--------|------|----------|--------|
+| 1 | Alice | 25 | active | true | beijing | 2020-04-09 | 5000.0 |
+| 2 | Bob | 30 | active | true | shanghai | 1991-08-09 | 6000.0 |
+| 3 | Charlie | 20 | pending | false | chengdu | 1988-07-12 | 4500.0 |
+| 4 | David | 35 | inactive | true | xian | 1955-11-29 | 7000.0 |
+| 5 | Eve | 28 | active | true | chongqing | 2003-07-12 | 5500.0 |
+| 6 | Martin | 30 | active | true | guangzhou | 1978-06-30 | 6500.0 |
+| 7 | Davila | 39 | active | true | null | 1999-06-30 | 8000.0 |
+
+
+
+
+#### 8.1
+>GROUP BY column — Groups rows by a specified column and applies aggregate functions like COUNT. This query groups users by status and returns the count for each group.
+
+**SQL Code**
+```sql
+SELECT status, COUNT(*) AS count FROM users GROUP BY status
+```
+```log
+    [2026-07-27 07:03:18.201] [INFO] +----------+-------+
+    [2026-07-27 07:03:18.201] [INFO] | status   | count |
+    [2026-07-27 07:03:18.201] [INFO] +----------+-------+
+    [2026-07-27 07:03:18.201] [INFO] | inactive | 1     |
+    [2026-07-27 07:03:18.201] [INFO] | pending  | 1     |
+    [2026-07-27 07:03:18.201] [INFO] | active   | 5     |
+    [2026-07-27 07:03:18.201] [INFO] +----------+-------+
+    [2026-07-27 07:03:18.201] [INFO] Total: 3 rows
+```
+
+#### 8.2
+>GROUP BY column, SUM(column) — Groups rows by a specified column and calculates the sum of another column for each group. This query groups users by status and returns the total age for each group.
+
+**SQL Code**
+```sql
+SELECT status, SUM(age) AS age_sum FROM users GROUP BY status
+```
+```log
+    [2026-07-27 07:07:19.828] [INFO] +----------+---------+
+    [2026-07-27 07:07:19.828] [INFO] | status   | age_sum |
+    [2026-07-27 07:07:19.830] [INFO] +----------+---------+
+    [2026-07-27 07:07:19.830] [INFO] | inactive | 35.0    |
+    [2026-07-27 07:07:19.830] [INFO] | pending  | 20.0    |
+    [2026-07-27 07:07:19.830] [INFO] | active   | 152.0   |
+    [2026-07-27 07:07:19.830] [INFO] +----------+---------+
+    [2026-07-27 07:07:19.830] [INFO] Total: 3 rows
+```
+
+
+#### 8.3
+>GROUP BY column, AVG(column) — Groups rows by a specified column and calculates the average value of another column for each group. This query groups users by status and returns the average age for each group.
+
+**SQL Code**
+```sql
+SELECT status,AVG(age) AS avg_age FROM users GROUP BY status
+```
+```log
+[2026-07-27 07:10:15.850] [INFO] +----------+---------+
+[2026-07-27 07:10:15.850] [INFO] | status   | avg_age |
+[2026-07-27 07:10:15.850] [INFO] +----------+---------+
+[2026-07-27 07:10:15.850] [INFO] | inactive | 35.0    |
+[2026-07-27 07:10:15.850] [INFO] | pending  | 20.0    |
+[2026-07-27 07:10:15.850] [INFO] | active   | 30.4    |
+[2026-07-27 07:10:15.850] [INFO] +----------+---------+
+[2026-07-27 07:10:15.851] [INFO] Total: 3 rows
+```
+
+#### 8.4
+>GROUP BY column, MIN(column) — Groups rows by a specified column and finds the minimum value of another column for each group. This query groups users by status and returns the minimum age for each group.
+
+**SQL Code**
+```sql
+SELECT status,MIN(age) AS active_min_age FROM users GROUP BY status
+```
+```log
+[2026-07-27 07:12:58.509] [INFO] +----------+----------------+
+[2026-07-27 07:12:58.509] [INFO] | status   | active_min_age |
+[2026-07-27 07:12:58.509] [INFO] +----------+----------------+
+[2026-07-27 07:12:58.509] [INFO] | inactive | 35             |
+[2026-07-27 07:12:58.511] [INFO] | pending  | 20             |
+[2026-07-27 07:12:58.511] [INFO] | active   | 25             |
+[2026-07-27 07:12:58.512] [INFO] +----------+----------------+
+[2026-07-27 07:12:58.512] [INFO] Total: 3 rows
+```
+#### 8.5
+>GROUP BY column, MAX(column) — Groups rows by a specified column and finds the maximum value of another column for each group. This query groups users by status and returns the maximum age for each group.
+
+**SQL Code**
+```sql
+SELECT status,Max(age) AS active_max_age FROM users GROUP BY status
+```
+```log
+[2026-07-27 07:14:15.781] [INFO] +----------+----------------+
+[2026-07-27 07:14:15.782] [INFO] | status   | active_max_age |
+[2026-07-27 07:14:15.782] [INFO] +----------+----------------+
+[2026-07-27 07:14:15.782] [INFO] | inactive | 35             |
+[2026-07-27 07:14:15.782] [INFO] | pending  | 20             |
+[2026-07-27 07:14:15.782] [INFO] | active   | 39             |
+[2026-07-27 07:14:15.782] [INFO] +----------+----------------+
+[2026-07-27 07:14:15.782] [INFO] Total: 3 rows
+```
 
 ## API Reference
 
