@@ -176,23 +176,18 @@ public class JQuickNodeExecutor {
         console.info("executeTableScan - tableName: " + tableName + ", partitionInfo: " + (node.getPartitionInfo() != null ? "exists" : "null"));
         Set<String> requiredColumns = node.getRequiredColumns();
         JQuickDataSet data;
-        
-        // 优先从输入分区读取数据（适用于 SOURCE 和 INTERMEDIATE Fragment）
         if (context != null && context.getRequest() != null && context.getRequest().getInputPartitionsCount() > 0) {
-            // 1. 尝试按表名查找分区（subquery_partition_xxx 格式）
             JQuickDataSet partitionData = readFromInputPartitions(tableName, context.getRequest());
             if (partitionData != null && !partitionData.isEmpty()) {
                 console.info("Reading from input partitions (by table name): " + tableName + ", rows: " + partitionData.size());
                 data = partitionData;
             } else {
-                // 2. 尝试从内存分区读取（subquery_partition_xxx 格式）- 优先于 readFromAnyInputPartition
                 String subqueryPartitionId = "subquery_partition_" + tableName;
                 JQuickDataSet memoryData = readFromMemoryPartition(subqueryPartitionId);
                 if (memoryData != null && !memoryData.isEmpty()) {
                     console.info("Reading from memory partition (subquery): " + subqueryPartitionId + ", rows: " + memoryData.size());
                     data = memoryData;
                 } else {
-                    // 3. INTERMEDIATE Fragment：尝试读取任意输入分区
                     partitionData = readFromAnyInputPartition(context.getRequest());
                     if (partitionData != null && !partitionData.isEmpty()) {
                         console.info("Reading from input partitions (INTERMEDIATE fragment): " + tableName + ", rows: " + partitionData.size());
@@ -580,8 +575,6 @@ public class JQuickNodeExecutor {
             List<JQuickMemoryPartitionProto> inputPartitions = context.getRequest().getInputPartitionsList();
             Set<JQuickTableScanPhysicalNode> leftTableScans = collectTableScans(node.getLeft());
             Set<JQuickTableScanPhysicalNode> rightTableScans = collectTableScans(node.getRight());
-            
-            // 先执行左分支
             if (inputPartitions.size() >= 1) {
                 JQuickDataSet leftPartitionData = dataConverter.convertFromProto(inputPartitions.get(0).getData());
                 for (JQuickTableScanPhysicalNode ts : leftTableScans) {
@@ -593,14 +586,10 @@ public class JQuickNodeExecutor {
                 }
             }
             leftData = executeNode(node.getLeft(), context);
-            
-            // 清理左分支数据
             for (JQuickTableScanPhysicalNode ts : leftTableScans) {
                 String partitionId = "subquery_partition_" + ts.getTableName();
                 worker.getMemoryPartitions().remove(partitionId);
             }
-            
-            // 再执行右分支
             if (inputPartitions.size() >= 2) {
                 JQuickDataSet rightPartitionData = dataConverter.convertFromProto(inputPartitions.get(1).getData());
                 for (JQuickTableScanPhysicalNode ts : rightTableScans) {
@@ -612,8 +601,6 @@ public class JQuickNodeExecutor {
                 }
             }
             rightData = executeNode(node.getRight(), context);
-            
-            // 清理右分支数据
             for (JQuickTableScanPhysicalNode ts : rightTableScans) {
                 String partitionId = "subquery_partition_" + ts.getTableName();
                 worker.getMemoryPartitions().remove(partitionId);

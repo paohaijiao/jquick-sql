@@ -115,17 +115,13 @@ public class JQuickExpressionEvaluator {
             String rawColumnName = colRef.getColumnName();
             String tableAlias = colRef.getTableAlias();
             String resolvedColumnName = resolveColumnName(rawColumnName);
-            
-            // 1. 尝试带表别名的列名（如 u.id）
             if (tableAlias != null) {
                 String qualifiedName = tableAlias + "." + rawColumnName;
                 Object value = row.get(qualifiedName);
                 if (value != null || row.containsKey(qualifiedName)) {
                     return value;
                 }
-                
-                // 2. 将表别名映射到 left/right（JOIN 场景）
-                if (aliasToTableMap.containsKey(tableAlias)) {
+                if (aliasToTableMap.containsKey(tableAlias)) {//将表别名映射到 left/right（JOIN 场景）
                     String tablePrefix = aliasToTableMap.get(tableAlias);
                     String prefixedName = tablePrefix + "." + rawColumnName;
                     value = row.get(prefixedName);
@@ -133,9 +129,7 @@ public class JQuickExpressionEvaluator {
                         return value;
                     }
                 }
-                
-                // 3. 外连接场景
-                value = row.get("outer_" + tableAlias + "_" + rawColumnName);
+                value = row.get("outer_" + tableAlias + "_" + rawColumnName);// 外连接场景
                 if (value != null || row.containsKey("outer_" + tableAlias + "_" + rawColumnName)) {
                     return value;
                 }
@@ -149,7 +143,7 @@ public class JQuickExpressionEvaluator {
                 }
             }
             
-            // 4. 外连接场景
+            //外连接场景
             Object value = row.get("outer_" + rawColumnName);
             if (value != null || row.containsKey("outer_" + rawColumnName)) {
                 return value;
@@ -159,7 +153,7 @@ public class JQuickExpressionEvaluator {
                 return value;
             }
             
-            // 5. 不带前缀的列名
+            //不带前缀的列名
             value = row.get(rawColumnName);
             if (value != null || row.containsKey(rawColumnName)) {
                 return value;
@@ -423,12 +417,15 @@ public class JQuickExpressionEvaluator {
         if (v1 == null && v2 == null) return 0;
         if (v1 == null) return nullsFirst ? -1 : 1;
         if (v2 == null) return nullsFirst ? 1 : -1;
-        try {
-            double d1 = asNumber(v1).doubleValue();
-            double d2 = asNumber(v2).doubleValue();
-            return Double.compare(d1, d2);
-        } catch (Exception e) {
+        if(v1 instanceof Number&&v2 instanceof Number) {
+            try {
+                double d1 = asNumber(v1).doubleValue();
+                double d2 = asNumber(v2).doubleValue();
+                return Double.compare(d1, d2);
+            } catch (Exception e) {
+            }
         }
+
         if (v1 instanceof Comparable && v2 instanceof Comparable) {
             @SuppressWarnings("unchecked")
             int cmp = ((Comparable<Object>) v1).compareTo(v2);
