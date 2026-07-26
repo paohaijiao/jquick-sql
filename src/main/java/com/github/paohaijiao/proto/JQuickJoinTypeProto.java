@@ -44,7 +44,6 @@ public enum JQuickJoinTypeProto
    * <code>JOIN_NATURAL = 7;</code>
    */
   JOIN_NATURAL(7),
-
   UNRECOGNIZED(-1),
   ;
 

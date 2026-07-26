@@ -73,27 +73,6 @@ JQuick-SQL, combined with **JQuick-Connector**, enables you to integrate externa
 >     <artifactId>jquick-connector</artifactId>
 >     <version>${latest.version}</version>
 > </dependency>
-> ```
-
-### Load from MySQL Database
-```sql
--- Define a virtual table 'users' that queries a MySQL table
-SELECT
-    field(id) -> id:Integer,
-        field(name) -> name:String,
-        field(age) -> age:Integer,
-        field(status) -> status:String,
-        field(enable) -> enable:Boolean,
-        field(addr) -> addr:String,
-        field(birthday) -> birthday:Date
-FROM MYSQL(
-        url: 'jdbc:mysql://localhost:3306/mydb',
-        username: 'root',
-        password: 'password',
-       sql: 'SELECT * FROM users',
-       driver: 'com.mysql.jdbc.Driver'
-     );
-```
 
 ## Supported SQL Features
 
