@@ -66,12 +66,20 @@ public class JQuickSQLUnionTest {
         );
 
         List<JQuickRow> userRows = Arrays.asList(
-                createRow("id", 1, "name", "Alice", "age", 25, "status", "active","enable",true,"addr","beijing","birthday",getDate("2020-04-09")),
-                createRow("id", 2, "name", "Bob", "age", 30, "status", "active","enable",true,"addr","shanghai","birthday",getDate("1991-08-09")),
-                createRow("id", 3, "name", "Charlie", "age", 20, "status", "pending","enable",false,"addr","chengdu","birthday",getDate("1988-07-12")),
-                createRow("id", 4, "name", "David", "age", 35, "status", "inactive","enable",true,"addr","xian","birthday",getDate("1955-11-29")),
-                createRow("id", 5, "name", "Eve", "age", 28, "status", "active","enable",true,"addr","chongqing","birthday",getDate("2003-07-12")),
-                createRow("id", 6, "name", "Martin", "age", 30, "status", "active","enable",true,"addr","guangzhou","birthday",getDate("1978-06-30"))
+                // 基础数据 - 用于演示各种集合操作
+                createRow("id", 1, "name", "Alice", "age", 25, "status", "active", "enable", true, "addr", "beijing", "birthday", getDate("2020-04-09")),
+                createRow("id", 2, "name", "Bob", "age", 30, "status", "active", "enable", true, "addr", "shanghai", "birthday", getDate("1991-08-09")),
+                createRow("id", 3, "name", "Charlie", "age", 20, "status", "pending", "enable", false, "addr", "chengdu", "birthday", getDate("1988-07-12")),
+                createRow("id", 4, "name", "David", "age", 35, "status", "inactive", "enable", true, "addr", "xian", "birthday", getDate("1955-11-29")),
+                createRow("id", 5, "name", "Eve", "age", 28, "status", "active", "enable", true, "addr", "chongqing", "birthday", getDate("2003-07-12")),
+                createRow("id", 6, "name", "Frank", "age", 30, "status", "pending", "enable", false, "addr", "guangzhou", "birthday", getDate("1978-06-30")),
+                // 重复数据1: 与 Alice 完全相同 (用于测试 UNION 去重)
+                createRow("id", 7, "name", "Alice", "age", 25, "status", "active", "enable", true, "addr", "beijing", "birthday", getDate("2020-04-09")),
+                // 重复数据2: 与 Bob 完全相同 (用于测试 UNION 去重)
+                createRow("id", 8, "name", "Bob", "age", 30, "status", "active", "enable", true, "addr", "shanghai", "birthday", getDate("1991-08-09")),
+                // 同名但不同年龄/状态: 用于测试集合运算的边界情况
+                createRow("id", 9, "name", "Alice", "age", 32, "status", "pending", "enable", false, "addr", "shenzhen", "birthday", getDate("1992-05-20")),
+                createRow("id", 10, "name", "Bob", "age", 22, "status", "inactive", "enable", true, "addr", "wuhan", "birthday", getDate("2002-08-15"))
         );
 
         sql.registerTable("users", userColumns, userRows);
@@ -90,30 +98,12 @@ public class JQuickSQLUnionTest {
     @Test
     public void testUnionQueries() {
         JQuickDataSet result1 = sql.execute(
-                "SELECT name, age,status FROM users WHERE age > 25 " +
-                        "UNION " +
-                        "SELECT name, age,status FROM users WHERE status = 'active'"
-        );
-        result1.printTable();
-
-    }
-    @Test
-    public void testUnionAllQueries() {
-        JQuickDataSet result2 = sql.execute(
-                "SELECT name, age ,status FROM users WHERE age > 25 " +
-                        "UNION ALL " +
-                        "SELECT name, age,status FROM users WHERE status = 'active'"
-        );
-        result2.printTable();
-    }
-    @Test
-    public void testIntersectQueries() {
-        JQuickDataSet result1 = sql.execute(
-                "SELECT name, age, status FROM users WHERE age >= 25 " +
-                        "INTERSECT " +
+                "SELECT name, age, status FROM users WHERE age > 25 \n" +
+                        "UNION \n" +
                         "SELECT name, age, status FROM users WHERE status = 'active'"
         );
         result1.printTable();
+
     }
     @Test
     public void testMinusQueries() {
@@ -124,4 +114,14 @@ public class JQuickSQLUnionTest {
         );
         result1.printTable();
     }
+    @Test
+    public void testIntersectQueries() {
+        JQuickDataSet result1 = sql.execute(
+                "SELECT name, age, status FROM users WHERE age >= 25 " +
+                        "INTERSECT " +
+                        "SELECT name, age, status FROM users WHERE status = 'active'"
+        );
+        result1.printTable();
+    }
+
     }

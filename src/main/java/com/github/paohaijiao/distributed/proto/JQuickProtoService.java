@@ -678,6 +678,7 @@ public class JQuickProtoService {
             case UNION_ALL: return JQuickSQLOperationTypeProto.SET_UNION_ALL;
             case INTERSECT: return JQuickSQLOperationTypeProto.SET_INTERSECT;
             case EXCEPT: return JQuickSQLOperationTypeProto.SET_EXCEPT;
+            case MINUS: return JQuickSQLOperationTypeProto.SET_EXCEPT;
             default: return JQuickSQLOperationTypeProto.SET_UNION;
         }
     }
@@ -970,7 +971,6 @@ public class JQuickProtoService {
                 return new JQuickProjectPhysicalNode(selectItems, !children.isEmpty() ? children.get(0) : null, projectProto.getDistinct(), projectProto.getIsStar());
             case HASH_JOIN:
                 JQuickHashJoinNodeProto joinProto = proto.getHashJoin();
-                // 反序列化 joinKeys
                 List<JQuickHashJoinPhysicalNode.JoinKeyPair> joinKeys = new ArrayList<>();
                 for (JQuickHashJoinNodeProto.JoinKeyPairProto keyPairProto : joinProto.getJoinKeysList()) {
                     joinKeys.add(new JQuickHashJoinPhysicalNode.JoinKeyPair(

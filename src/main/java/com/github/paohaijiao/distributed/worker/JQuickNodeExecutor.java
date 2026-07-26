@@ -575,7 +575,7 @@ public class JQuickNodeExecutor {
             List<JQuickMemoryPartitionProto> inputPartitions = context.getRequest().getInputPartitionsList();
             Set<JQuickTableScanPhysicalNode> leftTableScans = collectTableScans(node.getLeft());
             Set<JQuickTableScanPhysicalNode> rightTableScans = collectTableScans(node.getRight());
-            if (inputPartitions.size() >= 1) {
+            if (!inputPartitions.isEmpty()) {
                 JQuickDataSet leftPartitionData = dataConverter.convertFromProto(inputPartitions.get(0).getData());
                 for (JQuickTableScanPhysicalNode ts : leftTableScans) {
                     String partitionId = "subquery_partition_" + ts.getTableName();
@@ -618,12 +618,14 @@ public class JQuickNodeExecutor {
                 resultRows = new ArrayList<>(leftData.getRows());
                 resultRows.addAll(rightData.getRows());
                 break;
+
             case INTERSECT:
-                // 使用基于内容的比较实现交集
                 resultRows = intersectWithContentComparison(leftData.getRows(), rightData.getRows());
                 break;
+            case MINUS:
+                resultRows = exceptWithContentComparison(leftData.getRows(), rightData.getRows());
+                break;
             case EXCEPT:
-                // 使用基于内容的比较实现差集
                 resultRows = exceptWithContentComparison(leftData.getRows(), rightData.getRows());
                 break;
             default:
@@ -713,7 +715,6 @@ public class JQuickNodeExecutor {
      */
     private String generateRowKey(JQuickRow row) {
         StringBuilder key = new StringBuilder();
-        // 按键排序以确保一致的顺序
         List<String> keys = new ArrayList<>(row.keySet());
         Collections.sort(keys);
         for (String k : keys) {

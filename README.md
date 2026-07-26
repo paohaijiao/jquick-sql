@@ -129,7 +129,7 @@ sql.shutdown();
 | LIMIT / OFFSET                          | ✅ |
 | GROUP BY/HAVING                         | ✅ |
 | JOIN (INNER/LEFT/RIGHT/FULL/CROSS JOIN) | ✅ |
-| UNION / UNION ALL                       | ✅ |
+| UNION/ MINUS/INTERSECT                  | ✅ |
 | Aggregation (COUNT/SUM/AVG/MIN/MAX)     | ✅ |
 | Recursive CTE                           | ✅ |
 | Subquery                                | ✅ |
@@ -961,6 +961,23 @@ SELECT u.name, u.age, o.id, o.amount FROM users u NATURAL JOIN orders o
 [2026-07-24 14:02:03.903] [INFO] Total: 0 rows
 ```
 
+#### 7
+**SQL Code**
+```sql
+SELECT name, age,status FROM users WHERE age > 25 UNION SELECT name, age,status FROM users WHERE status = 'active'
+```
+```log
+[2026-07-26 11:36:31.432] [INFO] +--------+-----+----------+
+[2026-07-26 11:36:31.433] [INFO] | name   | age | status   |
+[2026-07-26 11:36:31.433] [INFO] +--------+-----+----------+
+[2026-07-26 11:36:31.433] [INFO] | Bob    | 30  | active   |
+[2026-07-26 11:36:31.433] [INFO] | David  | 35  | inactive |
+[2026-07-26 11:36:31.434] [INFO] | Eve    | 28  | active   |
+[2026-07-26 11:36:31.434] [INFO] | Martin | 30  | active   |
+[2026-07-26 11:36:31.434] [INFO] | Alice  | 25  | active   |
+[2026-07-26 11:36:31.434] [INFO] +--------+-----+----------+
+[2026-07-26 11:36:31.434] [INFO] Total: 5 rows
+```
 
 ## API Reference
 
