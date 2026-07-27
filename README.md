@@ -44,7 +44,6 @@ Optimization and distributed execution capabilities.
 - ✅ Two-phase Aggregation (Partial → Shuffle → Final)
 - ✅ Hash Join / Nested Loop Join
 - ✅ Sort / Limit / TopN
-- ✅ Recursive CTE (Common Table Expression)
 - ✅ gRPC-based Data Exchange
 
 ## Quick Start
@@ -110,7 +109,6 @@ sql.shutdown();
 | JOIN (INNER/LEFT/RIGHT/FULL/CROSS JOIN) | ✅ |
 | UNION/ MINUS/INTERSECT                  | ✅ |
 | Aggregation (COUNT/SUM/AVG/MIN/MAX)     | ✅ |
-| Recursive CTE                           | ✅ |
 | Subquery                                | ✅ |
 | Functions                               | ✅ |
 
