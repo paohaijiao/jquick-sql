@@ -104,6 +104,9 @@ public class JQuickFragmenter {
         visited.add(node);
         nodeToFragment.put(node, fragment);
         List<JQuickPhysicalPlanNode> children = getChildren(node);
+        if (node instanceof JQuickLimitPhysicalNode) {
+            return;
+        }
         boolean becomesRecursiveUnion = node instanceof JQuickRecursiveUnionPhysicalNode;
         boolean stayInSameFragment = isInRecursiveUnion || becomesRecursiveUnion;
         if (!stayInSameFragment && shouldCreateNewFragment(node)) {

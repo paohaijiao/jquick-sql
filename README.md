@@ -1,7 +1,13 @@
 # JQuick-SQL
 
-JQuick-SQL is a lightweight distributed SQL query engine for Java applications, providing SQL parsing, query planning,
-Optimization and distributed execution capabilities.
+JQuick-SQL is a lightweight distributed SQL query engine for Java applications, providing SQL parsing, query planning, optimization, 
+and distributed execution. Together with **jquick-connector**, it forms a **logical data warehouse** with **federated query capabilities**—delivering 
+unified SQL access across heterogeneous data sources (relational databases, files, NoSQL, REST APIs, and more). No data movement, no complex
+pipelines. Simply query, join, and aggregate across systems with minimal overhead.
+
+
+
+
 
 <div align="center">
 
@@ -502,7 +508,7 @@ SELECT * FROM users WHERE age >25
 [2026-07-23 11:39:59.746] [INFO] Total: 5 rows
 ```
 
-#### 2.10
+#### 2.11
 > WHERE column BETWEEN min AND max — Filters rows within a range . This query returns users with age between 25 and 30.
 
 **SQL Code**
@@ -521,7 +527,7 @@ SELECT * FROM users WHERE age  between 25 and 30
 [2026-07-26 15:24:44.554] [INFO] Total: 4 rows
 ```
 
-#### 2.11
+#### 2.12
 > WHERE column IN (value1, value2, ...) — Filters rows matching any value in a list. This query returns users with age 25 or 30.
 
 **SQL Code**
@@ -539,7 +545,7 @@ SELECT * FROM users WHERE age  in ( 25 , 30)
 [2026-07-23 11:41:31.655] [INFO] Total: 3 rows
 ```
 
-#### 2.12
+#### 2.13
 > WHERE column NOT IN (value1, value2, ...) — Filters rows that do not match any value in a list. This query returns users whose age is neither 25 nor 30.
 **SQL Code**
 ```sql
@@ -557,7 +563,7 @@ SELECT * FROM users WHERE age not in ( 25 , 30)
 [2026-07-23 11:42:21.731] [INFO] Total: 4 rows
 ```
 
-#### 2.13
+#### 2.14
 > WHERE column LIKE pattern or WHERE column NOT LIKE pattern — Filters rows using pattern matching with wildcards (% for any sequence, _ for a single character). This query returns users whose name contains 'Davi'.
 
 **SQL Code**
@@ -574,7 +580,7 @@ SELECT * FROM users WHERE name like '%Davi%'
 [2026-07-23 11:43:10.536] [INFO] Total: 2 rows
 ```
 
-#### 2.14
+#### 2.15
 > WHERE column REGEXP pattern or WHERE column NOT REGEXP pattern — Filters rows using regular expression matching. This query returns users whose name starts with 'A'.
 
 **SQL Code**
@@ -590,7 +596,7 @@ SELECT * FROM users WHERE name REGEXP '^A.*'
 [2026-07-23 11:43:45.933] [INFO] Total: 1 rows
 ```
 
-#### 2.15
+#### 2.16
 > WHERE EXISTS (subquery) — Filters rows based on the existence of matching records in a subquery. This query returns users who have at least one order.
 
 **SQL Code**
@@ -705,6 +711,23 @@ SELECT * FROM users ORDER BY enable DESC, age ASC
 [2026-07-23 16:56:03.296] [INFO] | 3  | Charlie | 20  | pending  | false  | chengdu   | 1988-07-11T15:00:00Z |
 [2026-07-23 16:56:03.296] [INFO] +----+---------+-----+----------+--------+-----------+----------------------+
 [2026-07-23 16:56:03.296] [INFO] Total: 7 rows
+```
+#### 3.4
+> Skip the first 2 records (offset), then return the next 3 rows
+**SQL Code**
+```sql
+SELECT * FROM users LIMIT  2, 3
+```
+```log
+
+[2026-07-28 16:58:34.179] [INFO] +----+---------+-----+----------+--------+-----------+----------------------+
+[2026-07-28 16:58:34.179] [INFO] | id | name    | age | status   | enable | addr      | birthday             |
+[2026-07-28 16:58:34.179] [INFO] +----+---------+-----+----------+--------+-----------+----------------------+
+[2026-07-28 16:58:34.179] [INFO] | 3  | Charlie | 20  | pending  | false  | chengdu   | 1988-07-11T15:00:00Z |
+[2026-07-28 16:58:34.180] [INFO] | 4  | David   | 35  | inactive | true   | xian      | 1955-11-28T16:00:00Z |
+[2026-07-28 16:58:34.180] [INFO] | 5  | Eve     | 28  | active   | true   | chongqing | 2003-07-11T16:00:00Z |
+[2026-07-28 16:58:34.180] [INFO] +----+---------+-----+----------+--------+-----------+----------------------+
+[2026-07-28 16:58:34.180] [INFO] Total: 3 rows
 ```
 
 ### 4. LIMIT OFFSET Query
