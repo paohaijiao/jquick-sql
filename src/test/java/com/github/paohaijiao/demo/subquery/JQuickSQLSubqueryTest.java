@@ -133,7 +133,6 @@ public class JQuickSQLSubqueryTest {
      */
     @Test
     public void testSubqueryInWhereWithAggregate() {
-        System.out.println("=== Subquery in WHERE clause (age > avg age) ===");
         JQuickDataSet result = sql.execute(
                 "SELECT * FROM users " + "WHERE age > (SELECT AVG(age) FROM users)"
         );

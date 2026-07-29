@@ -168,8 +168,24 @@ public class JQuickASTToLogicalPlanVisitor {
             List<JQuickProjectNode.SelectItem> selectItems = rebuildSelectItems(node.getSelectElements(), groupKeys, aggregates);// 重建投影（GROUP BY 后只能选择分组键和聚合结果）
             root = new JQuickProjectNode(selectItems, root, node.isDistinct());
         } else {//处理 SELECT 投影（无 GROUP BY）
-            List<JQuickProjectNode.SelectItem> selectItems = visitSelectElements(node.getSelectElements());
-            root = new JQuickProjectNode(selectItems, root, node.isDistinct());
+            // 检测 SELECT 中是否包含聚合函数（如 AVG、SUM、COUNT 等）
+            List<JQuickGroupByNode.AggregateItem> aggregates = extractAggregates(node.getSelectElements());
+            System.out.println("[DEBUG visit SelectClause] aggregates found: " + aggregates.size());
+            for (JQuickGroupByNode.AggregateItem agg : aggregates) {
+                System.out.println("[DEBUG visit SelectClause] aggregate: funcName=" + agg.getFunctionName() + ", alias=" + agg.getAlias());
+            }
+            if (!aggregates.isEmpty()) {
+                // 有聚合函数，即使没有 GROUP BY，也需要创建 GroupBy 节点（全局聚合）
+                List<JQuickExpression> emptyGroupKeys = new ArrayList<>();
+                root = new JQuickGroupByNode(emptyGroupKeys, aggregates, root, null);
+                // 重建 SELECT 项
+                List<JQuickProjectNode.SelectItem> selectItems = rebuildSelectItems(node.getSelectElements(), emptyGroupKeys, aggregates);
+                root = new JQuickProjectNode(selectItems, root, node.isDistinct());
+            } else {
+                // 无聚合函数，普通投影
+                List<JQuickProjectNode.SelectItem> selectItems = visitSelectElements(node.getSelectElements());
+                root = new JQuickProjectNode(selectItems, root, node.isDistinct());
+            }
         }
         if (node.getOrderByClause() != null) {//处理 ORDER BY
             List<JQuickSortNode.OrderByItem> orderByItems = visitOrderByClause(node.getOrderByClause());
@@ -562,10 +578,12 @@ public class JQuickASTToLogicalPlanVisitor {
     private void extractAggregatesFromExpression(JQuickExpressionNode expr, List<JQuickGroupByNode.AggregateItem> aggregates, String alias) {
         // 表达式可能是包装类型，需要获取内部的 ExpressionAtom
         JQuickExpressionAtomNode atom = getExpressionAtom(expr);
+        System.out.println("[DEBUG extractAggregatesFromExpression] expr type=" + (expr != null ? expr.getType() : "null") + ", atom=" + (atom != null ? atom.getType() : "null"));
         if (atom != null && atom.getType() == JQuickExpressionAtomNode.AtomType.FUNCTION) {
             JQuickFunctionCallNode func = atom.getFunctionCall();
             if (func != null) {
                 String funcName = func.getFunctionName().toLowerCase();
+                System.out.println("[DEBUG extractAggregatesFromExpression] funcName=" + funcName + ", isAggregate=" + JQuickAggregateFunction.isAggregateFunction(funcName));
                 if (JQuickAggregateFunction.isAggregateFunction(funcName)) {
                     // 获取函数参数
                     JQuickExpressionNode arg = null;
@@ -577,7 +595,9 @@ public class JQuickASTToLogicalPlanVisitor {
                     }
                     JQuickExpression aggExpr = arg != null ? visitExpression(arg) : null;
                     boolean isCountStar = funcName.equals("count") && func.isStarArg();
-                    aggregates.add(new JQuickGroupByNode.AggregateItem(aggExpr, funcName, alias, isCountStar));
+                    // 如果没有别名，使用函数名作为别名
+                    String aggAlias = (alias != null && !alias.isEmpty()) ? alias : funcName;
+                    aggregates.add(new JQuickGroupByNode.AggregateItem(aggExpr, funcName, aggAlias, isCountStar));
                 }
             }
         }
