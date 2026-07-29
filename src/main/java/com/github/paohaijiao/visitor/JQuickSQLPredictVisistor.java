@@ -244,6 +244,7 @@ public class JQuickSQLPredictVisistor extends JQuickSQLValueVisistor {
     }
     @Override
     public JQuickPredicateNode visitInPredicate(JQuickSQLParser.InPredicateContext ctx) {
+        String text= ctx.getText();
         JQuickPredicateNode predicate = (JQuickPredicateNode) visit(ctx.predicate());
         boolean not = ctx.NOT() != null;
         if (ctx.selectStatement() != null) {

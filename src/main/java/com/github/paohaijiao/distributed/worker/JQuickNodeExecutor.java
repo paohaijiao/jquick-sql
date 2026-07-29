@@ -997,78 +997,7 @@ public class JQuickNodeExecutor {
         }
     }
 
-    private Object extractJoinKey(JQuickRow row, JQuickHashJoinPhysicalNode node, boolean useLeftKey) {
-        return extractJoinKeyDirect(row, node.getJoinKeys(), useLeftKey);
-    }
 
-    /**
-     * 直接提取 JOIN 键，对于简单列引用直接从行中获取值
-     */
-    private Object extractJoinKeyDirect(JQuickRow row, List<JQuickHashJoinPhysicalNode.JoinKeyPair> joinKeys, boolean useLeftKey) {
-        if (joinKeys.isEmpty()) return null;
-        
-        // 组合键
-        if (joinKeys.size() > 1) {
-            List<Object> compositeKey = new ArrayList<>();
-            for (JQuickHashJoinPhysicalNode.JoinKeyPair keyPair : joinKeys) {
-                compositeKey.add(getJoinKeyValue(row, keyPair, useLeftKey));
-            }
-            return compositeKey;
-        }
-        
-        // 单键
-        return getJoinKeyValue(row, joinKeys.get(0), useLeftKey);
-    }
-    
-    /**
-     * 获取单个 JOIN 键值
-     */
-    private Object getJoinKeyValue(JQuickRow row, JQuickHashJoinPhysicalNode.JoinKeyPair keyPair, boolean useLeftKey) {
-        JQuickExpression keyExpr = useLeftKey ? keyPair.getLeftKey() : keyPair.getRightKey();
-        
-        // 简单列引用：直接从行中获取
-        if (keyExpr instanceof JQuickColumnRefExpression) {
-            JQuickColumnRefExpression colRef = (JQuickColumnRefExpression) keyExpr;
-            String colName = colRef.getColumnName();
-            String tableAlias = colRef.getTableAlias();
-            
-            // 1. 尝试带原始表别名前缀的列（如 "u.id"）
-            if (tableAlias != null && row.containsKey(tableAlias + "." + colName)) {
-                return row.get(tableAlias + "." + colName);
-            }
-            // 2. 优先查找不带前缀的列（单表数据）
-            if (row.containsKey(colName)) {
-                return row.get(colName);
-            }
-            // 3. 尝试带 left/right 前缀的列
-            if (row.containsKey("left." + colName)) {
-                return row.get("left." + colName);
-            }
-            if (row.containsKey("right." + colName)) {
-                return row.get("right." + colName);
-            }
-            // 4. 模糊匹配：查找以列名结尾的键（兼容各种前缀）
-            for (String key : row.keySet()) {
-                if (key.endsWith("." + colName)) {
-                    return row.get(key);
-                }
-            }
-        }
-        
-        // 复杂表达式：使用表达式求值器
-        return expressionEvaluator.evaluateExpression(row, keyExpr);
-    }
-
-    private JQuickRow extractGroupKey(JQuickRow row, List<JQuickExpression> groupKeys) {
-        JQuickRow key = new JQuickRow();
-        for (JQuickExpression expr : groupKeys) {
-            if (expr instanceof JQuickColumnRefExpression) {
-                String colName = ((JQuickColumnRefExpression) expr).getColumnName();
-                key.put(colName, row.get(colName));
-            }
-        }
-        return key;
-    }
 
     private String extractGroupKeyString(JQuickRow row, List<JQuickExpression> groupKeys) {
         StringBuilder sb = new StringBuilder();
