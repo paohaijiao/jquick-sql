@@ -181,7 +181,7 @@ public class JQuickSQL {
         JQuickLogicalPlanNode optimizedPlan = optimizer.optimize(logicalPlan);
         JQuickPhysicalPlanNode physicalPlan = physicalGenerator.generate(optimizedPlan);
         JQuickDistributedPlan distributedPlan = fragmenter.fragment(physicalPlan);
-        fragmenter.printFragments(distributedPlan);
+//        fragmenter.printFragments(distributedPlan);
         return coordinator.executeQueryWithPlan(queryId, distributedPlan);
     }
 

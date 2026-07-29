@@ -460,7 +460,13 @@ public class JQuickASTToLogicalPlanVisitor {
                 JQuickExpression high = visitPredicate(node.getBetweenHigh());
                 return new JQuickBetweenExpression(target, low, high, node.isBetweenNot());
             case IN:
+
                 JQuickExpression inTarget = visitPredicate(node.getInPredicate());
+                if (node.getInSubquery() != null) {
+                    JQuickLogicalPlanNode subqueryPlan = visit(node.getInSubquery());
+                    JQuickSubqueryType subType = node.isInNot() ? JQuickSubqueryType.NOT_IN : JQuickSubqueryType.IN;
+                    return new JQuickSubqueryExpression(subqueryPlan, subType, inTarget);
+                }
                 List<JQuickExpression> inValues = new ArrayList<>();
                 if (node.getInExpressions() != null) {
                     for (JQuickExpressionNode expr1 : node.getInExpressions().getExpressions()) {
