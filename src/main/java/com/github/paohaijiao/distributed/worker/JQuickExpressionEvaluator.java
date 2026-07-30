@@ -47,6 +47,8 @@ public class JQuickExpressionEvaluator {
 
     private Map<String, String> columnAliasMap = new HashMap<>();
 
+    private Set<String> innerTableAliases = new HashSet<>();
+
     /**
      * 设置别名上下文（在 JOIN 时使用）
      */
@@ -61,6 +63,27 @@ public class JQuickExpressionEvaluator {
     public void clearAliasContext() {
         this.aliasToTableMap.clear();
         this.columnAliasMap.clear();
+    }
+
+    /**
+     * 设置内部表别名（子查询上下文中当前查询层的表别名）
+     */
+    public void setInnerTableAliases(Set<String> aliases) {
+        this.innerTableAliases = aliases != null ? aliases : new HashSet<>();
+    }
+
+    /**
+     * 清除内部表别名
+     */
+    public void clearInnerTableAliases() {
+        this.innerTableAliases.clear();
+    }
+
+    /**
+     * 检查表别名是否是当前查询层的内部别名
+     */
+    private boolean isInnerTableAlias(String tableAlias) {
+        return tableAlias != null && innerTableAliases.contains(tableAlias);
     }
 
     /**
@@ -129,7 +152,19 @@ public class JQuickExpressionEvaluator {
                         return value;
                     }
                 }
-                value = row.get("outer_" + tableAlias + "_" + rawColumnName);// 外连接场景
+                if (isInnerTableAlias(tableAlias)) {
+                    // 内部表别名：优先解析为当前行的列
+                    value = row.get(rawColumnName);
+                    if (value != null || row.containsKey(rawColumnName)) {
+                        return value;
+                    }
+                    value = row.get(resolvedColumnName);
+                    if (value != null || row.containsKey(resolvedColumnName)) {
+                        return value;
+                    }
+                }
+                // 外部表别名（相关子查询引用）：解析为 outer_ 前缀的列
+                value = row.get("outer_" + tableAlias + "_" + rawColumnName);
                 if (value != null || row.containsKey("outer_" + tableAlias + "_" + rawColumnName)) {
                     return value;
                 }
@@ -529,6 +564,19 @@ public class JQuickExpressionEvaluator {
             if (columns.isEmpty()) continue;
 
             Object rightValue = row.get(columns.get(0));
+            if (rightValue == null) continue;
+            // 数值类型比较（处理 Integer/Long/BigDecimal 差异）
+            if (leftValue instanceof Number && rightValue instanceof Number) {
+                try {
+                    BigDecimal leftBd = new BigDecimal(leftValue.toString());
+                    BigDecimal rightBd = new BigDecimal(rightValue.toString());
+                    if (leftBd.compareTo(rightBd) == 0) {
+                        return true;
+                    }
+                } catch (NumberFormatException e) {
+                    // fall through to equals
+                }
+            }
             if (Objects.equals(leftValue, rightValue)) {
                 return true;
             }

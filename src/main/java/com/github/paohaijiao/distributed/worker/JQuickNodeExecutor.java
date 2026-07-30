@@ -124,6 +124,16 @@ public class JQuickNodeExecutor {
         }
         
         Set<JQuickTableScanPhysicalNode> tableScans = collectTableScans(actualNode);
+        // 收集内部表别名，用于相关子查询中区分内部表和外部表
+        if (parentRow != null) {
+            Set<String> innerAliases = new HashSet<>();
+            for (JQuickTableScanPhysicalNode tableScan : tableScans) {
+                if (tableScan.getAlias() != null) {
+                    innerAliases.add(tableScan.getAlias());
+                }
+            }
+            expressionEvaluator.setInnerTableAliases(innerAliases);
+        }
         JQuickExecuteTaskRequest.Builder requestBuilder = JQuickExecuteTaskRequest.newBuilder()
                 .setQueryId("subquery")
                 .setTaskId("subquery_task_" + System.currentTimeMillis())
@@ -155,6 +165,7 @@ public class JQuickNodeExecutor {
         console.info("executePhysicalPlan - actualNode type: " + actualNode.getNodeType() + ", tableScans found: " + tableScans.size() + ", inputPartitions: " + request.getInputPartitionsCount());
         JQuickDataSet result = executeNode(actualNode, context);
         console.info("executePhysicalPlan - result: rows=" + result.size() + ", columns=" + result.getColumnNames());
+        expressionEvaluator.clearInnerTableAliases();
         return result;
     }
 
@@ -352,33 +363,72 @@ public class JQuickNodeExecutor {
                 String starAlias = node.getQualifiedStar();
                 List<JQuickRow> projectedRows = new ArrayList<>();
                 List<JQuickColumnMeta> qualifiedColumns = new ArrayList<>();
-                for (JQuickRow row : input.getRows()) {
-                    JQuickRow newRow = new JQuickRow();
-                    for (String key : row.keySet()) {
-                        String colName = key;
-                        if (key.startsWith("left.")) {
-                            colName = key.substring(5);
-                        } else if (key.startsWith("right.")) {
-                            colName = key.substring(6);
-                        }
-                        if (key.startsWith(starAlias + ".") || key.equals(starAlias + "_" + colName)) {
-                            newRow.put(colName, row.get(key));
-                        } else if (key.startsWith("left." + starAlias + ".") ) {
-                            newRow.put(key.substring(5 + starAlias.length() + 1), row.get(key));
-                        } else if (key.startsWith("right." + starAlias + ".")) {
-                            newRow.put(key.substring(6 + starAlias.length() + 1), row.get(key));
+                // 检查是否有 JOIN 前缀的列（left./right.）
+                boolean hasJoinPrefix = false;
+                if (!input.getRows().isEmpty()) {
+                    for (String key : input.getRows().get(0).keySet()) {
+                        if (key.startsWith("left.") || key.startsWith("right.")) {
+                            hasJoinPrefix = true;
+                            break;
                         }
                     }
-                    projectedRows.add(newRow);
                 }
-                for (JQuickColumnMeta col : input.getColumns()) {
-                    String colName = col.getName();
-                    String colAlias = colName;
-                    if (colName.startsWith("left.")) colAlias = colName.substring(5);
-                    if (colName.startsWith("right.")) colAlias = colName.substring(6);
-                    if (colName.startsWith(starAlias + ".") || colName.startsWith("left." + starAlias + ".") || colName.startsWith("right." + starAlias + ".")) {
-                        qualifiedColumns.add(col);
+                if (!hasJoinPrefix) {
+                    // 非JOIN场景：单表查询 u1.* 等价于 SELECT *
+                    // 检查列是否带表别名前缀（如 u1.col）
+                    boolean hasAliasPrefix = false;
+                    if (!input.getRows().isEmpty()) {
+                        for (String key : input.getRows().get(0).keySet()) {
+                            if (key.startsWith(starAlias + ".")) {
+                                hasAliasPrefix = true;
+                                break;
+                            }
+                        }
                     }
+                    for (JQuickRow row : input.getRows()) {
+                        JQuickRow newRow = new JQuickRow();
+                        for (String key : row.keySet()) {
+                            if (hasAliasPrefix && key.startsWith(starAlias + ".")) {
+                                newRow.put(key.substring(starAlias.length() + 1), row.get(key));
+                            } else if (!hasAliasPrefix) {
+                                // 列名不带前缀，直接返回所有列
+                                newRow.put(key, row.get(key));
+                            }
+                        }
+                        projectedRows.add(newRow);
+                    }
+                    for (JQuickColumnMeta col : input.getColumns()) {
+                        String colName = col.getName();
+                        if (hasAliasPrefix && colName.startsWith(starAlias + ".")) {
+                            qualifiedColumns.add(col);
+                        } else if (!hasAliasPrefix) {
+                            qualifiedColumns.add(col);
+                        }
+                    }
+                } else {
+                    // JOIN场景：根据别名过滤 left.u1.col / right.u1.col / u1.col
+                    for (JQuickRow row : input.getRows()) {
+                        JQuickRow newRow = new JQuickRow();
+                        for (String key : row.keySet()) {
+                            if (key.startsWith(starAlias + ".")) {
+                                newRow.put(key.substring(starAlias.length() + 1), row.get(key));
+                            } else if (key.startsWith("left." + starAlias + ".")) {
+                                newRow.put(key.substring(5 + starAlias.length() + 1), row.get(key));
+                            } else if (key.startsWith("right." + starAlias + ".")) {
+                                newRow.put(key.substring(6 + starAlias.length() + 1), row.get(key));
+                            }
+                        }
+                        projectedRows.add(newRow);
+                    }
+                    for (JQuickColumnMeta col : input.getColumns()) {
+                        String colName = col.getName();
+                        if (colName.startsWith(starAlias + ".") || colName.startsWith("left." + starAlias + ".") || colName.startsWith("right." + starAlias + ".")) {
+                            qualifiedColumns.add(col);
+                        }
+                    }
+                }
+                if (node.isDistinct()) {
+                    projectedRows = projectedRows.stream().distinct().collect(Collectors.toList());
                 }
                 return new JQuickDataSet(qualifiedColumns, projectedRows);
             }
