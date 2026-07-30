@@ -127,12 +127,12 @@ public class JQuickDatasetOpTest {
         JQuickFilterNode filter = (JQuickFilterNode) leftQuery.getChild();
         JQuickBinaryExpression newPredicate = new JQuickBinaryExpression(new JQuickColumnRefExpression("age"), new JQuickLiteralExpression(18), JQuickBinaryOperator.GT);
         JQuickFilterNode newFilter = new JQuickFilterNode(newPredicate, ((JQuickFilterNode) filter).getChild());
-        JQuickProjectNode leftQueryModified = new JQuickProjectNode(leftQuery.getSelectItems(), newFilter, leftQuery.isDistinct());
+        JQuickProjectNode leftQueryModified = new JQuickProjectNode(leftQuery.getSelectItems(), newFilter, leftQuery.isDistinct(),null);
         JQuickProjectNode rightQuery = createProjectWithFilter("users", "age", 18, "id", "name");
         JQuickFilterNode rightFilter = (JQuickFilterNode) rightQuery.getChild();
         JQuickBinaryExpression rightPredicate = new JQuickBinaryExpression(new JQuickColumnRefExpression("age"), new JQuickLiteralExpression(18), JQuickBinaryOperator.LE);
         JQuickFilterNode newRightFilter = new JQuickFilterNode(rightPredicate, rightFilter.getChild());
-        JQuickProjectNode rightQueryModified = new JQuickProjectNode(rightQuery.getSelectItems(), newRightFilter, rightQuery.isDistinct());
+        JQuickProjectNode rightQueryModified = new JQuickProjectNode(rightQuery.getSelectItems(), newRightFilter, rightQuery.isDistinct(),null);
         JQuickSetOperationNode unionAllNode = new JQuickSetOperationNode(JQuickSQLOperationType.UNION_ALL, leftQueryModified, rightQueryModified);
         JQuickPhysicalPlanNode physicalPlan = generator.generate(unionAllNode);
         System.out.println(physicalPlan);

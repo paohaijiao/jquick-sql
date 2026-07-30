@@ -62,7 +62,7 @@ public abstract class JQuickRecursiveOptimizerRule implements JQuickOptimizerRul
         }
         if (node instanceof JQuickProjectNode) {
             JQuickProjectNode project = (JQuickProjectNode) node;
-            return new JQuickProjectNode(project.getSelectItems(), newChildren.get(0), project.isDistinct());
+            return new JQuickProjectNode(project.getSelectItems(), newChildren.get(0), project.isDistinct(),project.getQualifiedStar());
         }
         if (node instanceof JQuickGroupByNode) {
             JQuickGroupByNode groupBy = (JQuickGroupByNode) node;

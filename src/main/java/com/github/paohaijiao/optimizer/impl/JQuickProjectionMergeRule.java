@@ -66,7 +66,7 @@ public class JQuickProjectionMergeRule implements JQuickOptimizerRule {
     private JQuickLogicalPlanNode rebuildNode(JQuickLogicalPlanNode node, List<JQuickLogicalPlanNode> newChildren) {
         if (node instanceof JQuickProjectNode) {
             JQuickProjectNode project = (JQuickProjectNode) node;
-            return new JQuickProjectNode(project.getSelectItems(), newChildren.get(0), project.isDistinct());
+            return new JQuickProjectNode(project.getSelectItems(), newChildren.get(0), project.isDistinct(),project.getQualifiedStar());
         }
         if (node instanceof JQuickFilterNode) {
             JQuickFilterNode filter = (JQuickFilterNode) node;
@@ -111,7 +111,7 @@ public class JQuickProjectionMergeRule implements JQuickOptimizerRule {
                     merged.add(new JQuickProjectNode.SelectItem(replaced, outerItem.getAlias()));
                 }
                 boolean distinct = outer.isDistinct() || inner.isDistinct();
-                return new JQuickProjectNode(merged, inner.getChild(), distinct);
+                return new JQuickProjectNode(merged, inner.getChild(), distinct, outer.getQualifiedStar());
             }
         }
 

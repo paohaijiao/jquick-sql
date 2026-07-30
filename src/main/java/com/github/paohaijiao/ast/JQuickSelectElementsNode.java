@@ -49,6 +49,14 @@ public class JQuickSelectElementsNode implements JQuickASTNode {
         return isStar;
     }
 
+    public String getQualifiedStar() {
+        return qualifiedStar;
+    }
+
+    public boolean isQualifiedStar() {
+        return qualifiedStar != null;
+    }
+
     public List<JQuickSelectElementNode> getSelectElements() {
         return selectElements;
     }

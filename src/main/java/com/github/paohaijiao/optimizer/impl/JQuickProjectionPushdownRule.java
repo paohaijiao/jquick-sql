@@ -59,7 +59,7 @@ public class JQuickProjectionPushdownRule implements JQuickOptimizerRule {
     private JQuickLogicalPlanNode rebuildNode(JQuickLogicalPlanNode node, List<JQuickLogicalPlanNode> newChildren) {
         if (node instanceof JQuickProjectNode) {
             JQuickProjectNode project = (JQuickProjectNode) node;
-            return new JQuickProjectNode(project.getSelectItems(), newChildren.get(0), project.isDistinct());
+            return new JQuickProjectNode(project.getSelectItems(), newChildren.get(0), project.isDistinct(),project.getQualifiedStar());
         }
         if (node instanceof JQuickJoinNode) {
             JQuickJoinNode join = (JQuickJoinNode) node;
@@ -95,7 +95,7 @@ public class JQuickProjectionPushdownRule implements JQuickOptimizerRule {
             if(!project.getSelectItems().isEmpty()&&project.getSelectItems().get(0).isStar() ){
                 selectAll=true;
             }
-            return new JQuickProjectNode(project.getSelectItems(), new JQuickTableScanNode(scan.getTableName(), scan.getAlias(), selectAll||columnNames.isEmpty() ? null : columnNames, scan.getFilterPredicate()), project.isDistinct());
+            return new JQuickProjectNode(project.getSelectItems(), new JQuickTableScanNode(scan.getTableName(), scan.getAlias(), selectAll||columnNames.isEmpty() ? null : columnNames, scan.getFilterPredicate()), project.isDistinct(),project.getQualifiedStar());
         } else if (child instanceof JQuickProjectNode) {
             JQuickProjectNode childProject = (JQuickProjectNode) child;
             Map<String, JQuickExpression> innerExprMap = new HashMap<>();
@@ -113,7 +113,7 @@ public class JQuickProjectionPushdownRule implements JQuickOptimizerRule {
             }
             JQuickLogicalPlanNode newChild = pushdownProjection(childProject, newRequiredColumns);
             boolean distinct = project.isDistinct() || childProject.isDistinct();
-            return new JQuickProjectNode(mergedItems, newChild, distinct);
+            return new JQuickProjectNode(mergedItems, newChild, distinct,project.getQualifiedStar());
         } else if (child instanceof JQuickJoinNode) {
             JQuickJoinNode join = (JQuickJoinNode) child;
             Set<String> actualRequiredColumns = extractActualColumns(project.getSelectItems(), requiredColumns);
@@ -142,7 +142,7 @@ public class JQuickProjectionPushdownRule implements JQuickOptimizerRule {
             JQuickLogicalPlanNode newLeft = pushdownToNode(join.getLeft(), leftColumns);
             JQuickLogicalPlanNode newRight = pushdownToNode(join.getRight(), rightColumns);
             JQuickJoinNode newJoin = new JQuickJoinNode(join.getJoinType(), newLeft, newRight, join.getCondition(),join.getJoinKeys());
-            return new JQuickProjectNode(project.getSelectItems(), newJoin, project.isDistinct());
+            return new JQuickProjectNode(project.getSelectItems(), newJoin, project.isDistinct(),project.getQualifiedStar());
         }
 
         return project;
@@ -270,7 +270,7 @@ public class JQuickProjectionPushdownRule implements JQuickOptimizerRule {
             if (filtered.isEmpty()) {
                 return newChild;
             }
-            return new JQuickProjectNode(filtered, newChild, project.isDistinct());
+            return new JQuickProjectNode(filtered, newChild, project.isDistinct(),project.getQualifiedStar());
         } else if (node instanceof JQuickJoinNode) {
             JQuickJoinNode join = (JQuickJoinNode) node;
             Set<String> joinRequired = new HashSet<>(requiredColumns);

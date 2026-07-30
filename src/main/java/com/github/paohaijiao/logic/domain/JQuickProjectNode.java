@@ -34,17 +34,23 @@ public class JQuickProjectNode implements JQuickLogicalPlanNode {
 
     private final JQuickLogicalPlanNode child;
 
-
     private final boolean distinct;
 
+    private final String qualifiedStar;
+
     public JQuickProjectNode(List<SelectItem> selectItems, JQuickLogicalPlanNode child) {
-        this(selectItems, child, false);
+        this(selectItems, child, false, null);
     }
 
     public JQuickProjectNode(List<SelectItem> selectItems, JQuickLogicalPlanNode child, boolean distinct) {
+        this(selectItems, child, distinct, null);
+    }
+
+    public JQuickProjectNode(List<SelectItem> selectItems, JQuickLogicalPlanNode child, boolean distinct, String qualifiedStar) {
         this.selectItems = Collections.unmodifiableList(new ArrayList<>(selectItems));
         this.child = child;
         this.distinct = distinct;
+        this.qualifiedStar = qualifiedStar;
     }
 
     @Override
@@ -76,13 +82,15 @@ public class JQuickProjectNode implements JQuickLogicalPlanNode {
         for (SelectItem item : selectItems) {
             clonedItems.add(item.clone());
         }
-        return new JQuickProjectNode(clonedItems, child.clone(), distinct);
+        return new JQuickProjectNode(clonedItems, child.clone(), distinct, qualifiedStar);
     }
     public List<SelectItem> getSelectItems() { return selectItems; }
 
     public JQuickLogicalPlanNode getChild() { return child; }
 
     public boolean isDistinct() { return distinct; }
+
+    public String getQualifiedStar() { return qualifiedStar; }
 
     /**
      * 选择项

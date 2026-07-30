@@ -60,7 +60,7 @@ public class JQuickLimitPushdownRule implements JQuickOptimizerRule {
     private JQuickLogicalPlanNode rebuildNode(JQuickLogicalPlanNode node, List<JQuickLogicalPlanNode> newChildren) {
         if (node instanceof JQuickProjectNode) {
             JQuickProjectNode project = (JQuickProjectNode) node;
-            return new JQuickProjectNode(project.getSelectItems(), newChildren.get(0), project.isDistinct());
+            return new JQuickProjectNode(project.getSelectItems(), newChildren.get(0), project.isDistinct(),project.getQualifiedStar());
         }
         if (node instanceof JQuickFilterNode) {
             JQuickFilterNode filter = (JQuickFilterNode) node;
@@ -95,7 +95,7 @@ public class JQuickLimitPushdownRule implements JQuickOptimizerRule {
             else if (child instanceof JQuickProjectNode) {
                 JQuickProjectNode project = (JQuickProjectNode) child;
                 JQuickLimitNode newLimit = new JQuickLimitNode(limit.getLimit(), limit.getOffset(), project.getChild());
-                return new JQuickProjectNode(project.getSelectItems(), newLimit, project.isDistinct());
+                return new JQuickProjectNode(project.getSelectItems(), newLimit, project.isDistinct(),project.getQualifiedStar());
             }
             else if (child instanceof JQuickFilterNode) {
                 JQuickFilterNode filter = (JQuickFilterNode) child;

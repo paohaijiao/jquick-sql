@@ -73,7 +73,7 @@ public class JQuickPredicatePushdownRule implements JQuickOptimizerRule {
         }
         if (node instanceof JQuickProjectNode) {
             JQuickProjectNode project = (JQuickProjectNode) node;
-            return new JQuickProjectNode(project.getSelectItems(), newChildren.get(0), project.isDistinct());
+            return new JQuickProjectNode(project.getSelectItems(), newChildren.get(0), project.isDistinct(),project.getQualifiedStar());
         }
         if (node instanceof JQuickJoinNode) {
             JQuickJoinNode join = (JQuickJoinNode) node;
@@ -99,7 +99,7 @@ public class JQuickPredicatePushdownRule implements JQuickOptimizerRule {
             else if (child instanceof JQuickProjectNode) {
                 JQuickProjectNode project = (JQuickProjectNode) child;
                 if (canPushdown(predicate, project)) {
-                    return new JQuickProjectNode(project.getSelectItems(), new JQuickFilterNode(predicate, project.getChild()), project.isDistinct());
+                    return new JQuickProjectNode(project.getSelectItems(), new JQuickFilterNode(predicate, project.getChild()), project.isDistinct(),project.getQualifiedStar());
                 }
             }
             else if (child instanceof JQuickJoinNode) {

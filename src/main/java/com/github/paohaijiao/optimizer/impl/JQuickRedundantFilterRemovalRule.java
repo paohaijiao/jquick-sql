@@ -60,7 +60,7 @@ public class JQuickRedundantFilterRemovalRule implements JQuickOptimizerRule {
         }
         if (node instanceof JQuickProjectNode) {
             JQuickProjectNode project = (JQuickProjectNode) node;
-            return new JQuickProjectNode(project.getSelectItems(), newChildren.get(0), project.isDistinct());
+            return new JQuickProjectNode(project.getSelectItems(), newChildren.get(0), project.isDistinct(),project.getQualifiedStar());
         }
         if (node instanceof JQuickJoinNode) {
             JQuickJoinNode join = (JQuickJoinNode) node;

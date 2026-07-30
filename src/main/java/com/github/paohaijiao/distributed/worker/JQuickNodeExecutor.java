@@ -347,6 +347,41 @@ public class JQuickNodeExecutor {
                 }
                 return input;
             }
+            // 处理 qualified star (如 u.*)：过滤出指定表别名的列
+            if (node.getQualifiedStar() != null) {
+                String starAlias = node.getQualifiedStar();
+                List<JQuickRow> projectedRows = new ArrayList<>();
+                List<JQuickColumnMeta> qualifiedColumns = new ArrayList<>();
+                for (JQuickRow row : input.getRows()) {
+                    JQuickRow newRow = new JQuickRow();
+                    for (String key : row.keySet()) {
+                        String colName = key;
+                        if (key.startsWith("left.")) {
+                            colName = key.substring(5);
+                        } else if (key.startsWith("right.")) {
+                            colName = key.substring(6);
+                        }
+                        if (key.startsWith(starAlias + ".") || key.equals(starAlias + "_" + colName)) {
+                            newRow.put(colName, row.get(key));
+                        } else if (key.startsWith("left." + starAlias + ".") ) {
+                            newRow.put(key.substring(5 + starAlias.length() + 1), row.get(key));
+                        } else if (key.startsWith("right." + starAlias + ".")) {
+                            newRow.put(key.substring(6 + starAlias.length() + 1), row.get(key));
+                        }
+                    }
+                    projectedRows.add(newRow);
+                }
+                for (JQuickColumnMeta col : input.getColumns()) {
+                    String colName = col.getName();
+                    String colAlias = colName;
+                    if (colName.startsWith("left.")) colAlias = colName.substring(5);
+                    if (colName.startsWith("right.")) colAlias = colName.substring(6);
+                    if (colName.startsWith(starAlias + ".") || colName.startsWith("left." + starAlias + ".") || colName.startsWith("right." + starAlias + ".")) {
+                        qualifiedColumns.add(col);
+                    }
+                }
+                return new JQuickDataSet(qualifiedColumns, projectedRows);
+            }
             List<JQuickRow> projectedRows = new ArrayList<>();
             for (JQuickRow row : input.getRows()) {
                 JQuickRow newRow = new JQuickRow();

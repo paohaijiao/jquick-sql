@@ -125,6 +125,9 @@ public class JQuickProtoService {
         JQuickProjectNodeProto.Builder builder = JQuickProjectNodeProto.newBuilder()
                 .setDistinct(node.isDistinct())
                 .setIsStar(node.isStar());
+        if (node.getQualifiedStar() != null) {
+            builder.setQualifiedStar(node.getQualifiedStar());
+        }
         for (JQuickProjectPhysicalNode.SelectItem item : node.getSelectItems()) {
             JQuickProjectNodeProto.SelectItemProto.Builder itemBuilder = JQuickProjectNodeProto.SelectItemProto.newBuilder().setExpression(convertExpressionToProto(item.getExpression()));
             if (item.getAlias() != null) {
@@ -968,7 +971,8 @@ public class JQuickProtoService {
                 for (JQuickProjectNodeProto.SelectItemProto itemProto : projectProto.getSelectItemsList()) {
                     selectItems.add(new JQuickProjectPhysicalNode.SelectItem(buildExpression(itemProto.getExpression()), itemProto.getAlias()));
                 }
-                return new JQuickProjectPhysicalNode(selectItems, !children.isEmpty() ? children.get(0) : null, projectProto.getDistinct(), projectProto.getIsStar());
+                String qualifiedStar = !projectProto.getQualifiedStar().isEmpty() ? projectProto.getQualifiedStar() : null;
+                return new JQuickProjectPhysicalNode(selectItems, !children.isEmpty() ? children.get(0) : null, projectProto.getDistinct(), projectProto.getIsStar(), qualifiedStar);
             case HASH_JOIN:
                 JQuickHashJoinNodeProto joinProto = proto.getHashJoin();
                 List<JQuickHashJoinPhysicalNode.JoinKeyPair> joinKeys = new ArrayList<>();

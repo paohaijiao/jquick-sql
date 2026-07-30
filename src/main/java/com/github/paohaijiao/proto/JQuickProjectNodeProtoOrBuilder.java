@@ -42,4 +42,16 @@ public interface JQuickProjectNodeProtoOrBuilder extends
    * @return The isStar.
    */
   boolean getIsStar();
+
+  /**
+   * <code>string qualified_star = 4;</code>
+   * @return The qualifiedStar.
+   */
+  java.lang.String getQualifiedStar();
+  /**
+   * <code>string qualified_star = 4;</code>
+   * @return The bytes for qualifiedStar.
+   */
+  com.google.protobuf.ByteString
+      getQualifiedStarBytes();
 }

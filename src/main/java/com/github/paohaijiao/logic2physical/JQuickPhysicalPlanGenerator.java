@@ -109,7 +109,7 @@ public class JQuickPhysicalPlanGenerator implements JQuickLogicalPlanVisitor {
             }
             items.add(new JQuickProjectPhysicalNode.SelectItem(item.getExpression(), item.getAlias()));
         }
-        JQuickProjectPhysicalNode physicalNode = new JQuickProjectPhysicalNode(items, childPhysical, node.isDistinct(), hasStar);
+        JQuickProjectPhysicalNode physicalNode = new JQuickProjectPhysicalNode(items, childPhysical, node.isDistinct(), hasStar, node.getQualifiedStar());
         logicalToPhysical.put(node, physicalNode);
     }
 
@@ -300,7 +300,7 @@ public class JQuickPhysicalPlanGenerator implements JQuickLogicalPlanVisitor {
         if (plan instanceof JQuickProjectPhysicalNode) {
             JQuickProjectPhysicalNode project = (JQuickProjectPhysicalNode) plan;
             JQuickPhysicalPlanNode newChild = replaceCteReference(project.getChildren().get(0), cteName, replacement);
-            return new JQuickProjectPhysicalNode(project.getSelectItems(), newChild, project.isDistinct(), project.isStar());
+            return new JQuickProjectPhysicalNode(project.getSelectItems(), newChild, project.isDistinct(), project.isStar(), project.getQualifiedStar());
         }
         if (plan instanceof JQuickFilterPhysicalNode) {
             JQuickFilterPhysicalNode filter = (JQuickFilterPhysicalNode) plan;
@@ -461,7 +461,7 @@ public class JQuickPhysicalPlanGenerator implements JQuickLogicalPlanVisitor {
                 }
             }
             if (filteredItems.size() < project.getSelectItems().size()) {
-                return new JQuickProjectPhysicalNode(filteredItems, project.getChildren().get(0), project.isDistinct(), false);
+                return new JQuickProjectPhysicalNode(filteredItems, project.getChildren().get(0), project.isDistinct(), false, project.getQualifiedStar());
             }
         }
 

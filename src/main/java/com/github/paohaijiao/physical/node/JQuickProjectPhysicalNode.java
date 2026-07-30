@@ -35,6 +35,8 @@ public class JQuickProjectPhysicalNode extends JQuickAbstractPhysicalNode {
 
     private final boolean star;
 
+    private final String qualifiedStar;
+
     public static class SelectItem {
 
         private final JQuickExpression expression;
@@ -55,16 +57,20 @@ public class JQuickProjectPhysicalNode extends JQuickAbstractPhysicalNode {
         }
     }
     public JQuickProjectPhysicalNode(List<SelectItem> selectItems, JQuickPhysicalPlanNode child) {
-      this(selectItems,child,false,false);
+      this(selectItems,child,false,false, null);
     }
     public JQuickProjectPhysicalNode(List<SelectItem> selectItems, JQuickPhysicalPlanNode child, boolean distinct) {
-        this(selectItems, child, distinct, false);
+        this(selectItems, child, distinct, false, null);
     }
     public JQuickProjectPhysicalNode(List<SelectItem> selectItems, JQuickPhysicalPlanNode child, boolean distinct, boolean star) {
+        this(selectItems, child, distinct, star, null);
+    }
+    public JQuickProjectPhysicalNode(List<SelectItem> selectItems, JQuickPhysicalPlanNode child, boolean distinct, boolean star, String qualifiedStar) {
         super(child);
         this.selectItems = new ArrayList<>(selectItems);
         this.distinct = distinct;
         this.star = star;
+        this.qualifiedStar = qualifiedStar;
     }
 
     @Override
@@ -86,7 +92,7 @@ public class JQuickProjectPhysicalNode extends JQuickAbstractPhysicalNode {
     @Override
     public JQuickPhysicalPlanNode clone() {
         List<SelectItem> clonedItems = selectItems.stream().map(SelectItem::clone).collect(Collectors.toList());
-        return new JQuickProjectPhysicalNode(clonedItems, children.get(0).clone(), distinct, star);
+        return new JQuickProjectPhysicalNode(clonedItems, children.get(0).clone(), distinct, star, qualifiedStar);
     }
 
     @Override
@@ -99,6 +105,8 @@ public class JQuickProjectPhysicalNode extends JQuickAbstractPhysicalNode {
     public boolean isDistinct() { return distinct; }
 
     public boolean isStar() { return star; }
+
+    public String getQualifiedStar() { return qualifiedStar; }
     @Override
     public JQuickPhysicalStats getStats() {
         JQuickPhysicalPlanNode child = getChild();

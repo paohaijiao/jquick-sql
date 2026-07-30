@@ -167,7 +167,7 @@ public class JQuickASTToLogicalPlanVisitor {
             JQuickExpression havingExpr = node.getHavingClause() != null ? visit(node.getHavingClause().getFilterCondition()) : null; // 处理 HAVING
             root = new JQuickGroupByNode(groupKeys, aggregates, root, havingExpr);// 创建分组节点
             List<JQuickProjectNode.SelectItem> selectItems = rebuildSelectItems(node.getSelectElements(), groupKeys, aggregates);// 重建投影（GROUP BY 后只能选择分组键和聚合结果）
-            root = new JQuickProjectNode(selectItems, root, node.isDistinct());
+            root = new JQuickProjectNode(selectItems, root, node.isDistinct(),null);
         } else {//处理 SELECT 投影（无 GROUP BY）
             // 检测 SELECT 中是否包含聚合函数（如 AVG、SUM、COUNT 等）
             List<JQuickGroupByNode.AggregateItem> aggregates = extractAggregates(node.getSelectElements());
@@ -177,11 +177,11 @@ public class JQuickASTToLogicalPlanVisitor {
                 root = new JQuickGroupByNode(emptyGroupKeys, aggregates, root, null);
                 // 重建 SELECT 项
                 List<JQuickProjectNode.SelectItem> selectItems = rebuildSelectItems(node.getSelectElements(), emptyGroupKeys, aggregates);
-                root = new JQuickProjectNode(selectItems, root, node.isDistinct());
+                root = new JQuickProjectNode(selectItems, root, node.isDistinct(),null);
             } else {
                 // 无聚合函数，普通投影
                 List<JQuickProjectNode.SelectItem> selectItems = visitSelectElements(node.getSelectElements());
-                root = new JQuickProjectNode(selectItems, root, node.isDistinct());
+                root = new JQuickProjectNode(selectItems, root, node.isDistinct(), node.getSelectElements().getQualifiedStar());
             }
         }
         if (node.getOrderByClause() != null) {//处理 ORDER BY
@@ -274,7 +274,6 @@ public class JQuickASTToLogicalPlanVisitor {
                 items.add(visitSelectElement(elem));
             }
         }
-
         return items;
     }
 

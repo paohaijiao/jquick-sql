@@ -66,7 +66,7 @@ public class JQuickJoinReorderRule implements JQuickOptimizerRule {
         }
         if (node instanceof JQuickProjectNode) {
             JQuickProjectNode project = (JQuickProjectNode) node;
-            return new JQuickProjectNode(project.getSelectItems(), newChildren.get(0), project.isDistinct());
+            return new JQuickProjectNode(project.getSelectItems(), newChildren.get(0), project.isDistinct(),project.getQualifiedStar());
         }
         if (node instanceof JQuickFilterNode) {
             JQuickFilterNode filter = (JQuickFilterNode) node;
