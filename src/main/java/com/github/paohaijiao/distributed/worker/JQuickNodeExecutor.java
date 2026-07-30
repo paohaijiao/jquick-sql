@@ -6,11 +6,13 @@ import com.github.paohaijiao.distributed.proto.JQuickProtoService;
 import com.github.paohaijiao.distributed.worker.join.JQuickJoinHandler;
 import com.github.paohaijiao.distributed.worker.join.JQuickJoinHandlerFactory;
 import com.github.paohaijiao.enums.JQuickExchangeType;
+import com.github.paohaijiao.enums.JQuickSubqueryType;
 import com.github.paohaijiao.expression.JQuickExpression;
 import com.github.paohaijiao.expression.domain.JQuickBinaryExpression;
 import com.github.paohaijiao.expression.domain.JQuickColumnRefExpression;
 import com.github.paohaijiao.expression.domain.JQuickFunctionCallExpression;
 import com.github.paohaijiao.expression.domain.JQuickLiteralExpression;
+import com.github.paohaijiao.expression.domain.JQuickSubqueryExpression;
 import com.github.paohaijiao.physical.JQuickPhysicalPlanNode;
 import com.github.paohaijiao.physical.domain.JQuickPhysicalColumn;
 import com.github.paohaijiao.physical.node.*;
@@ -150,7 +152,10 @@ public class JQuickNodeExecutor {
         }
         JQuickExecuteTaskRequest request = requestBuilder.build();
         JQuickWorker.JQuickTaskContext context = worker.new JQuickTaskContext(request.getTaskId(), request);
-        return executeNode(actualNode, context);
+        console.info("executePhysicalPlan - actualNode type: " + actualNode.getNodeType() + ", tableScans found: " + tableScans.size() + ", inputPartitions: " + request.getInputPartitionsCount());
+        JQuickDataSet result = executeNode(actualNode, context);
+        console.info("executePhysicalPlan - result: rows=" + result.size() + ", columns=" + result.getColumnNames());
+        return result;
     }
 
     private Set<JQuickTableScanPhysicalNode> collectTableScans(JQuickPhysicalPlanNode node) {
@@ -268,12 +273,48 @@ public class JQuickNodeExecutor {
     }
     /**
      * 执行 Filter
+     * 对谓词中的非相关 SCALAR 子查询提前计算一次，用字面量替换，避免逐行重复执行
      */
     private JQuickDataSet executeFilter(JQuickFilterPhysicalNode node, JQuickWorker.JQuickTaskContext context) {
         JQuickDataSet input = executeNode(node.getChild(), context);
-        JQuickDataSet result = input.filter(row -> expressionEvaluator.evaluatePredicate(row, node.getPredicate()));
+        JQuickExpression predicate = preEvaluateScalarSubqueries(node.getPredicate());
+        JQuickDataSet result = input.filter(row -> expressionEvaluator.evaluatePredicate(row, predicate));
         context.addProcessedRows(input.size());
         return result;
+    }
+
+    /**
+     * 预计算表达式中的标量子查询
+     * 对 SCALAR 类型子查询，用 null parentRow 提前执行一次：
+     *   - 非相关子查询：返回标量值，用 JQuickLiteralExpression 替换，后续逐行比较只需常量比较
+     *   - 相关子查询：执行时找不到外部列会返回 null 或抛异常，保持原样逐行计算
+     * 递归处理二元表达式的左右子树。
+     */
+    private JQuickExpression preEvaluateScalarSubqueries(JQuickExpression expr) {
+        if (expr == null) {
+            return null;
+        }
+        if (expr instanceof JQuickSubqueryExpression) {
+            JQuickSubqueryExpression subqueryExpr = (JQuickSubqueryExpression) expr;
+            if (subqueryExpr.getSubqueryType() == JQuickSubqueryType.SCALAR) {
+                try {
+                    Object value = expressionEvaluator.evaluateExpression(null, subqueryExpr);
+                    console.info("preEvaluateScalarSubqueries - subquery result: " + value);
+                    if (value != null) {
+                        return new JQuickLiteralExpression(value);
+                    }
+                } catch (Exception e) {
+                    console.warn("preEvaluateScalarSubqueries - failed to pre-evaluate subquery, keep original: " + e.getMessage());
+                }
+            }
+            return expr;
+        } else if (expr instanceof JQuickBinaryExpression) {
+            JQuickBinaryExpression binary = (JQuickBinaryExpression) expr;
+            JQuickExpression left = preEvaluateScalarSubqueries(binary.getLeft());
+            JQuickExpression right = preEvaluateScalarSubqueries(binary.getRight());
+            return new JQuickBinaryExpression(left, right, binary.getOperator());
+        }
+        return expr;
     }
 
 
@@ -804,6 +845,17 @@ public class JQuickNodeExecutor {
     }
 
     /**
+     * 判断当前是否为子查询执行上下文（queryId 以 "subquery" 开头）。
+     * 子查询上下文中，Exchange 节点必须被绕过，直接执行子节点。
+     */
+    private boolean isSubqueryContext(JQuickWorker.JQuickTaskContext context) {
+        return context != null
+                && context.getRequest() != null
+                && context.getRequest().getQueryId() != null
+                && context.getRequest().getQueryId().startsWith("subquery");
+    }
+
+    /**
      * 执行 Exchange - 数据分发或接收
      */
     private JQuickDataSet executeExchange(JQuickExchangePhysicalNode node, JQuickWorker.JQuickTaskContext context) {
@@ -811,6 +863,19 @@ public class JQuickNodeExecutor {
         console.info("Exchange type: " + node.getExchangeType());
         console.info("Target parallelism: " + node.getTargetParallelism());
         console.info("Partition strategy: " + node.getPartitionStrategy());
+        // 子查询执行上下文中，SHUFFLE/BROADCAST/GATHER Exchange 必须被绕过，直接执行子节点。
+        // 因为 executePhysicalPlan 把原始表数据放入 subquery_partition_<table> 分区，
+        // Exchange 若读取这些分区会拿到原始数据，绕过本应执行的 HashAggregate 等节点。
+        if (isSubqueryContext(context)
+                && (node.getExchangeType() == JQuickExchangeType.SHUFFLE
+                    || node.getExchangeType() == JQuickExchangeType.BROADCAST
+                    || node.getExchangeType() == JQuickExchangeType.GATHER)) {
+            console.info("Exchange bypassed in subquery context, executing child directly");
+            if (node.getChild() != null) {
+                return executeNode(node.getChild(), context);
+            }
+            return JQuickDataSet.builder().build();
+        }
         // GATHER Exchange: 收集数据（从 gRPC 接收的数据中收集）
         if (node.getExchangeType() == JQuickExchangeType.GATHER) {
             console.info("GATHER Exchange: collecting data from gRPC received partitions");
@@ -1257,7 +1322,8 @@ public class JQuickNodeExecutor {
     }
 
     private JQuickDataSet applyFilter(JQuickDataSet data, JQuickExpression predicate) {
-        return data.filter(row -> expressionEvaluator.evaluatePredicate(row, predicate));
+        JQuickExpression preEvaluated = preEvaluateScalarSubqueries(predicate);
+        return data.filter(row -> expressionEvaluator.evaluatePredicate(row, preEvaluated));
     }
 
     private int compareValues(Object v1, Object v2, boolean nullsFirst) {

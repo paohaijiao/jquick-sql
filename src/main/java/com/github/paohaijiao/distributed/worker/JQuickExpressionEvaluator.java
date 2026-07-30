@@ -437,9 +437,12 @@ public class JQuickExpressionEvaluator {
     private Object evaluateSubquery(JQuickRow row, JQuickSubqueryExpression subquery) {
         try {
             JQuickDataSet result = executeSubqueryPlan(subquery, row);
+            console.info("evaluateSubquery - subquery result dataset: rows=" + result.size() + ", columns=" + result.getColumnNames());
             JQuickSubqueryType type = subquery.getSubqueryType();
             if (type == JQuickSubqueryType.SCALAR) {
-                return evaluateScalarSubquery(result);
+                Object val= evaluateScalarSubquery(result);
+                console.info("evaluateSubquery - scalar extracted value: " + val + " (type=" + (val == null ? "null" : val.getClass().getName()) + ")");
+                return val;
             } else if (type == JQuickSubqueryType.EXISTS) {
                 return !result.isEmpty();
             } else if (type == JQuickSubqueryType.NOT_EXISTS) {
@@ -491,20 +494,24 @@ public class JQuickExpressionEvaluator {
 
     private Object evaluateScalarSubquery(JQuickDataSet result) {
         if (result.isEmpty()) {
+            console.info("evaluateScalarSubquery - result is EMPTY, returning null");
             return null;
         }
 
         JQuickRow firstRow = result.first();
         if (firstRow == null) {
+            console.info("evaluateScalarSubquery - firstRow is null, returning null");
             return null;
         }
 
         List<String> columns = result.getColumnNames();
         if (columns.isEmpty()) {
+            console.info("evaluateScalarSubquery - columns is empty, returning null. firstRow keys: " + firstRow.keySet());
             return null;
         }
-
-        return firstRow.get(columns.get(0));
+        Object value = firstRow.get(columns.get(0));
+        console.info("evaluateScalarSubquery - column[0]=" + columns.get(0) + ", value=" + value + ", firstRow keys=" + firstRow.keySet());
+        return value;
     }
 
     private boolean evaluateInSubquery(JQuickDataSet result, JQuickRow outerRow, JQuickExpression leftExpression) {

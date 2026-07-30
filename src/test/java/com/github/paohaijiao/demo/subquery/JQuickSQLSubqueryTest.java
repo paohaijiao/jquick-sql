@@ -158,7 +158,6 @@ public class JQuickSQLSubqueryTest {
      */
     @Test
     public void testSubqueryInWhereWithExists() {
-        System.out.println("=== Subquery with EXISTS ===");
         JQuickDataSet result = sql.execute(
                 "SELECT * FROM users u " +
                         "WHERE EXISTS (SELECT 1 FROM orders o WHERE o.user_id = u.id)"
@@ -172,7 +171,6 @@ public class JQuickSQLSubqueryTest {
      */
     @Test
     public void testSubqueryInFromClause() {
-        System.out.println("=== Subquery in FROM clause (derived table) ===");
         JQuickDataSet result = sql.execute(
                 "SELECT dept_id, avg_age " +
                         "FROM (SELECT department_id as dept_id, AVG(age) as avg_age FROM users GROUP BY department_id) " +
@@ -187,7 +185,6 @@ public class JQuickSQLSubqueryTest {
      */
     @Test
     public void testSubqueryInSelectClause() {
-        System.out.println("=== Subquery in SELECT clause (scalar subquery) ===");
         JQuickDataSet result = sql.execute(
                 "SELECT u.name, u.age, " +
                         "(SELECT dept_name FROM departments d WHERE d.dept_id = u.department_id) as dept_name, " +
