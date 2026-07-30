@@ -1,4 +1,4 @@
-// Generated from D:/my/jthornruleGrammer/distrubutionsql/JQuickSQL.g4 by ANTLR 4.13.2
+// Generated from D:/idea/jthornruleGrammer/distrubutionsql/JQuickSQL.g4 by ANTLR 4.13.2
 package com.github.paohaijiao.parser;
 
 import org.antlr.v4.runtime.ParserRuleContext;
@@ -828,6 +828,18 @@ public class JQuickSQLBaseListener implements JQuickSQLListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitBooleanLiteral(JQuickSQLParser.BooleanLiteralContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterQualifiedStar(JQuickSQLParser.QualifiedStarContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitQualifiedStar(JQuickSQLParser.QualifiedStarContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *

@@ -1,4 +1,4 @@
-// Generated from D:/my/jthornruleGrammer/distrubutionsql/JQuickSQL.g4 by ANTLR 4.13.2
+// Generated from D:/idea/jthornruleGrammer/distrubutionsql/JQuickSQL.g4 by ANTLR 4.13.2
 package com.github.paohaijiao.parser;
 import org.antlr.v4.runtime.tree.ParseTreeListener;
 
@@ -731,6 +731,16 @@ public interface JQuickSQLListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitBooleanLiteral(JQuickSQLParser.BooleanLiteralContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link JQuickSQLParser#qualifiedStar}.
+	 * @param ctx the parse tree
+	 */
+	void enterQualifiedStar(JQuickSQLParser.QualifiedStarContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link JQuickSQLParser#qualifiedStar}.
+	 * @param ctx the parse tree
+	 */
+	void exitQualifiedStar(JQuickSQLParser.QualifiedStarContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link JQuickSQLParser#stringLiteral}.
 	 * @param ctx the parse tree

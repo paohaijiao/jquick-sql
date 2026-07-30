@@ -1,4 +1,4 @@
-// Generated from D:/my/jthornruleGrammer/distrubutionsql/JQuickSQL.g4 by ANTLR 4.13.2
+// Generated from D:/idea/jthornruleGrammer/distrubutionsql/JQuickSQL.g4 by ANTLR 4.13.2
 package com.github.paohaijiao.parser;
 import org.antlr.v4.runtime.tree.ParseTreeVisitor;
 
@@ -440,6 +440,12 @@ public interface JQuickSQLVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitBooleanLiteral(JQuickSQLParser.BooleanLiteralContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link JQuickSQLParser#qualifiedStar}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitQualifiedStar(JQuickSQLParser.QualifiedStarContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link JQuickSQLParser#stringLiteral}.
 	 * @param ctx the parse tree

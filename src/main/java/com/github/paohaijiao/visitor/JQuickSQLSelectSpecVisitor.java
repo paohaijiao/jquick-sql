@@ -207,7 +207,12 @@ public class JQuickSQLSelectSpecVisitor extends JQuickSQLPredictVisistor{
             JQuickSelectElementNode element = (JQuickSelectElementNode) visit(elementCtx);
             selectElements.add(element);
         }
-        return new JQuickSelectElementsNode(false, selectElements);
+        if (ctx.qualifiedStar() != null) {
+            return new JQuickSelectElementsNode(ctx.qualifiedStar().uid().getText(), selectElements);
+        }else{
+            return new JQuickSelectElementsNode(false, selectElements);
+        }
+
     }
     @Override
     public JQuickSelectSpecNode visitSelectSpec(JQuickSQLParser.SelectSpecContext ctx) {

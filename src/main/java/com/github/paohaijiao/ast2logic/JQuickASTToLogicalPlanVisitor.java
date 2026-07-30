@@ -24,6 +24,7 @@ import com.github.paohaijiao.logic.JQuickLogicalPlanNode;
 import com.github.paohaijiao.logic.domain.*;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -645,11 +646,29 @@ public class JQuickASTToLogicalPlanVisitor {
      */
     private List<JQuickProjectNode.SelectItem> rebuildSelectItems(JQuickSelectElementsNode original, List<JQuickExpression> groupKeys, List<JQuickGroupByNode.AggregateItem> aggregates) {
         List<JQuickProjectNode.SelectItem> items = new ArrayList<>();
+        // 构建分组键到原始别名的映射
+        Map<String, String> groupKeyToAlias = new HashMap<>();
+        if (original != null && original.getSelectElements() != null) {
+            for (JQuickSelectElementNode elem : original.getSelectElements()) {
+                if (elem.hasAlias()) {
+                    String colName = extractColumnName(elem.getExpression());
+                    if (colName != null && !colName.isEmpty()) {
+                        groupKeyToAlias.put(colName.toLowerCase(), elem.getAlias());
+                    }
+                }
+            }
+        }
         for (int i = 0; i < groupKeys.size(); i++) { // 添加分组键
-            JQuickExpression expression=groupKeys.get(i);
-            if(expression instanceof JQuickColumnRefExpression) {
+            JQuickExpression expression = groupKeys.get(i);
+            if (expression instanceof JQuickColumnRefExpression) {
                 JQuickColumnRefExpression columnRefExpr = (JQuickColumnRefExpression) expression;
-                items.add(new JQuickProjectNode.SelectItem(new JQuickColumnRefExpression(columnRefExpr.getColumnName()), columnRefExpr.getTableAlias()));
+                String colName = columnRefExpr.getColumnName();
+                // 优先使用原始 SELECT 中的 AS 别名
+                String alias = groupKeyToAlias.get(colName.toLowerCase());
+                if (alias == null) {
+                    alias = columnRefExpr.getTableAlias();
+                }
+                items.add(new JQuickProjectNode.SelectItem(new JQuickColumnRefExpression(colName), alias));
             }
         }
         for (JQuickGroupByNode.AggregateItem agg : aggregates) {// 添加聚合结果

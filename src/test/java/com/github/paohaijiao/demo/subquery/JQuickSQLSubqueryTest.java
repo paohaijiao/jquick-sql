@@ -303,9 +303,9 @@ public class JQuickSQLSubqueryTest {
     @Test
     public void testSubqueryInFromClause() {
         JQuickDataSet result = sql.execute(
-                "SELECT dept_id, avg_age " +
-                        "FROM (SELECT department_id as dept_id, AVG(age) as avg_age FROM users GROUP BY department_id) " +
-                        "WHERE avg_age > 28"
+                "SELECT tmp.dept_id, avg_age " +
+                        "FROM (SELECT department_id as dept_id, AVG(age) as avg_age FROM users GROUP BY department_id) as tmp" +
+                        " WHERE avg_age > 28"
         );
         result.printTable();
     }

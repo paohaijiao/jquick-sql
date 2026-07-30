@@ -25,10 +25,18 @@ public class JQuickSelectElementsNode implements JQuickASTNode {
 
     private final boolean isStar;
 
+    private final String qualifiedStar;
+
     private final List<JQuickSelectElementNode> selectElements;
 
     public JQuickSelectElementsNode(boolean isStar, List<JQuickSelectElementNode> selectElements) {
         this.isStar = isStar;
+        this.qualifiedStar = null;
+        this.selectElements = selectElements;
+    }
+    public JQuickSelectElementsNode(String qualifiedStar, List<JQuickSelectElementNode> selectElements) {
+        this.isStar = false;
+        this.qualifiedStar = qualifiedStar;
         this.selectElements = selectElements;
     }
 
