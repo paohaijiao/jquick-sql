@@ -181,22 +181,26 @@ public class JQuickNodeExecutor {
         console.info("executeTableScan - tableName: " + tableName + ", partitionInfo: " + (node.getPartitionInfo() != null ? "exists" : "null"));
         Set<String> requiredColumns = node.getRequiredColumns();
         JQuickDataSet data;
+        boolean fromInputPartitions = false;
         if (context != null && context.getRequest() != null && context.getRequest().getInputPartitionsCount() > 0) {
             JQuickDataSet partitionData = readFromInputPartitions(tableName, context.getRequest());
             if (partitionData != null && !partitionData.isEmpty()) {
                 console.info("Reading from input partitions (by table name): " + tableName + ", rows: " + partitionData.size());
                 data = partitionData;
+                fromInputPartitions = true;
             } else {
                 String subqueryPartitionId = "subquery_partition_" + tableName;
                 JQuickDataSet memoryData = readFromMemoryPartition(subqueryPartitionId);
                 if (memoryData != null && !memoryData.isEmpty()) {
                     console.info("Reading from memory partition (subquery): " + subqueryPartitionId + ", rows: " + memoryData.size());
                     data = memoryData;
+                    fromInputPartitions = true;
                 } else {
                     partitionData = readFromAnyInputPartition(context.getRequest());
                     if (partitionData != null && !partitionData.isEmpty()) {
                         console.info("Reading from input partitions (INTERMEDIATE fragment): " + tableName + ", rows: " + partitionData.size());
                         data = partitionData;
+                        fromInputPartitions = true;
                     } else if (node.getPartitionInfo() != null) {
                         console.info("Reading from memory partition: " + tableName);
                         data = readFromMemoryPartition(tableName);
@@ -224,7 +228,7 @@ public class JQuickNodeExecutor {
             data = applyFilter(data, node.getFilterPredicate());
             console.info("After filter - rows: " + data.size());
         }
-        if (requiredColumns != null && !requiredColumns.isEmpty()) {
+        if (requiredColumns != null && !requiredColumns.isEmpty() && !fromInputPartitions) {
             String alias=node.getAlias();
             Set<String> columns = new HashSet<>();
             for (String column : requiredColumns) {

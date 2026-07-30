@@ -165,19 +165,7 @@ public class JQuickSQLSubqueryTest {
         result.printTable();
     }
 
-    /**
-     * 测试子查询在FROM子句中使用 (派生表)
-     * 计算每个部门的平均年龄
-     */
-    @Test
-    public void testSubqueryInFromClause() {
-        JQuickDataSet result = sql.execute(
-                "SELECT dept_id, avg_age " +
-                        "FROM (SELECT department_id as dept_id, AVG(age) as avg_age FROM users GROUP BY department_id) " +
-                        "WHERE avg_age > 28"
-        );
-        result.printTable();
-    }
+
 
     /**
      * 测试子查询在SELECT子句中使用 (标量子查询)
@@ -190,6 +178,19 @@ public class JQuickSQLSubqueryTest {
                         "(SELECT dept_name FROM departments d WHERE d.dept_id = u.department_id) as dept_name, " +
                         "(SELECT budget FROM departments d WHERE d.dept_id = u.department_id) as dept_budget " +
                         "FROM users u"
+        );
+        result.printTable();
+    }
+    /**
+     * 测试子查询在FROM子句中使用 (派生表)
+     * 计算每个部门的平均年龄
+     */
+    @Test
+    public void testSubqueryInFromClause() {
+        JQuickDataSet result = sql.execute(
+                "SELECT dept_id, avg_age " +
+                        "FROM (SELECT department_id as dept_id, AVG(age) as avg_age FROM users GROUP BY department_id) " +
+                        "WHERE avg_age > 28"
         );
         result.printTable();
     }
