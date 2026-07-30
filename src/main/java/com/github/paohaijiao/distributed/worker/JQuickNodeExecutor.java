@@ -326,34 +326,52 @@ public class JQuickNodeExecutor {
      * 执行 Project
      */
     private JQuickDataSet executeProject(JQuickProjectPhysicalNode node, JQuickWorker.JQuickTaskContext context) {
-        JQuickDataSet input = executeNode(node.getChild(), context);
-        if (node.isStar()) {
-            if (node.isDistinct()) {
-                List<JQuickRow> distinctRows = input.getRows().stream().distinct().collect(Collectors.toList());
-                return new JQuickDataSet(input.getColumns(), distinctRows);
-            }
-            return input;
+        JQuickPhysicalPlanNode child = node.getChild();
+        // 先执行子节点（含JOIN及子查询），不提前设置别名上下文
+        // 因为子查询中的Project会覆盖/清除外层别名上下文
+        JQuickDataSet input = executeNode(child, context);
+        // 子节点执行完毕后，如果是JOIN节点，设置别名上下文用于投影求值
+        boolean needAliasContext = false;
+        if (child instanceof JQuickHashJoinPhysicalNode) {
+            setupAliasContext((JQuickHashJoinPhysicalNode) child);
+            needAliasContext = true;
+        } else if (child instanceof JQuickNestedLoopJoinPhysicalNode) {
+            setupAliasContext((JQuickNestedLoopJoinPhysicalNode) child);
+            needAliasContext = true;
         }
-        List<JQuickRow> projectedRows = new ArrayList<>();
-        for (JQuickRow row : input.getRows()) {
-            JQuickRow newRow = new JQuickRow();
-            for (JQuickProjectPhysicalNode.SelectItem item : node.getSelectItems()) {
-                Object value = expressionEvaluator.evaluateExpression(row, item.getExpression());
-                String col="";
-                if (item.getExpression() instanceof JQuickColumnRefExpression){
-                    col=((JQuickColumnRefExpression) item.getExpression()).getColumnName();
+        try {
+            if (node.isStar()) {
+                if (node.isDistinct()) {
+                    List<JQuickRow> distinctRows = input.getRows().stream().distinct().collect(Collectors.toList());
+                    return new JQuickDataSet(input.getColumns(), distinctRows);
                 }
-                String alias = item.getAlias() != null ? item.getAlias() : col;
-                newRow.put(alias, value);
+                return input;
             }
-            projectedRows.add(newRow);
-        }
+            List<JQuickRow> projectedRows = new ArrayList<>();
+            for (JQuickRow row : input.getRows()) {
+                JQuickRow newRow = new JQuickRow();
+                for (JQuickProjectPhysicalNode.SelectItem item : node.getSelectItems()) {
+                    Object value = expressionEvaluator.evaluateExpression(row, item.getExpression());
+                    String col="";
+                    if (item.getExpression() instanceof JQuickColumnRefExpression){
+                        col=((JQuickColumnRefExpression) item.getExpression()).getColumnName();
+                    }
+                    String alias = item.getAlias() != null ? item.getAlias() : col;
+                    newRow.put(alias, value);
+                }
+                projectedRows.add(newRow);
+            }
 
-        if (node.isDistinct()) {
-            projectedRows = projectedRows.stream().distinct().collect(Collectors.toList());
+            if (node.isDistinct()) {
+                projectedRows = projectedRows.stream().distinct().collect(Collectors.toList());
+            }
+            List<JQuickColumnMeta> columnMetas = buildColumnMetasForProject(node);
+            return new JQuickDataSet(columnMetas, projectedRows);
+        } finally {
+            if (needAliasContext) {
+                expressionEvaluator.clearAliasContext();
+            }
         }
-        List<JQuickColumnMeta> columnMetas = buildColumnMetasForProject(node);
-        return new JQuickDataSet(columnMetas, projectedRows);
     }
 
     /**
@@ -393,20 +411,38 @@ public class JQuickNodeExecutor {
      * 设置表别名上下文，用于表达式求值器解析带别名的列引用
      */
     private void setupAliasContext(JQuickHashJoinPhysicalNode node) {
+        setupAliasContext(node.getLeft(), node.getRight(), node.getLeftAlias(), node.getRightAlias());
+    }
+
+    /**
+     * 为 NestedLoopJoin 设置别名上下文
+     */
+    private void setupAliasContext(JQuickNestedLoopJoinPhysicalNode node) {
+        setupAliasContext(node.getLeft(), node.getRight(), node.getLeftAlias(), node.getRightAlias());
+    }
+
+    /**
+     * 通用的别名上下文设置方法
+     */
+    private void setupAliasContext(JQuickPhysicalPlanNode left, JQuickPhysicalPlanNode right, String leftAlias, String rightAlias) {
         Map<String, String> aliasToTable = new HashMap<>();
         Map<String, String> columnAliasToActual = new HashMap<>();
-        String leftAlias = extractTableAlias(node.getLeft());
-        String rightAlias = extractTableAlias(node.getRight());
+        if (leftAlias == null) {
+            leftAlias = extractTableAlias(left);
+        }
+        if (rightAlias == null) {
+            rightAlias = extractTableAlias(right);
+        }
         if (leftAlias != null) {
             aliasToTable.put(leftAlias, "left");
-            for (JQuickPhysicalColumn col : node.getLeft().getOutputSchema()) {
-                columnAliasToActual.put(leftAlias + "." + col.getName(), col.getName());
+            for (JQuickPhysicalColumn col : left.getOutputSchema()) {
+                columnAliasToActual.put(leftAlias + "." + col.getName(), "left." + col.getName());
             }
         }
         if (rightAlias != null) {
             aliasToTable.put(rightAlias, "right");
-            for (JQuickPhysicalColumn col : node.getRight().getOutputSchema()) {
-                columnAliasToActual.put(rightAlias + "." + col.getName(), col.getName());
+            for (JQuickPhysicalColumn col : right.getOutputSchema()) {
+                columnAliasToActual.put(rightAlias + "." + col.getName(), "right." + col.getName());
             }
         }
         expressionEvaluator.setAliasContext(aliasToTable, columnAliasToActual);
@@ -417,13 +453,18 @@ public class JQuickNodeExecutor {
      * 采用 JQuickJoinHandler 来实现所有 JOIN 类型的处理
      */
     private JQuickDataSet executeNestedLoopJoin(JQuickNestedLoopJoinPhysicalNode node, JQuickWorker.JQuickTaskContext context) {
-        JQuickDataSet leftData = executeNode(node.getLeft(), context);
-        JQuickDataSet rightData = executeNode(node.getRight(), context);
-        console.info("executeNestedLoopJoin - joinType: " + node.getJoinType() + ", condition: " + node.getCondition());
-        JQuickJoinHandler handler = joinHandlerFactory.getHandler(node.getJoinType());
-        JQuickDataSet result = handler.join(leftData, rightData, null, node.getCondition(), true);
-        console.info("executeNestedLoopJoin - result rows: " + result.size());
-        return result;
+        setupAliasContext(node);
+        try {
+            JQuickDataSet leftData = executeNode(node.getLeft(), context);
+            JQuickDataSet rightData = executeNode(node.getRight(), context);
+            console.info("executeNestedLoopJoin - joinType: " + node.getJoinType() + ", condition: " + node.getCondition());
+            JQuickJoinHandler handler = joinHandlerFactory.getHandler(node.getJoinType());
+            JQuickDataSet result = handler.join(leftData, rightData, null, node.getCondition(), true);
+            console.info("executeNestedLoopJoin - result rows: " + result.size());
+            return result;
+        } finally {
+            expressionEvaluator.clearAliasContext();
+        }
     }
     /**
      * 执行 Hash Aggregate

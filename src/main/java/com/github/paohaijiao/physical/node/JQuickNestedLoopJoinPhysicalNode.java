@@ -32,10 +32,20 @@ public class JQuickNestedLoopJoinPhysicalNode extends JQuickAbstractPhysicalNode
 
     private final JQuickExpression condition;
 
+    private final String leftAlias;
+
+    private final String rightAlias;
+
     public JQuickNestedLoopJoinPhysicalNode(JQuickJoinType joinType, JQuickPhysicalPlanNode left, JQuickPhysicalPlanNode right, JQuickExpression condition) {
+        this(joinType, left, right, condition, null, null);
+    }
+
+    public JQuickNestedLoopJoinPhysicalNode(JQuickJoinType joinType, JQuickPhysicalPlanNode left, JQuickPhysicalPlanNode right, JQuickExpression condition, String leftAlias, String rightAlias) {
         super(left, right);
         this.joinType = joinType;
         this.condition = condition;
+        this.leftAlias = leftAlias;
+        this.rightAlias = rightAlias;
     }
 
     @Override
@@ -54,7 +64,7 @@ public class JQuickNestedLoopJoinPhysicalNode extends JQuickAbstractPhysicalNode
 
     @Override
     public JQuickPhysicalPlanNode clone() {
-        return new JQuickNestedLoopJoinPhysicalNode(joinType, children.get(0).clone(), children.get(1).clone(), condition != null ? condition.clone() : null);
+        return new JQuickNestedLoopJoinPhysicalNode(joinType, children.get(0).clone(), children.get(1).clone(), condition != null ? condition.clone() : null, leftAlias, rightAlias);
     }
 
     @Override
@@ -62,7 +72,10 @@ public class JQuickNestedLoopJoinPhysicalNode extends JQuickAbstractPhysicalNode
         visitor.visit(this);
     }
 
-    public JQuickJoinType getJoinType() { return joinType; }public JQuickExpression getCondition() { return condition; }
+    public JQuickJoinType getJoinType() { return joinType; }
+    public JQuickExpression getCondition() { return condition; }
+    public String getLeftAlias() { return leftAlias; }
+    public String getRightAlias() { return rightAlias; }
 
     @Override
     public JQuickPhysicalStats getStats() {

@@ -38,6 +38,10 @@ public class JQuickHashJoinPhysicalNode extends JQuickAbstractPhysicalNode {
 
     private final JoinDistribution distribution;
 
+    private final String leftAlias;
+
+    private final String rightAlias;
+
     public enum BuildSide { LEFT, RIGHT }
 
     public enum JoinDistribution {
@@ -68,12 +72,18 @@ public class JQuickHashJoinPhysicalNode extends JQuickAbstractPhysicalNode {
     }
 
     public JQuickHashJoinPhysicalNode(JQuickJoinType joinType, JQuickPhysicalPlanNode left, JQuickPhysicalPlanNode right, JQuickExpression condition, List<JoinKeyPair> joinKeys, BuildSide buildSide, JoinDistribution distribution) {
+        this(joinType, left, right, condition, joinKeys, buildSide, distribution, null, null);
+    }
+
+    public JQuickHashJoinPhysicalNode(JQuickJoinType joinType, JQuickPhysicalPlanNode left, JQuickPhysicalPlanNode right, JQuickExpression condition, List<JoinKeyPair> joinKeys, BuildSide buildSide, JoinDistribution distribution, String leftAlias, String rightAlias) {
         super(left, right);
         this.joinType = joinType;
         this.condition = condition;
         this.joinKeys = joinKeys != null ? new ArrayList<>(joinKeys) : new ArrayList<>();
         this.buildSide = buildSide;
         this.distribution = distribution;
+        this.leftAlias = leftAlias;
+        this.rightAlias = rightAlias;
     }
 
     @Override
@@ -94,7 +104,7 @@ public class JQuickHashJoinPhysicalNode extends JQuickAbstractPhysicalNode {
     @Override
     public JQuickPhysicalPlanNode clone() {
         List<JoinKeyPair> clonedKeys = joinKeys.stream().map(JoinKeyPair::clone).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
-        return new JQuickHashJoinPhysicalNode(joinType, children.get(0).clone(), children.get(1).clone(), condition != null ? condition.clone() : null, clonedKeys, buildSide, distribution);
+        return new JQuickHashJoinPhysicalNode(joinType, children.get(0).clone(), children.get(1).clone(), condition != null ? condition.clone() : null, clonedKeys, buildSide, distribution, leftAlias, rightAlias);
     }
 
     @Override
@@ -115,6 +125,10 @@ public class JQuickHashJoinPhysicalNode extends JQuickAbstractPhysicalNode {
     public JQuickPhysicalPlanNode getLeft() { return children.get(0); }
 
     public JQuickPhysicalPlanNode getRight() { return children.get(1); }
+
+    public String getLeftAlias() { return leftAlias; }
+
+    public String getRightAlias() { return rightAlias; }
 
     @Override
     public JQuickPhysicalStats getStats() {

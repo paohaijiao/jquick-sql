@@ -134,9 +134,9 @@ public class JQuickPhysicalPlanGenerator implements JQuickLogicalPlanVisitor {
                 joinKeyPairs = extractJoinKeys(node.getCondition());
             }
             JQuickHashJoinPhysicalNode.BuildSide buildSide = determineBuildSide(leftPhysical, rightPhysical);
-            physicalNode = new JQuickHashJoinPhysicalNode(node.getJoinType(), leftPhysical, rightPhysical, node.getCondition(), joinKeyPairs, buildSide, JQuickHashJoinPhysicalNode.JoinDistribution.SHUFFLE_HASH);
+            physicalNode = new JQuickHashJoinPhysicalNode(node.getJoinType(), leftPhysical, rightPhysical, node.getCondition(), joinKeyPairs, buildSide, JQuickHashJoinPhysicalNode.JoinDistribution.SHUFFLE_HASH, node.getLeftAlias(), node.getRightAlias());
         } else {
-            physicalNode = new JQuickNestedLoopJoinPhysicalNode(node.getJoinType(), leftPhysical, rightPhysical, node.getCondition());
+            physicalNode = new JQuickNestedLoopJoinPhysicalNode(node.getJoinType(), leftPhysical, rightPhysical, node.getCondition(), node.getLeftAlias(), node.getRightAlias());
         }
         logicalToPhysical.put(node, physicalNode);
     }

@@ -16,6 +16,7 @@
 package com.github.paohaijiao.logic.domain;
 
 import com.github.paohaijiao.expression.JQuickExpression;
+import com.github.paohaijiao.expression.domain.JQuickColumnRefExpression;
 import com.github.paohaijiao.logic.JQuickLogicalPlanNode;
 import com.github.paohaijiao.logic.JQuickLogicalPlanVisitor;
 
@@ -116,12 +117,15 @@ public class JQuickProjectNode implements JQuickLogicalPlanNode {
         }
 
         private String generateAlias(JQuickExpression expr) {
-            String sql = expr.toSql();
-            if (sql.length() <= 20) {
-                return sql;
-            }
-            return "col_" + Math.abs(sql.hashCode());
+        if (expr instanceof JQuickColumnRefExpression) {
+            return ((JQuickColumnRefExpression) expr).getColumnName();
         }
+        String sql = expr.toSql();
+        if (sql.length() <= 20) {
+            return sql;
+        }
+        return "col_" + Math.abs(sql.hashCode());
+    }
 
         public JQuickExpression getExpression() { return expression; }
 

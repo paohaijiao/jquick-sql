@@ -181,19 +181,7 @@ public class JQuickSQLSubqueryTest {
         );
         result.printTable();
     }
-    /**
-     * 测试子查询在FROM子句中使用 (派生表)
-     * 计算每个部门的平均年龄
-     */
-    @Test
-    public void testSubqueryInFromClause() {
-        JQuickDataSet result = sql.execute(
-                "SELECT dept_id, avg_age " +
-                        "FROM (SELECT department_id as dept_id, AVG(age) as avg_age FROM users GROUP BY department_id) " +
-                        "WHERE avg_age > 28"
-        );
-        result.printTable();
-    }
+
 
     /**
      * 测试子查询在HAVING子句中使用
@@ -240,21 +228,7 @@ public class JQuickSQLSubqueryTest {
         result.printTable();
     }
 
-    /**
-     * 测试关联子查询 (Correlated Subquery)
-     * 查询每个部门中年龄最大的用户
-     */
-    @Test
-    public void testCorrelatedSubquery() {
-        JQuickDataSet result = sql.execute(
-                "SELECT u1.* FROM users u1 " +
-                        "WHERE u1.age = (" +
-                        "    SELECT MAX(u2.age) FROM users u2 " +
-                        "    WHERE u2.department_id = u1.department_id" +
-                        ")"
-        );
-        result.printTable();
-    }
+
 
     /**
      * 测试子查询与CASE WHEN结合
@@ -313,12 +287,40 @@ public class JQuickSQLSubqueryTest {
         JQuickDataSet result = sql.execute(
                 "SELECT u.name, u.age, dept_stats.dept_name, dept_stats.avg_age " +
                         "FROM users u " +
-                        "JOIN (" +
+                        "left JOIN (" +
                         "    SELECT d.dept_id, d.dept_name, AVG(u2.age) as avg_age " +
                         "    FROM departments d " +
                         "    LEFT JOIN users u2 ON d.dept_id = u2.department_id " +
                         "    GROUP BY d.dept_id, d.dept_name" +
-                        ") dept_stats ON u.department_id = dept_stats.dept_id"
+                        ") as dept_stats ON u.department_id = dept_stats.dept_id"
+        );
+        result.printTable();
+    }
+    /**
+     * 测试子查询在FROM子句中使用 (派生表)
+     * 计算每个部门的平均年龄
+     */
+    @Test
+    public void testSubqueryInFromClause() {
+        JQuickDataSet result = sql.execute(
+                "SELECT dept_id, avg_age " +
+                        "FROM (SELECT department_id as dept_id, AVG(age) as avg_age FROM users GROUP BY department_id) " +
+                        "WHERE avg_age > 28"
+        );
+        result.printTable();
+    }
+    /**
+     * 测试关联子查询 (Correlated Subquery)
+     * 查询每个部门中年龄最大的用户
+     */
+    @Test
+    public void testCorrelatedSubquery() {
+        JQuickDataSet result = sql.execute(
+                "SELECT u1.* FROM users u1 " +
+                        "WHERE u1.age in (" +
+                        "    SELECT MAX(u2.age) FROM users u2 " +
+                        "    WHERE u2.department_id = u1.department_id" +
+                        ")"
         );
         result.printTable();
     }

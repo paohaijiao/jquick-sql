@@ -43,6 +43,10 @@ public class JQuickJoinNode implements JQuickLogicalPlanNode {
 
     private final List<JoinKey> joinKeys;
 
+    private final String leftAlias;
+
+    private final String rightAlias;
+
     public static class JoinKey {
 
         private final JQuickExpression leftKey;
@@ -60,11 +64,17 @@ public class JQuickJoinNode implements JQuickLogicalPlanNode {
     }
 
     public JQuickJoinNode(JQuickJoinType joinType, JQuickLogicalPlanNode left, JQuickLogicalPlanNode right, JQuickExpression condition, List<JoinKey> joinKeys) {
+        this(joinType, left, right, condition, joinKeys, null, null);
+    }
+
+    public JQuickJoinNode(JQuickJoinType joinType, JQuickLogicalPlanNode left, JQuickLogicalPlanNode right, JQuickExpression condition, List<JoinKey> joinKeys, String leftAlias, String rightAlias) {
         this.joinType = joinType;
         this.left = left;
         this.right = right;
         this.condition = condition;
         this.joinKeys = joinKeys != null ? new ArrayList<>(joinKeys) : new ArrayList<>();
+        this.leftAlias = leftAlias;
+        this.rightAlias = rightAlias;
     }
 
     @Override
@@ -100,7 +110,8 @@ public class JQuickJoinNode implements JQuickLogicalPlanNode {
         }
         return new JQuickJoinNode(joinType, left.clone(), right.clone(),
                 condition != null ? condition.clone() : null,
-                clonedKeys.isEmpty() ? null : clonedKeys);
+                clonedKeys.isEmpty() ? null : clonedKeys,
+                leftAlias, rightAlias);
     }
 
     public JQuickJoinType getJoinType() { return joinType; }
@@ -112,4 +123,8 @@ public class JQuickJoinNode implements JQuickLogicalPlanNode {
     public JQuickExpression getCondition() { return condition; }
 
     public List<JoinKey> getJoinKeys() { return joinKeys; }
+
+    public String getLeftAlias() { return leftAlias; }
+
+    public String getRightAlias() { return rightAlias; }
 }

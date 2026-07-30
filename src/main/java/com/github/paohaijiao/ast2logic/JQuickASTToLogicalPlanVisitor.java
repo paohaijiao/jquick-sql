@@ -170,10 +170,6 @@ public class JQuickASTToLogicalPlanVisitor {
         } else {//处理 SELECT 投影（无 GROUP BY）
             // 检测 SELECT 中是否包含聚合函数（如 AVG、SUM、COUNT 等）
             List<JQuickGroupByNode.AggregateItem> aggregates = extractAggregates(node.getSelectElements());
-            System.out.println("[DEBUG visit SelectClause] aggregates found: " + aggregates.size());
-            for (JQuickGroupByNode.AggregateItem agg : aggregates) {
-                System.out.println("[DEBUG visit SelectClause] aggregate: funcName=" + agg.getFunctionName() + ", alias=" + agg.getAlias());
-            }
             if (!aggregates.isEmpty()) {
                 // 有聚合函数，即使没有 GROUP BY，也需要创建 GroupBy 节点（全局聚合）
                 List<JQuickExpression> emptyGroupKeys = new ArrayList<>();
@@ -242,7 +238,21 @@ public class JQuickASTToLogicalPlanVisitor {
             condition = new JQuickBinaryExpression(leftExpr, rightExpr, JQuickBinaryOperator.EQ);
             joinKeys.add(new JQuickJoinNode.JoinKey(leftExpr, rightExpr));
         }
-        return new JQuickJoinNode(joinType, left, right, condition, joinKeys);
+        String leftAlias = extractAlias(left);
+        String rightAlias = join.getTableNameItem().getAlias();
+        return new JQuickJoinNode(joinType, left, right, condition, joinKeys, leftAlias, rightAlias);
+    }
+
+    private String extractAlias(JQuickLogicalPlanNode node) {
+        if (node instanceof JQuickTableScanNode) {
+            return ((JQuickTableScanNode) node).getAlias();
+        }
+        // 递归查找子节点中的表扫描节点别名
+        for (JQuickLogicalPlanNode child : node.getChildren()) {
+            String alias = extractAlias(child);
+            if (alias != null) return alias;
+        }
+        return null;
     }
 
     /**
@@ -578,12 +588,10 @@ public class JQuickASTToLogicalPlanVisitor {
     private void extractAggregatesFromExpression(JQuickExpressionNode expr, List<JQuickGroupByNode.AggregateItem> aggregates, String alias) {
         // 表达式可能是包装类型，需要获取内部的 ExpressionAtom
         JQuickExpressionAtomNode atom = getExpressionAtom(expr);
-        System.out.println("[DEBUG extractAggregatesFromExpression] expr type=" + (expr != null ? expr.getType() : "null") + ", atom=" + (atom != null ? atom.getType() : "null"));
         if (atom != null && atom.getType() == JQuickExpressionAtomNode.AtomType.FUNCTION) {
             JQuickFunctionCallNode func = atom.getFunctionCall();
             if (func != null) {
                 String funcName = func.getFunctionName().toLowerCase();
-                System.out.println("[DEBUG extractAggregatesFromExpression] funcName=" + funcName + ", isAggregate=" + JQuickAggregateFunction.isAggregateFunction(funcName));
                 if (JQuickAggregateFunction.isAggregateFunction(funcName)) {
                     // 获取函数参数
                     JQuickExpressionNode arg = null;
