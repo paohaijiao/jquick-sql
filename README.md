@@ -1224,6 +1224,298 @@ SELECT status,Max(age) AS active_max_age FROM users GROUP BY status
 [2026-07-27 07:14:15.782] [INFO] Total: 3 rows
 ```
 
+
+### 9. Subquery
+**Input Data**
+
+#### users 表
+## users 表
+
+| id | name | age | status | enable | addr | birthday | department_id |
+|----|------|-----|--------|--------|------|----------|---------------|
+| 1 | Alice | 25 | active | true | beijing | 2020-04-09 | 1 |
+| 2 | Bob | 30 | active | true | shanghai | 1991-08-09 | 2 |
+| 3 | Charlie | 20 | pending | false | chengdu | 1988-07-12 | 1 |
+| 4 | David | 35 | inactive | true | xian | 1955-11-29 | 3 |
+| 5 | Eve | 28 | active | true | chongqing | 2003-07-12 | 2 |
+| 6 | Martin | 30 | active | true | guangzhou | 1978-06-30 | 3 |
+| 7 | Davila | 39 | active | true | null | 1999-06-30 | 1 |
+
+## departments 表
+
+| dept_id | dept_name | location | budget |
+|---------|-----------|----------|--------|
+| 1 | Engineering | Building A | 500000.0 |
+| 2 | Marketing | Building B | 300000.0 |
+| 3 | Finance | Building C | 400000.0 |
+| 4 | HR | Building D | 200000.0 |
+
+## orders 表
+
+| order_id | user_id | amount | order_date |
+|----------|---------|--------|------------|
+| 101 | 1 | 150.50 | 2024-01-15 |
+| 102 | 2 | 200.00 | 2024-01-16 |
+| 103 | 1 | 75.25 | 2024-01-17 |
+| 104 | 3 | 300.00 | 2024-01-18 |
+| 105 | 5 | 120.00 | 2024-01-19 |
+| 106 | 2 | 450.50 | 2024-01-20 |
+
+
+#### 9.1
+>
+
+**SQL Code**
+```sql
+SELECT * FROM users " + "WHERE age > (SELECT AVG(age) FROM users)
+```
+```log
+[2026-07-31 16:08:24.517] [INFO] +----+--------+-----+----------+--------+-----------+----------------------+---------------+
+[2026-07-31 16:08:24.517] [INFO] | id | name   | age | status   | enable | addr      | birthday             | department_id |
+[2026-07-31 16:08:24.517] [INFO] +----+--------+-----+----------+--------+-----------+----------------------+---------------+
+[2026-07-31 16:08:24.517] [INFO] | 2  | Bob    | 30  | active   | true   | shanghai  | 1991-08-08T15:00:00Z | 2             |
+[2026-07-31 16:08:24.518] [INFO] | 4  | David  | 35  | inactive | true   | xian      | 1955-11-28T16:00:00Z | 3             |
+[2026-07-31 16:08:24.518] [INFO] | 6  | Martin | 30  | active   | true   | guangzhou | 1978-06-29T16:00:00Z | 3             |
+[2026-07-31 16:08:24.519] [INFO] | 7  | Davila | 39  | active   | true   | null      | 1999-06-29T16:00:00Z | 1             |
+[2026-07-31 16:08:24.519] [INFO] +----+--------+-----+----------+--------+-----------+----------------------+---------------+
+[2026-07-31 16:08:24.519] [INFO] Total: 4 rows
+```
+
+#### 9.2
+>
+
+**SQL Code**
+```sql
+SELECT * FROM users WHERE department_id IN (SELECT dept_id FROM departments WHERE dept_name IN ('Engineering', 'Marketing'))
+```
+```log
+[2026-07-31 16:09:51.077] [INFO] +----+---------+-----+---------+--------+-----------+----------------------+---------------+
+[2026-07-31 16:09:51.077] [INFO] | id | name    | age | status  | enable | addr      | birthday             | department_id |
+[2026-07-31 16:09:51.077] [INFO] +----+---------+-----+---------+--------+-----------+----------------------+---------------+
+[2026-07-31 16:09:51.077] [INFO] | 1  | Alice   | 25  | active  | true   | beijing   | 2020-04-08T16:00:00Z | 1             |
+[2026-07-31 16:09:51.077] [INFO] | 2  | Bob     | 30  | active  | true   | shanghai  | 1991-08-08T15:00:00Z | 2             |
+[2026-07-31 16:09:51.077] [INFO] | 3  | Charlie | 20  | pending | false  | chengdu   | 1988-07-11T15:00:00Z | 1             |
+[2026-07-31 16:09:51.078] [INFO] | 5  | Eve     | 28  | active  | true   | chongqing | 2003-07-11T16:00:00Z | 2             |
+[2026-07-31 16:09:51.078] [INFO] | 7  | Davila  | 39  | active  | true   | null      | 1999-06-29T16:00:00Z | 1             |
+[2026-07-31 16:09:51.078] [INFO] +----+---------+-----+---------+--------+-----------+----------------------+---------------+
+[2026-07-31 16:09:51.078] [INFO] Total: 5 rows
+```
+
+#### 9.3
+>
+
+**SQL Code**
+```sql
+SELECT * FROM users u WHERE EXISTS (SELECT 1 FROM orders o WHERE o.user_id = u.id)
+```
+```log
+[2026-07-31 16:11:20.306] [INFO] +----+---------+-----+---------+--------+-----------+----------------------+---------------+
+[2026-07-31 16:11:20.306] [INFO] | id | name    | age | status  | enable | addr      | birthday             | department_id |
+[2026-07-31 16:11:20.306] [INFO] +----+---------+-----+---------+--------+-----------+----------------------+---------------+
+[2026-07-31 16:11:20.306] [INFO] | 1  | Alice   | 25  | active  | true   | beijing   | 2020-04-08T16:00:00Z | 1             |
+[2026-07-31 16:11:20.306] [INFO] | 2  | Bob     | 30  | active  | true   | shanghai  | 1991-08-08T15:00:00Z | 2             |
+[2026-07-31 16:11:20.306] [INFO] | 3  | Charlie | 20  | pending | false  | chengdu   | 1988-07-11T15:00:00Z | 1             |
+[2026-07-31 16:11:20.306] [INFO] | 5  | Eve     | 28  | active  | true   | chongqing | 2003-07-11T16:00:00Z | 2             |
+[2026-07-31 16:11:20.306] [INFO] +----+---------+-----+---------+--------+-----------+----------------------+---------------+
+[2026-07-31 16:11:20.307] [INFO] Total: 4 rows
+```
+
+#### 9.4
+>
+
+**SQL Code**
+```sql
+SELECT * FROM users u WHERE EXISTS (SELECT 1 FROM orders o WHERE o.user_id = u.id)
+```
+```log
+[2026-07-31 16:11:20.306] [INFO] +----+---------+-----+---------+--------+-----------+----------------------+---------------+
+[2026-07-31 16:11:20.306] [INFO] | id | name    | age | status  | enable | addr      | birthday             | department_id |
+[2026-07-31 16:11:20.306] [INFO] +----+---------+-----+---------+--------+-----------+----------------------+---------------+
+[2026-07-31 16:11:20.306] [INFO] | 1  | Alice   | 25  | active  | true   | beijing   | 2020-04-08T16:00:00Z | 1             |
+[2026-07-31 16:11:20.306] [INFO] | 2  | Bob     | 30  | active  | true   | shanghai  | 1991-08-08T15:00:00Z | 2             |
+[2026-07-31 16:11:20.306] [INFO] | 3  | Charlie | 20  | pending | false  | chengdu   | 1988-07-11T15:00:00Z | 1             |
+[2026-07-31 16:11:20.306] [INFO] | 5  | Eve     | 28  | active  | true   | chongqing | 2003-07-11T16:00:00Z | 2             |
+[2026-07-31 16:11:20.306] [INFO] +----+---------+-----+---------+--------+-----------+----------------------+---------------+
+[2026-07-31 16:11:20.307] [INFO] Total: 4 rows
+```
+#### 9.5
+>
+
+**SQL Code**
+```sql
+SELECT u.name, u.age, (SELECT dept_name FROM departments d WHERE d.dept_id = u.department_id) as dept_name, (SELECT budget FROM departments d WHERE d.dept_id = u.department_id) as dept_budget FROM users u
+```
+```log
+[2026-07-31 16:17:14.396] [INFO] | name    | age | dept_name   | dept_budget |
+[2026-07-31 16:17:14.396] [INFO] +---------+-----+-------------+-------------+
+[2026-07-31 16:17:14.396] [INFO] | Alice   | 25  | Engineering | 500000.0    |
+[2026-07-31 16:17:14.396] [INFO] | Bob     | 30  | Marketing   | 300000.0    |
+[2026-07-31 16:17:14.396] [INFO] | Charlie | 20  | Engineering | 500000.0    |
+[2026-07-31 16:17:14.396] [INFO] | David   | 35  | Finance     | 400000.0    |
+[2026-07-31 16:17:14.397] [INFO] | Eve     | 28  | Marketing   | 300000.0    |
+[2026-07-31 16:17:14.397] [INFO] | Martin  | 30  | Finance     | 400000.0    |
+[2026-07-31 16:17:14.397] [INFO] | Davila  | 39  | Engineering | 500000.0    |
+[2026-07-31 16:17:14.397] [INFO] +---------+-----+-------------+-------------+
+[2026-07-31 16:17:14.397] [INFO] Total: 7 rows
+```
+#### 9.6
+>
+
+**SQL Code**
+```sql
+ SELECT u.name, u.age, u.department_id FROM users u ORDER BY (SELECT budget FROM departments d WHERE d.dept_id = u.department_id) DESC, u.age
+```
+```log
+[2026-07-31 16:19:35.492] [INFO] +---------+--------------+
+[2026-07-31 16:19:35.492] [INFO] | user_id | total_amount |
+[2026-07-31 16:19:35.492] [INFO] +---------+--------------+
+[2026-07-31 16:19:35.492] [INFO] | 1       | 225.75       |
+[2026-07-31 16:19:35.492] [INFO] | 2       | 650.5        |
+[2026-07-31 16:19:35.492] [INFO] | 3       | 300.0        |
+[2026-07-31 16:19:35.492] [INFO] +---------+--------------+
+[2026-07-31 16:19:35.492] [INFO] Total: 3 rows
+```
+
+#### 9.7
+>
+
+**SQL Code**
+```sql
+SELECT user_id, SUM(amount) as total_amount FROM orders GROUP BY user_id HAVING SUM(amount) > (SELECT AVG(amount) FROM orders)
+```
+```log
+[2026-07-31 16:20:38.719] [INFO] +---------+-----+---------------+
+[2026-07-31 16:20:38.719] [INFO] | name    | age | department_id |
+[2026-07-31 16:20:38.719] [INFO] +---------+-----+---------------+
+[2026-07-31 16:20:38.719] [INFO] | Charlie | 20  | 1             |
+[2026-07-31 16:20:38.719] [INFO] | Alice   | 25  | 1             |
+[2026-07-31 16:20:38.720] [INFO] | Eve     | 28  | 2             |
+[2026-07-31 16:20:38.720] [INFO] | Bob     | 30  | 2             |
+[2026-07-31 16:20:38.720] [INFO] | Martin  | 30  | 3             |
+[2026-07-31 16:20:38.720] [INFO] | David   | 35  | 3             |
+[2026-07-31 16:20:38.720] [INFO] | Davila  | 39  | 1             |
+[2026-07-31 16:20:38.720] [INFO] +---------+-----+---------------+
+[2026-07-31 16:20:38.720] [INFO] Total: 7 rows
+```
+
+#### 9.8
+>
+
+**SQL Code**
+```sql
+SELECT * FROM users WHERE id IN (    SELECT user_id FROM orders     WHERE amount > (SELECT AVG(amount) FROM orders))
+```
+```log
+[2026-07-31 16:22:25.297] [INFO] +----+---------+-----+---------+--------+----------+----------------------+---------------+
+[2026-07-31 16:22:25.298] [INFO] | id | name    | age | status  | enable | addr     | birthday             | department_id |
+[2026-07-31 16:22:25.298] [INFO] +----+---------+-----+---------+--------+----------+----------------------+---------------+
+[2026-07-31 16:22:25.298] [INFO] | 2  | Bob     | 30  | active  | true   | shanghai | 1991-08-08T15:00:00Z | 2             |
+[2026-07-31 16:22:25.298] [INFO] | 3  | Charlie | 20  | pending | false  | chengdu  | 1988-07-11T15:00:00Z | 1             |
+[2026-07-31 16:22:25.298] [INFO] +----+---------+-----+---------+--------+----------+----------------------+---------------+
+[2026-07-31 16:22:25.298] [INFO] Total: 2 rows
+```
+
+
+#### 9.9
+>
+
+**SQL Code**
+```sql
+SELECT u.name, u.age, CASE     WHEN (SELECT COUNT(*) FROM orders o WHERE o.user_id = u.id) > 2 THEN 'High Volume'     WHEN (SELECT COUNT(*) FROM orders o WHERE o.user_id = u.id) > 0 THEN 'Normal'     ELSE 'No Orders' END as order_volume FROM users u
+```
+```log
+[2026-07-31 16:23:27.211] [INFO] +---------+-----+--------------+
+[2026-07-31 16:23:27.213] [INFO] | name    | age | order_volume |
+[2026-07-31 16:23:27.213] [INFO] +---------+-----+--------------+
+[2026-07-31 16:23:27.213] [INFO] | Alice   | 25  | Normal       |
+[2026-07-31 16:23:27.213] [INFO] | Bob     | 30  | Normal       |
+[2026-07-31 16:23:27.213] [INFO] | Charlie | 20  | Normal       |
+[2026-07-31 16:23:27.213] [INFO] | David   | 35  | No Orders    |
+[2026-07-31 16:23:27.213] [INFO] | Eve     | 28  | Normal       |
+[2026-07-31 16:23:27.213] [INFO] | Martin  | 30  | No Orders    |
+[2026-07-31 16:23:27.213] [INFO] | Davila  | 39  | No Orders    |
+[2026-07-31 16:23:27.213] [INFO] +---------+-----+--------------+
+[2026-07-31 16:23:27.213] [INFO] Total: 7 rows
+```
+#### 9.10
+>
+
+**SQL Code**
+```sql
+SELECT u.name, u.age, CASE     WHEN (SELECT COUNT(*) FROM orders o WHERE o.user_id = u.id) > 2 THEN 'High Volume'     WHEN (SELECT COUNT(*) FROM orders o WHERE o.user_id = u.id) > 0 THEN 'Normal'     ELSE 'No Orders' END as order_volume FROM users u
+```
+```log
+[2026-07-31 16:23:27.211] [INFO] +---------+-----+--------------+
+[2026-07-31 16:23:27.213] [INFO] | name    | age | order_volume |
+[2026-07-31 16:23:27.213] [INFO] +---------+-----+--------------+
+[2026-07-31 16:23:27.213] [INFO] | Alice   | 25  | Normal       |
+[2026-07-31 16:23:27.213] [INFO] | Bob     | 30  | Normal       |
+[2026-07-31 16:23:27.213] [INFO] | Charlie | 20  | Normal       |
+[2026-07-31 16:23:27.213] [INFO] | David   | 35  | No Orders    |
+[2026-07-31 16:23:27.213] [INFO] | Eve     | 28  | Normal       |
+[2026-07-31 16:23:27.213] [INFO] | Martin  | 30  | No Orders    |
+[2026-07-31 16:23:27.213] [INFO] | Davila  | 39  | No Orders    |
+[2026-07-31 16:23:27.213] [INFO] +---------+-----+--------------+
+[2026-07-31 16:23:27.213] [INFO] Total: 7 rows
+```
+
+#### 9.11
+>
+
+**SQL Code**
+```sql
+SELECT u.name, u.department_id, (SELECT SUM(o.amount) FROM orders o WHERE o.user_id = u.id) as user_total_orders FROM users u WHERE (SELECT SUM(o.amount) FROM orders o WHERE o.user_id = u.id) > (SELECT AVG(budget) FROM departments)
+```
+```log
++------+---------------+-------------------+
+| name | department_id | user_total_orders |
++------+---------------+-------------------+
+(empty)
++------+---------------+-------------------+
+```
+
+
+#### 9.12
+>
+
+**SQL Code**
+```sql
+SELECT u.name, u.age, dept_stats.dept_name, dept_stats.avg_age FROM users u left JOIN (    SELECT d.dept_id, d.dept_name, AVG(u2.age) as avg_age     FROM departments d     LEFT JOIN users u2 ON d.dept_id = u2.department_id     GROUP BY d.dept_id, d.dept_name) as dept_stats ON u.department_id = dept_stats.dept_id
+```
+```log
+[2026-07-31 16:27:08.546] [INFO] +---------+-----+-------------+---------+
+[2026-07-31 16:27:08.546] [INFO] | name    | age | dept_name   | avg_age |
+[2026-07-31 16:27:08.546] [INFO] +---------+-----+-------------+---------+
+[2026-07-31 16:27:08.546] [INFO] | Alice   | 25  | Engineering | 28.0    |
+[2026-07-31 16:27:08.546] [INFO] | Bob     | 30  | Marketing   | 29.0    |
+[2026-07-31 16:27:08.546] [INFO] | Charlie | 20  | Engineering | 28.0    |
+[2026-07-31 16:27:08.546] [INFO] | David   | 35  | Finance     | 32.5    |
+[2026-07-31 16:27:08.546] [INFO] | Eve     | 28  | Marketing   | 29.0    |
+[2026-07-31 16:27:08.546] [INFO] | Martin  | 30  | Finance     | 32.5    |
+[2026-07-31 16:27:08.546] [INFO] | Davila  | 39  | Engineering | 28.0    |
+[2026-07-31 16:27:08.546] [INFO] +---------+-----+-------------+---------+
+[2026-07-31 16:27:08.546] [INFO] Total: 7 rows
+```
+#### 9.13
+>
+
+**SQL Code**
+```sql
+ SELECT tmp.dept_id, avg_age FROM (SELECT department_id as dept_id, AVG(age) as avg_age FROM users GROUP BY department_id) as tmp WHERE avg_age > 28
+```
+```log
+[2026-07-31 16:30:31.067] [INFO] Global config updated
+[2026-07-31 16:30:31.067] [INFO] +---------+---------+
+[2026-07-31 16:30:31.067] [INFO] | dept_id | avg_age |
+[2026-07-31 16:30:31.068] [INFO] +---------+---------+
+[2026-07-31 16:30:31.068] [INFO] | 2       | 29.0    |
+[2026-07-31 16:30:31.068] [INFO] | 3       | 32.5    |
+[2026-07-31 16:30:31.068] [INFO] +---------+---------+
+[2026-07-31 16:30:31.068] [INFO] Total: 2 rows
+```
+
+
+
 ## API Reference
 
 ### JQuickSQL
