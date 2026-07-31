@@ -1501,7 +1501,22 @@ SELECT u.name, u.age, dept_stats.dept_name, dept_stats.avg_age FROM users u left
 
 **SQL Code**
 ```sql
- SELECT tmp.dept_id, avg_age FROM (SELECT department_id as dept_id, AVG(age) as avg_age FROM users GROUP BY department_id) as tmp WHERE avg_age > 28
+ SELECT
+	tmp.dept_id,
+	avg_age
+FROM
+	(
+	SELECT
+		department_id as dept_id,
+		AVG(age) as avg_age
+	FROM
+		users
+	GROUP BY
+		department_id
+		) as tmp
+WHERE
+	avg_age > 28
+
 ```
 ```log
 [2026-07-31 16:30:31.067] [INFO] Global config updated
