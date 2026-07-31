@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqls PUBLIC "-//PAOHAIJIAO//DTD API JAVA 1.0//EN"
+        "classpath:paohaijiao/dtd/Jquick-sql.dtd">
+<sqls namespace="com.github.paohaijiao.xml.service.JQuickUserService">
+    <sql name="getUsers" returnClass="java.util.List">
+        select * from users limit #{limit}
+    </sql>
+    <sql name="getUsersOne" returnClass="java.util.List">
+        select * from users limit #{limit}
+    </sql>
+    <sql name="getUsersTwo" returnClass="java.util.List">
+        select * from users limit #{limit}
+    </sql>
+</sqls>
