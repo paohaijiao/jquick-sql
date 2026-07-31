@@ -1530,6 +1530,110 @@ WHERE
 ```
 
 
+## XML Configuration Usage
+
+JQuick-SQL provides an XML-based configuration approach that allows you to define SQL queries in an XML file and generate service interfaces dynamically. This is particularly useful for organizing large numbers of SQL statements and maintaining clean separation between SQL and Java code.
+
+### XML Configuration File
+
+Create an XML file (e.g., `jquick-sql.xml`) in your classpath:
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqls PUBLIC "-//PAOHAIJIAO//DTD API JAVA 1.0//EN"
+        "classpath:paohaijiao/dtd/Jquick-sql.dtd">
+<sqls namespace="com.example.service.UserService">
+    <sql name="getUsers" returnClass="java.util.List">
+        SELECT * FROM users LIMIT #{limit}
+    </sql>
+</sqls>
+```
+
+### Define Service Interface
+
+Define a Java interface with methods annotated by `@Param`:
+
+```java
+package com.example.service;
+
+import com.github.paohaijiao.statement.JQuickDataSet;
+import com.github.paohaijiao.statement.JQuickRow;
+import com.github.paohaijiao.xml.param.Param;
+
+import java.util.List;
+
+public interface UserService {
+    JQuickDataSet getUsers(@Param("limit") Integer limit);
+}
+```
+
+The method names in the interface must match the name attribute of the <sql> elements in the XML configuration file. The @Param annotation binds method parameters to the placeholders (#{...}) used in the SQL statements.
+
+### Register Table Data
+
+Register your table data with `JQuickTable`:
+
+```java
+// Create column metadata
+List<JQuickColumnMeta> columns = Arrays.asList(
+                new JQuickColumnMeta("id", Integer.class, "users"),
+                new JQuickColumnMeta("name", String.class, "users"),
+                new JQuickColumnMeta("age", Integer.class, "users")
+        );
+
+// Create row data
+List<JQuickRow> rows = Arrays.asList(
+        createRow("id", 1, "name", "Alice", "age", 25),
+        createRow("id", 2, "name", "Bob", "age", 30)
+);
+
+JQuickTable table = new JQuickTable("users", columns, rows);
+```
+### Create and Use Service API
+
+```java
+import com.github.paohaijiao.statement.JQuickDataSet;
+import com.github.paohaijiao.xml.factory.JQuickFactory;
+import com.github.paohaijiao.xml.factory.JQuickXmlFactory;
+
+public class Example {
+    public static void main(String[] args) {
+        // Create table data
+        JQuickTable table = new JQuickTable("users", getUserColumns(), getUserRows());
+        JQuickJavaXmlParseFactory handler = new JQuickJavaXmlParseFactory(Arrays.asList(table));
+
+        // Create factory with XML configuration
+        JQuickFactory factory = new JQuickXmlFactory(handler, "jquick-sql.xml");
+
+        // Generate service API dynamically
+        UserService userService = factory.createApi(UserService.class);
+
+        // Execute queries
+        JQuickDataSet dataSet = userService.getUsers(2);
+        dataSet.printTable();  // Print the result table
+    }
+}
+```
+### Configuration Elements
+
+| XML Element | Attribute | Description |
+|-------------|-----------|-------------|
+| `<sqls>` | `namespace` | The fully qualified name of the service interface |
+| `<sql>` | `name` | The method name in the service interface |
+| `<sql>` | `returnClass` | The return type of the method (e.g., `java.util.List`, `java.lang.Integer`) |
+
+### Parameter Binding
+
+Use `#{paramName}` syntax in SQL to bind method parameters:
+
+```xml
+<sql name="findUsers" returnClass="java.util.List">
+    SELECT * FROM users
+    WHERE age > #{minAge}
+    AND status = #{status}
+    LIMIT #{limit}
+</sql>
+```
 
 ## API Reference
 
