@@ -100,17 +100,17 @@ public class JQuickCoordinator {
      */
     public JQuickCoordinator(JQuickSqlConfig config) {
         JAssert.notNull(config, "config required not null ");
-        JAssert.notEmptyCol(config.getWorkers(), "workers required not empty ");
-        this.fragmenter = new JQuickFragmenter(config.getDefaultParallelism());
+        JAssert.notEmptyCol(config.getRuntime().getWorkers(), "workers required not empty ");
+        this.fragmenter = new JQuickFragmenter(config.getRuntime().getDefaultParallelism());
         this.coordinatorId = JQuickUuidGenerator.standardUuid();
         this.dataConverter = new JQuickDataConverter();
-        this.workers = new ArrayList<>(config.getWorkers());
+        this.workers = new ArrayList<>(config.getRuntime().getWorkers());
         this.workerIdMap = new ConcurrentHashMap<>();
         this.workerIndexMap = new ConcurrentHashMap<>();
         this.workerChannels = new ConcurrentHashMap<>();
         this.workerStubs = new ConcurrentHashMap<>();
         this.activeQueries = new ConcurrentHashMap<>();
-        this.maxRetries = config.getMaxTaskRetries();
+        this.maxRetries = config.getRuntime().getMaxTaskRetries();
         this.jQuickprotoService=new JQuickProtoService();
         for (int i = 0; i < workers.size(); i++) {
             WorkerEndpoint worker = workers.get(i);

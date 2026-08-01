@@ -115,7 +115,7 @@ public class JQuickProjectToPhysicalPlanTest {
         endpoints.add(new JQuickCoordinator.WorkerEndpoint("worker-2", "localhost", WORKER2_PORT, 1));
         endpoints.add(new JQuickCoordinator.WorkerEndpoint("worker-3", "localhost", WORKER3_PORT, 2));
         JQuickSqlConfig config = new JQuickSqlConfig();
-        config.setWorkers(endpoints);
+        config.getRuntime().setWorkers(endpoints);
         coordinator = new JQuickCoordinator(config);
         for (JQuickWorker worker : workers) {
             worker.setWorkerEndpoints(endpoints);

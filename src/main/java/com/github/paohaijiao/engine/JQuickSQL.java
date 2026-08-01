@@ -64,7 +64,7 @@ public class JQuickSQL {
     private JQuickSQL(JQuickSqlConfig config) {
         this.config = config != null ? config : new JQuickSqlConfig();
         this.physicalGenerator = new JQuickPhysicalPlanGenerator();
-        this.fragmenter = new JQuickFragmenter(this.config.getDefaultParallelism());
+        this.fragmenter = new JQuickFragmenter(this.config.getRuntime().getDefaultParallelism());
         this.workers = new ArrayList<>();
         this.embeddedMode = false;
         this.optimizer=new JQuickLogicalPlanOptimizer();
@@ -87,19 +87,19 @@ public class JQuickSQL {
     public static JQuickSQL embedded(int workerCount) {
         JQuickSQL sql = new JQuickSQL(new JQuickSqlConfig());
         sql.embeddedMode = true;
-        sql.config.setDefaultParallelism(workerCount);
+        sql.config.getRuntime().setDefaultParallelism(workerCount);
         return sql;
     }
 
     public JQuickSQL withParallelism(int parallelism) {
-        this.config.setDefaultParallelism(parallelism);
+        this.config.getRuntime().setDefaultParallelism(parallelism);
         return this;
     }
 
     public JQuickSQL withWorker(String host, int port) {
-        List<JQuickCoordinator.WorkerEndpoint> endpoints = new ArrayList<>(config.getWorkers() != null ? config.getWorkers() : new ArrayList<>());
+        List<JQuickCoordinator.WorkerEndpoint> endpoints = new ArrayList<>(config.getRuntime().getWorkers() != null ? config.getRuntime().getWorkers() : new ArrayList<>());
         endpoints.add(new JQuickCoordinator.WorkerEndpoint("worker-" + (endpoints.size() + 1), host, port, endpoints.size()));
-        config.setWorkers(endpoints);
+        config.getRuntime().setWorkers(endpoints);
         return this;
     }
 
@@ -111,17 +111,17 @@ public class JQuickSQL {
             int port = Integer.parseInt(parts[1]);
             endpoints.add(new JQuickCoordinator.WorkerEndpoint("worker-" + (i + 1), host, port, i));
         }
-        config.setWorkers(endpoints);
+        config.getRuntime().setWorkers(endpoints);
         return this;
     }
 
     public JQuickSQL withConfig(JQuickSqlConfig config) {
         if (config != null) {
-            this.config.setDefaultParallelism(config.getDefaultParallelism());
-            this.config.setWorkers(config.getWorkers());
-            this.config.setMaxTaskRetries(config.getMaxTaskRetries());
-            this.config.setTaskTimeoutMs(config.getTaskTimeoutMs());
-            this.config.setExecutionMode(config.getExecutionMode());
+            this.config.getRuntime().setDefaultParallelism(config.getRuntime().getDefaultParallelism());
+            this.config.getRuntime().setWorkers(config.getRuntime().getWorkers());
+            this.config.getRuntime().setMaxTaskRetries(config.getRuntime().getMaxTaskRetries());
+            this.config.getRuntime().setTaskTimeoutMs(config.getRuntime().getTaskTimeoutMs());
+            this.config.getRuntime().setExecutionMode(config.getRuntime().getExecutionMode());
         }
         return this;
     }
@@ -199,7 +199,7 @@ public class JQuickSQL {
 
     private synchronized void ensureInitialized() {
         if (coordinator == null) {
-            if (embeddedMode && config.getWorkers() == null || config.getWorkers().isEmpty()) {
+            if (embeddedMode && config.getRuntime().getWorkers() == null || config.getRuntime().getWorkers().isEmpty()) {
                 startEmbeddedWorkers();
             }
             coordinator = new JQuickCoordinator(config);
@@ -207,7 +207,7 @@ public class JQuickSQL {
     }
 
     private void startEmbeddedWorkers() {
-        int workerCount = config.getDefaultParallelism();
+        int workerCount = config.getRuntime().getDefaultParallelism();
         List<JQuickCoordinator.WorkerEndpoint> endpoints = new ArrayList<>();
         int basePort = 19001;
         for (int i = 0; i < workerCount; i++) {
@@ -226,7 +226,7 @@ public class JQuickSQL {
                 Thread.currentThread().interrupt();
             }
         }
-        config.setWorkers(endpoints);
+        config.getRuntime().setWorkers(endpoints);
         for (JQuickWorker worker : workers) {
             worker.setWorkerEndpoints(endpoints);
         }
@@ -299,7 +299,7 @@ public class JQuickSQL {
             if (config == null) {
                 config = new JQuickSqlConfig();
             }
-            config.setDefaultParallelism(parallelism);
+            config.getRuntime().setDefaultParallelism(parallelism);
             return this;
         }
 
@@ -307,9 +307,9 @@ public class JQuickSQL {
             if (config == null) {
                 config = new JQuickSqlConfig();
             }
-            List<JQuickCoordinator.WorkerEndpoint> endpoints = new ArrayList<>(config.getWorkers() != null ? config.getWorkers() : new ArrayList<>());
+            List<JQuickCoordinator.WorkerEndpoint> endpoints = new ArrayList<>(config.getRuntime().getWorkers() != null ? config.getRuntime().getWorkers() : new ArrayList<>());
             endpoints.add(new JQuickCoordinator.WorkerEndpoint("worker-" + (endpoints.size() + 1), host, port, endpoints.size()));
-            config.setWorkers(endpoints);
+            config.getRuntime().setWorkers(endpoints);
             return this;
         }
 

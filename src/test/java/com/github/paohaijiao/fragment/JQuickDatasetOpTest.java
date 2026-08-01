@@ -315,7 +315,7 @@ public class JQuickDatasetOpTest {
         worker1.start();
       //  worker2.start();
         JQuickSqlConfig config=new JQuickSqlConfig();
-        config.setWorkers(endpoints);
+        config.getRuntime().setWorkers(endpoints);
         JQuickCoordinator coordinator = new JQuickCoordinator( config);
         JQuickProjectNode leftQuery = createProjectWithFilter("users", "status", "active", "id", "name");
         JQuickProjectNode rightQuery = createProjectWithFilter("users", "status", "pending", "id", "name");

@@ -17,6 +17,8 @@ package com.github.paohaijiao.executor;
 
 import com.github.paohaijiao.antlr.impl.JAbstractAntlrExecutor;
 import com.github.paohaijiao.ast.JQuickQueryNode;
+import com.github.paohaijiao.banner.JQuickBanner;
+import com.github.paohaijiao.banner.impl.JQuickBannerImpl;
 import com.github.paohaijiao.config.JQuickSqlConfig;
 import com.github.paohaijiao.console.JConsole;
 import com.github.paohaijiao.exception.JAntlrExecutionException;
@@ -76,6 +78,8 @@ public class JQuickSQLExecutor extends JAbstractAntlrExecutor<String, JQuickQuer
 
     @Override
     protected JQuickQueryNode parse(Parser parser) throws JAntlrExecutionException {
+        JQuickBanner banner= JQuickBannerImpl.getInstance();
+        banner.printBanner();
         JQuickSQLParser calcParser = (JQuickSQLParser) parser;
         JQuickSQLParser.QueryContext tree = calcParser.query();
         JQuickSQLCommonVisistor visitor = new JQuickSQLCommonVisistor(this.context,this.config);

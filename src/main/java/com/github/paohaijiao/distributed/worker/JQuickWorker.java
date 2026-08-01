@@ -385,7 +385,7 @@ public class JQuickWorker {
         distributionService = new JQuickDataDistributionServiceImpl(this);
         tableService = new JQuickTableServiceImpl(dataConverter);
         server = ServerBuilder.forPort(port)
-                .maxInboundMessageSize(config.getMaxFileSize())
+                .maxInboundMessageSize(config.getRuntime().getMaxFileSize())
                 .addService(planService)
                 .addService(distributionService)
                 .addService(tableService)

@@ -91,6 +91,7 @@ public class JQuickLimitTest {
         JQuickFactory factory = new JQuickXmlFactory(handler,"jquick-sql.xml");
         JQuickUserService orderService = factory.createApi(JQuickUserService.class);
         JQuickDataSet dataSet= orderService.getUsers(2);
+        List<JQuickRow> dataSet1= orderService.getUsersOne(2);
         dataSet.printTable();
     }
     @Test
