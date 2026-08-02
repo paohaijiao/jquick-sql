@@ -202,7 +202,6 @@ public class JQuickCoordinator {
         }
         List<JQuickDataSet> rootResults = execution.getFragmentResult(rootFragment.getFragmentId()); //获取根 Fragment 结果
         JQuickDataSet finalResult = mergeResults(rootResults); //合并结果
-        finalResult.printSummary();
         console.info("Executing finalResult : " + execution.getQueryId());
         execution.setStatus(QueryExecution.QueryStatus.COMPLETED);
         console.info(String.format("Query completed - queryId: %s, duration: %dms, resultRows: %d", execution.getQueryId(), execution.getExecutionTimeMs(), finalResult.size()));
