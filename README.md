@@ -8,7 +8,6 @@ pipelines. Simply query, join, and aggregate across systems with minimal overhea
 
 
 
-
 <div align="center">
 
 [![GitHub Stars](https://img.shields.io/github/stars/paohaijiao/jquick-sql?style=flat-square)](https://github.com/paohaijiao/jquick-sql/stargazers)
