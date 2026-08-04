@@ -117,6 +117,7 @@ sql.shutdown();
 | Aggregation (COUNT/SUM/AVG/MIN/MAX)     | ✅ |
 | Subquery                                | ✅ |
 | Functions                               | ✅ |
+| XML Confuguration                       | ✅ |
 
 ### 1. SELECT Query
 **Input Data**
@@ -1533,7 +1534,299 @@ WHERE
 ### 10. Function
 > JQuick-SQL's built-in functions are provided by [**jquick-transform-function**](https://github.com/paohaijiao/jquick-transform-function) (200+ functions covering strings, dates, aggregation, encryption, conversion, business validation, etc.) and can be extended with custom functions via **SPI (Service Provider Interface)**. Once registered, custom functions can be used directly in `SELECT`, `WHERE`, `GROUP BY`, `HAVING`, `ORDER BY` and other clauses just like built-in functions, e.g. `jsonPath(detail, '$.position')`.
 
-#### 10.1 Extension Mechanism
+# Built-in Methods
+| No  | Method Name                     | Description                                                                              |
+|-----|---------------------------------| ---------------------------------------------------------------------------------------- |
+| 1   | isArray                         | Check if it is an array or list - usage: isArray(value)                                |
+| 2   | bitAnd                          | Bitwise AND - usage: bitAnd(a, b)                                                     |
+| 3   | bitOr                           | Bitwise OR - usage: bitOr(a, b)                                                       |
+| 4   | bitXor                          | Bitwise XOR - usage: bitXor(a, b)                                                     |
+| 5   | isBoolean                       | Check if it is a boolean - usage: isBoolean(value)                                    |
+| 6   | bankCardMask                    | Bank card number mask - usage: bankCardMask(cardNo, keepStart?, keepEnd?)             |
+| 7   | bankCardValidate                | Validate whether bank card number is valid (Luhn algorithm) - usage: bankCardValidate(cardNo) |
+| 8   | emailMask                       | Email mask - usage: emailMask(email)                                                  |
+| 9   | genderName                      | Get gender name - usage: genderName(code) supports: M/F, 1/0, male/female             |
+| 10  | idCardAge                       | Calculate age from ID card number - usage: idCardAge(idCard, referenceDate?)          |
+| 11  | idCardBirthday                  | Extract birthday from ID card number - usage: idCardBirthday(idCard, pattern?)        |
+| 12  | idCardGender                    | Get gender from ID card number - usage: idCardGender(idCard, format?)                 |
+| 13  | idCardInfo                      | Extract ID card information - usage: idCardInfo(idCard, field?) field: birthday/age/gender/region |
+| 14  | idCardValidate                  | Validate whether ID card number is valid - usage: idCardValidate(idCard)              |
+| 15  | phoneInfo                       | Get phone number information - usage: phoneInfo(phone, field?) field: carrier/prefix/location |
+| 16  | phoneMask                       | Phone number mask - usage: phoneMask(phone, keepStart?, keepEnd?)                     |
+| 17  | phoneValidate                   | Validate whether phone number is valid - usage: phoneValidate(phone)                  |
+| 18  | isEmpty                         | Check if object is empty - supports String/Collection/Map/Array                       |
+| 19  | join                            | Concatenate collection elements - usage: join(list, delimiter)                        |
+| 20  | size                            | Get length of collection, array, Map or string                                        |
+| 21  | between                         | Range check - usage: between(value, min, max, inclusive?)                             |
+| 22  | caseWhen                        | CASE WHEN conditional expression - usage: caseWhen(condition1, result1, condition2, result2, ..., defaultResult) |
+| 23  | coalesce                        | Return the first non-null value - usage: coalesce(value1, value2, ...)                |
+| 24  | defaultIfNull                   | Replace null with default value - usage: defaultIfNull(value, defaultValue)           |
+| 25  | eq                              | Equality check - usage: eq(a, b, ignoreCase?)                                         |
+| 26  | gte                             | Greater than or equal check - usage: gte(a, b)                                        |
+| 27  | gt                              | Greater than check - usage: gt(a, b)                                                  |
+| 28  | ifElse                          | Multi-condition check - usage: ifElse(condition1, value1, condition2, value2, ..., defaultValue) |
+| 29  | if                              | Conditional check - usage: if(condition, trueValue, falseValue)                       |
+| 30  | lte                             | Less than or equal check - usage: lte(a, b)                                           |
+| 31  | lt                              | Less than check - usage: lt(a, b)                                                     |
+| 32  | ne                              | Inequality check - usage: ne(a, b, ignoreCase?)                                       |
+| 33  | nvl                             | Null replacement - usage: nvl(value, defaultValue)                                    |
+| 34  | switch                          | Multi-branch matching - usage: switch(value, case1, result1, case2, result2, ..., defaultValue) |
+| 35  | toBoolean                       | Convert to boolean - usage: toBoolean(value, defaultValue?)                           |
+| 36  | toDate                          | Convert to date (LocalDate) - usage: toDate(value, pattern?)                          |
+| 37  | toDateTime                      | Convert to datetime (LocalDateTime) - usage: toDateTime(value, pattern?)              |
+| 38  | toShort                         | Convert to short integer - usage: toShort(value, defaultValue?)                       |
+| 39  | addDays                         | Add days - usage: addDays(date, days)                                                 |
+| 40  | addHours                        | Add hours - usage: addHours(datetime, hours)                                          |
+| 41  | addMinutes                      | Add minutes - usage: addMinutes(datetime, minutes)                                    |
+| 42  | addMonths                       | Add months - usage: addMonths(date, months)                                           |
+| 43  | addSeconds                      | Add seconds - usage: addSeconds(datetime, seconds)                                    |
+| 44  | addYears                        | Add years - usage: addYears(date, years)                                              |
+| 45  | age                             | Calculate age - usage: age(birthDate, referenceDate?)                                 |
+| 46  | day                             | Get day of month (1-31) - usage: day(date?)                                           |
+| 47  | dayOfWeek                       | Get day of week - usage: dayOfWeek(date?, locale?) returns 1-7 (Mon=1) or name        |
+| 48  | dayOfYear                       | Get day of year (1-366) - usage: dayOfYear(date?)                                     |
+| 49  | daysBetween                     | Calculate difference in days between two dates - usage: daysBetween(date1, date2)     |
+| 50  | endOfDay                        | Get end of day (23:59:59) - usage: endOfDay(date?)                                    |
+| 51  | endOfMonth                      | Get last day of month - usage: endOfMonth(date?)                                      |
+| 52  | endOfYear                       | Get last day of year - usage: endOfYear(date?)                                        |
+| 53  | hour                            | Get hour (0-23) - usage: hour(datetime?)                                              |
+| 54  | hoursBetween                    | Calculate difference in hours between two datetimes - usage: hoursBetween(datetime1, datetime2) |
+| 55  | isAfter                         | Check if date is after another - usage: isAfter(date1, date2)                         |
+| 56  | isBefore                        | Check if date is before another - usage: isBefore(date1, date2)                       |
+| 57  | isDate                          | Check if it is a date - usage: isDate(value)                                          |
+| 58  | isLeapYear                      | Check if it is a leap year - usage: isLeapYear(year?)                                 |
+| 59  | isSameDay                       | Check if two dates are the same day - usage: isSameDay(date1, date2)                  |
+| 60  | isWeekend                       | Check if it is a weekend - usage: isWeekend(date?)                                    |
+| 61  | minute                          | Get minute (0-59) - usage: minute(datetime?)                                          |
+| 62  | month                           | Get month (1-12) - usage: month(date?)                                                |
+| 63  | monthsBetween                   | Calculate difference in months between two dates - usage: monthsBetween(date1, date2) |
+| 64  | second                          | Get second (0-59) - usage: second(datetime?)                                          |
+| 65  | startOfDay                      | Get start of day (00:00:00) - usage: startOfDay(date?)                                |
+| 66  | startOfMonth                    | Get first day of month - usage: startOfMonth(date?)                                   |
+| 67  | startOfYear                     | Get first day of year - usage: startOfYear(date?)                                     |
+| 68  | weekOfYear                      | Get week of year - usage: weekOfYear(date?)                                           |
+| 69  | year                            | Get year - usage: year(date?) returns current year if no argument is passed           |
+| 70  | yearsBetween                    | Calculate difference in years between two dates - usage: yearsBetween(date1, date2)   |
+| 71  | areaCircle                      | Calculate area of circle - usage: areaCircle(radius)                                  |
+| 72  | areaRectangle                   | Calculate area of rectangle - usage: areaRectangle(length, width)                     |
+| 73  | areaTriangle                    | Calculate area of triangle - usage: areaTriangle(base, height) or areaTriangle(a, b, c) Heron's formula |
+| 74  | circumference                   | Calculate circumference of circle - usage: circumference(radius)                      |
+| 75  | clamp                           | Clamp value to range - usage: clamp(value, min, max)                                  |
+| 76  | combination                     | Calculate combinations C(n,k) - usage: combination(n, k)                              |
+| 77  | cross                           | Calculate vector cross product (2D scalar) - usage: cross(x1, y1, x2, y2)             |
+| 78  | distance                        | Calculate distance between two points - usage: distance(x1, y1, x2, y2) or distance(x1, y1, z1, x2, y2, z2) |
+| 79  | dot                             | Calculate vector dot product - usage: dot(vector1, vector2)                           |
+| 80  | factorial                       | Calculate factorial - usage: factorial(n)                                             |
+| 81  | fibonacci                       | Calculate Fibonacci number - usage: fibonacci(n)                                      |
+| 82  | gcd                             | Calculate greatest common divisor - usage: gcd(a, b, ...)                             |
+| 83  | hypot                           | Calculate sqrt(x²+y²) - usage: hypot(x, y)                                            |
+| 84  | isPowerOfTwo                    | Check if it is a power of two - usage: isPowerOfTwo(n)                                |
+| 85  | isPrime                         | Check if it is a prime number - usage: isPrime(n)                                     |
+| 86  | lcm                             | Calculate least common multiple - usage: lcm(a, b, ...)                               |
+| 87  | lerp                            | Linear interpolation - usage: lerp(a, b, t) returns a + (b - a) * t                   |
+| 88  | map                             | Map value range - usage: map(value, fromLow, fromHigh, toLow, toHigh, clamp?)         |
+| 89  | permutation                     | Calculate permutations P(n,k) - usage: permutation(n, k)                              |
+| 90  | cast                            | Force type conversion - usage: cast(value, targetClass)                                |
+| 91  | formatNumber                    | Format number - usage: formatNumber(number, pattern)                                  |
+| 92  | parseNumber                     | Parse formatted number - usage: parseNumber(str, pattern)                             |
+| 93  | toArray                         | Convert to array - usage: toArray(value1, value2, ...)                                 |
+| 94  | toCurrency                      | Convert to currency format - usage: toCurrency(number, locale?)                       |
+| 95  | toList                          | Convert to list - usage: toList(value1, value2, ...)                                  |
+| 96  | toPercentage                    | Convert to percentage format - usage: toPercentage(number, decimals?)                 |
+| 97  | typeOf                          | Get type name of object - usage: typeOf(value)                                        |
+| 98  | abs                             | Absolute value                                                                         |
+| 99  | acos                            | Arc cosine - usage: acos(value)                                                        |
+| 100 | add                             | Sum                                                                                    |
+| 101 | asin                            | Arc sine - usage: asin(value)                                                          |
+| 102 | atan                            | Arc tangent - usage: atan(value)                                                       |
+| 103 | atan2                           | Coordinate arc tangent - usage: atan2(y, x) returns angle of coordinate (x,y)         |
+| 104 | avg                             | Average                                                                                |
+| 105 | ceil                            | Round up                                                                               |
+| 106 | ceilTo                          | Round up to specified decimal places - usage: ceilTo(value, places)                    |
+| 107 | e                               | Get value of natural constant e                                                        |
+| 108 | pi                              | Get value of pi                                                                        |
+| 109 | cos                             | Cosine - usage: cos(radians)                                                           |
+| 110 | cosh                            | Hyperbolic cosine - usage: cosh(value)                                                 |
+| 111 | divide                          | Division - usage: divide(a, b, ...) returns a/b/...                                    |
+| 112 | exp                             | Exponential e^x - usage: exp(value)                                                    |
+| 113 | expm1                           | Exponential e^x - 1 - usage: expm1(value)                                              |
+| 114 | floor                           | Round down                                                                             |
+| 115 | floorTo                         | Round down to specified decimal places - usage: floorTo(value, places)                 |
+| 116 | greatest                        | Return maximum - usage: greatest(value1, value2, ...)                                  |
+| 117 | isNumber                        | Check if object is a number type or numeric string                                     |
+| 118 | least                           | Return minimum - usage: least(value1, value2, ...)                                     |
+| 119 | log                             | Natural logarithm - usage: log(value)                                                  |
+| 120 | log10                           | Common logarithm (base 10) - usage: log10(value)                                      |
+| 121 | log1p                           | Natural logarithm log(1+x) - usage: log1p(value)                                      |
+| 122 | max                             | Maximum                                                                                |
+| 123 | median                          | Calculate median - usage: median(numbers...)                                          |
+| 124 | min                             | Minimum                                                                                |
+| 125 | mode                            | Calculate mode (most frequent value) - usage: mode(numbers...)                        |
+| 126 | mod                             | Modulo operation - usage: mod(a, b) returns a % b                                      |
+| 127 | multiply                        | Multiplication                                                                         |
+| 128 | parseBinary                     | Convert binary string to number - usage: parseBinary(binaryStr)                        |
+| 129 | parseHex                        | Convert hex string to number - usage: parseHex(hexStr)                                 |
+| 130 | percentile                      | Calculate percentile - usage: percentile(numbers..., percentile)                      |
+| 131 | pow                             | Power operation - usage: pow(base, exponent)                                          |
+| 132 | range                           | Calculate range (max - min) - usage: range(numbers...)                                 |
+| 133 | round                           | Round                                                                                  |
+| 134 | roundTo                         | Round to specified decimal places - usage: roundTo(value, places)                      |
+| 135 | signum                          | Sign function - returns -1, 0, 1 - usage: signum(value)                                |
+| 136 | sin                             | Sine - usage: sin(radians)                                                             |
+| 137 | sinh                            | Hyperbolic sine - usage: sinh(value)                                                   |
+| 138 | sqrt                            | Square root - usage: sqrt(value)                                                       |
+| 139 | stdDev                          | Calculate standard deviation - usage: stdDev(numbers...)                              |
+| 140 | subtract                        | Subtraction - usage: subtract(a, b, ...) returns a-b-...                              |
+| 141 | tan                             | Tangent - usage: tan(radians)                                                          |
+| 142 | tanh                            | Hyperbolic tangent - usage: tanh(value)                                                |
+| 143 | toBinary                        | Convert to binary string - usage: toBinary(number)                                    |
+| 144 | toDegrees                       | Convert radians to degrees - usage: toDegrees(radians)                                 |
+| 145 | toDouble                        | Convert to double - usage: toDouble(value, defaultValue?)                             |
+| 146 | toFloat                         | Convert to float - usage: toFloat(value, defaultValue?)                                |
+| 147 | toHex                           | Convert to hex string - usage: toHex(number)                                           |
+| 148 | toInt                           | Convert to integer - usage: toInt(value, defaultValue?)                                |
+| 149 | toLong                          | Convert to long integer - usage: toLong(value, defaultValue?)                          |
+| 150 | toNumberString                  | Convert to number string - usage: toNumberString(number, pattern?)                     |
+| 151 | toOctal                         | Convert to octal string - usage: toOctal(number)                                       |
+| 152 | toRadians                       | Convert degrees to radians - usage: toRadians(degrees)                                 |
+| 153 | ulp                             | Get unit in the last place of floating point - usage: ulp(value)                       |
+| 154 | variance                        | Calculate variance - usage: variance(numbers...)                                       |
+| 155 | randomBoolean                   | Generate random boolean - usage: randomBoolean() or randomBoolean(trueProbability?)    |
+| 156 | randomChoice                    | Randomly select an element from list - usage: randomChoice(list) or randomChoice(elem1, elem2, ...) |
+| 157 | randomDouble                    | Generate random double - usage: randomDouble() or randomDouble(min, max)               |
+| 158 | random                          | Get a random element from array - usage: random(arr) or random(elem1, elem2, ...)      |
+| 159 | randomInt                       | Generate random integer - usage: randomInt() or randomInt(max) or randomInt(min, max) |
+| 160 | randomIntArray                  | Generate random integer array - usage: randomIntArray(size, min, max)                 |
+| 161 | randomLong                      | Generate random long integer - usage: randomLong() or randomLong(max) or randomLong(min, max) |
+| 162 | randomSample                    | Random sampling - usage: randomSample(list, count, allowRepeat?)                      |
+| 163 | shuffle                         | Randomly shuffle list/array order - usage: shuffle(list)                              |
+| 164 | randomString                    | Generate random string - usage: randomString(length)                                  |
+| 165 | randomUUID                      | Generate random UUID - usage: randomUUID(withoutDashes?)                              |
+| 166 | abbreviate                      | Abbreviate string - usage: abbreviate(str, maxWidth, ellipsis?)                       |
+| 167 | capitalize                      | Capitalize first letter - usage: capitalize(str)                                      |
+| 168 | centerPad                       | Center-align padding - usage: centerPad(str, size, padChar?)                          |
+| 169 | compareTo                       | Lexicographical comparison - usage: compareTo(str1, str2, ignoreCase?)                |
+| 170 | concat                          | Concatenate multiple strings                                                           |
+| 171 | contains                        | Check if string contains substring                                                     |
+| 172 | tokenize                        | Tokenize by multiple delimiters - usage: tokenize(str, delimiters)                     |
+| 173 | countChar                       | Count character occurrences - usage: countChar(str, ch, ignoreCase?)                  |
+| 174 | countMatches                    | Count substring occurrences - usage: countMatches(str, sub, ignoreCase?)              |
+| 175 | equalsAny                       | Check if string equals any target - usage: equalsAny(str, target1, target2, ...)       |
+| 176 | equalsIgnoreCase                | Compare strings ignoring case - usage: equalsIgnoreCase(str1, str2)                    |
+| 177 | escapeHtml                      | HTML escape - convert special characters to HTML entities                              |
+| 178 | escapeRegex                     | Escape regex special characters                                                         |
+| 179 | format                          | Format string - usage: format(pattern, arg1, arg2, ...)                               |
+| 180 | indexOf                         | Find first occurrence of substring - usage: indexOf(str, search, fromIndex?)          |
+| 181 | isAlpha                         | Check if string contains only letters                                                 |
+| 182 | isAlphaNumeric                  | Check if string contains only letters and digits                                       |
+| 183 | isBlank                         | Check if string is null, empty or only whitespace                                      |
+| 184 | isNumeric                       | Check if string contains only digits                                                   |
+| 185 | isString                        | Check if it is a string - usage: isString(value)                                       |
+| 186 | left                            | Get left N characters - usage: left(str, n)                                            |
+| 187 | leftPad                         | Left padding - usage: leftPad(str, size, padChar?)                                     |
+| 188 | length                          | Get string length                                                                      |
+| 189 | levenshtein                     | Calculate Levenshtein edit distance - usage: levenshtein(str1, str2)                   |
+| 190 | maskEmail                       | Email mask - usage: maskEmail(email) e.g. te***@example.com                            |
+| 191 | mask                            | Mask processing - usage: mask(str, start, end, maskChar?)                              |
+| 192 | matches                         | Regex match - usage: matches(str, regex)                                               |
+| 193 | mid                             | Get middle part - usage: mid(str, start, length?)                                      |
+| 194 | removeDuplicates                | Remove adjacent duplicate characters - usage: removeDuplicates(str)                    |
+| 195 | removeEnd                       | Remove ending suffix - usage: removeEnd(str, suffix, ignoreCase?)                      |
+| 196 | removeStart                     | Remove starting prefix - usage: removeStart(str, prefix, ignoreCase?)                  |
+| 197 | removeWhitespace                | Remove all whitespace characters                                                       |
+| 198 | repeat                          | Repeat string - usage: repeat(str, count, separator?)                                  |
+| 199 | repeatChar                      | Repeat character - usage: repeatChar(ch, count)                                        |
+| 200 | replace                         | Replace string - usage: replace(str, target, replacement)                              |
+| 201 | replaceAll                      | Regex replace all - usage: replaceAll(str, regex, replacement)                         |
+| 202 | reverse                         | Reverse string                                                                         |
+| 203 | right                           | Get right N characters - usage: right(str, n)                                          |
+| 204 | rightPad                        | Right padding - usage: rightPad(str, size, padChar?)                                   |
+| 205 | similarity                      | Calculate string similarity (percentage) - usage: similarity(str1, str2)               |
+| 206 | split                           | Split string - usage: split(str, regex)                                                |
+| 207 | splitByLength                   | Split string by specified length - usage: splitByLength(str, chunkSize)                 |
+| 208 | substring                       | Extract substring - usage: substring(str, beginIndex) or substring(str, beginIndex, endIndex) |
+| 209 | substringAfter                  | Get content after specified substring - usage: substringAfter(str, separator)           |
+| 210 | substringBefore                 | Get content before specified substring - usage: substringBefore(str, separator)         |
+| 211 | substringBetween                | Get content between two substrings - usage: substringBetween(str, open, close)          |
+| 212 | swapCase                        | Swap case - upper to lower, lower to upper                                              |
+| 213 | toCamelCase                     | Convert to camel case - usage: toCamelCase(str, firstUpper?)                            |
+| 214 | toLower                         | Convert string to lowercase                                                             |
+| 215 | toSnakeCase                     | Convert to snake case - usage: toSnakeCase(str)                                        |
+| 216 | toString                        | Convert to string - usage: toString(value, pattern?)                                   |
+| 217 | toUpper                         | Convert string to uppercase                                                             |
+| 218 | trim                            | Trim leading and trailing whitespace of string                                          |
+| 219 | uncapitalize                    | Lowercase first letter - usage: uncapitalize(str)                                      |
+| 220 | unescapeHtml                    | HTML unescape - restore HTML entities to characters                                     |
+| 221 | uniqueChars                     | Keep unique characters (in order of first occurrence)                                   |
+| 222 | wordCount                       | Count number of words - usage: wordCount(str)                                          |
+| 223 | translate                       | Code value translation - usage: translate(context, code, dictType, defaultValue?)       |
+| 224 | formatDate                      | Format date - usage: formatDate(date, pattern)                                          |
+| 225 | now                             | Get current datetime                                                                   |
+| 226 | parseDate                       | Parse date string - usage: parseDate(dateStr, pattern)                                  |
+| 227 | timestamp                       | Get current timestamp                                                                  |
+| 228 | today                           | Get current date                                                                       |
+| 229 | toIsoString                     | Convert to ISO format string - usage: toIsoString(date)                                 |
+| 230 | complexAdd                      | Complex number addition - usage: complexAdd(r1, i1, r2, i2) returns [real, imaginary]  |
+| 231 | complexMultiply                 | Complex number multiplication - usage: complexMultiply(r1, i1, r2, i2) returns [real, imaginary] |
+| 232 | matrixAdd                       | Matrix addition - usage: matrixAdd(matrix1, matrix2)                                    |
+| 233 | toJson                          | Convert object to JSON string                                                           |
+| 234 | randomColor                     | Generate random color - usage: randomColor(type?) type: 'hex', 'rgb', 'preset'          |
+| 235 | randomDate                      | Generate random date - usage: randomDate(startDate, endDate, pattern?)                 |
+| 236 | base64Decode                    | Base64 decode - usage: base64Decode(encodedStr)                                         |
+| 237 | base64Encode                    | Base64 encode - usage: base64Encode(str)                                                |
+| 238 | decodeUrl                       | URL decode - usage: decodeUrl(str)                                                      |
+| 239 | encodeUrl                       | URL encode - usage: encodeUrl(str)                                                     |
+| 240 | md5                             | MD5 hash - usage: md5(str)                                                              |
+| 241 | isEmail                         | Check if it is a valid email address                                                    |
+| 242 | countDistinct                   | Distinct count - returns count of distinct elements                                     |
+| 243 | count                           | Count - returns the number of arguments                                                  |
+| 244 | countNonNull                    | Non-null count - returns the number of non-null arguments                                |
+| 245 | product                         | Product - calculates the product of all numeric arguments                                |
+| 246 | sum                             | Sum - calculates the sum of all numeric arguments                                        |
+| 247 | groupConcat                     | Group concatenation - merges strings with specified delimiter, first argument is delimiter |
+| 248 | stringAgg                       | String aggregation - merges strings with specified delimiter                              |
+
+#### 10.1 Built-in Functions
+JQuick-SQL ships with 200+ built-in functions provided by [**jquick-transform-function**](https://github.com/paohaijiao/jquick-transform-function), organized into the following categories:
+
+| Category | Description | Representative Functions |
+|----------|-------------|--------------------------|
+| String | String manipulation | `toUpper`, `toLower`, `concat`, `substring`, `replace`, `length`, `trim`, `mask`, `md5`, `base64Encode`, `reverse`, `split`, `pad` |
+| Math | Math & aggregation | `abs`, `ceil`, `floor`, `round`, `max`, `min`, `sum`, `avg`, `count`, `sqrt`, `pow`, `log`, `toInt`, `toDouble`, `stdDev`, `median` |
+| Date | Date & time | `now`, `today`, `addDays`, `formatDate`, `day`, `month`, `year`, `isWeekend`, `daysBetween`, `startOfMonth`, `endOfYear` |
+| Condition | Conditional logic | `caseWhen`, `if`, `ifElse`, `coalesce`, `nvl`, `between`, `switch`, `defaultIfNull` |
+| Convert | Type conversion | `toBoolean`, `toDate`, `toDateTime`, `toShort` |
+| Business | Business validation & masking | `bankCardMask`, `bankCardValidate`, `idCardValidate`, `idCardInfo`, `phoneInfo`, `phoneMask`, `emailMask`, `isEmail` |
+| Crypto | Encryption (AES / RSA / ECC) | `aesEncrypt`, `aesDecrypt`, `rsaEncrypt`, `rsaDecrypt`, `eccEncrypt`, `eccDecrypt`, `aesGenerateKey` |
+| Collection | Collection operations | `isEmpty`, `size`, `join` |
+| Bit | Bitwise operations | `bitAnd`, `bitOr`, `bitXor` |
+| Geometry | Geometry & combinatorics | `areaCircle`, `areaRectangle`, `distance`, `factorial`, `gcd`, `lcm`, `permutation`, `crossProduct`, `dotProduct` |
+| Random | Random generation | `randomInt`, `randomDouble`, `randomUUID`, `randomString`, `randomChoice`, `randomSample`, `randomShuffle` |
+| Extra | Formatting & casting | `cast`, `formatNumber`, `parseNumber`, `toCurrency`, `toPercentage`, `typeOf`, `toArray`, `toList` |
+| JSON | JSON handling | `toJson` |
+
+All built-in functions can be called directly in SQL. Function names are case-insensitive:
+
+```sql
+SELECT toUpper(name) AS upper_name,
+       length(addr) AS addr_len,
+       formatDate(birthday, 'yyyy-MM') AS birth_month,
+       caseWhen(age >= 30, 'senior', 'junior') AS level,
+       mask(phoneInfo(addr), '***') AS masked_addr
+FROM users
+```
+
+```log
+[INFO] +-----------+----------+-------------+--------+-------------+
+[INFO] | upper_name | addr_len | birth_month | level  | masked_addr |
+[INFO] +-----------+----------+-------------+--------+-------------+
+[INFO] | ALICE     | 7        | 2020-04      | junior | ***         |
+[INFO] | BOB       | 8        | 1991-08      | senior | ***         |
+[INFO] +-----------+----------+-------------+--------+-------------+
+[INFO] Total: 7 rows
+```
+
+#### 10.2 Extension Mechanism
 JQuick-SQL's function manager `JQuickMethodInvocationManager` is a singleton. At startup it loads all function providers through the custom SPI loader `com.github.paohaijiao.spi.ServiceLoader.loadServicesByPriority(Class)` (which ultimately delegates to the JDK `java.util.ServiceLoader`, reading `META-INF/services/<fully-qualified-interface-name>` files from the classpath) and sorts them by the `@Priority` annotation. The worker node startup log prints the number loaded:
 ```
 [INFO] Loaded 259 functions via SPI
