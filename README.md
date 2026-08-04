@@ -1530,6 +1530,151 @@ WHERE
 ```
 
 
+### 10. Function
+> JQuick-SQL's built-in functions are provided by [**jquick-transform-function**](https://github.com/paohaijiao/jquick-transform-function) (200+ functions covering strings, dates, aggregation, encryption, conversion, business validation, etc.) and can be extended with custom functions via **SPI (Service Provider Interface)**. Once registered, custom functions can be used directly in `SELECT`, `WHERE`, `GROUP BY`, `HAVING`, `ORDER BY` and other clauses just like built-in functions, e.g. `jsonPath(detail, '$.position')`.
+
+#### 10.1 Extension Mechanism
+JQuick-SQL's function manager `JQuickMethodInvocationManager` is a singleton. At startup it loads all function providers through the custom SPI loader `com.github.paohaijiao.spi.ServiceLoader.loadServicesByPriority(Class)` (which ultimately delegates to the JDK `java.util.ServiceLoader`, reading `META-INF/services/<fully-qualified-interface-name>` files from the classpath) and sorts them by the `@Priority` annotation. The worker node startup log prints the number loaded:
+```
+[INFO] Loaded 259 functions via SPI
+```
+
+Extending a custom function takes three steps:
+1. **Implement the function provider**: extend `JQuickBaseFunctionFunctionProvider` (which indirectly implements the `JQuickMethodFunctionProvider` interface) and write the function logic in `invoke(List<Object> args)`.
+2. **Declare priority (optional)**: use the `@Priority` annotation to declare the priority; a smaller value ranks earlier. When not specified, the default is `5000` (`PriorityConstants.DEFAULT`).
+3. **Register in the SPI container**: create a file named `com.github.paohaijiao.function.core.JQuickMethodFunctionProvider` under `src/main/resources/META-INF/services/` whose content is the fully-qualified name of the implementation class.
+
+> ⚠️ **Common pitfall**: the SPI registration file name **must exactly equal the fully-qualified name of the interface** `com.github.paohaijiao.function.core.JQuickMethodFunctionProvider`. Using any other name (e.g. `com.github.paohaijiao.spi.JQuickFunctionProvider`) will cause `ServiceLoader` to never find the file, so the function provider will not be loaded.
+
+#### 10.2 Built-in Priorities
+The priority constants are defined in `com.github.paohaijiao.spi.constants.PriorityConstants`:
+
+| Constant | Value | Description |
+|----------|-------|-------------|
+| `SYSTEM_HIGHEST` | 1 | System level, highest |
+| `SYSTEM_HIGH` | 10 | System level, high |
+| `SYSTEM_MEDIUM` | 20 | System level, medium |
+| `SYSTEM_LOW` | 30 | System level, low |
+| `APPLICATION_HIGHEST` | 100 | Application level, highest |
+| `APPLICATION_HIGH` | 200 | Application level, high |
+| `APPLICATION_MEDIUM` | 300 | Application level, medium |
+| `APPLICATION_LOW` | 400 | Application level, low |
+| `BUSINESS_HIGHEST` | 1000 | Business level, highest |
+| `BUSINESS_HIGH` | 2000 | Business level, high |
+| `BUSINESS_MEDIUM` | 3000 | Business level, medium |
+| `BUSINESS_LOW` | 4000 | Business level, low |
+| `USER_HIGHEST` | 5000 | User level, highest (default) |
+| `USER_HIGH` | 6000 | User level, high |
+| `USER_MEDIUM` | 7000 | User level, medium |
+| `USER_LOW` | 8000 | User level, low |
+| `LOWEST` | 10000 | Lowest priority |
+
+When multiple function providers register functions with the same name, the one with the smaller priority value is ranked first and is invoked first.
+
+#### 10.3 Example: Custom `jsonPath` Function
+This example implements a `jsonPath(json, path)` function that extracts data from a JSON field by path.
+
+**Step 1: Implement the Function Provider**
+
+Create a function provider class that extends `JQuickBaseFunctionFunctionProvider` and implements the function logic in the `invoke` method:
+
+```java
+package com.github.paohaijiao.provider;
+
+import com.github.paohaijiao.builder.JSONPathQueryBuilder;
+import com.github.paohaijiao.exception.JAssert;
+import com.github.paohaijiao.function.domain.JQuickBaseFunctionFunctionProvider;
+import com.github.paohaijiao.model.JSONObject;
+import com.github.paohaijiao.model.JSONPathResult;
+import com.github.paohaijiao.spi.anno.Priority;
+import com.github.paohaijiao.spi.constants.PriorityConstants;
+
+import java.util.List;
+
+@Priority(PriorityConstants.SYSTEM_HIGH)
+public class JQuickJSonPathFunctionFunctionProvider extends JQuickBaseFunctionFunctionProvider {
+
+    public JQuickJSonPathFunctionFunctionProvider() {
+        super("jsonPath", "Extract data by JSON path expression - usage: jsonPath(jsonField, pathExpression)");
+    }
+
+    @Override
+    public Object invoke(List<Object> args) {
+        validateArgCount(args, 2);
+        Object object = args.get(0);
+        JAssert.notNull(object, "para1 require not null");
+        String path = (String) args.get(1);
+        JSONObject obj;
+        if (object instanceof JSONObject) {
+            obj = (JSONObject) object;
+        } else if (object instanceof java.util.Map) {
+            @SuppressWarnings("unchecked")
+            java.util.Map<String, Object> map = (java.util.Map<String, Object>) object;
+            obj = new JSONObject(map);
+        } else {
+            throw new IllegalArgumentException(
+                    "jsonPath first argument must be a JSON object or row, but was: "
+                            + (object == null ? "null" : object.getClass().getName()));
+        }
+        JSONPathResult result = JSONPathQueryBuilder.from(obj)
+                .path(path)
+                .execute();
+        return result.getRawData();
+    }
+}
+```
+
+Notes:
+- The constructor `super(methodName, description)` registers the function name and description; the function name is the name used when calling it in SQL (case-insensitive).
+- `JQuickBaseFunctionFunctionProvider` provides parameter conversion and validation helper methods: `asString`, `asInt`, `asLong`, `asDouble`, `asBoolean`, `validateArgCount`, `validateArgCountRange`.
+- `@Priority(PriorityConstants.SYSTEM_HIGH)` declares the priority; any other implementation with the same name (if present) will be ranked after it.
+
+**Step 2: Register via SPI**
+
+Create a file named `com.github.paohaijiao.function.core.JQuickMethodFunctionProvider` under `src/main/resources/META-INF/services/` whose content is the fully-qualified name of the implementation class (one class per line; `#` comments are supported):
+
+```
+com.github.paohaijiao.provider.JQuickJSonPathFunctionFunctionProvider
+```
+
+> When registering multiple function providers, each class occupies one line. For functions with the same name, `@Priority` determines which implementation is invoked first.
+
+**Step 3: Use in SQL**
+
+Once registered, it can be called in SQL just like a built-in function:
+
+```sql
+SELECT name, age, status, enable, jsonPath(detail, '$.position') FROM users
+```
+
+```log
+[INFO] +----+---------+-----+----------+--------+--------------------+
+[INFO] | id | name    | age | status   | enable | position            |
+[INFO] +----+---------+-----+----------+--------+--------------------+
+[INFO] | 1  | Alice   | 25  | active   | true   | Senior Developer   |
+[INFO] | 2  | Bob     | 30  | active   | true   | Marketing Manager  |
+[INFO] | 3  | Charlie | 20  | pending  | false  | Junior Accountant  |
+[INFO] | 4  | David   | 35  | inactive | true   | HR Director        |
+[INFO] | 5  | Eve     | 28  | active   | true   | Frontend Developer |
+[INFO] | 6  | Martin  | 30  | active   | true   | Architect          |
+[INFO] | 7  | Davila  | 39  | active   | true   | Tech Lead          |
+[INFO] +----+---------+-----+----------+--------+--------------------+
+[INFO] Total: 7 rows
+```
+
+#### 10.4 Programmatic Registration (Optional)
+In addition to SPI auto-discovery, you can also register functions manually in code (useful for scenarios that require runtime dynamic registration):
+
+```java
+JQuickMethodInvocationManager manager = JQuickMethodInvocationManager.getInstance();
+manager.registerInvoker(new JQuickJSonPathFunctionFunctionProvider());
+
+// Or register a simple function directly as a lambda
+manager.registerInvoker("greet", args -> "Hello, " + args.get(0), "Concatenate a greeting", PriorityConstants.USER_HIGH);
+```
+
+> Manually registered functions share the same registry as SPI-loaded functions. A function registered later with the same name will not override one registered earlier (use `registerOrReplaceInvoker` to override).
+
 ## XML Configuration Usage
 
 JQuick-SQL provides an XML-based configuration approach that allows you to define SQL queries in an XML file and generate service interfaces dynamically. This is particularly useful for organizing large numbers of SQL statements and maintaining clean separation between SQL and Java code.
