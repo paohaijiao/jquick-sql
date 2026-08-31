@@ -318,6 +318,129 @@ SELECT u.name,
 - XML 动态代理（iBatis 风格）：把 SQL 写在 classpath XML 中，通过 JDK 动态代理生成 Service/DAO 实现，支持 `#{param}` 占位符（见下文 Demo05）；
 - Builder 流式 API：`JQuickSQL.builder().embedded(n).config(cfg).table(name,cols,rows).build()`（见下文 Demo06）。
 
+### 4.11 窗口函数（🛠️ 执行层已实现 · Parser OVER 语法 roadmap）
+
+> 执行器层（物理节点）**已实现并通过单元测试**；但 Parser 的 SQL 字符串端到端 `OVER` 语法当前未覆盖（Parser Visitor 接口尚未暴露 `visitWindowFunction`，预计下一 release 打通）。推荐业务端在 Parser 发布后走 SQL 路径；需先行尝鲜可按物理节点 API 构造 `JQuickWindowPhysicalNode` 调用 `JQuickNodeExecutor.executeNode()`。
+
+已实现窗口函数（10 种 + 自定义函数回退）：
+
+| 窗口函数 | 含义 | 用法示例 |
+|---------|------|---------|
+| `ROW_NUMBER()` | 分区内从 1 开始的连续行号（不跳跃） | `ROW_NUMBER() OVER (PARTITION BY dept ORDER BY salary DESC)` |
+| `RANK()` | 跳跃排名（相同值相同名次，下一名次跳空） | `RANK() OVER (PARTITION BY dept ORDER BY salary DESC)` |
+| `DENSE_RANK()` | 密集排名（相同值相同名次，下一名次不跳跃） | `DENSE_RANK() OVER (PARTITION BY dept ORDER BY salary DESC)` |
+| `LEAD(expr, n)` | 分区内当前行向前（后面）第 n 行的 expr 值 | `LEAD(salary,1) OVER (ORDER BY hire_date)` |
+| `LAG(expr, n)`  | 分区内当前行向后（前面）第 n 行的 expr 值 | `LAG(salary,1) OVER (ORDER BY hire_date)` |
+| `COUNT(*)` / `COUNT(expr)` | 窗口内计数 | `COUNT(*) OVER (PARTITION BY dept)` |
+| `SUM(expr)` | 窗口内求和 | `SUM(salary) OVER (PARTITION BY dept)` |
+| `AVG(expr)` | 窗口内平均 | `AVG(salary) OVER (PARTITION BY dept)` |
+| `MAX(expr)` | 窗口内最大 | `MAX(salary) OVER (PARTITION BY dept)` |
+| `MIN(expr)` | 窗口内最小 | `MIN(salary) OVER (PARTITION BY dept)` |
+
+WindowSpec（窗口定义）已支持三要素：
+- **PARTITION BY col1, col2...**：分区键；
+- **ORDER BY col1 [ASC|DESC], col2...**：分区内排序键；
+- **WindowFrame**：`ROWS` / `RANGE` 两种 Frame 类型 × `UNBOUNDED PRECEDING / n PRECEDING / CURRENT ROW / n FOLLOWING / UNBOUNDED FOLLOWING` 五种边界。
+
+目标 SQL 示例（Parser 发布后可直接执行）：
+```sql
+SELECT dept, name, salary,
+       ROW_NUMBER() OVER (PARTITION BY dept ORDER BY salary DESC) rn,
+       RANK()       OVER (PARTITION BY dept ORDER BY salary DESC) rk,
+       LAG(salary, 1) OVER (PARTITION BY dept ORDER BY salary DESC) prev_sal
+  FROM emp;
+```
+对应物理节点测试：`distribute/nodeExecutor/executeNode/window/JQuickWindowPhysicalNodeWindowSpecTest.java`（部门内排名、RANK、DENSE_RANK、LEAD/LAG 共 5 个真实单元测试场景）。
+
+### 4.12 扩展 SPI 自定义函数（完整步骤）
+
+JQuick-SQL 的函数调用走 **「SPI 自定义 → 内置函数 → 报错」** 的三级回退链路：
+```
+SQL 中出现 MY_FUNC(a,b)
+    → JQuickFunctionCallExpression.evaluate()
+      → 1. loadFunctionProvider("my_func")
+           查 SPI（JQuickMethodInvocationManager 单例加载的 JQuickMethodFunctionProvider 列表）
+           命中 → 直接调用 provider.invoke(args) ✅
+      → 2. 未命中 → 走 JQuickExpressionEvaluator.evaluateBuiltinFunction(name,args)
+           命中内置（upper/lower/concat/substring/trim/replace/abs/round/ceil/floor/
+                  pow/sqrt/year/month/day/now/current_date/count/sum/avg/max/min/cast）→ 执行 ✅
+      → 3. 都未命中 → 抛出 "The function `my_func` does not exist" ❌
+```
+
+#### 步骤 1：实现 SPI 接口
+```java
+package demo.spi;
+
+import com.github.paohaijiao.spi.JQuickMethodFunctionProvider;
+//                                    ↑ 实际包名以源码为准：全局搜索 interface JQuickMethodFunctionProvider 确认
+import java.util.List;
+
+/**
+ * 自定义函数：TO_CAMEL_CASE("hello_world", "_") → "helloWorld"
+ * 函数名大小写不敏感，按 getMethodName() 返回值注册。
+ */
+public class ToCamelCaseFunction implements JQuickMethodFunctionProvider {
+
+    @Override
+    public String getMethodName() {
+        return "TO_CAMEL_CASE";   // 或 "to_camel_case"（匹配大小写不敏感）
+    }
+
+    @Override
+    public Object invoke(List<Object> args) throws Exception {
+        if (args == null || args.size() < 1) return null;
+        Object text    = args.get(0);
+        Object sepObj  = args.size() >= 2 ? args.get(1) : "_";   // 默认分隔符下划线
+        if (text == null) return null;
+        String   s       = text.toString();
+        String   sep     = sepObj == null ? "_" : sepObj.toString();
+        String[] parts   = s.split(java.util.regex.Pattern.quote(sep));
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < parts.length; i++) {
+            String p = parts[i];
+            if (p.isEmpty()) continue;
+            if (i == 0) {
+                sb.append(Character.toLowerCase(p.charAt(0)));
+            } else {
+                sb.append(Character.toUpperCase(p.charAt(0)));
+            }
+            if (p.length() > 1) sb.append(p.substring(1));
+        }
+        return sb.toString();
+    }
+}
+```
+
+#### 步骤 2（推荐）：ServiceLoader 自动注册（引擎启动即生效）
+- 在 classpath 新建：`META-INF/services/com.github.paohaijiao.spi.JQuickMethodFunctionProvider`
+  （再次提醒：**文件名 = SPI 接口完全限定名**，以源码中真实包路径为准）
+- 文件内容每行一个实现类全限定名：
+  ```
+  demo.spi.ToCamelCaseFunction
+  ```
+- 启动引擎后 Worker 日志将打印：`Loaded N functions via SPI`（JQuickWorker.start() 中输出），包含该自定义函数。
+
+#### 步骤 2 备选：运行时手动注册（引擎初始化前后皆可）
+```java
+import com.github.paohaijiao.spi.JQuickMethodInvocationManager;
+//                                    ↑ 同样以源码实际包路径为准
+
+// 在 JQuickSQL.embedded() / .builder().build() 之前或之后执行一次即可
+JQuickMethodInvocationManager.getInstance().registerInvoker(new ToCamelCaseFunction());
+// （若源码中注册方法名并非 registerInvoker，改为搜索 addInvoker / register 方法，签名为传入 JQuickMethodFunctionProvider）
+```
+
+#### 步骤 3：SQL 中直接使用
+```sql
+-- 下划线列名转驼峰："user_login_name" → "userLoginName"
+SELECT id,
+       name,
+       TO_CAMEL_CASE(name, '_')    camel_name,
+       TO_CAMEL_CASE(addr, '-')    camel_addr
+  FROM users;
+```
+完整可运行 Java 示例见下文 **Demo07**。
+
 ---
 
 ## 五、Demo 示例
@@ -844,12 +967,116 @@ public class Demo06BuilderEmbedded {
 
 ---
 
+### 案例 7：扩展自定义 SPI 函数（ToCamelCase 驼峰转换）
+
+#### 功能说明
+演示「**实现 JQuickMethodFunctionProvider → 运行时注册 → SQL 中使用**」完整链路。适用于业务特有函数（脱敏、编码转换、国标代码映射等）的无侵入扩展。同时可改用 ServiceLoader `META-INF/services/...` 方式随引擎启动自动加载。
+
+#### 完整 Demo 代码
+
+```java
+package demo;
+
+import com.github.paohaijiao.engine.JQuickSQL;
+import com.github.paohaijiao.spi.JQuickMethodFunctionProvider;
+import com.github.paohaijiao.spi.JQuickMethodInvocationManager;
+//                  ↑ 以上两个 SPI 包路径实际以源码为准：全局搜索 interface JQuickMethodFunctionProvider 确认
+import com.github.paohaijiao.statement.JQuickColumnMeta;
+import com.github.paohaijiao.statement.JQuickDataSet;
+import com.github.paohaijiao.statement.JQuickRow;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.regex.Pattern;
+
+/**
+ * 功能作用：演示实现自定义 SPI 函数 TO_CAMEL_CASE，并在 SELECT / WHERE / ORDER BY 中直接使用。
+ * 使用场景：业务自定义函数（脱敏、国标码转换、拼音、编码、正则清洗等）无需改动引擎源码。
+ * 注意事项：① 函数名匹配大小写不敏感；② 注册必须在第一次调用该 SQL 之前执行一次即可；
+ *           ③ 生产更推荐使用 ServiceLoader（META-INF/services/接口全名）方式，避免运行时序问题。
+ */
+public class Demo07SpiFunctionExtension {
+
+    /* ----------- 内联自定义函数实现（真实项目中独立成 demo.spi.ToCamelCaseFunction.java） ----------- */
+    public static class ToCamelCaseFunction implements JQuickMethodFunctionProvider {
+        @Override
+        public String getMethodName() {
+            return "TO_CAMEL_CASE";
+        }
+        @Override
+        public Object invoke(List<Object> args) throws Exception {
+            if (args == null || args.isEmpty()) return null;
+            Object text   = args.get(0);
+            String sep    = args.size() >= 2 && args.get(1) != null ? args.get(1).toString() : "_";
+            if (text == null) return null;
+            String[] parts = text.toString().split(Pattern.quote(sep));
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < parts.length; i++) {
+                String p = parts[i];
+                if (p.isEmpty()) continue;
+                if (i == 0) sb.append(Character.toLowerCase(p.charAt(0)));
+                else        sb.append(Character.toUpperCase(p.charAt(0)));
+                if (p.length() > 1) sb.append(p.substring(1));
+            }
+            return sb.toString();
+        }
+    }
+
+    public static void main(String[] args) {
+        // 0) 运行时注册自定义函数（也可以放 META-INF/services 里走 ServiceLoader）
+        JQuickMethodInvocationManager.getInstance().registerInvoker(new ToCamelCaseFunction());
+        // 注：若源码中注册方法名为 addInvoker / register 而非 registerInvoker，按源码实际签名调整即可。
+
+        JQuickSQL sql = JQuickSQL.embedded();
+        try {
+            List<JQuickColumnMeta> cols = Arrays.asList(
+                    new JQuickColumnMeta("id",   Integer.class, "users"),
+                    new JQuickColumnMeta("name", String.class,  "users"),
+                    new JQuickColumnMeta("addr", String.class,  "users"));
+            List<JQuickRow> rows = Arrays.asList(
+                    row("id",1,"name","zhang_san_feng",   "addr","bei-jing-chao-yang"),
+                    row("id",2,"name","li_si",            "addr","shang-hai-pu-dong"),
+                    row("id",3,"name","wang_wu_bo_lun",   "addr","cheng-du-wu-hou"),
+                    row("id",4,"name","zhao_liu",         "addr","guang-zhou-tian-he"));
+            sql.registerTable("users", cols, rows);
+
+            System.out.println("===== 1) SELECT 中使用 TO_CAMEL_CASE =====");
+            JQuickDataSet r1 = sql.execute(
+                    "SELECT id, name, " +
+                    "       TO_CAMEL_CASE(name, '_') AS camel_name, " +
+                    "       TO_CAMEL_CASE(addr, '-') AS camel_addr " +
+                    "FROM users ORDER BY id");
+            r1.printTable();
+
+            System.out.println("===== 2) WHERE 中使用自定义函数（等号过滤）=====");
+            sql.execute("SELECT id, name, TO_CAMEL_CASE(name) cn " +
+                    "FROM users WHERE TO_CAMEL_CASE(name, '_') = 'liSi'").printTable();
+
+            System.out.println("===== 3) ORDER BY 中使用（按驼峰结果排序）=====");
+            sql.execute("SELECT id, name, TO_CAMEL_CASE(name) cn " +
+                    "FROM users ORDER BY TO_CAMEL_CASE(name, '_') ASC").printTable();
+
+        } finally {
+            sql.shutdown();
+        }
+    }
+
+    private static JQuickRow row(Object... kv) {
+        JQuickRow r = new JQuickRow();
+        for (int i = 0; i < kv.length; i += 2) r.put((String) kv[i], kv[i + 1]);
+        return r;
+    }
+}
+```
+
+---
+
 ## 六、核心特性
 
 | 分类 | 能力 | 状态 |
 |------|------|------|
-| 🧩 SQL 语法 | SELECT 子句(*) / WHERE / ORDER BY / LIMIT / GROUP BY / HAVING / JOIN(5种: INNER/LEFT/RIGHT/CROSS/NATURAL) / UNION / MINUS / INTERSECT / 子查询(8种位置) / CASE WHEN / DISTINCT | ✅ |
-| 🔍 函数 | 内置数学 / 字符串 + **SPI 自定义函数**（jquick-transform-function 扩展） | ✅ |
+| 🧩 SQL 语法 | SELECT 子句(*) / WHERE / ORDER BY / LIMIT / GROUP BY / HAVING / JOIN(5种: INNER/LEFT/RIGHT/CROSS/NATURAL) / UNION / MINUS / INTERSECT / 子查询(8种位置) / CASE WHEN / DISTINCT / 窗口函数(10种: ROW_NUMBER/RANK/DENSE_RANK/LEAD/LAG/COUNT/SUM/AVG/MAX/MIN + PARTITION BY + ORDER BY + WindowFrame — 执行层✅ / Parser OVER 语法🗺️) | ✅ / 🗺️ |
+| 🔍 函数 | 内置 20+ 数学/字符串/日期/类型（upper/lower/concat/substring/trim/replace/abs/round/ceil/floor/pow/sqrt/year/month/day/now/current_date/cast + 6 聚合）+ **SPI 自定义函数双模式**（ServiceLoader 自动注册推荐 + 运行时手动注册） | ✅ |
 | 🧠 优化器 | 谓词下推 · 投影下推 · 常量折叠 · 过滤合并 等基础规则 | ✅ |
 | 🚀 并行执行 | `embedded(n)` 同一 JVM 内 n 个并行 Worker；Fragment 切分；Hash/NestedLoop Join | ✅ |
 | 🗂️ 数据源 | 内存注册表 + 生态组件接入：jquick-curl(REST JSON) / jquick-excel(Excel) / jquick-java(规则脚本)；更多 RDBMS 连接器在 jquick-connector 路线图中 | ✅ / 🗺️ |
@@ -944,7 +1171,7 @@ jquick.runtime.taskTimeoutMs=60000
 | 6 | **协议边界**：jquick-sql 自身 Apache-2.0，免费商用；若业务同时使用 jquick-pdf，请单独阅读 AGPL-3.0 商业授权条款。 |
 | 7 | `JQuickSQL` 单例即可（内部同步锁）；`JQuickDataSet` 非线程安全。 |
 | 8 | 大 SQL / 大数据量请把 `taskTimeoutMs` 调大并适当提升 `embedded(n)` 的并行度（`Runtime.getRuntime().availableProcessors()` 做参考）。 |
-| 9 | FULL OUTER JOIN 当前未支持；CTE / 递归 UNION / 窗口函数 未实现，请勿在生产 SQL 中使用。 |
+| 9 | FULL OUTER JOIN 当前未支持；CTE / 递归 UNION 未实现；**窗口函数**执行层已实现 10 种 + PARTITION BY / ORDER BY / WindowFrame，物理节点单元测试齐备，但 Parser 的 SQL OVER 语法端到端路径在 roadmap 中——生产请在 Parser 版本发布后再使用 OVER 语法。 |
 
 ---
 

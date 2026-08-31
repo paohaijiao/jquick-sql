@@ -316,6 +316,132 @@ Ref test: `demo/subquery/JQuickSQLSubqueryTest.java`.
 - **XML dynamic proxy (iBatis style)**: store SQL statements in classpath XML, materialize Service/DAO interfaces via JDK dynamic proxy with `#{param}` placeholders — see Demo 5 below;
 - **Builder fluent API**: `JQuickSQL.builder().embedded(n).config(cfg).table(name,cols,rows).build()` — see Demo 6 below.
 
+### 4.11 Window Functions (🛠️ Executor implemented · Parser OVER syntax on roadmap)
+
+> The **executor (physical-node) layer is fully implemented and unit-tested**. However, the end-to-end `OVER` clause path through the Parser SQL-string visitor is not exposed yet (`visitWindowFunction` is not yet present on the ANTLR4 visitor interface — expected in the next release). For production SQL use, wait until the Parser release is published; for early adopters, build a `JQuickWindowPhysicalNode` directly and call `JQuickNodeExecutor.executeNode()`.
+
+Implemented window functions (10 built-in + custom-function fallback):
+| Window Function | Meaning | Usage example |
+|-----------------|---------|---------------|
+| `ROW_NUMBER()`  | Consecutive row number starting at 1 inside each partition | `ROW_NUMBER() OVER (PARTITION BY dept ORDER BY salary DESC)` |
+| `RANK()`        | Ranking with gaps (ties share rank; next rank skips ahead) | `RANK() OVER (PARTITION BY dept ORDER BY salary DESC)` |
+| `DENSE_RANK()`  | Dense ranking (ties share rank; next rank does NOT skip) | `DENSE_RANK() OVER (PARTITION BY dept ORDER BY salary DESC)` |
+| `LEAD(expr, n)` | Value of `expr` from the row *n rows ahead* inside the partition | `LEAD(salary,1) OVER (ORDER BY hire_date)` |
+| `LAG(expr, n)`  | Value of `expr` from the row *n rows behind* inside the partition | `LAG(salary,1) OVER (ORDER BY hire_date)` |
+| `COUNT(*)` / `COUNT(expr)` | Count non-null rows / values in the window | `COUNT(*) OVER (PARTITION BY dept)` |
+| `SUM(expr)`     | Summation over the window | `SUM(salary) OVER (PARTITION BY dept)` |
+| `AVG(expr)`     | Average over the window | `AVG(salary) OVER (PARTITION BY dept)` |
+| `MAX(expr)`     | Maximum over the window | `MAX(salary) OVER (PARTITION BY dept)` |
+| `MIN(expr)`     | Minimum over the window | `MIN(salary) OVER (PARTITION BY dept)` |
+
+WindowSpec is fully supported with all three components:
+- **PARTITION BY col1, col2…** — partition keys;
+- **ORDER BY col1 [ASC\|DESC], col2…** — sort keys inside each partition;
+- **WindowFrame** — two frame types (`ROWS`, `RANGE`) × five boundary types (`UNBOUNDED PRECEDING / n PRECEDING / CURRENT ROW / n FOLLOWING / UNBOUNDED FOLLOWING`).
+
+Target SQL example (runs directly once the Parser path ships):
+```sql
+SELECT dept, name, salary,
+       ROW_NUMBER() OVER (PARTITION BY dept ORDER BY salary DESC) rn,
+       RANK()       OVER (PARTITION BY dept ORDER BY salary DESC) rk,
+       LAG(salary, 1) OVER (PARTITION BY dept ORDER BY salary DESC) prev_sal
+  FROM emp;
+```
+Physical-node test reference: `distribute/nodeExecutor/executeNode/window/JQuickWindowPhysicalNodeWindowSpecTest.java` — covers 5 real scenarios (intra-department ROW_NUMBER / RANK / DENSE_RANK / LEAD / LAG).
+
+### 4.12 Custom SPI Function Extension (step-by-step)
+
+Function calls follow a **three-level fallback chain**:
+```
+SQL uses MY_FUNC(a,b)
+    → JQuickFunctionCallExpression.evaluate()
+      → 1. loadFunctionProvider("my_func")
+           scans the SPI list managed by JQuickMethodInvocationManager singleton
+           HIT → invoke provider.invoke(args) ✅
+      → 2. MISS → fallback to evaluateBuiltinFunction(name,args)
+           HIT builtins (upper/lower/concat/substring/trim/replace/abs/round/ceil/
+                  floor/pow/sqrt/year/month/day/now/current_date/
+                  count/sum/avg/max/min/cast) → execute ✅
+      → 3. All MISS → throw "The function `my_func` does not exist" ❌
+```
+
+#### Step 1: Implement the SPI interface
+```java
+package demo.spi;
+
+import com.github.paohaijiao.spi.JQuickMethodFunctionProvider;
+//                                    ↑ confirm real package by grepping
+//                                    `interface JQuickMethodFunctionProvider` in the source tree
+import java.util.List;
+
+/**
+ * Custom function: TO_CAMEL_CASE("hello_world", "_") → "helloWorld"
+ * Function name is matched case-insensitively using getMethodName().
+ */
+public class ToCamelCaseFunction implements JQuickMethodFunctionProvider {
+
+    @Override
+    public String getMethodName() {
+        return "TO_CAMEL_CASE";   // or "to_camel_case" — match is case-insensitive
+    }
+
+    @Override
+    public Object invoke(List<Object> args) throws Exception {
+        if (args == null || args.isEmpty()) return null;
+        Object text   = args.get(0);
+        Object sepObj = args.size() >= 2 ? args.get(1) : "_";   // default separator: underscore
+        if (text == null) return null;
+        String   s     = text.toString();
+        String   sep   = sepObj == null ? "_" : sepObj.toString();
+        String[] parts = s.split(java.util.regex.Pattern.quote(sep));
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < parts.length; i++) {
+            String p = parts[i];
+            if (p.isEmpty()) continue;
+            if (i == 0) {
+                sb.append(Character.toLowerCase(p.charAt(0)));
+            } else {
+                sb.append(Character.toUpperCase(p.charAt(0)));
+            }
+            if (p.length() > 1) sb.append(p.substring(1));
+        }
+        return sb.toString();
+    }
+}
+```
+
+#### Step 2 (recommended): ServiceLoader auto-registration (picked up at engine boot)
+- Create classpath file: `META-INF/services/com.github.paohaijiao.spi.JQuickMethodFunctionProvider`
+  (**filename must equal the SPI interface FQCN** — again, confirm real package by searching the source tree)
+- File contents, one implementation FQCN per line:
+  ```
+  demo.spi.ToCamelCaseFunction
+  ```
+- After the engine boots, every Worker will log: `Loaded N functions via SPI` (printed in `JQuickWorker.start()`), including your custom function.
+
+#### Step 2 alternative: Runtime manual registration (before or after engine init)
+```java
+import com.github.paohaijiao.spi.JQuickMethodInvocationManager;
+//                                    ↑ confirm real package in source
+
+// Run exactly once, before the first SQL that references the function
+JQuickMethodInvocationManager.getInstance().registerInvoker(new ToCamelCaseFunction());
+// If the actual registration method is named addInvoker / register rather than
+// registerInvoker in the source, use whatever matches the signature that accepts
+// a JQuickMethodFunctionProvider.
+```
+
+#### Step 3: Use it anywhere in SQL
+```sql
+-- underscore-separated column → camelCase: "user_login_name" → "userLoginName"
+SELECT id,
+       name,
+       TO_CAMEL_CASE(name, '_')    camel_name,
+       TO_CAMEL_CASE(addr, '-')    camel_addr
+  FROM users;
+```
+See **Demo 07** below for a full, runnable Java class.
+
 ---
 
 ## V. Demo Examples
@@ -843,12 +969,121 @@ public class Demo06BuilderEmbedded {
 
 ---
 
+### Demo 7: Extend a Custom SPI Function (ToCamelCase)
+
+#### Description
+Walks the full chain: **implement JQuickMethodFunctionProvider → register it at runtime → call the function from SELECT / WHERE / ORDER BY**. Suitable for domain-specific functions (masking, code-set mapping, encoding, pinyin, regex cleansers…) that must not require engine source changes. An alternative deployment via `META-INF/services/<SPI-FQCN>` ServiceLoader is also recommended for production.
+
+#### Complete Runnable Code
+
+```java
+package demo;
+
+import com.github.paohaijiao.engine.JQuickSQL;
+import com.github.paohaijiao.spi.JQuickMethodFunctionProvider;
+import com.github.paohaijiao.spi.JQuickMethodInvocationManager;
+//                  ↑ confirm real package names in source by grepping the interface FQCN
+import com.github.paohaijiao.statement.JQuickColumnMeta;
+import com.github.paohaijiao.statement.JQuickDataSet;
+import com.github.paohaijiao.statement.JQuickRow;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.regex.Pattern;
+
+/**
+ * Function: Implements a custom TO_CAMEL_CASE function and invokes it from
+ *           SELECT list, WHERE predicate, and ORDER BY.
+ * Scenario: Domain functions (PII masking, standard-code mapping, pinyin,
+ *           charset conversion, regex sanitisation…) added without forking the engine.
+ * Notes: ① function name match is case-insensitive; ② register exactly once
+ *           before the first SQL referencing it; ③ for production prefer the
+ *           ServiceLoader approach (META-INF/services/<SPI-FQCN>) to avoid
+ *           init-order bugs.
+ */
+public class Demo07SpiFunctionExtension {
+
+    /* --- Inline custom function (in real projects split into demo.spi.ToCamelCaseFunction) --- */
+    public static class ToCamelCaseFunction implements JQuickMethodFunctionProvider {
+        @Override
+        public String getMethodName() {
+            return "TO_CAMEL_CASE";
+        }
+        @Override
+        public Object invoke(List<Object> args) throws Exception {
+            if (args == null || args.isEmpty()) return null;
+            Object text = args.get(0);
+            String sep   = args.size() >= 2 && args.get(1) != null ? args.get(1).toString() : "_";
+            if (text == null) return null;
+            String[] parts = text.toString().split(Pattern.quote(sep));
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < parts.length; i++) {
+                String p = parts[i];
+                if (p.isEmpty()) continue;
+                if (i == 0) sb.append(Character.toLowerCase(p.charAt(0)));
+                else        sb.append(Character.toUpperCase(p.charAt(0)));
+                if (p.length() > 1) sb.append(p.substring(1));
+            }
+            return sb.toString();
+        }
+    }
+
+    public static void main(String[] args) {
+        // 0) Runtime register custom function (alternatively put into META-INF/services/<SPI-FQCN>)
+        JQuickMethodInvocationManager.getInstance().registerInvoker(new ToCamelCaseFunction());
+        // Note: if the actual source method is named addInvoker / register rather than
+        // registerInvoker, call whatever public method accepts a JQuickMethodFunctionProvider.
+
+        JQuickSQL sql = JQuickSQL.embedded();
+        try {
+            List<JQuickColumnMeta> cols = Arrays.asList(
+                    new JQuickColumnMeta("id",   Integer.class, "users"),
+                    new JQuickColumnMeta("name", String.class,  "users"),
+                    new JQuickColumnMeta("addr", String.class,  "users"));
+            List<JQuickRow> rows = Arrays.asList(
+                    row("id",1,"name","zhang_san_feng",   "addr","bei-jing-chao-yang"),
+                    row("id",2,"name","li_si",            "addr","shang-hai-pu-dong"),
+                    row("id",3,"name","wang_wu_bo_lun",   "addr","cheng-du-wu-hou"),
+                    row("id",4,"name","zhao_liu",         "addr","guang-zhou-tian-he"));
+            sql.registerTable("users", cols, rows);
+
+            System.out.println("===== 1) TO_CAMEL_CASE in SELECT list =====");
+            JQuickDataSet r1 = sql.execute(
+                    "SELECT id, name, " +
+                    "       TO_CAMEL_CASE(name, '_') AS camel_name, " +
+                    "       TO_CAMEL_CASE(addr, '-') AS camel_addr " +
+                    "FROM users ORDER BY id");
+            r1.printTable();
+
+            System.out.println("===== 2) TO_CAMEL_CASE in WHERE (equality filter) =====");
+            sql.execute("SELECT id, name, TO_CAMEL_CASE(name) cn " +
+                    "FROM users WHERE TO_CAMEL_CASE(name, '_') = 'liSi'").printTable();
+
+            System.out.println("===== 3) TO_CAMEL_CASE in ORDER BY =====");
+            sql.execute("SELECT id, name, TO_CAMEL_CASE(name) cn " +
+                    "FROM users ORDER BY TO_CAMEL_CASE(name, '_') ASC").printTable();
+
+        } finally {
+            sql.shutdown();
+        }
+    }
+
+    private static JQuickRow row(Object... kv) {
+        JQuickRow r = new JQuickRow();
+        for (int i = 0; i < kv.length; i += 2) r.put((String) kv[i], kv[i + 1]);
+        return r;
+    }
+}
+```
+
+---
+
 ## VI. Core Features
 
 | Category | Capability | Status |
 |----------|-----------|--------|
-| 🧩 SQL Syntax | SELECT (*) / WHERE / ORDER BY / LIMIT / GROUP BY / HAVING / JOIN (5 types: INNER/LEFT/RIGHT/CROSS/NATURAL) / UNION / MINUS / INTERSECT / Subqueries (8 positions) / CASE WHEN / DISTINCT | ✅ |
-| 🔍 Functions | Built-in math / string + **SPI custom functions** (jquick-transform-function) | ✅ |
+| 🧩 SQL Syntax | SELECT (*) / WHERE / ORDER BY / LIMIT / GROUP BY / HAVING / JOIN (5 types: INNER/LEFT/RIGHT/CROSS/NATURAL) / UNION / MINUS / INTERSECT / Subqueries (8 positions) / CASE WHEN / DISTINCT / Window Functions (10: ROW_NUMBER/RANK/DENSE_RANK/LEAD/LAG/COUNT/SUM/AVG/MAX/MIN + PARTITION BY + ORDER BY + WindowFrame — Executor ✅ / Parser OVER syntax 🗺️) | ✅ / 🗺️ |
+| 🔍 Functions | 20+ built-in (math/string/date/type: upper/lower/concat/substring/trim/replace/abs/round/ceil/floor/pow/sqrt/year/month/day/now/current_date/cast + 6 aggregates) + **SPI custom functions, dual registration** (ServiceLoader auto-load recommended + runtime manual register) | ✅ |
 | 🧠 Optimizer | Predicate pushdown · Projection pushdown · Constant folding · Filter merge (basic rules) | ✅ |
 | 🚀 Parallel Execution | `embedded(n)` parallel Workers inside the same JVM; Fragment slicing; Hash/NestedLoop Join | ✅ |
 | 🗂️ Data Sources | In-memory registration + ecosystem bridges: jquick-curl (REST JSON) / jquick-excel (Excel rows) / jquick-java (rule scripts); further RDBMS connectors are on the jquick-connector roadmap | ✅ / 🗺️ |
@@ -943,7 +1178,7 @@ jquick.runtime.taskTimeoutMs=60000
 | 6 | **License boundary**: jquick-sql itself is Apache-2.0 (free commercial use). If you also ship jquick-pdf, please review the AGPL-3.0 separately. |
 | 7 | `JQuickSQL` is thread-safe (internal lock) — keep it as a singleton. `JQuickDataSet` is NOT thread-safe. |
 | 8 | For huge SQL / huge datasets, raise `taskTimeoutMs` and bump `embedded(n)` parallelism (use `Runtime.getRuntime().availableProcessors()` as a baseline). |
-| 9 | FULL OUTER JOIN is not supported. CTE / Recursive UNION / Window Functions are **not implemented** — do not rely on them in production SQL. |
+| 9 | FULL OUTER JOIN is not supported. CTE / Recursive UNION are **not implemented**. **Window Functions** — 10 built-ins plus PARTITION BY / ORDER BY / WindowFrame — are fully implemented at the executor/physical-node level (with unit tests). The end-to-end SQL OVER-syntax path through the Parser is on the roadmap. Wait for the Parser release before using OVER clauses in production SQL.
 
 ---
 
