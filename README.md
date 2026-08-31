@@ -1,1669 +1,969 @@
-# JQuick-SQL
+# JQuick-SQL · 嵌入式 SQL 查询引擎
 
-JQuick-SQL is a lightweight distributed SQL query engine for Java applications, providing SQL parsing, query planning, optimization, 
-and distributed execution. Together with **jquick-connector**, it forms a **logical data warehouse** with **federated query capabilities**—delivering 
-unified SQL access across heterogeneous data sources (relational databases, files, NoSQL, REST APIs, and more). No data movement, no complex
-pipelines. Simply query, join, and aggregate across systems with minimal overhead.
+> 🏠 组织：[paohaijiao](https://github.com/paohaijiao) · 🧩 生态：[【JQuick 生态导航】](#三jquick-生态导航) · 📜 协议：**Apache-2.0** ✅ 免费商用
+>
+> 英文名：JQuick-SQL · Embedded SQL Query Engine · JDK 8+ · Maven `io.github.paohaijiao:jquick-sql:4.1.0`
 
-
-
-
+JQuick-SQL 是一款 **纯 Java、嵌入式运行、无需部署服务** 的轻量级 SQL 查询引擎。基于 ANTLR4 自研 Parser，支持 `SELECT / WHERE / JOIN / GROUP BY / HAVING / UNION / MINUS / INTERSECT / 子查询 / CASE WHEN` 等语法；搭配 `jquick-curl`、`jquick-excel` 等生态组件，可在**同一 JVM 内**对内存数据与外部异构源执行 JOIN 与聚合——**不搬迁数据、不写中间件、一条 SQL 搞定**。
 
 <div align="center">
 
-[![GitHub Stars](https://img.shields.io/github/stars/paohaijiao/jquick-sql?style=flat-square)](https://github.com/paohaijiao/jquick-sql/stargazers)
-[![GitHub Forks](https://img.shields.io/github/forks/paohaijiao/jquick-sql?style=flat-square)](https://github.com/paohaijiao/jquick-sql/forks)
-[![GitHub Issues](https://img.shields.io/github/issues/paohaijiao/jquick-sql?style=flat-square)](https://github.com/paohaijiao/jquick-sql/issues)
-[![License](https://img.shields.io/github/license/paohaijiao/jquick-sql?style=flat-square)](LICENSE)
-[![Java Version](https://img.shields.io/badge/Java-8%2B-blue?style=flat-square&logo=java)](https://www.oracle.com/java/)
-[![Maven Central](https://img.shields.io/maven-central/v/com.github.paohaijiao/jquick-sql?style=flat-square)](https://search.maven.org/search?q=g:com.github.paohaijiao%20AND%20a:jquick-sql)
+[![GitHub Stars](https://img.shields.io/github/stars/paohaijiao/jquick-sql?style=flat-square&logo=github)](https://github.com/paohaijiao/jquick-sql/stargazers)
+[![GitHub Forks](https://img.shields.io/github/forks/paohaijiao/jquick-sql?style=flat-square&logo=github)](https://github.com/paohaijiao/jquick-sql/forks)
+[![Maven Central](https://img.shields.io/maven-central/v/io.github.paohaijiao/jquick-sql?style=flat-square)](https://search.maven.org/artifact/io.github.paohaijiao/jquick-sql)
+[![Java](https://img.shields.io/badge/Java-8%2B-ED8B00?style=flat-square&logo=java)](https://adoptium.net/)
+[![ANTLR](https://img.shields.io/badge/ANTLR4-4.x-success?style=flat-square&logo=antlr)](https://www.antlr.org/)
+[![License](https://img.shields.io/badge/License-Apache--2.0-yellowgreen?style=flat-square)](LICENSE)
 [![Last Commit](https://img.shields.io/github/last-commit/paohaijiao/jquick-sql?style=flat-square)](https://github.com/paohaijiao/jquick-sql/commits)
-[![Code Size](https://img.shields.io/github/languages/code-size/paohaijiao/jquick-sql?style=flat-square)](https://github.com/paohaijiao/jquick-sql)
-[![GitHub Release](https://img.shields.io/github/release/paohaijiao/jquick-sql?style=flat-square)](https://github.com/paohaijiao/jquick-sql/releases)
+
+**国内 Gitee 镜像 →** [paohaijiao / jquick-sql · Gitee](https://gitee.com/paohaijiao/jquick-sql)
 
 </div>
 
-## Architecture
+---
+
+## 一、项目简介
+
+### 1.1 典型痛点与 JQuick-SQL 方案
+
+| 业务痛点 | JQuick-SQL 怎么解决 |
+|---------|-------------------|
+| 报表跨 MySQL / Oracle / Excel 取数，手工写 N 个 DAO 再用 Java 拼数据 | 一条 SQL 直接 `JOIN` 所有已注册内存表，引擎自动完成谓词与合并聚合 |
+| 老项目 Tomcat 7 + iBatis + JDK 8 升级成本高 | 保留 iBatis 风格 XML 动态代理；最低 JDK 8，单应用无服务化，一个 jar 嵌入即可 |
+| 批量统计任务单线程慢，CPU 利用率上不去 | `embedded(n)` 在**同一 JVM 内**启动 n 个并行 Worker，通过 Fragment 切分并行执行 |
+| 数据中台/湖仓一体太重，业务要快速出数 | 嵌入式 JVM 内完成 ETL：`读→算→写` 一个 jar 包搞定 |
+| SQL 方言能力弱，业务 SQL 复杂 CASE/子查询写不出来 | Parser 支持 SELECT 子句/ WHERE / JOIN / GROUP BY / HAVING / ORDER BY / LIMIT / UNION / MINUS / INTERSECT / 子查询 / CASE WHEN 等完整语法 |
+
+### 1.2 架构图
 
 ```
-┌───────────────────────────────────────────────────────────────────────────────┐
-│                           JQuickSQL Engine                                   │
-├───────────────────────────────────────────────────────────────────────────────┤
-│  SQL Input → Parser → AST → Logical Plan → Optimizer → Physical Plan        │
-│                                                                              │
-│                              ↓                                               │
-│                        Fragmenter                                            │
-│                                                                              │
-│                              ↓                                               │
-│                   Coordinator → Workers (gRPC)                              │
-│                                                                              │
-│                              ↓                                               │
-│                        Result → DataSet                                     │
-└───────────────────────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────┐
+│                     JQuick-SQL Engine (嵌入式 JVM 内)            │
+├──────────────────────────────────────────────────────────────────┤
+│  SQL Input → Parser(ANTLR4 AST) → Logical Plan → Optimizer      │
+│                                           ↓                       │
+│                                   Physical Plan                  │
+│                              (HashJoin/Sort/TopN/Agg)            │
+│                                           ↓                       │
+│                       Fragmenter → 并行 Worker(n) 执行            │
+│                              (同一 JVM 内，embedded(n) 指定)       │
+│                                           ↓                       │
+│                           JQuickDataSet (打印/导出/再查询)         │
+└──────────────────────────────────────────────────────────────────┘
 ```
-## Features
 
-- ✅ SQL Parser 
-- ✅ Logical and Physical Query Plan
-- ✅ Query Optimization (predicate pushdown, projection pushdown, join reorder, etc.)
-- ✅ Distributed Query Execution (Coordinator-Worker architecture)
-- ✅ Two-phase Aggregation (Partial → Shuffle → Final)
-- ✅ Hash Join / Nested Loop Join
-- ✅ Sort / Limit / TopN
-- ✅ gRPC-based Data Exchange
+---
 
-## Quick Start
+## 二、快速开始（3 分钟跑通）
 
-### Maven Dependency
+### 2.1 Maven 依赖
 
 ```xml
 <dependency>
     <groupId>io.github.paohaijiao</groupId>
     <artifactId>jquick-sql</artifactId>
-    <version>${latest.version}</version>
+    <version>4.1.0</version>
 </dependency>
 ```
 
-### Basic Usage
+### 2.2 Gradle
 
-## Data Source Integration
-JQuick-SQL, combined with **JQuick-Connector**, enables you to integrate external data into `JQuickDataSet`, which can then be transformed and processed using JQuick-SQL's query engine.
+```groovy
+implementation 'io.github.paohaijiao:jquick-sql:4.1.0'
+```
 
-> **Connector Project:** [paohaijiao/jquick-connector](https://github.com/paohaijiao/jquick-connector)
->
-> **Maven Dependency:**
-> ```xml
-> <dependency>
->     <groupId>io.github.paohaijiao</groupId>
->     <artifactId>jquick-connector</artifactId>
->     <version>${latest.version}</version>
-> </dependency>
-
-## Supported SQL Features
-
+### 2.3 Hello World（完整可运行，含 main）
 
 ```java
-// Create embedded SQL engine
-JQuickSQL sql = JQuickSQL.embedded();
-// Register test data
-List<JQuickColumnMeta> columns = Arrays.asList(
-    new JQuickColumnMeta("id", Integer.class, "users"),
-    new JQuickColumnMeta("name", String.class, "users"),
-    new JQuickColumnMeta("age", Integer.class, "users")
-);
-List<JQuickRow> rows = Arrays.asList(
-    createRow("id", 1, "name", "Alice", "age", 25),
-    createRow("id", 2, "name", "Bob", "age", 30)
-);
-sql.registerTable("users", columns, rows);
-// Execute SQL
-JQuickDataSet result = sql.execute("SELECT * FROM users");
-result.printTable();
-// Shutdown
-sql.shutdown();
-```
+package demo;
 
-## SQL Examples
-
-| Feature                                 | Status |
-|-----------------------------------------|--------|
-| SELECT                                  | ✅ |
-| WHERE                                   | ✅ |
-| ORDER BY                                | ✅ |
-| LIMIT / OFFSET                          | ✅ |
-| GROUP BY/HAVING                         | ✅ |
-| JOIN (INNER/LEFT/RIGHT/FULL/CROSS JOIN) | ✅ |
-| UNION/ MINUS/INTERSECT                  | ✅ |
-| Aggregation (COUNT/SUM/AVG/MIN/MAX)     | ✅ |
-| Subquery                                | ✅ |
-| Functions                               | ✅ |
-
-### 1. SELECT Query
-**Input Data**
-
-| id | name | age | status | enable | addr | birthday |
-|----|------|-----|--------|--------|------|----------|
-| 1 | Alice | 25 | active | true | beijing | 2020-04-09 |
-| 2 | Bob | 30 | active | true | shanghai | 1991-08-09 |
-| 3 | Charlie | 20 | pending | false | chengdu | 1988-07-12 |
-| 4 | David | 35 | inactive | true | xian | 1955-11-29 |
-| 5 | Eve | 28 | active | true | chongqing | 2003-07-12 |
-| 6 | Martin | 30 | active | true | guangzhou | 1978-06-30 |
-
-#### 1.1 
-> Returns all columns and rows from the `users` table. Useful for viewing the complete dataset.
-
-**SQL Code**
-```sql
-SELECT * FROM users
-```
-**Output Data**
-```log
-[2026-07-23 11:19:19.052] [INFO] +----+---------+-----+----------+--------+-----------+----------------------+
-[2026-07-23 11:19:19.052] [INFO] | id | name    | age | status   | enable | addr      | birthday             |
-[2026-07-23 11:19:19.052] [INFO] +----+---------+-----+----------+--------+-----------+----------------------+
-[2026-07-23 11:19:19.053] [INFO] | 1  | Alice   | 25  | active   | true   | beijing   | 2020-04-08T16:00:00Z |
-[2026-07-23 11:19:19.053] [INFO] | 2  | Bob     | 30  | active   | true   | shanghai  | 1991-08-08T15:00:00Z |
-[2026-07-23 11:19:19.053] [INFO] | 3  | Charlie | 20  | pending  | false  | chengdu   | 1988-07-11T15:00:00Z |
-[2026-07-23 11:19:19.053] [INFO] | 4  | David   | 35  | inactive | true   | xian      | 1955-11-28T16:00:00Z |
-[2026-07-23 11:19:19.053] [INFO] | 5  | Eve     | 28  | active   | true   | chongqing | 2003-07-11T16:00:00Z |
-[2026-07-23 11:19:19.053] [INFO] | 6  | Martin  | 30  | active   | true   | guangzhou | 1978-06-29T16:00:00Z |
-[2026-07-23 11:19:19.053] [INFO] +----+---------+-----+----------+--------+-----------+----------------------+
-```
----
-#### 1.2
->  Returns only the specified columns (`id`, `name`, `age`, `status`, `enable`, `addr`) from the `users` table
-
-**SQL Code**
-```sql
-SELECT id, name,age, status,enable,addr FROM users
-```
-```log
-[2026-07-23 11:21:39.973] [INFO] +----+---------+-----+----------+--------+-----------+
-[2026-07-23 11:21:39.973] [INFO] | id | name    | age | status   | enable | addr      |
-[2026-07-23 11:21:39.973] [INFO] +----+---------+-----+----------+--------+-----------+
-[2026-07-23 11:21:39.973] [INFO] | 1  | Alice   | 25  | active   | true   | beijing   |
-[2026-07-23 11:21:39.973] [INFO] | 2  | Bob     | 30  | active   | true   | shanghai  |
-[2026-07-23 11:21:39.974] [INFO] | 3  | Charlie | 20  | pending  | false  | chengdu   |
-[2026-07-23 11:21:39.974] [INFO] | 4  | David   | 35  | inactive | true   | xian      |
-[2026-07-23 11:21:39.974] [INFO] | 5  | Eve     | 28  | active   | true   | chongqing |
-[2026-07-23 11:21:39.974] [INFO] | 6  | Martin  | 30  | active   | true   | guangzhou |
-[2026-07-23 11:21:39.974] [INFO] +----+---------+-----+----------+--------+-----------+
-```
-
-#### 1.3
-> Built-in functions like `toUpper()` are provided by [**jquick-transform-function**](https://github.com/paohaijiao/jquick-transform-function) and can be extended via <span style="color:red"> **SPI**</span>.(Service Provider Interface).
-
-**SQL Code**
-```sql
-SELECT id, toUpper(name) as upperName,age, status,enable,addr,birthday FROM users
-```
-```log
-[2026-07-23 11:22:48.126] [INFO] +----+-----------+-----+----------+--------+-----------+----------------------+
-[2026-07-23 11:22:48.126] [INFO] | id | upperName | age | status   | enable | addr      | birthday             |
-[2026-07-23 11:22:48.126] [INFO] +----+-----------+-----+----------+--------+-----------+----------------------+
-[2026-07-23 11:22:48.126] [INFO] | 1  | ALICE     | 25  | active   | true   | beijing   | 2020-04-08T16:00:00Z |
-[2026-07-23 11:22:48.126] [INFO] | 2  | BOB       | 30  | active   | true   | shanghai  | 1991-08-08T15:00:00Z |
-[2026-07-23 11:22:48.126] [INFO] | 3  | CHARLIE   | 20  | pending  | false  | chengdu   | 1988-07-11T15:00:00Z |
-[2026-07-23 11:22:48.126] [INFO] | 4  | DAVID     | 35  | inactive | true   | xian      | 1955-11-28T16:00:00Z |
-[2026-07-23 11:22:48.126] [INFO] | 5  | EVE       | 28  | active   | true   | chongqing | 2003-07-11T16:00:00Z |
-[2026-07-23 11:22:48.126] [INFO] | 6  | MARTIN    | 30  | active   | true   | guangzhou | 1978-06-29T16:00:00Z |
-[2026-07-23 11:22:48.126] [INFO] +----+-----------+-----+----------+--------+-----------+----------------------+
-```
-
-#### 1.4
->Supports nested arithmetic expressions, e.g., (age + 1) * 3 on the age column, and aliases name as upperName.
-
-**SQL Code**
-```sql
-SELECT id, name as upperName,(age+1)*3 as age, status,enable,addr,birthday FROM users
-```
-```log
-[2026-07-23 11:23:35.632] [INFO] +----+-----------+-------+----------+--------+-----------+----------------------+
-[2026-07-23 11:23:35.632] [INFO] | id | upperName | age   | status   | enable | addr      | birthday             |
-[2026-07-23 11:23:35.632] [INFO] +----+-----------+-------+----------+--------+-----------+----------------------+
-[2026-07-23 11:23:35.632] [INFO] | 1  | Alice     | 78.0  | active   | true   | beijing   | 2020-04-08T16:00:00Z |
-[2026-07-23 11:23:35.632] [INFO] | 2  | Bob       | 93.0  | active   | true   | shanghai  | 1991-08-08T15:00:00Z |
-[2026-07-23 11:23:35.633] [INFO] | 3  | Charlie   | 63.0  | pending  | false  | chengdu   | 1988-07-11T15:00:00Z |
-[2026-07-23 11:23:35.633] [INFO] | 4  | David     | 108.0 | inactive | true   | xian      | 1955-11-28T16:00:00Z |
-[2026-07-23 11:23:35.633] [INFO] | 5  | Eve       | 87.0  | active   | true   | chongqing | 2003-07-11T16:00:00Z |
-[2026-07-23 11:23:35.633] [INFO] | 6  | Martin    | 93.0  | active   | true   | guangzhou | 1978-06-29T16:00:00Z |
-[2026-07-23 11:23:35.633] [INFO] +----+-----------+-------+----------+--------+-----------+----------------------+
-```
-
-#### 1.5
-> Supports CASE WHEN conditional expressions to categorize age into groups.
-
-**SQL Code**
-```sql
-SELECT id, name, age, CASE WHEN age >= 30 THEN '中年'      WHEN age >= 20 THEN '青年'      ELSE '少年' END AS age_group FROM users
-```
-```log
-[2026-07-23 11:24:12.889] [INFO] +----+---------+-----+-----------+
-[2026-07-23 11:24:12.890] [INFO] | id | name    | age | age_group |
-[2026-07-23 11:24:12.890] [INFO] +----+---------+-----+-----------+
-[2026-07-23 11:24:12.890] [INFO] | 1  | Alice   | 25  | 青年        |
-[2026-07-23 11:24:12.890] [INFO] | 2  | Bob     | 30  | 中年        |
-[2026-07-23 11:24:12.890] [INFO] | 3  | Charlie | 20  | 青年        |
-[2026-07-23 11:24:12.890] [INFO] | 4  | David   | 35  | 中年        |
-[2026-07-23 11:24:12.890] [INFO] | 5  | Eve     | 28  | 青年        |
-[2026-07-23 11:24:12.890] [INFO] | 6  | Martin  | 30  | 中年        |
-[2026-07-23 11:24:12.890] [INFO] +----+---------+-----+-----------+
-```
-
-#### 1.6
->Returns distinct  values from the users table, removing duplicates.
-
-**SQL Code**
-```sql
-SELECT distinct age FROM users
-```
-```log
-[2026-07-23 11:25:44.641] [INFO] +-----+
-[2026-07-23 11:25:44.641] [INFO] | age |
-[2026-07-23 11:25:44.641] [INFO] +-----+
-[2026-07-23 11:25:44.641] [INFO] | 25  |
-[2026-07-23 11:25:44.641] [INFO] | 30  |
-[2026-07-23 11:25:44.641] [INFO] | 20  |
-[2026-07-23 11:25:44.641] [INFO] | 35  |
-[2026-07-23 11:25:44.641] [INFO] | 28  |
-[2026-07-23 11:25:44.641] [INFO] +-----+
-[2026-07-23 11:25:44.641] [INFO] Total: 5 rows
-```
-#### 1.7
->Supports  express '!' conduct boolean negation (e.g., !enable).
-
-**SQL Code**
-```sql
-SELECT id, toUpper(name) as upperName,age, status,!enable,addr,birthday FROM users
-```
-```log
-[2026-07-23 11:26:55.089] [INFO] +----+-----------+-----+----------+------------+-----------+----------------------+
-[2026-07-23 11:26:55.089] [INFO] | id | upperName | age | status   | NOT enable | addr      | birthday             |
-[2026-07-23 11:26:55.089] [INFO] +----+-----------+-----+----------+------------+-----------+----------------------+
-[2026-07-23 11:26:55.089] [INFO] | 1  | ALICE     | 25  | active   | false      | beijing   | 2020-04-08T16:00:00Z |
-[2026-07-23 11:26:55.089] [INFO] | 2  | BOB       | 30  | active   | false      | shanghai  | 1991-08-08T15:00:00Z |
-[2026-07-23 11:26:55.089] [INFO] | 3  | CHARLIE   | 20  | pending  | true       | chengdu   | 1988-07-11T15:00:00Z |
-[2026-07-23 11:26:55.089] [INFO] | 4  | DAVID     | 35  | inactive | false      | xian      | 1955-11-28T16:00:00Z |
-[2026-07-23 11:26:55.090] [INFO] | 5  | EVE       | 28  | active   | false      | chongqing | 2003-07-11T16:00:00Z |
-[2026-07-23 11:26:55.090] [INFO] | 6  | MARTIN    | 30  | active   | false      | guangzhou | 1978-06-29T16:00:00Z |
-[2026-07-23 11:26:55.090] [INFO] +----+-----------+-----+----------+------------+-----------+----------------------+
-[2026-07-23 11:26:55.090] [INFO] Total: 6 rows
-```
-#### 1.8
-> Supports constant expressions (e.g., 0 as index, 'hello' as greeting, 1 + 1 as two) as fields in the SELECT clause.
-
-**SQL Code**
-```sql
-SELECT 0 as index,id, toUpper(name) as upperName,age, status,!enable,addr,birthday FROM users
-```
-```log
-[2026-07-23 11:27:41.668] [INFO] +-------+----+-----------+-----+----------+------------+-----------+----------------------+
-[2026-07-23 11:27:41.668] [INFO] | index | id | upperName | age | status   | NOT enable | addr      | birthday             |
-[2026-07-23 11:27:41.669] [INFO] +-------+----+-----------+-----+----------+------------+-----------+----------------------+
-[2026-07-23 11:27:41.669] [INFO] | 0.0   | 1  | ALICE     | 25  | active   | false      | beijing   | 2020-04-08T16:00:00Z |
-[2026-07-23 11:27:41.669] [INFO] | 0.0   | 2  | BOB       | 30  | active   | false      | shanghai  | 1991-08-08T15:00:00Z |
-[2026-07-23 11:27:41.669] [INFO] | 0.0   | 3  | CHARLIE   | 20  | pending  | true       | chengdu   | 1988-07-11T15:00:00Z |
-[2026-07-23 11:27:41.669] [INFO] | 0.0   | 4  | DAVID     | 35  | inactive | false      | xian      | 1955-11-28T16:00:00Z |
-[2026-07-23 11:27:41.669] [INFO] | 0.0   | 5  | EVE       | 28  | active   | false      | chongqing | 2003-07-11T16:00:00Z |
-[2026-07-23 11:27:41.670] [INFO] | 0.0   | 6  | MARTIN    | 30  | active   | false      | guangzhou | 1978-06-29T16:00:00Z |
-[2026-07-23 11:27:41.670] [INFO] +-------+----+-----------+-----+----------+------------+-----------+----------------------+
-[2026-07-23 11:27:41.670] [INFO] Total: 6 rows
-```
-### 2. WHERE Query
->Filters rows based on specified conditions. Supports comparison operators (=, >, >=, <, <=, <>), 
-> logical operators (AND, OR, NOT), NULL checks (IS NULL, IS NOT NULL), range queries (BETWEEN), 
-> Set membership (IN), Pattern Matching (LIKE), regular expressions (REGEXP), and subqueries (EXISTS).
-
-
-**Input Data**
-
-| id | name | age | status | enable | addr | birthday |
-|----|------|-----|--------|--------|------|----------|
-| 1 | Alice | 25 | active | true | beijing | 2020-04-09 |
-| 2 | Bob | 30 | active | true | shanghai | 1991-08-09 |
-| 3 | Charlie | 20 | pending | false | chengdu | 1988-07-12 |
-| 4 | David | 35 | inactive | true | xian | 1955-11-29 |
-| 5 | Eve | 28 | active | true | chongqing | 2003-07-12 |
-| 6 | Martin | 30 | active | true | guangzhou | 1978-06-30 |
-| 7 | Davila | 39 | active | true | null | 1999-06-30 |
-
-#### 2.1 
-> WHERE column = value — Filters rows based on an equality condition, e.g., status = 'active'.
-
-**SQL Code**
-```sql
-SELECT * FROM users WHERE status = 'active'
-```
-```log
-[2026-07-23 11:32:33.878] [INFO] +----+--------+-----+--------+--------+-----------+----------------------+
-[2026-07-23 11:32:33.878] [INFO] | id | name   | age | status | enable | addr      | birthday             |
-[2026-07-23 11:32:33.878] [INFO] +----+--------+-----+--------+--------+-----------+----------------------+
-[2026-07-23 11:32:33.878] [INFO] | 1  | Alice  | 25  | active | true   | beijing   | 2020-04-08T16:00:00Z |
-[2026-07-23 11:32:33.878] [INFO] | 2  | Bob    | 30  | active | true   | shanghai  | 1991-08-08T15:00:00Z |
-[2026-07-23 11:32:33.878] [INFO] | 5  | Eve    | 28  | active | true   | chongqing | 2003-07-11T16:00:00Z |
-[2026-07-23 11:32:33.878] [INFO] | 6  | Martin | 30  | active | true   | guangzhou | 1978-06-29T16:00:00Z |
-[2026-07-23 11:32:33.878] [INFO] | 7  | Davila | 39  | active | true   | null      | 1999-06-29T16:00:00Z |
-[2026-07-23 11:32:33.878] [INFO] +----+--------+-----+--------+--------+-----------+----------------------+
-[2026-07-23 11:32:33.878] [INFO] Total: 5 rows
-```
-#### 2.2
->WHERE condition1 AND condition2 — Filters rows using multiple conditions with logical AND. 
-> This query returns active users with age greater than 25.
-
-**SQL Code**
-```sql
-SELECT * FROM users WHERE age > 25 AND status = 'active'
-```
-```log
-[2026-07-23 11:33:27.498] [INFO] +----+--------+-----+--------+--------+-----------+----------------------+
-[2026-07-23 11:33:27.498] [INFO] | id | name   | age | status | enable | addr      | birthday             |
-[2026-07-23 11:33:27.498] [INFO] +----+--------+-----+--------+--------+-----------+----------------------+
-[2026-07-23 11:33:27.498] [INFO] | 2  | Bob    | 30  | active | true   | shanghai  | 1991-08-08T15:00:00Z |
-[2026-07-23 11:33:27.498] [INFO] | 5  | Eve    | 28  | active | true   | chongqing | 2003-07-11T16:00:00Z |
-[2026-07-23 11:33:27.498] [INFO] | 6  | Martin | 30  | active | true   | guangzhou | 1978-06-29T16:00:00Z |
-[2026-07-23 11:33:27.498] [INFO] | 7  | Davila | 39  | active | true   | null      | 1999-06-29T16:00:00Z |
-[2026-07-23 11:33:27.498] [INFO] +----+--------+-----+--------+--------+-----------+----------------------+
-[2026-07-23 11:33:27.498] [INFO] Total: 4 rows
-```
-
-#### 2.3
->WHERE condition1 OR condition2 — Filters rows using logical OR. 
-> This query returns users who are either pending or enabled.
-> 
-**SQL Code**
-```sql
-SELECT * FROM users WHERE status = 'pending' OR enable = true
-```
-```log
-[2026-07-23 11:34:40.825] [INFO] +----+---------+-----+----------+--------+-----------+----------------------+
-[2026-07-23 11:34:40.825] [INFO] | id | name    | age | status   | enable | addr      | birthday             |
-[2026-07-23 11:34:40.825] [INFO] +----+---------+-----+----------+--------+-----------+----------------------+
-[2026-07-23 11:34:40.825] [INFO] | 1  | Alice   | 25  | active   | true   | beijing   | 2020-04-08T16:00:00Z |
-[2026-07-23 11:34:40.825] [INFO] | 2  | Bob     | 30  | active   | true   | shanghai  | 1991-08-08T15:00:00Z |
-[2026-07-23 11:34:40.825] [INFO] | 3  | Charlie | 20  | pending  | false  | chengdu   | 1988-07-11T15:00:00Z |
-[2026-07-23 11:34:40.825] [INFO] | 4  | David   | 35  | inactive | true   | xian      | 1955-11-28T16:00:00Z |
-[2026-07-23 11:34:40.826] [INFO] | 5  | Eve     | 28  | active   | true   | chongqing | 2003-07-11T16:00:00Z |
-[2026-07-23 11:34:40.826] [INFO] | 6  | Martin  | 30  | active   | true   | guangzhou | 1978-06-29T16:00:00Z |
-[2026-07-23 11:34:40.826] [INFO] | 7  | Davila  | 39  | active   | true   | null      | 1999-06-29T16:00:00Z |
-[2026-07-23 11:34:40.826] [INFO] +----+---------+-----+----------+--------+-----------+----------------------+
-[2026-07-23 11:34:40.826] [INFO] Total: 7 rows
-```
-
-#### 2.4
->WHERE condition OR (condition OR condition) — Supports nested parentheses for complex logical grouping. This query
-> returns users who are older than 30, or have status 'pending', or live in 'chengdu'.
->
-
-**SQL Code**
-```sql
-SELECT * FROM users WHERE age > 30 OR (status = 'pending' OR addr = 'chengdu')
-```
-```log
-[2026-07-23 11:35:36.293] [INFO] +----+---------+-----+----------+--------+---------+----------------------+
-[2026-07-23 11:35:36.293] [INFO] | id | name    | age | status   | enable | addr    | birthday             |
-[2026-07-23 11:35:36.293] [INFO] +----+---------+-----+----------+--------+---------+----------------------+
-[2026-07-23 11:35:36.293] [INFO] | 3  | Charlie | 20  | pending  | false  | chengdu | 1988-07-11T15:00:00Z |
-[2026-07-23 11:35:36.294] [INFO] | 4  | David   | 35  | inactive | true   | xian    | 1955-11-28T16:00:00Z |
-[2026-07-23 11:35:36.294] [INFO] | 7  | Davila  | 39  | active   | true   | null    | 1999-06-29T16:00:00Z |
-[2026-07-23 11:35:36.294] [INFO] +----+---------+-----+----------+--------+---------+----------------------+
-[2026-07-23 11:35:36.294] [INFO] Total: 3 rows
-```
-
-#### 2.5
->WHERE true — Filters rows with a constant boolean condition. This query returns all rows from the users table.
-
-
-**SQL Code**
-```sql
-SELECT * FROM users WHERE true
-```
-```log
-[2026-07-23 11:36:17.974] [INFO] +----+---------+-----+----------+--------+-----------+----------------------+
-[2026-07-23 11:36:17.975] [INFO] | id | name    | age | status   | enable | addr      | birthday             |
-[2026-07-23 11:36:17.975] [INFO] +----+---------+-----+----------+--------+-----------+----------------------+
-[2026-07-23 11:36:17.975] [INFO] | 1  | Alice   | 25  | active   | true   | beijing   | 2020-04-08T16:00:00Z |
-[2026-07-23 11:36:17.975] [INFO] | 2  | Bob     | 30  | active   | true   | shanghai  | 1991-08-08T15:00:00Z |
-[2026-07-23 11:36:17.975] [INFO] | 3  | Charlie | 20  | pending  | false  | chengdu   | 1988-07-11T15:00:00Z |
-[2026-07-23 11:36:17.975] [INFO] | 4  | David   | 35  | inactive | true   | xian      | 1955-11-28T16:00:00Z |
-[2026-07-23 11:36:17.975] [INFO] | 5  | Eve     | 28  | active   | true   | chongqing | 2003-07-11T16:00:00Z |
-[2026-07-23 11:36:17.975] [INFO] | 6  | Martin  | 30  | active   | true   | guangzhou | 1978-06-29T16:00:00Z |
-[2026-07-23 11:36:17.975] [INFO] | 7  | Davila  | 39  | active   | true   | null      | 1999-06-29T16:00:00Z |
-[2026-07-23 11:36:17.975] [INFO] +----+---------+-----+----------+--------+-----------+----------------------+
-[2026-07-23 11:36:17.975] [INFO] Total: 7 rows
-```
-
-#### 2.6
-> WHERE column — Filters rows where the boolean column evaluates to true. This query returns all enabled users.
-
-**SQL Code**
-```sql
-SELECT * FROM users WHERE enable
-```
-```log
-[2026-07-23 11:37:11.555] [INFO] +----+--------+-----+----------+--------+-----------+----------------------+
-[2026-07-23 11:37:11.555] [INFO] | id | name   | age | status   | enable | addr      | birthday             |
-[2026-07-23 11:37:11.555] [INFO] +----+--------+-----+----------+--------+-----------+----------------------+
-[2026-07-23 11:37:11.555] [INFO] | 1  | Alice  | 25  | active   | true   | beijing   | 2020-04-08T16:00:00Z |
-[2026-07-23 11:37:11.555] [INFO] | 2  | Bob    | 30  | active   | true   | shanghai  | 1991-08-08T15:00:00Z |
-[2026-07-23 11:37:11.555] [INFO] | 4  | David  | 35  | inactive | true   | xian      | 1955-11-28T16:00:00Z |
-[2026-07-23 11:37:11.555] [INFO] | 5  | Eve    | 28  | active   | true   | chongqing | 2003-07-11T16:00:00Z |
-[2026-07-23 11:37:11.555] [INFO] | 6  | Martin | 30  | active   | true   | guangzhou | 1978-06-29T16:00:00Z |
-[2026-07-23 11:37:11.556] [INFO] | 7  | Davila | 39  | active   | true   | null      | 1999-06-29T16:00:00Z |
-[2026-07-23 11:37:11.556] [INFO] +----+--------+-----+----------+--------+-----------+----------------------+
-[2026-07-23 11:37:11.556] [INFO] Total: 6 rows
-```
-
-
-#### 2.7
->WHERE function(column) = value — Supports function calls in filter conditions. This query converts name to uppercase and returns the user whose name is 'ALICE'.
-
-**SQL Code**
-```sql
-SELECT * FROM users WHERE toUpper(name)='ALICE'
-```
-```log
-[2026-07-23 11:37:58.226] [INFO] +----+-------+-----+--------+--------+---------+----------------------+
-[2026-07-23 11:37:58.226] [INFO] | id | name  | age | status | enable | addr    | birthday             |
-[2026-07-23 11:37:58.226] [INFO] +----+-------+-----+--------+--------+---------+----------------------+
-[2026-07-23 11:37:58.226] [INFO] | 1  | Alice | 25  | active | true   | beijing | 2020-04-08T16:00:00Z |
-[2026-07-23 11:37:58.226] [INFO] +----+-------+-----+--------+--------+---------+----------------------+
-[2026-07-23 11:37:58.226] [INFO] Total: 1 rows
-```
-
-#### 2.8
->WHERE column IS NULL — Filters rows where a column is NULL. This query returns users whose addr is missing.
-
-**SQL Code**
-```sql
-SELECT * FROM users WHERE addr is null
-```
-```log
-[2026-07-23 11:38:36.946] [INFO] +----+--------+-----+--------+--------+------+----------------------+
-[2026-07-23 11:38:36.946] [INFO] | id | name   | age | status | enable | addr | birthday             |
-[2026-07-23 11:38:36.946] [INFO] +----+--------+-----+--------+--------+------+----------------------+
-[2026-07-23 11:38:36.946] [INFO] | 7  | Davila | 39  | active | true   | null | 1999-06-29T16:00:00Z |
-[2026-07-23 11:38:36.946] [INFO] +----+--------+-----+--------+--------+------+----------------------+
-[2026-07-23 11:38:36.946] [INFO] Total: 1 rows
-```
-#### 2.9
->WHERE column IS NOT NULL — Filters rows where a column is not NULL. This query returns users whose addr has a value.
-
-**SQL Code**
-```sql
-SELECT * FROM users WHERE addr is not null
-```
-```log
-[2026-07-23 11:39:15.906] [INFO] +----+---------+-----+----------+--------+-----------+----------------------+
-[2026-07-23 11:39:15.906] [INFO] | id | name    | age | status   | enable | addr      | birthday             |
-[2026-07-23 11:39:15.906] [INFO] +----+---------+-----+----------+--------+-----------+----------------------+
-[2026-07-23 11:39:15.906] [INFO] | 1  | Alice   | 25  | active   | true   | beijing   | 2020-04-08T16:00:00Z |
-[2026-07-23 11:39:15.907] [INFO] | 2  | Bob     | 30  | active   | true   | shanghai  | 1991-08-08T15:00:00Z |
-[2026-07-23 11:39:15.907] [INFO] | 3  | Charlie | 20  | pending  | false  | chengdu   | 1988-07-11T15:00:00Z |
-[2026-07-23 11:39:15.907] [INFO] | 4  | David   | 35  | inactive | true   | xian      | 1955-11-28T16:00:00Z |
-[2026-07-23 11:39:15.907] [INFO] | 5  | Eve     | 28  | active   | true   | chongqing | 2003-07-11T16:00:00Z |
-[2026-07-23 11:39:15.907] [INFO] | 6  | Martin  | 30  | active   | true   | guangzhou | 1978-06-29T16:00:00Z |
-[2026-07-23 11:39:15.907] [INFO] +----+---------+-----+----------+--------+-----------+----------------------+
-```
-
-#### 2.10
->WHERE column > value — Filters rows using a comparison operator (>, >=, <, <=, =, <>). This query returns users older than 25.
-
-**SQL Code**
-```sql
-SELECT * FROM users WHERE age >25
-```
-```log
-[2026-07-23 11:39:59.745] [INFO] +----+--------+-----+----------+--------+-----------+----------------------+
-[2026-07-23 11:39:59.745] [INFO] | id | name   | age | status   | enable | addr      | birthday             |
-[2026-07-23 11:39:59.745] [INFO] +----+--------+-----+----------+--------+-----------+----------------------+
-[2026-07-23 11:39:59.745] [INFO] | 2  | Bob    | 30  | active   | true   | shanghai  | 1991-08-08T15:00:00Z |
-[2026-07-23 11:39:59.745] [INFO] | 4  | David  | 35  | inactive | true   | xian      | 1955-11-28T16:00:00Z |
-[2026-07-23 11:39:59.745] [INFO] | 5  | Eve    | 28  | active   | true   | chongqing | 2003-07-11T16:00:00Z |
-[2026-07-23 11:39:59.746] [INFO] | 6  | Martin | 30  | active   | true   | guangzhou | 1978-06-29T16:00:00Z |
-[2026-07-23 11:39:59.746] [INFO] | 7  | Davila | 39  | active   | true   | null      | 1999-06-29T16:00:00Z |
-[2026-07-23 11:39:59.746] [INFO] +----+--------+-----+----------+--------+-----------+----------------------+
-[2026-07-23 11:39:59.746] [INFO] Total: 5 rows
-```
-
-#### 2.11
-> WHERE column BETWEEN min AND max — Filters rows within a range . This query returns users with age between 25 and 30.
-
-**SQL Code**
-```sql
-SELECT * FROM users WHERE age  between 25 and 30
-```
-```log
-[2026-07-26 15:24:44.552] [INFO] +----+--------+-----+--------+--------+-----------+----------------------+
-[2026-07-26 15:24:44.552] [INFO] | id | name   | age | status | enable | addr      | birthday             |
-[2026-07-26 15:24:44.552] [INFO] +----+--------+-----+--------+--------+-----------+----------------------+
-[2026-07-26 15:24:44.552] [INFO] | 1  | Alice  | 25  | active | true   | beijing   | 2020-04-08T16:00:00Z |
-[2026-07-26 15:24:44.553] [INFO] | 2  | Bob    | 30  | active | true   | shanghai  | 1991-08-08T15:00:00Z |
-[2026-07-26 15:24:44.554] [INFO] | 5  | Eve    | 28  | active | true   | chongqing | 2003-07-11T16:00:00Z |
-[2026-07-26 15:24:44.554] [INFO] | 6  | Martin | 30  | active | true   | guangzhou | 1978-06-29T16:00:00Z |
-[2026-07-26 15:24:44.554] [INFO] +----+--------+-----+--------+--------+-----------+----------------------+
-[2026-07-26 15:24:44.554] [INFO] Total: 4 rows
-```
-
-#### 2.12
-> WHERE column IN (value1, value2, ...) — Filters rows matching any value in a list. This query returns users with age 25 or 30.
-
-**SQL Code**
-```sql
-SELECT * FROM users WHERE age  in ( 25 , 30)
-```
-```log
-[2026-07-23 11:41:31.655] [INFO] +----+--------+-----+--------+--------+-----------+----------------------+
-[2026-07-23 11:41:31.655] [INFO] | id | name   | age | status | enable | addr      | birthday             |
-[2026-07-23 11:41:31.655] [INFO] +----+--------+-----+--------+--------+-----------+----------------------+
-[2026-07-23 11:41:31.655] [INFO] | 1  | Alice  | 25  | active | true   | beijing   | 2020-04-08T16:00:00Z |
-[2026-07-23 11:41:31.655] [INFO] | 2  | Bob    | 30  | active | true   | shanghai  | 1991-08-08T15:00:00Z |
-[2026-07-23 11:41:31.655] [INFO] | 6  | Martin | 30  | active | true   | guangzhou | 1978-06-29T16:00:00Z |
-[2026-07-23 11:41:31.655] [INFO] +----+--------+-----+--------+--------+-----------+----------------------+
-[2026-07-23 11:41:31.655] [INFO] Total: 3 rows
-```
-
-#### 2.13
-> WHERE column NOT IN (value1, value2, ...) — Filters rows that do not match any value in a list. This query returns users whose age is neither 25 nor 30.
-**SQL Code**
-```sql
-SELECT * FROM users WHERE age not in ( 25 , 30)
-```
-```log
-[2026-07-23 11:42:21.731] [INFO] +----+---------+-----+----------+--------+-----------+----------------------+
-[2026-07-23 11:42:21.731] [INFO] | id | name    | age | status   | enable | addr      | birthday             |
-[2026-07-23 11:42:21.731] [INFO] +----+---------+-----+----------+--------+-----------+----------------------+
-[2026-07-23 11:42:21.731] [INFO] | 3  | Charlie | 20  | pending  | false  | chengdu   | 1988-07-11T15:00:00Z |
-[2026-07-23 11:42:21.731] [INFO] | 4  | David   | 35  | inactive | true   | xian      | 1955-11-28T16:00:00Z |
-[2026-07-23 11:42:21.731] [INFO] | 5  | Eve     | 28  | active   | true   | chongqing | 2003-07-11T16:00:00Z |
-[2026-07-23 11:42:21.731] [INFO] | 7  | Davila  | 39  | active   | true   | null      | 1999-06-29T16:00:00Z |
-[2026-07-23 11:42:21.731] [INFO] +----+---------+-----+----------+--------+-----------+----------------------+
-[2026-07-23 11:42:21.731] [INFO] Total: 4 rows
-```
-
-#### 2.14
-> WHERE column LIKE pattern or WHERE column NOT LIKE pattern — Filters rows using pattern matching with wildcards (% for any sequence, _ for a single character). This query returns users whose name contains 'Davi'.
-
-**SQL Code**
-```sql
-SELECT * FROM users WHERE name like '%Davi%'
-```
-```log
-[2026-07-23 11:43:10.536] [INFO] +----+--------+-----+----------+--------+------+----------------------+
-[2026-07-23 11:43:10.536] [INFO] | id | name   | age | status   | enable | addr | birthday             |
-[2026-07-23 11:43:10.536] [INFO] +----+--------+-----+----------+--------+------+----------------------+
-[2026-07-23 11:43:10.536] [INFO] | 4  | David  | 35  | inactive | true   | xian | 1955-11-28T16:00:00Z |
-[2026-07-23 11:43:10.536] [INFO] | 7  | Davila | 39  | active   | true   | null | 1999-06-29T16:00:00Z |
-[2026-07-23 11:43:10.536] [INFO] +----+--------+-----+----------+--------+------+----------------------+
-[2026-07-23 11:43:10.536] [INFO] Total: 2 rows
-```
-
-#### 2.15
-> WHERE column REGEXP pattern or WHERE column NOT REGEXP pattern — Filters rows using regular expression matching. This query returns users whose name starts with 'A'.
-
-**SQL Code**
-```sql
-SELECT * FROM users WHERE name REGEXP '^A.*'
-```
-```log
-[2026-07-23 11:43:45.932] [INFO] +----+-------+-----+--------+--------+---------+----------------------+
-[2026-07-23 11:43:45.933] [INFO] | id | name  | age | status | enable | addr    | birthday             |
-[2026-07-23 11:43:45.933] [INFO] +----+-------+-----+--------+--------+---------+----------------------+
-[2026-07-23 11:43:45.933] [INFO] | 1  | Alice | 25  | active | true   | beijing | 2020-04-08T16:00:00Z |
-[2026-07-23 11:43:45.933] [INFO] +----+-------+-----+--------+--------+---------+----------------------+
-[2026-07-23 11:43:45.933] [INFO] Total: 1 rows
-```
-
-#### 2.16
-> WHERE EXISTS (subquery) — Filters rows based on the existence of matching records in a subquery. This query returns users who have at least one order.
-
-**SQL Code**
-```sql
-SELECT * FROM users u WHERE EXISTS (   SELECT 1 FROM orders o WHERE o.user_id = u.id)
-```
-```log
-[2026-07-23 12:13:18.994] [INFO] +----+---------+-----+---------+--------+----------+----------------------+
-[2026-07-23 12:13:18.994] [INFO] | id | name    | age | status  | enable | addr     | birthday             |
-[2026-07-23 12:13:18.994] [INFO] +----+---------+-----+---------+--------+----------+----------------------+
-[2026-07-23 12:13:18.994] [INFO] | 1  | Alice   | 25  | active  | true   | beijing  | 2020-04-08T16:00:00Z |
-[2026-07-23 12:13:18.994] [INFO] | 2  | Bob     | 30  | active  | true   | shanghai | 1991-08-08T15:00:00Z |
-[2026-07-23 12:13:18.994] [INFO] | 3  | Charlie | 20  | pending | false  | chengdu  | 1988-07-11T15:00:00Z |
-[2026-07-23 12:13:18.994] [INFO] +----+---------+-----+---------+--------+----------+----------------------+
-[2026-07-23 12:13:18.994] [INFO] Total: 3 rows
-```
-### 3. ORDER BY Query
-**Input Data**
-
-| id | name | age | status | enable | addr | birthday |
-|----|------|-----|--------|--------|------|----------|
-| 1 | Alice | 25 | active | true | beijing | 2020-04-09 |
-| 2 | Bob | 30 | active | true | shanghai | 1991-08-09 |
-| 3 | Charlie | 20 | pending | false | chengdu | 1988-07-12 |
-| 4 | David | 35 | inactive | true | xian | 1955-11-29 |
-| 5 | Eve | 28 | active | true | chongqing | 2003-07-12 |
-| 6 | Martin | 30 | active | true | guangzhou | 1978-06-30 |
-| 7 | Davila | 39 | active | true | null | 1999-06-30 |
-
-#### 3.1
-> ORDER BY column ASC — Sorts results by the specified column in ascending order. This query returns all users sorted by age from youngest to oldest.
-
-**SQL Code**
-```sql
-SELECT * FROM users ORDER BY age ASC
-```
-```log
-[2026-07-23 16:53:29.684] [INFO] +----+---------+-----+----------+--------+-----------+----------------------+
-[2026-07-23 16:53:29.684] [INFO] | id | name    | age | status   | enable | addr      | birthday             |
-[2026-07-23 16:53:29.684] [INFO] +----+---------+-----+----------+--------+-----------+----------------------+
-[2026-07-23 16:53:29.684] [INFO] | 3  | Charlie | 20  | pending  | false  | chengdu   | 1988-07-11T15:00:00Z |
-[2026-07-23 16:53:29.684] [INFO] | 1  | Alice   | 25  | active   | true   | beijing   | 2020-04-08T16:00:00Z |
-[2026-07-23 16:53:29.684] [INFO] | 5  | Eve     | 28  | active   | true   | chongqing | 2003-07-11T16:00:00Z |
-[2026-07-23 16:53:29.684] [INFO] | 2  | Bob     | 30  | active   | true   | shanghai  | 1991-08-08T15:00:00Z |
-[2026-07-23 16:53:29.685] [INFO] | 6  | Martin  | 30  | active   | true   | guangzhou | 1978-06-29T16:00:00Z |
-[2026-07-23 16:53:29.685] [INFO] | 4  | David   | 35  | inactive | true   | xian      | 1955-11-28T16:00:00Z |
-[2026-07-23 16:53:29.685] [INFO] | 7  | Davila  | 39  | active   | true   | null      | 1999-06-29T16:00:00Z |
-[2026-07-23 16:53:29.685] [INFO] +----+---------+-----+----------+--------+-----------+----------------------+
-[2026-07-23 16:53:29.685] [INFO] Total: 7 rows
-```
-
-#### 3.2
-> ORDER BY column DESC — Sorts results by the specified column in descending order. This query returns all users sorted by age from oldest to youngest.
-
-**SQL Code**
-```sql
-SELECT * FROM users ORDER BY age DESC
-```
-```log
-[2026-07-23 16:54:29.749] [INFO] +----+---------+-----+----------+--------+-----------+----------------------+
-[2026-07-23 16:54:29.749] [INFO] | id | name    | age | status   | enable | addr      | birthday             |
-[2026-07-23 16:54:29.749] [INFO] +----+---------+-----+----------+--------+-----------+----------------------+
-[2026-07-23 16:54:29.749] [INFO] | 7  | Davila  | 39  | active   | true   | null      | 1999-06-29T16:00:00Z |
-[2026-07-23 16:54:29.749] [INFO] | 4  | David   | 35  | inactive | true   | xian      | 1955-11-28T16:00:00Z |
-[2026-07-23 16:54:29.750] [INFO] | 2  | Bob     | 30  | active   | true   | shanghai  | 1991-08-08T15:00:00Z |
-[2026-07-23 16:54:29.750] [INFO] | 6  | Martin  | 30  | active   | true   | guangzhou | 1978-06-29T16:00:00Z |
-[2026-07-23 16:54:29.750] [INFO] | 5  | Eve     | 28  | active   | true   | chongqing | 2003-07-11T16:00:00Z |
-[2026-07-23 16:54:29.750] [INFO] | 1  | Alice   | 25  | active   | true   | beijing   | 2020-04-08T16:00:00Z |
-[2026-07-23 16:54:29.750] [INFO] | 3  | Charlie | 20  | pending  | false  | chengdu   | 1988-07-11T15:00:00Z |
-[2026-07-23 16:54:29.750] [INFO] +----+---------+-----+----------+--------+-----------+----------------------+
-[2026-07-23 16:54:29.750] [INFO] Total: 7 rows
-```
-
-#### 3.3
-> ORDER BY column1 ASC, column2 DESC — Sorts results by multiple columns with different sort directions. This query sorts users by status ascending, then by age descending within the same status group.
-
-**SQL Code**
-```sql
-SELECT * FROM users ORDER BY status ASC, age DESC
-```
-```log
-[2026-07-23 16:55:13.550] [INFO] +----+---------+-----+----------+--------+-----------+----------------------+
-[2026-07-23 16:55:13.550] [INFO] | id | name    | age | status   | enable | addr      | birthday             |
-[2026-07-23 16:55:13.550] [INFO] +----+---------+-----+----------+--------+-----------+----------------------+
-[2026-07-23 16:55:13.550] [INFO] | 7  | Davila  | 39  | active   | true   | null      | 1999-06-29T16:00:00Z |
-[2026-07-23 16:55:13.550] [INFO] | 2  | Bob     | 30  | active   | true   | shanghai  | 1991-08-08T15:00:00Z |
-[2026-07-23 16:55:13.550] [INFO] | 6  | Martin  | 30  | active   | true   | guangzhou | 1978-06-29T16:00:00Z |
-[2026-07-23 16:55:13.550] [INFO] | 5  | Eve     | 28  | active   | true   | chongqing | 2003-07-11T16:00:00Z |
-[2026-07-23 16:55:13.550] [INFO] | 1  | Alice   | 25  | active   | true   | beijing   | 2020-04-08T16:00:00Z |
-[2026-07-23 16:55:13.551] [INFO] | 4  | David   | 35  | inactive | true   | xian      | 1955-11-28T16:00:00Z |
-[2026-07-23 16:55:13.551] [INFO] | 3  | Charlie | 20  | pending  | false  | chengdu   | 1988-07-11T15:00:00Z |
-[2026-07-23 16:55:13.551] [INFO] +----+---------+-----+----------+--------+-----------+----------------------+
-[2026-07-23 16:55:13.551] [INFO] Total: 7 rows
-```
-#### 3.4
->ORDER BY column1 DESC, column2 ASC — Sorts results by multiple columns with different sort directions. This query sorts users by enable descending, then by age ascending within the same group.
-
-**SQL Code**
-```sql
-SELECT * FROM users ORDER BY enable DESC, age ASC
-```
-```log
-[2026-07-23 16:56:03.295] [INFO] +----+---------+-----+----------+--------+-----------+----------------------+
-[2026-07-23 16:56:03.295] [INFO] | id | name    | age | status   | enable | addr      | birthday             |
-[2026-07-23 16:56:03.295] [INFO] +----+---------+-----+----------+--------+-----------+----------------------+
-[2026-07-23 16:56:03.295] [INFO] | 1  | Alice   | 25  | active   | true   | beijing   | 2020-04-08T16:00:00Z |
-[2026-07-23 16:56:03.296] [INFO] | 5  | Eve     | 28  | active   | true   | chongqing | 2003-07-11T16:00:00Z |
-[2026-07-23 16:56:03.296] [INFO] | 2  | Bob     | 30  | active   | true   | shanghai  | 1991-08-08T15:00:00Z |
-[2026-07-23 16:56:03.296] [INFO] | 6  | Martin  | 30  | active   | true   | guangzhou | 1978-06-29T16:00:00Z |
-[2026-07-23 16:56:03.296] [INFO] | 4  | David   | 35  | inactive | true   | xian      | 1955-11-28T16:00:00Z |
-[2026-07-23 16:56:03.296] [INFO] | 7  | Davila  | 39  | active   | true   | null      | 1999-06-29T16:00:00Z |
-[2026-07-23 16:56:03.296] [INFO] | 3  | Charlie | 20  | pending  | false  | chengdu   | 1988-07-11T15:00:00Z |
-[2026-07-23 16:56:03.296] [INFO] +----+---------+-----+----------+--------+-----------+----------------------+
-[2026-07-23 16:56:03.296] [INFO] Total: 7 rows
-```
-#### 3.4
-> Skip the first 2 records (offset), then return the next 3 rows
-**SQL Code**
-```sql
-SELECT * FROM users LIMIT  2, 3
-```
-```log
-
-[2026-07-28 16:58:34.179] [INFO] +----+---------+-----+----------+--------+-----------+----------------------+
-[2026-07-28 16:58:34.179] [INFO] | id | name    | age | status   | enable | addr      | birthday             |
-[2026-07-28 16:58:34.179] [INFO] +----+---------+-----+----------+--------+-----------+----------------------+
-[2026-07-28 16:58:34.179] [INFO] | 3  | Charlie | 20  | pending  | false  | chengdu   | 1988-07-11T15:00:00Z |
-[2026-07-28 16:58:34.180] [INFO] | 4  | David   | 35  | inactive | true   | xian      | 1955-11-28T16:00:00Z |
-[2026-07-28 16:58:34.180] [INFO] | 5  | Eve     | 28  | active   | true   | chongqing | 2003-07-11T16:00:00Z |
-[2026-07-28 16:58:34.180] [INFO] +----+---------+-----+----------+--------+-----------+----------------------+
-[2026-07-28 16:58:34.180] [INFO] Total: 3 rows
-```
-
-### 4. LIMIT OFFSET Query
-**Input Data**
-
-| id | name | age | status | enable | addr | birthday |
-|----|------|-----|--------|--------|------|----------|
-| 1 | Alice | 25 | active | true | beijing | 2020-04-09 |
-| 2 | Bob | 30 | active | true | shanghai | 1991-08-09 |
-| 3 | Charlie | 20 | pending | false | chengdu | 1988-07-12 |
-| 4 | David | 35 | inactive | true | xian | 1955-11-29 |
-| 5 | Eve | 28 | active | true | chongqing | 2003-07-12 |
-| 6 | Martin | 30 | active | true | guangzhou | 1978-06-30 |
-| 7 | Davila | 39 | active | true | null | 1999-06-30 |
-
-
-#### 4.1
-> LIMIT n — Limits the number of rows returned. This query returns the first 3 rows from the users table.
-
-**SQL Code**
-```sql
-SELECT * FROM users LIMIT 3
-```
-```log
-[2026-07-23 16:59:29.806] [INFO] +----+---------+-----+---------+--------+----------+----------------------+
-[2026-07-23 16:59:29.806] [INFO] | id | name    | age | status  | enable | addr     | birthday             |
-[2026-07-23 16:59:29.807] [INFO] +----+---------+-----+---------+--------+----------+----------------------+
-[2026-07-23 16:59:29.807] [INFO] | 1  | Alice   | 25  | active  | true   | beijing  | 2020-04-08T16:00:00Z |
-[2026-07-23 16:59:29.807] [INFO] | 2  | Bob     | 30  | active  | true   | shanghai | 1991-08-08T15:00:00Z |
-[2026-07-23 16:59:29.807] [INFO] | 3  | Charlie | 20  | pending | false  | chengdu  | 1988-07-11T15:00:00Z |
-[2026-07-23 16:59:29.807] [INFO] +----+---------+-----+---------+--------+----------+----------------------+
-[2026-07-23 16:59:29.807] [INFO] Total: 3 rows
-```
-
-#### 4.2
-> LIMIT offset, limit — Skips the specified number of rows (offset) before returning the result (limit). This query skips the first 2 rows and returns the next 3 rows from the users table.
-
-**SQL Code**
-```sql
-SELECT * FROM users LIMIT  2, 3
-```
-```log
-[2026-07-23 17:00:04.403] [INFO] +----+------+-----+--------+--------+-----------+----------------------+
-[2026-07-23 17:00:04.403] [INFO] | id | name | age | status | enable | addr      | birthday             |
-[2026-07-23 17:00:04.403] [INFO] +----+------+-----+--------+--------+-----------+----------------------+
-[2026-07-23 17:00:04.403] [INFO] | 5  | Eve  | 28  | active | true   | chongqing | 2003-07-11T16:00:00Z |
-[2026-07-23 17:00:04.403] [INFO] +----+------+-----+--------+--------+-----------+----------------------+
-[2026-07-23 17:00:04.403] [INFO] Total: 1 rows
-```
-
-#### 4.3
->ORDER BY ... LIMIT offset, limit — Sorts the result first, then applies the pagination. This query orders users by age ascending and returns the first 3 rows.
-
-**SQL Code**
-```sql
-SELECT * FROM users order by age asc LIMIT  0, 3
-```
-```log
-[2026-07-23 17:00:32.950] [INFO] +----+---------+-----+---------+--------+-----------+----------------------+
-[2026-07-23 17:00:32.950] [INFO] | id | name    | age | status  | enable | addr      | birthday             |
-[2026-07-23 17:00:32.950] [INFO] +----+---------+-----+---------+--------+-----------+----------------------+
-[2026-07-23 17:00:32.951] [INFO] | 3  | Charlie | 20  | pending | false  | chengdu   | 1988-07-11T15:00:00Z |
-[2026-07-23 17:00:32.951] [INFO] | 1  | Alice   | 25  | active  | true   | beijing   | 2020-04-08T16:00:00Z |
-[2026-07-23 17:00:32.951] [INFO] | 5  | Eve     | 28  | active  | true   | chongqing | 2003-07-11T16:00:00Z |
-[2026-07-23 17:00:32.951] [INFO] +----+---------+-----+---------+--------+-----------+----------------------+
-[2026-07-23 17:00:32.951] [INFO] Total: 3 rows
-```
-
-### 5. Group by/Having  Query
-**Input Data**
-
-| id | name | age | status | enable | addr | birthday |
-|----|------|-----|--------|--------|------|----------|
-| 1 | Alice | 25 | active | true | beijing | 2020-04-09 |
-| 2 | Bob | 30 | active | true | shanghai | 1991-08-09 |
-| 3 | Charlie | 20 | pending | false | chengdu | 1988-07-12 |
-| 4 | David | 35 | inactive | true | xian | 1955-11-29 |
-| 5 | Eve | 28 | active | true | chongqing | 2003-07-12 |
-| 6 | Martin | 30 | active | true | guangzhou | 1978-06-30 |
-| 7 | Davila | 39 | active | true | null | 1999-06-30 |
-
-
-#### 5.1
->GROUP BY column, aggregate_function(column) — Groups rows by a specified column and applies aggregate functions (COUNT, AVG, SUM, MIN, MAX) on each group, combined with ORDER BY. This query groups users by status, calculates the count and average age per group, and orders the results by status.
-
-**SQL Code**
-```sql
-SELECT status, COUNT(*) as count, AVG(age) as avg_age FROM users GROUP BY status ORDER BY status
-```
-```log
-[2026-07-23 17:02:47.779] [INFO] +----------+-------+---------+
-[2026-07-23 17:02:47.780] [INFO] | status   | count | avg_age |
-[2026-07-23 17:02:47.780] [INFO] +----------+-------+---------+
-[2026-07-23 17:02:47.780] [INFO] | active   | 5     | 30.4    |
-[2026-07-23 17:02:47.780] [INFO] | inactive | 1     | 35.0    |
-[2026-07-23 17:02:47.780] [INFO] | pending  | 1     | 20.0    |
-[2026-07-23 17:02:47.780] [INFO] +----------+-------+---------+
-[2026-07-23 17:02:47.780] [INFO] Total: 3 rows
-```
-#### 5.2
->GROUP BY ... HAVING condition ORDER BY ... — Groups rows, filters groups using HAVING (with aggregate functions),
-> and sorts results. This query groups users by status, counts and averages ages per group, keeps only
-> groups with more than 1 user, and orders by count descending.
-
-**SQL Code**
-```sql
- SELECT status, COUNT(age) as count, AVG(age) as avg_age FROM users GROUP BY status HAVING COUNT(age) >1 ORDER BY count DESC
-```
-```log
-[2026-07-23 17:04:55.056] [INFO] +--------+-------+---------+
-[2026-07-23 17:04:55.056] [INFO] | status | count | avg_age |
-[2026-07-23 17:04:55.056] [INFO] +--------+-------+---------+
-[2026-07-23 17:04:55.056] [INFO] | active | 5     | 30.4    |
-[2026-07-23 17:04:55.056] [INFO] +--------+-------+---------+
-[2026-07-23 17:04:55.056] [INFO] Total: 1 rows
-```
-
-### 6. JOIN (INNER/LEFT/RIGHT/FULL/CROSS JOIN)  Query
-**Input Data**
-
-#### users 表
-
-| id | name | age | status | enable | addr | birthday |
-|----|------|-----|--------|--------|------|----------|
-| 1 | Alice | 25 | active | true | beijing | 2020-04-09 |
-| 2 | Bob | 30 | active | true | shanghai | 1991-08-09 |
-| 3 | Charlie | 20 | pending | false | chengdu | 1988-07-12 |
-| 4 | David | 35 | inactive | true | xian | 1955-11-29 |
-| 5 | Eve | 28 | active | true | chongqing | 2003-07-12 |
-| 6 | Martin | 30 | active | true | guangzhou | 1978-06-30 |
-| 7 | Davila | 39 | active | true | null | 1999-06-30 |
-
-#### orders 表
-
-| id | user_id    | amount   |
-|----|------------|----------|
-| 101 | 1          | 100.0    |
-| 102 | 1          | 200.0    |
-| 103 | 2          | 150.0    |
-| 104 | 3          | 300.0    |
-
-
-#### 6.1
->INNER JOIN table ON condition — Returns only rows with matching keys in both tables. This query returns users who have orders, along with their order details.
-
-**SQL Code**
-```sql
-SELECT u.id, u.name, u.age, o.id as order_id, o.amount FROM users u INNER JOIN orders o ON u.id = o.user_id
-```
-```log
-[2026-07-23 22:26:39.908] [INFO] +------+---------+-------+----------+----------+
-[2026-07-23 22:26:39.909] [INFO] | u.id | u.name  | u.age | order_id | o.amount |
-[2026-07-23 22:26:39.909] [INFO] +------+---------+-------+----------+----------+
-[2026-07-23 22:26:39.909] [INFO] | 1    | Alice   | 25    | 1        | 100.0    |
-[2026-07-23 22:26:39.909] [INFO] | 1    | Alice   | 25    | 1        | 200.0    |
-[2026-07-23 22:26:39.909] [INFO] | 2    | Bob     | 30    | 2        | 150.0    |
-[2026-07-23 22:26:39.910] [INFO] | 3    | Charlie | 20    | 3        | 300.0    |
-[2026-07-23 22:26:39.910] [INFO] +------+---------+-------+----------+----------+
-[2026-07-23 22:26:39.910] [INFO] Total: 4 rows
-```
-#### 6.2
->INNER JOIN ... ON condition WHERE condition — Combines rows from multiple tables based on a matching condition, then applies additional filters. This query returns active users with orders of at least 150.
-
-**SQL Code**
-```sql
- SELECT u.name, u.age, u.status, o.id as order_id, o.amount FROM users u INNER JOIN orders o ON u.id = o.user_id WHERE u.status = 'active' AND o.amount >= 150
-
-```
-```log
-[2026-07-23 22:27:57.249] [INFO] +--------+-------+----------+----------+----------+
-[2026-07-23 22:27:57.249] [INFO] | u.name | u.age | u.status | order_id | o.amount |
-[2026-07-23 22:27:57.249] [INFO] +--------+-------+----------+----------+----------+
-[2026-07-23 22:27:57.250] [INFO] | Alice  | 25    | active   | 1        | 200.0    |
-[2026-07-23 22:27:57.250] [INFO] | Bob    | 30    | active   | 2        | 150.0    |
-[2026-07-23 22:27:57.250] [INFO] +--------+-------+----------+----------+----------+
-[2026-07-23 22:27:57.251] [INFO] Total: 2 rows
-```
-
-#### 6.3
->LEFT JOIN table ON condition — Returns all rows from the left table, with matching rows from the right table (or NULL if no match). This query returns all users, along with their orders if they exist.
-
-**SQL Code**
-```sql
- SELECT u.id, u.name, u.age, o.id as order_id, o.amount FROM users u LEFT JOIN orders o ON u.id = o.user_id
-
-```
-```log
-[2026-07-23 22:28:58.433] [INFO] +------+---------+-------+----------+----------+
-[2026-07-23 22:28:58.434] [INFO] | u.id | u.name  | u.age | order_id | o.amount |
-[2026-07-23 22:28:58.434] [INFO] +------+---------+-------+----------+----------+
-[2026-07-23 22:28:58.434] [INFO] | 1    | Alice   | 25    | 1        | 100.0    |
-[2026-07-23 22:28:58.434] [INFO] | 1    | Alice   | 25    | 1        | 200.0    |
-[2026-07-23 22:28:58.434] [INFO] | 2    | Bob     | 30    | 2        | 150.0    |
-[2026-07-23 22:28:58.435] [INFO] | 3    | Charlie | 20    | 3        | 300.0    |
-[2026-07-23 22:28:58.435] [INFO] | 4    | David   | 35    | 4        | null     |
-[2026-07-23 22:28:58.435] [INFO] | 5    | Eve     | 28    | 5        | null     |
-[2026-07-23 22:28:58.435] [INFO] | 6    | Martin  | 30    | 6        | null     |
-[2026-07-23 22:28:58.435] [INFO] | 7    | Davila  | 39    | 7        | null     |
-[2026-07-23 22:28:58.435] [INFO] +------+---------+-------+----------+----------+
-[2026-07-23 22:28:58.436] [INFO] Total: 8 rows
-```
-
-#### 6.4
->RIGHT JOIN table ON condition — Returns all rows from the right table, with matching rows from the left table (or NULL if no match). This query returns all orders, along with user details if they exist.
-
-**SQL Code**
-```sql
- SELECT u.id, u.name, u.age, o.id as order_id, o.amount FROM users u RIGHT JOIN orders o ON u.id = o.user_id
-
-```
-```log
-[2026-07-23 22:30:04.935] [INFO] +------+---------+-------+----------+----------+
-[2026-07-23 22:30:04.935] [INFO] | u.id | u.name  | u.age | order_id | o.amount |
-[2026-07-23 22:30:04.935] [INFO] +------+---------+-------+----------+----------+
-[2026-07-23 22:30:04.935] [INFO] | 1    | Alice   | 25    | 1        | 100.0    |
-[2026-07-23 22:30:04.935] [INFO] | 1    | Alice   | 25    | 1        | 200.0    |
-[2026-07-23 22:30:04.935] [INFO] | 2    | Bob     | 30    | 2        | 150.0    |
-[2026-07-23 22:30:04.935] [INFO] | 3    | Charlie | 20    | 3        | 300.0    |
-[2026-07-23 22:30:04.936] [INFO] +------+---------+-------+----------+----------+
-[2026-07-23 22:30:04.936] [INFO] Total: 4 rows
-```
-
-#### 6.5
->FULL JOIN table ON condition — Returns all rows from both tables, with matching rows joined and NULL for non-matching sides. This query returns all users and all orders, matching them where a relationship exists.
-
-**SQL Code**
-```sql
- SELECT u.id, u.name, u.age, o.id as order_id, o.amount FROM users u FULL JOIN orders o ON u.id = o.user_id
-
-```
-```log
-[2026-07-23 22:31:13.677] [INFO] +------+---------+-------+----------+----------+
-[2026-07-23 22:31:13.679] [INFO] | u.id | u.name  | u.age | order_id | o.amount |
-[2026-07-23 22:31:13.679] [INFO] +------+---------+-------+----------+----------+
-[2026-07-23 22:31:13.679] [INFO] | 1    | Alice   | 25    | 1        | 100.0    |
-[2026-07-23 22:31:13.680] [INFO] | 1    | Alice   | 25    | 1        | 200.0    |
-[2026-07-23 22:31:13.680] [INFO] | 2    | Bob     | 30    | 2        | 150.0    |
-[2026-07-23 22:31:13.680] [INFO] | 3    | Charlie | 20    | 3        | 300.0    |
-[2026-07-23 22:31:13.681] [INFO] | 4    | David   | 35    | 4        | null     |
-[2026-07-23 22:31:13.681] [INFO] | 5    | Eve     | 28    | 5        | null     |
-[2026-07-23 22:31:13.681] [INFO] | 6    | Martin  | 30    | 6        | null     |
-[2026-07-23 22:31:13.682] [INFO] | 7    | Davila  | 39    | 7        | null     |
-[2026-07-23 22:31:13.682] [INFO] +------+---------+-------+----------+----------+
-[2026-07-23 22:31:13.682] [INFO] Total: 8 rows
-```
-#### 6.6
->FULL JOIN table ON condition — Returns all rows from both tables, with matching rows joined and NULL for non-matching sides. This query returns all users and all orders, matching them where a relationship exists.
-
-**SQL Code**
-```sql
-SELECT u.id, u.name, u.age, o.id as order_id, o.amount FROM users u FULL JOIN orders o ON u.id = o.user_id
-
-```
-```log
-[2026-07-24 08:49:12.518] [INFO] +------+---------+-------+----------+----------+
-[2026-07-24 08:49:12.518] [INFO] | u.id | u.name  | u.age | order_id | o.amount |
-[2026-07-24 08:49:12.518] [INFO] +------+---------+-------+----------+----------+
-[2026-07-24 08:49:12.518] [INFO] | 1    | Alice   | 25    | 1        | 100.0    |
-[2026-07-24 08:49:12.519] [INFO] | 1    | Alice   | 25    | 1        | 200.0    |
-[2026-07-24 08:49:12.519] [INFO] | 2    | Bob     | 30    | 2        | 150.0    |
-[2026-07-24 08:49:12.519] [INFO] | 3    | Charlie | 20    | 3        | 300.0    |
-[2026-07-24 08:49:12.519] [INFO] | 4    | David   | 35    | 4        | null     |
-[2026-07-24 08:49:12.519] [INFO] | 5    | Eve     | 28    | 5        | null     |
-[2026-07-24 08:49:12.519] [INFO] | 6    | Martin  | 30    | 6        | null     |
-[2026-07-24 08:49:12.519] [INFO] | 7    | Davila  | 39    | 7        | null     |
-[2026-07-24 08:49:12.519] [INFO] +------+---------+-------+----------+----------+
-[2026-07-24 08:49:12.519] [INFO] Total: 8 rows
-```
-
-#### 6.7
->CROSS JOIN table — Returns the Cartesian product of both tables (all row combinations). This query pairs every user with every order.
-
-**SQL Code**
-```sql
-SELECT u.name, u.age, o.id, o.amount FROM users u CROSS JOIN orders o
-
-```
-```log
-[2026-07-24 08:53:28.324] [INFO] +---------+-------+------+----------+
-[2026-07-24 08:53:28.324] [INFO] | u.name  | u.age | o.id | o.amount |
-[2026-07-24 08:53:28.324] [INFO] +---------+-------+------+----------+
-[2026-07-24 08:53:28.324] [INFO] | Alice   | 25    | 101  | 100.0    |
-[2026-07-24 08:53:28.324] [INFO] | Alice   | 25    | 102  | 200.0    |
-[2026-07-24 08:53:28.326] [INFO] | Alice   | 25    | 103  | 150.0    |
-[2026-07-24 08:53:28.326] [INFO] | Alice   | 25    | 104  | 300.0    |
-[2026-07-24 08:53:28.326] [INFO] | Bob     | 30    | 101  | 100.0    |
-[2026-07-24 08:53:28.326] [INFO] | Bob     | 30    | 102  | 200.0    |
-[2026-07-24 08:53:28.326] [INFO] | Bob     | 30    | 103  | 150.0    |
-[2026-07-24 08:53:28.326] [INFO] | Bob     | 30    | 104  | 300.0    |
-[2026-07-24 08:53:28.326] [INFO] | Charlie | 20    | 101  | 100.0    |
-[2026-07-24 08:53:28.326] [INFO] | Charlie | 20    | 102  | 200.0    |
-[2026-07-24 08:53:28.326] [INFO] | Charlie | 20    | 103  | 150.0    |
-[2026-07-24 08:53:28.326] [INFO] | Charlie | 20    | 104  | 300.0    |
-[2026-07-24 08:53:28.326] [INFO] | David   | 35    | 101  | 100.0    |
-[2026-07-24 08:53:28.326] [INFO] | David   | 35    | 102  | 200.0    |
-[2026-07-24 08:53:28.326] [INFO] | David   | 35    | 103  | 150.0    |
-[2026-07-24 08:53:28.326] [INFO] | David   | 35    | 104  | 300.0    |
-[2026-07-24 08:53:28.326] [INFO] | Eve     | 28    | 101  | 100.0    |
-[2026-07-24 08:53:28.326] [INFO] | Eve     | 28    | 102  | 200.0    |
-[2026-07-24 08:53:28.326] [INFO] | Eve     | 28    | 103  | 150.0    |
-[2026-07-24 08:53:28.326] [INFO] | Eve     | 28    | 104  | 300.0    |
-[2026-07-24 08:53:28.326] [INFO] | Martin  | 30    | 101  | 100.0    |
-[2026-07-24 08:53:28.326] [INFO] | Martin  | 30    | 102  | 200.0    |
-[2026-07-24 08:53:28.326] [INFO] | Martin  | 30    | 103  | 150.0    |
-[2026-07-24 08:53:28.326] [INFO] | Martin  | 30    | 104  | 300.0    |
-[2026-07-24 08:53:28.328] [INFO] | Davila  | 39    | 101  | 100.0    |
-[2026-07-24 08:53:28.328] [INFO] | Davila  | 39    | 102  | 200.0    |
-[2026-07-24 08:53:28.328] [INFO] | Davila  | 39    | 103  | 150.0    |
-[2026-07-24 08:53:28.328] [INFO] | Davila  | 39    | 104  | 300.0    |
-[2026-07-24 08:53:28.328] [INFO] +---------+-------+------+----------+
-[2026-07-24 08:53:28.328] [INFO] Total: 28 rows
-```
-
-#### 6.8
->NATURAL JOIN table — Automatically joins tables on columns with the same name. This query joins users and orders on all common column names (e.g., id), returning only rows with matching values.
-
-**SQL Code**
-```sql
-SELECT u.name, u.age, o.id, o.amount FROM users u NATURAL JOIN orders o
-
-```
-```log
-[2026-07-24 14:02:03.903] [INFO] +--------+-------+------+----------+
-[2026-07-24 14:02:03.903] [INFO] | u.name | u.age | o.id | o.amount |
-[2026-07-24 14:02:03.903] [INFO] +--------+-------+------+----------+
-[2026-07-24 14:02:03.903] [INFO] +--------+-------+------+----------+
-[2026-07-24 14:02:03.903] [INFO] Total: 0 rows
-```
-
-#### 7 UNION/ MINUS/INTERSECT Query
-##### 7.1
->SELECT ... UNION SELECT ... — Combines results from two queries and removes duplicates. This query returns users older than 25 or with status 'active'.
-
-**SQL Code**
-```sql
-SELECT name, age, status FROM users WHERE age > 25 
-UNION 
-SELECT name, age, status FROM users WHERE status = 'active'
-```
-```log
-[2026-07-26 12:59:08.817] [INFO] +-------+-----+----------+
-[2026-07-26 12:59:08.819] [INFO] | name  | age | status   |
-[2026-07-26 12:59:08.819] [INFO] +-------+-----+----------+
-[2026-07-26 12:59:08.823] [INFO] | Bob   | 30  | active   |
-[2026-07-26 12:59:08.823] [INFO] | David | 35  | inactive |
-[2026-07-26 12:59:08.824] [INFO] | Eve   | 28  | active   |
-[2026-07-26 12:59:08.824] [INFO] | Frank | 30  | pending  |
-[2026-07-26 12:59:08.825] [INFO] | Alice | 32  | pending  |
-[2026-07-26 12:59:08.825] [INFO] | Alice | 25  | active   |
-[2026-07-26 12:59:08.825] [INFO] +-------+-----+----------+
-[2026-07-26 12:59:08.825] [INFO] Total: 6 rows
-```
-##### 7.2
->SELECT ... MINUS SELECT ... — Returns rows from the first query that are not present in the second query. This query returns users aged 25 or older who are not active.
-
-**SQL Code**
-```sql
-SELECT name, age, status FROM users WHERE age >= 25 
-    MINUS                                
-SELECT name, age, status FROM users WHERE status = 'active'
-```
-```log
-[2026-07-26 13:03:04.755] [INFO] +-------+-----+----------+
-[2026-07-26 13:03:04.755] [INFO] | name  | age | status   |
-[2026-07-26 13:03:04.755] [INFO] +-------+-----+----------+
-[2026-07-26 13:03:04.755] [INFO] | David | 35  | inactive |
-[2026-07-26 13:03:04.755] [INFO] | Frank | 30  | pending  |
-[2026-07-26 13:03:04.755] [INFO] | Alice | 32  | pending  |
-[2026-07-26 13:03:04.755] [INFO] +-------+-----+----------+
-[2026-07-26 13:03:04.755] [INFO] Total: 3 rows
-```
-
-##### 7.3
->SELECT ... INTERSECT SELECT ... — Returns rows that are present in both queries. This query returns users who are both aged 25 or older and have status 'active'.
-
-**SQL Code**
-```sql
-SELECT name, age, status FROM users WHERE age >= 25 
-   INTERSECT 
-SELECT name, age, status FROM users WHERE status = 'active'
-```
-```log
-[2026-07-26 13:09:45.576] [INFO] +-------+-----+--------+
-[2026-07-26 13:09:45.577] [INFO] | name  | age | status |
-[2026-07-26 13:09:45.578] [INFO] +-------+-----+--------+
-[2026-07-26 13:09:45.580] [INFO] | Alice | 25  | active |
-[2026-07-26 13:09:45.581] [INFO] | Bob   | 30  | active |
-[2026-07-26 13:09:45.582] [INFO] | Eve   | 28  | active |
-[2026-07-26 13:09:45.582] [INFO] +-------+-----+--------+
-[2026-07-26 13:09:45.583] [INFO] Total: 3 rows
-```
-### 8. JAggregation (COUNT/SUM/AVG/MIN/MAX)
-**Input Data**
-
-#### users 表
-| id | name | age | status | enable | addr | birthday | salary |
-|----|------|-----|--------|--------|------|----------|--------|
-| 1 | Alice | 25 | active | true | beijing | 2020-04-09 | 5000.0 |
-| 2 | Bob | 30 | active | true | shanghai | 1991-08-09 | 6000.0 |
-| 3 | Charlie | 20 | pending | false | chengdu | 1988-07-12 | 4500.0 |
-| 4 | David | 35 | inactive | true | xian | 1955-11-29 | 7000.0 |
-| 5 | Eve | 28 | active | true | chongqing | 2003-07-12 | 5500.0 |
-| 6 | Martin | 30 | active | true | guangzhou | 1978-06-30 | 6500.0 |
-| 7 | Davila | 39 | active | true | null | 1999-06-30 | 8000.0 |
-
-
-
-
-#### 8.1
->GROUP BY column — Groups rows by a specified column and applies aggregate functions like COUNT. This query groups users by status and returns the count for each group.
-
-**SQL Code**
-```sql
-SELECT status, COUNT(*) AS count FROM users GROUP BY status
-```
-```log
-    [2026-07-27 07:03:18.201] [INFO] +----------+-------+
-    [2026-07-27 07:03:18.201] [INFO] | status   | count |
-    [2026-07-27 07:03:18.201] [INFO] +----------+-------+
-    [2026-07-27 07:03:18.201] [INFO] | inactive | 1     |
-    [2026-07-27 07:03:18.201] [INFO] | pending  | 1     |
-    [2026-07-27 07:03:18.201] [INFO] | active   | 5     |
-    [2026-07-27 07:03:18.201] [INFO] +----------+-------+
-    [2026-07-27 07:03:18.201] [INFO] Total: 3 rows
-```
-
-#### 8.2
->GROUP BY column, SUM(column) — Groups rows by a specified column and calculates the sum of another column for each group. This query groups users by status and returns the total age for each group.
-
-**SQL Code**
-```sql
-SELECT status, SUM(age) AS age_sum FROM users GROUP BY status
-```
-```log
-    [2026-07-27 07:07:19.828] [INFO] +----------+---------+
-    [2026-07-27 07:07:19.828] [INFO] | status   | age_sum |
-    [2026-07-27 07:07:19.830] [INFO] +----------+---------+
-    [2026-07-27 07:07:19.830] [INFO] | inactive | 35.0    |
-    [2026-07-27 07:07:19.830] [INFO] | pending  | 20.0    |
-    [2026-07-27 07:07:19.830] [INFO] | active   | 152.0   |
-    [2026-07-27 07:07:19.830] [INFO] +----------+---------+
-    [2026-07-27 07:07:19.830] [INFO] Total: 3 rows
-```
-
-
-#### 8.3
->GROUP BY column, AVG(column) — Groups rows by a specified column and calculates the average value of another column for each group. This query groups users by status and returns the average age for each group.
-
-**SQL Code**
-```sql
-SELECT status,AVG(age) AS avg_age FROM users GROUP BY status
-```
-```log
-[2026-07-27 07:10:15.850] [INFO] +----------+---------+
-[2026-07-27 07:10:15.850] [INFO] | status   | avg_age |
-[2026-07-27 07:10:15.850] [INFO] +----------+---------+
-[2026-07-27 07:10:15.850] [INFO] | inactive | 35.0    |
-[2026-07-27 07:10:15.850] [INFO] | pending  | 20.0    |
-[2026-07-27 07:10:15.850] [INFO] | active   | 30.4    |
-[2026-07-27 07:10:15.850] [INFO] +----------+---------+
-[2026-07-27 07:10:15.851] [INFO] Total: 3 rows
-```
-
-#### 8.4
->GROUP BY column, MIN(column) — Groups rows by a specified column and finds the minimum value of another column for each group. This query groups users by status and returns the minimum age for each group.
-
-**SQL Code**
-```sql
-SELECT status,MIN(age) AS active_min_age FROM users GROUP BY status
-```
-```log
-[2026-07-27 07:12:58.509] [INFO] +----------+----------------+
-[2026-07-27 07:12:58.509] [INFO] | status   | active_min_age |
-[2026-07-27 07:12:58.509] [INFO] +----------+----------------+
-[2026-07-27 07:12:58.509] [INFO] | inactive | 35             |
-[2026-07-27 07:12:58.511] [INFO] | pending  | 20             |
-[2026-07-27 07:12:58.511] [INFO] | active   | 25             |
-[2026-07-27 07:12:58.512] [INFO] +----------+----------------+
-[2026-07-27 07:12:58.512] [INFO] Total: 3 rows
-```
-#### 8.5
->GROUP BY column, MAX(column) — Groups rows by a specified column and finds the maximum value of another column for each group. This query groups users by status and returns the maximum age for each group.
-
-**SQL Code**
-```sql
-SELECT status,Max(age) AS active_max_age FROM users GROUP BY status
-```
-```log
-[2026-07-27 07:14:15.781] [INFO] +----------+----------------+
-[2026-07-27 07:14:15.782] [INFO] | status   | active_max_age |
-[2026-07-27 07:14:15.782] [INFO] +----------+----------------+
-[2026-07-27 07:14:15.782] [INFO] | inactive | 35             |
-[2026-07-27 07:14:15.782] [INFO] | pending  | 20             |
-[2026-07-27 07:14:15.782] [INFO] | active   | 39             |
-[2026-07-27 07:14:15.782] [INFO] +----------+----------------+
-[2026-07-27 07:14:15.782] [INFO] Total: 3 rows
-```
-
-
-### 9. Subquery
-**Input Data**
-
-#### users 表
-## users 表
-
-| id | name | age | status | enable | addr | birthday | department_id |
-|----|------|-----|--------|--------|------|----------|---------------|
-| 1 | Alice | 25 | active | true | beijing | 2020-04-09 | 1 |
-| 2 | Bob | 30 | active | true | shanghai | 1991-08-09 | 2 |
-| 3 | Charlie | 20 | pending | false | chengdu | 1988-07-12 | 1 |
-| 4 | David | 35 | inactive | true | xian | 1955-11-29 | 3 |
-| 5 | Eve | 28 | active | true | chongqing | 2003-07-12 | 2 |
-| 6 | Martin | 30 | active | true | guangzhou | 1978-06-30 | 3 |
-| 7 | Davila | 39 | active | true | null | 1999-06-30 | 1 |
-
-## departments 表
-
-| dept_id | dept_name | location | budget |
-|---------|-----------|----------|--------|
-| 1 | Engineering | Building A | 500000.0 |
-| 2 | Marketing | Building B | 300000.0 |
-| 3 | Finance | Building C | 400000.0 |
-| 4 | HR | Building D | 200000.0 |
-
-## orders 表
-
-| order_id | user_id | amount | order_date |
-|----------|---------|--------|------------|
-| 101 | 1 | 150.50 | 2024-01-15 |
-| 102 | 2 | 200.00 | 2024-01-16 |
-| 103 | 1 | 75.25 | 2024-01-17 |
-| 104 | 3 | 300.00 | 2024-01-18 |
-| 105 | 5 | 120.00 | 2024-01-19 |
-| 106 | 2 | 450.50 | 2024-01-20 |
-
-
-#### 9.1
->
-
-**SQL Code**
-```sql
-SELECT * FROM users " + "WHERE age > (SELECT AVG(age) FROM users)
-```
-```log
-[2026-07-31 16:08:24.517] [INFO] +----+--------+-----+----------+--------+-----------+----------------------+---------------+
-[2026-07-31 16:08:24.517] [INFO] | id | name   | age | status   | enable | addr      | birthday             | department_id |
-[2026-07-31 16:08:24.517] [INFO] +----+--------+-----+----------+--------+-----------+----------------------+---------------+
-[2026-07-31 16:08:24.517] [INFO] | 2  | Bob    | 30  | active   | true   | shanghai  | 1991-08-08T15:00:00Z | 2             |
-[2026-07-31 16:08:24.518] [INFO] | 4  | David  | 35  | inactive | true   | xian      | 1955-11-28T16:00:00Z | 3             |
-[2026-07-31 16:08:24.518] [INFO] | 6  | Martin | 30  | active   | true   | guangzhou | 1978-06-29T16:00:00Z | 3             |
-[2026-07-31 16:08:24.519] [INFO] | 7  | Davila | 39  | active   | true   | null      | 1999-06-29T16:00:00Z | 1             |
-[2026-07-31 16:08:24.519] [INFO] +----+--------+-----+----------+--------+-----------+----------------------+---------------+
-[2026-07-31 16:08:24.519] [INFO] Total: 4 rows
-```
-
-#### 9.2
->
-
-**SQL Code**
-```sql
-SELECT * FROM users WHERE department_id IN (SELECT dept_id FROM departments WHERE dept_name IN ('Engineering', 'Marketing'))
-```
-```log
-[2026-07-31 16:09:51.077] [INFO] +----+---------+-----+---------+--------+-----------+----------------------+---------------+
-[2026-07-31 16:09:51.077] [INFO] | id | name    | age | status  | enable | addr      | birthday             | department_id |
-[2026-07-31 16:09:51.077] [INFO] +----+---------+-----+---------+--------+-----------+----------------------+---------------+
-[2026-07-31 16:09:51.077] [INFO] | 1  | Alice   | 25  | active  | true   | beijing   | 2020-04-08T16:00:00Z | 1             |
-[2026-07-31 16:09:51.077] [INFO] | 2  | Bob     | 30  | active  | true   | shanghai  | 1991-08-08T15:00:00Z | 2             |
-[2026-07-31 16:09:51.077] [INFO] | 3  | Charlie | 20  | pending | false  | chengdu   | 1988-07-11T15:00:00Z | 1             |
-[2026-07-31 16:09:51.078] [INFO] | 5  | Eve     | 28  | active  | true   | chongqing | 2003-07-11T16:00:00Z | 2             |
-[2026-07-31 16:09:51.078] [INFO] | 7  | Davila  | 39  | active  | true   | null      | 1999-06-29T16:00:00Z | 1             |
-[2026-07-31 16:09:51.078] [INFO] +----+---------+-----+---------+--------+-----------+----------------------+---------------+
-[2026-07-31 16:09:51.078] [INFO] Total: 5 rows
-```
-
-#### 9.3
->
-
-**SQL Code**
-```sql
-SELECT * FROM users u WHERE EXISTS (SELECT 1 FROM orders o WHERE o.user_id = u.id)
-```
-```log
-[2026-07-31 16:11:20.306] [INFO] +----+---------+-----+---------+--------+-----------+----------------------+---------------+
-[2026-07-31 16:11:20.306] [INFO] | id | name    | age | status  | enable | addr      | birthday             | department_id |
-[2026-07-31 16:11:20.306] [INFO] +----+---------+-----+---------+--------+-----------+----------------------+---------------+
-[2026-07-31 16:11:20.306] [INFO] | 1  | Alice   | 25  | active  | true   | beijing   | 2020-04-08T16:00:00Z | 1             |
-[2026-07-31 16:11:20.306] [INFO] | 2  | Bob     | 30  | active  | true   | shanghai  | 1991-08-08T15:00:00Z | 2             |
-[2026-07-31 16:11:20.306] [INFO] | 3  | Charlie | 20  | pending | false  | chengdu   | 1988-07-11T15:00:00Z | 1             |
-[2026-07-31 16:11:20.306] [INFO] | 5  | Eve     | 28  | active  | true   | chongqing | 2003-07-11T16:00:00Z | 2             |
-[2026-07-31 16:11:20.306] [INFO] +----+---------+-----+---------+--------+-----------+----------------------+---------------+
-[2026-07-31 16:11:20.307] [INFO] Total: 4 rows
-```
-
-#### 9.4
->
-
-**SQL Code**
-```sql
-SELECT * FROM users u WHERE EXISTS (SELECT 1 FROM orders o WHERE o.user_id = u.id)
-```
-```log
-[2026-07-31 16:11:20.306] [INFO] +----+---------+-----+---------+--------+-----------+----------------------+---------------+
-[2026-07-31 16:11:20.306] [INFO] | id | name    | age | status  | enable | addr      | birthday             | department_id |
-[2026-07-31 16:11:20.306] [INFO] +----+---------+-----+---------+--------+-----------+----------------------+---------------+
-[2026-07-31 16:11:20.306] [INFO] | 1  | Alice   | 25  | active  | true   | beijing   | 2020-04-08T16:00:00Z | 1             |
-[2026-07-31 16:11:20.306] [INFO] | 2  | Bob     | 30  | active  | true   | shanghai  | 1991-08-08T15:00:00Z | 2             |
-[2026-07-31 16:11:20.306] [INFO] | 3  | Charlie | 20  | pending | false  | chengdu   | 1988-07-11T15:00:00Z | 1             |
-[2026-07-31 16:11:20.306] [INFO] | 5  | Eve     | 28  | active  | true   | chongqing | 2003-07-11T16:00:00Z | 2             |
-[2026-07-31 16:11:20.306] [INFO] +----+---------+-----+---------+--------+-----------+----------------------+---------------+
-[2026-07-31 16:11:20.307] [INFO] Total: 4 rows
-```
-#### 9.5
->
-
-**SQL Code**
-```sql
-SELECT u.name, u.age, (SELECT dept_name FROM departments d WHERE d.dept_id = u.department_id) as dept_name, (SELECT budget FROM departments d WHERE d.dept_id = u.department_id) as dept_budget FROM users u
-```
-```log
-[2026-07-31 16:17:14.396] [INFO] | name    | age | dept_name   | dept_budget |
-[2026-07-31 16:17:14.396] [INFO] +---------+-----+-------------+-------------+
-[2026-07-31 16:17:14.396] [INFO] | Alice   | 25  | Engineering | 500000.0    |
-[2026-07-31 16:17:14.396] [INFO] | Bob     | 30  | Marketing   | 300000.0    |
-[2026-07-31 16:17:14.396] [INFO] | Charlie | 20  | Engineering | 500000.0    |
-[2026-07-31 16:17:14.396] [INFO] | David   | 35  | Finance     | 400000.0    |
-[2026-07-31 16:17:14.397] [INFO] | Eve     | 28  | Marketing   | 300000.0    |
-[2026-07-31 16:17:14.397] [INFO] | Martin  | 30  | Finance     | 400000.0    |
-[2026-07-31 16:17:14.397] [INFO] | Davila  | 39  | Engineering | 500000.0    |
-[2026-07-31 16:17:14.397] [INFO] +---------+-----+-------------+-------------+
-[2026-07-31 16:17:14.397] [INFO] Total: 7 rows
-```
-#### 9.6
->
-
-**SQL Code**
-```sql
- SELECT u.name, u.age, u.department_id FROM users u ORDER BY (SELECT budget FROM departments d WHERE d.dept_id = u.department_id) DESC, u.age
-```
-```log
-[2026-07-31 16:19:35.492] [INFO] +---------+--------------+
-[2026-07-31 16:19:35.492] [INFO] | user_id | total_amount |
-[2026-07-31 16:19:35.492] [INFO] +---------+--------------+
-[2026-07-31 16:19:35.492] [INFO] | 1       | 225.75       |
-[2026-07-31 16:19:35.492] [INFO] | 2       | 650.5        |
-[2026-07-31 16:19:35.492] [INFO] | 3       | 300.0        |
-[2026-07-31 16:19:35.492] [INFO] +---------+--------------+
-[2026-07-31 16:19:35.492] [INFO] Total: 3 rows
-```
-
-#### 9.7
->
-
-**SQL Code**
-```sql
-SELECT user_id, SUM(amount) as total_amount FROM orders GROUP BY user_id HAVING SUM(amount) > (SELECT AVG(amount) FROM orders)
-```
-```log
-[2026-07-31 16:20:38.719] [INFO] +---------+-----+---------------+
-[2026-07-31 16:20:38.719] [INFO] | name    | age | department_id |
-[2026-07-31 16:20:38.719] [INFO] +---------+-----+---------------+
-[2026-07-31 16:20:38.719] [INFO] | Charlie | 20  | 1             |
-[2026-07-31 16:20:38.719] [INFO] | Alice   | 25  | 1             |
-[2026-07-31 16:20:38.720] [INFO] | Eve     | 28  | 2             |
-[2026-07-31 16:20:38.720] [INFO] | Bob     | 30  | 2             |
-[2026-07-31 16:20:38.720] [INFO] | Martin  | 30  | 3             |
-[2026-07-31 16:20:38.720] [INFO] | David   | 35  | 3             |
-[2026-07-31 16:20:38.720] [INFO] | Davila  | 39  | 1             |
-[2026-07-31 16:20:38.720] [INFO] +---------+-----+---------------+
-[2026-07-31 16:20:38.720] [INFO] Total: 7 rows
-```
-
-#### 9.8
->
-
-**SQL Code**
-```sql
-SELECT * FROM users WHERE id IN (    SELECT user_id FROM orders     WHERE amount > (SELECT AVG(amount) FROM orders))
-```
-```log
-[2026-07-31 16:22:25.297] [INFO] +----+---------+-----+---------+--------+----------+----------------------+---------------+
-[2026-07-31 16:22:25.298] [INFO] | id | name    | age | status  | enable | addr     | birthday             | department_id |
-[2026-07-31 16:22:25.298] [INFO] +----+---------+-----+---------+--------+----------+----------------------+---------------+
-[2026-07-31 16:22:25.298] [INFO] | 2  | Bob     | 30  | active  | true   | shanghai | 1991-08-08T15:00:00Z | 2             |
-[2026-07-31 16:22:25.298] [INFO] | 3  | Charlie | 20  | pending | false  | chengdu  | 1988-07-11T15:00:00Z | 1             |
-[2026-07-31 16:22:25.298] [INFO] +----+---------+-----+---------+--------+----------+----------------------+---------------+
-[2026-07-31 16:22:25.298] [INFO] Total: 2 rows
-```
-
-
-#### 9.9
->
-
-**SQL Code**
-```sql
-SELECT u.name, u.age, CASE     WHEN (SELECT COUNT(*) FROM orders o WHERE o.user_id = u.id) > 2 THEN 'High Volume'     WHEN (SELECT COUNT(*) FROM orders o WHERE o.user_id = u.id) > 0 THEN 'Normal'     ELSE 'No Orders' END as order_volume FROM users u
-```
-```log
-[2026-07-31 16:23:27.211] [INFO] +---------+-----+--------------+
-[2026-07-31 16:23:27.213] [INFO] | name    | age | order_volume |
-[2026-07-31 16:23:27.213] [INFO] +---------+-----+--------------+
-[2026-07-31 16:23:27.213] [INFO] | Alice   | 25  | Normal       |
-[2026-07-31 16:23:27.213] [INFO] | Bob     | 30  | Normal       |
-[2026-07-31 16:23:27.213] [INFO] | Charlie | 20  | Normal       |
-[2026-07-31 16:23:27.213] [INFO] | David   | 35  | No Orders    |
-[2026-07-31 16:23:27.213] [INFO] | Eve     | 28  | Normal       |
-[2026-07-31 16:23:27.213] [INFO] | Martin  | 30  | No Orders    |
-[2026-07-31 16:23:27.213] [INFO] | Davila  | 39  | No Orders    |
-[2026-07-31 16:23:27.213] [INFO] +---------+-----+--------------+
-[2026-07-31 16:23:27.213] [INFO] Total: 7 rows
-```
-#### 9.10
->
-
-**SQL Code**
-```sql
-SELECT u.name, u.age, CASE     WHEN (SELECT COUNT(*) FROM orders o WHERE o.user_id = u.id) > 2 THEN 'High Volume'     WHEN (SELECT COUNT(*) FROM orders o WHERE o.user_id = u.id) > 0 THEN 'Normal'     ELSE 'No Orders' END as order_volume FROM users u
-```
-```log
-[2026-07-31 16:23:27.211] [INFO] +---------+-----+--------------+
-[2026-07-31 16:23:27.213] [INFO] | name    | age | order_volume |
-[2026-07-31 16:23:27.213] [INFO] +---------+-----+--------------+
-[2026-07-31 16:23:27.213] [INFO] | Alice   | 25  | Normal       |
-[2026-07-31 16:23:27.213] [INFO] | Bob     | 30  | Normal       |
-[2026-07-31 16:23:27.213] [INFO] | Charlie | 20  | Normal       |
-[2026-07-31 16:23:27.213] [INFO] | David   | 35  | No Orders    |
-[2026-07-31 16:23:27.213] [INFO] | Eve     | 28  | Normal       |
-[2026-07-31 16:23:27.213] [INFO] | Martin  | 30  | No Orders    |
-[2026-07-31 16:23:27.213] [INFO] | Davila  | 39  | No Orders    |
-[2026-07-31 16:23:27.213] [INFO] +---------+-----+--------------+
-[2026-07-31 16:23:27.213] [INFO] Total: 7 rows
-```
-
-#### 9.11
->
-
-**SQL Code**
-```sql
-SELECT u.name, u.department_id, (SELECT SUM(o.amount) FROM orders o WHERE o.user_id = u.id) as user_total_orders FROM users u WHERE (SELECT SUM(o.amount) FROM orders o WHERE o.user_id = u.id) > (SELECT AVG(budget) FROM departments)
-```
-```log
-+------+---------------+-------------------+
-| name | department_id | user_total_orders |
-+------+---------------+-------------------+
-(empty)
-+------+---------------+-------------------+
-```
-
-
-#### 9.12
->
-
-**SQL Code**
-```sql
-SELECT u.name, u.age, dept_stats.dept_name, dept_stats.avg_age FROM users u left JOIN (    SELECT d.dept_id, d.dept_name, AVG(u2.age) as avg_age     FROM departments d     LEFT JOIN users u2 ON d.dept_id = u2.department_id     GROUP BY d.dept_id, d.dept_name) as dept_stats ON u.department_id = dept_stats.dept_id
-```
-```log
-[2026-07-31 16:27:08.546] [INFO] +---------+-----+-------------+---------+
-[2026-07-31 16:27:08.546] [INFO] | name    | age | dept_name   | avg_age |
-[2026-07-31 16:27:08.546] [INFO] +---------+-----+-------------+---------+
-[2026-07-31 16:27:08.546] [INFO] | Alice   | 25  | Engineering | 28.0    |
-[2026-07-31 16:27:08.546] [INFO] | Bob     | 30  | Marketing   | 29.0    |
-[2026-07-31 16:27:08.546] [INFO] | Charlie | 20  | Engineering | 28.0    |
-[2026-07-31 16:27:08.546] [INFO] | David   | 35  | Finance     | 32.5    |
-[2026-07-31 16:27:08.546] [INFO] | Eve     | 28  | Marketing   | 29.0    |
-[2026-07-31 16:27:08.546] [INFO] | Martin  | 30  | Finance     | 32.5    |
-[2026-07-31 16:27:08.546] [INFO] | Davila  | 39  | Engineering | 28.0    |
-[2026-07-31 16:27:08.546] [INFO] +---------+-----+-------------+---------+
-[2026-07-31 16:27:08.546] [INFO] Total: 7 rows
-```
-#### 9.13
->
-
-**SQL Code**
-```sql
- SELECT
-	tmp.dept_id,
-	avg_age
-FROM
-	(
-	SELECT
-		department_id as dept_id,
-		AVG(age) as avg_age
-	FROM
-		users
-	GROUP BY
-		department_id
-		) as tmp
-WHERE
-	avg_age > 28
-
-```
-```log
-[2026-07-31 16:30:31.067] [INFO] Global config updated
-[2026-07-31 16:30:31.067] [INFO] +---------+---------+
-[2026-07-31 16:30:31.067] [INFO] | dept_id | avg_age |
-[2026-07-31 16:30:31.068] [INFO] +---------+---------+
-[2026-07-31 16:30:31.068] [INFO] | 2       | 29.0    |
-[2026-07-31 16:30:31.068] [INFO] | 3       | 32.5    |
-[2026-07-31 16:30:31.068] [INFO] +---------+---------+
-[2026-07-31 16:30:31.068] [INFO] Total: 2 rows
-```
-
-
-## XML Configuration Usage
-
-JQuick-SQL provides an XML-based configuration approach that allows you to define SQL queries in an XML file and generate service interfaces dynamically. This is particularly useful for organizing large numbers of SQL statements and maintaining clean separation between SQL and Java code.
-
-### XML Configuration File
-
-Create an XML file (e.g., `jquick-sql.xml`) in your classpath:
-
-```xml
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE sqls PUBLIC "-//PAOHAIJIAO//DTD API JAVA 1.0//EN"
-        "classpath:paohaijiao/dtd/Jquick-sql.dtd">
-<sqls namespace="com.example.service.UserService">
-    <sql name="getUsers" returnClass="java.util.List">
-        SELECT * FROM users LIMIT #{limit}
-    </sql>
-</sqls>
-```
-
-### Define Service Interface
-
-Define a Java interface with methods annotated by `@Param`:
-
-```java
-package com.example.service;
-
+import com.github.paohaijiao.engine.JQuickSQL;
+import com.github.paohaijiao.statement.JQuickColumnMeta;
 import com.github.paohaijiao.statement.JQuickDataSet;
 import com.github.paohaijiao.statement.JQuickRow;
-import com.github.paohaijiao.xml.param.Param;
 
+import java.util.Arrays;
 import java.util.List;
 
-public interface UserService {
-    JQuickDataSet getUsers(@Param("limit") Integer limit);
-}
-```
+/**
+ * 功能作用：以 embedded 嵌入式模式启动 JQuick-SQL，注册内存数据表并执行 SELECT。
+ * 使用场景：本地单元测试、离线报表计算、ETL 原型验证、小工具脚本。
+ * 注意事项：embedded() 会占用 19001+ 端口启动同 JVM 内并行 Worker；
+ *           用完必须在 finally 中调用 shutdown() 释放资源。
+ */
+public class QuickStartDemo {
 
-The method names in the interface must match the name attribute of the <sql> elements in the XML configuration file. The @Param annotation binds method parameters to the placeholders (#{...}) used in the SQL statements.
-
-### Register Table Data
-
-Register your table data with `JQuickTable`:
-
-```java
-// Create column metadata
-List<JQuickColumnMeta> columns = Arrays.asList(
-                new JQuickColumnMeta("id", Integer.class, "users"),
-                new JQuickColumnMeta("name", String.class, "users"),
-                new JQuickColumnMeta("age", Integer.class, "users")
-        );
-
-// Create row data
-List<JQuickRow> rows = Arrays.asList(
-        createRow("id", 1, "name", "Alice", "age", 25),
-        createRow("id", 2, "name", "Bob", "age", 30)
-);
-
-JQuickTable table = new JQuickTable("users", columns, rows);
-```
-### Create and Use Service API
-
-```java
-import com.github.paohaijiao.statement.JQuickDataSet;
-import com.github.paohaijiao.xml.factory.JQuickFactory;
-import com.github.paohaijiao.xml.factory.JQuickXmlFactory;
-
-public class Example {
     public static void main(String[] args) {
-        // Create table data
-        JQuickTable table = new JQuickTable("users", getUserColumns(), getUserRows());
-        JQuickJavaXmlParseFactory handler = new JQuickJavaXmlParseFactory(Arrays.asList(table));
+        // 1) 创建嵌入式引擎；embedded(4) 可指定同 JVM 内并行 Worker 数
+        JQuickSQL sql = JQuickSQL.embedded();
+        try {
+            // 2) 列元数据：列名 + Java 类型 + 表别名（JOIN 时必须匹配）
+            List<JQuickColumnMeta> columns = Arrays.asList(
+                    new JQuickColumnMeta("id",   Integer.class, "users"),
+                    new JQuickColumnMeta("name", String.class,  "users"),
+                    new JQuickColumnMeta("age",  Integer.class, "users")
+            );
 
-        // Create factory with XML configuration
-        JQuickFactory factory = new JQuickXmlFactory(handler, "jquick-sql.xml");
+            // 3) 数据行：key-value 交替，顺序自动对应列
+            List<JQuickRow> rows = Arrays.asList(
+                    row("id", 1, "name", "Alice",   "age", 25),
+                    row("id", 2, "name", "Bob",     "age", 30),
+                    row("id", 3, "name", "Charlie", "age", 20)
+            );
 
-        // Generate service API dynamically
-        UserService userService = factory.createApi(UserService.class);
+            // 4) 注册表
+            sql.registerTable("users", columns, rows);
 
-        // Execute queries
-        JQuickDataSet dataSet = userService.getUsers(2);
-        dataSet.printTable();  // Print the result table
+            // 5) 执行 SQL，打印可视化表格
+            JQuickDataSet result = sql.execute(
+                    "SELECT id, name, age FROM users WHERE age >= 25 ORDER BY age DESC"
+            );
+            result.printTable();
+
+            System.out.println("总行数：" + result.size());
+
+        } finally {
+            // 6) 关闭引擎，释放端口
+            sql.shutdown();
+        }
+    }
+
+    private static JQuickRow row(Object... kv) {
+        JQuickRow r = new JQuickRow();
+        for (int i = 0; i < kv.length; i += 2) r.put((String) kv[i], kv[i + 1]);
+        return r;
     }
 }
 ```
-### Configuration Elements
 
-| XML Element | Attribute | Description |
-|-------------|-----------|-------------|
-| `<sqls>` | `namespace` | The fully qualified name of the service interface |
-| `<sql>` | `name` | The method name in the service interface |
-| `<sql>` | `returnClass` | The return type of the method (e.g., `java.util.List`, `java.lang.Integer`) |
+---
 
-### Parameter Binding
+## 三、JQuick 生态导航
 
-Use `#{paramName}` syntax in SQL to bind method parameters:
+> 点击下表即可跳转到对应子项目。所有项目共享 `io.github.paohaijiao` groupId。
+> 协议：Apache-2.0（✅ 免费商用），**除 jquick-pdf 为 AGPL-3.0（⚠️ 商用需授权）**。
 
-```xml
-<sql name="findUsers" returnClass="java.util.List">
-    SELECT * FROM users
-    WHERE age > #{minAge}
-    AND status = #{status}
-    LIMIT #{limit}
-</sql>
+| # | 项目名称 | 仓库地址 | 简介 | 开源协议 |
+|---|---------|---------|------|---------|
+| 1 | **jquick-sql** ⭐ | [paohaijiao/jquick-sql](https://github.com/paohaijiao/jquick-sql) | 嵌入式 SQL 查询引擎（当前项目） | Apache-2.0 |
+| 2 | jquick-gateway | [paohaijiao/jquick-gateway](https://github.com/paohaijiao/jquick-gateway) | 基于 Netty 的轻量级 API 网关（路由 / 限流 / 熔断 / 灰度） | Apache-2.0 |
+| 3 | jquick-excel | [paohaijiao/jquick-excel](https://github.com/paohaijiao/jquick-excel) | Excel 读写工具；大文件 SAX 流式；老项目 POI 3.x 兼容 | Apache-2.0 |
+| 4 | jquick-pdf | [paohaijiao/jquick-pdf](https://github.com/paohaijiao/jquick-pdf) | 基于 iText7 的 PDF 处理（模板渲染 / 签章 / 水印 / 合并拆分） | **AGPL-3.0 ⚠️** |
+| 5 | jquick-asm | [paohaijiao/jquick-asm](https://github.com/paohaijiao/jquick-asm) | ASM 9.x 字节码增强；AOP 代理 / 动态 Bean / 类转换 | Apache-2.0 |
+| 6 | jquick-curl | [paohaijiao/jquick-curl](https://github.com/paohaijiao/jquick-curl) | HTTP 客户端（链式 Fluent API / 连接池 / 断点续传 / 重试） | Apache-2.0 |
+| 7 | jquick-java | [paohaijiao/jquick-java](https://github.com/paohaijiao/jquick-java) | ANTLR4 脚本引擎 + XML 动态代理；规则引擎热加载 | Apache-2.0 |
+
+> 📌 **跨项目组合示例**：jquick-sql + jquick-curl → 将 REST JSON 数据注册为内存表后联邦查询；jquick-sql + jquick-excel → 读取 Excel 行后与业务表 JOIN；更多见各项目 README。
+
+---
+
+## 四、支持的 SQL 语法
+
+> 本节所列能力均来自 `src/test/java/com/github/paohaijiao/demo/` 下真实单元测试套件，用户可直接查看对应目录下的 `*Test.java` 获取更多示例。
+
+### 4.1 SELECT 子句（Projection / Project）
+
+支持形式：
+- `SELECT *`：全列投影；
+- 列列表：`SELECT id, name, age`；
+- 列别名：`SELECT name AS username`；
+- 常量与算术表达式：`SELECT 1, 2+3, salary*12 annual`；
+- 函数表达式：`SELECT toUpper(name) uname, ROUND(AVG(salary),2)`；
+- `CASE WHEN ... THEN ... ELSE ... END`；
+- `DISTINCT` 去重：`SELECT DISTINCT dept`；
+- 标量子查询：`SELECT name, (SELECT COUNT(*) FROM orders o WHERE o.user_id=u.id) cnt FROM users u`。
+
+示例：
+```sql
+SELECT DISTINCT dept,
+       CASE WHEN salary>=30000 THEN '高'
+            WHEN salary>=20000 THEN '中'
+            ELSE '低' END grade,
+       salary * 12 annual
+FROM emp;
 ```
+对应测试：`demo/project/JQuickSQLProjectTest.java`。
 
-## API Reference
+### 4.2 WHERE 条件过滤
 
-### JQuickSQL
+支持形式：
+- 比较运算：`=`, `<>`, `>`, `>=`, `<`, `<=`；
+- 逻辑运算：`AND` / `OR` / `NOT` + 嵌套括号；
+- 布尔常量：`WHERE true`、`WHERE 1=1`；
+- 布尔列：`WHERE enable`（列类型必须是 `Boolean.class`）；
+- 函数结果比较：`WHERE toUpper(name)='ALICE'`；
+- 空值判断：`IS NULL` / `IS NOT NULL`；
+- 范围：`BETWEEN a AND b` / `NOT BETWEEN a AND b`；
+- 集合：`IN (v1,v2,...)` / `NOT IN (...)`；
+- 模糊：`LIKE '%x%'` / `NOT LIKE`；
+- 正则：`REGEXP '^A.*'` / `NOT REGEXP`；
+- 存在性：`EXISTS (子查询)`。
 
-| Method | Description |
-|--------|-------------|
-| `JQuickSQL.embedded(int parallelism)` | Create embedded SQL engine with specified parallelism |
-| `JQuickSQL.builder()` | Create builder for custom configuration |
-| `registerTable(String name, List<JQuickColumnMeta> columns, List<JQuickRow> rows)` | Register a table |
-| `execute(String sql)` | Execute SQL query |
-| `getTable(String name)` | Get registered table data |
-| `hasTable(String name)` | Check if table exists |
-| `getRegisteredTables()` | Get all registered table names |
-| `shutdown()` | Shutdown the engine |
+示例：
+```sql
+SELECT id, name FROM users
+ WHERE age > 25 AND status = 'active'
+   AND addr IN ('beijing','shanghai')
+   AND name LIKE '%Davi%'
+   AND name REGEXP '^A.*'
+   AND addr IS NOT NULL;
+```
+对应测试：`demo/where/JQuickSQLWhereTest.java`。
 
-### JQuickSQL Builder
+### 4.3 JOIN 多表关联
+
+支持形式（5 种）：
+- `INNER JOIN ... ON ...`：内连接；
+- `LEFT [OUTER] JOIN ... ON ...`：左外连接；
+- `RIGHT [OUTER] JOIN ... ON ...`：右外连接；
+- `CROSS JOIN`：笛卡尔积；
+- `NATURAL JOIN`：按同名列自然连接。
+
+注意：`FULL OUTER JOIN` 当前不支持（demo 中已显式 try/catch 验证会抛出不支持异常）。
+
+示例：
+```sql
+SELECT u.name, o.amount
+  FROM users u LEFT JOIN orders o ON u.id = o.user_id;
+```
+对应测试：`demo/joinClause/JQuickSQLJoinTest.java`。
+
+### 4.4 GROUP BY + HAVING + 聚合函数
+
+支持形式：
+- `GROUP BY col1, col2, ...`：按单列或多列分组；
+- `HAVING agg_expr condition`：对聚合结果再过滤；
+- 聚合函数：`COUNT(*)` / `COUNT(col)` / `AVG(col)` / `SUM(col)` / `MAX(col)` / `MIN(col)` / `ROUND(expr, scale)`。
+
+示例：
+```sql
+SELECT dept, COUNT(*) c, AVG(salary) avg_s
+  FROM emp
+ GROUP BY dept
+HAVING COUNT(*) >= 2
+ ORDER BY c DESC;
+```
+对应测试：`demo/groupby/JQuickSQLGroupByTest.java`、`demo/aggregation/JQuickSQLAggregateTest.java`。
+
+### 4.5 ORDER BY 排序
+
+支持形式：
+- `ORDER BY col ASC` / `DESC`：单列升降序；
+- `ORDER BY col1, col2 DESC`：多字段排序；
+- `ORDER BY CASE WHEN ... THEN ... END`：表达式排序；
+- 布尔列排序：`ORDER BY enable DESC`。
+
+示例：
+```sql
+SELECT name, salary, dept
+  FROM emp
+ ORDER BY dept ASC, salary DESC;
+```
+对应测试：`demo/orderBy/JQuickSQLOrderByTest.java`。
+
+### 4.6 LIMIT 分页
+
+支持两种 MySQL 风格：
+- `LIMIT n`：取前 n 行；
+- `LIMIT offset, n`：跳过 offset 行，取 n 行。
+
+示例：
+```sql
+SELECT name FROM users ORDER BY age DESC LIMIT 2, 3;
+```
+对应测试：`demo/limitClause/JQuickSQLLimitTest.java`。
+
+### 4.7 集合运算：UNION / MINUS / INTERSECT
+
+支持形式：
+- `SELECT ... UNION     SELECT ...`：合并去重；
+- `SELECT ... MINUS     SELECT ...`：差集（A 有 B 无）；
+- `SELECT ... INTERSECT SELECT ...`：交集。
+
+示例：
+```sql
+-- 交集：同时出现在两份名单中的用户
+SELECT name FROM list_a  INTERSECT  SELECT name FROM list_b;
+```
+对应测试：`demo/union/JQuickSQLUnionTest.java`。
+
+### 4.8 子查询
+
+子查询位置均已支持：
+- `WHERE` 中的相关子查询与非相关子查询：`IN (子查询)` / `EXISTS (子查询)` / 比较运算 + 标量子查询；
+- `SELECT` 列表中的标量子查询；
+- `HAVING` 中的子查询；
+- `ORDER BY` 中的子查询；
+- `FROM` 后的派生表（inline view）：`SELECT * FROM (SELECT ...) t`；
+- `JOIN` 中的子查询：`SELECT * FROM t1 JOIN (SELECT ...) t2 ON ...`；
+- 嵌套子查询与多列子查询。
+
+示例：
+```sql
+SELECT u.name,
+       (SELECT COUNT(*) FROM orders o WHERE o.user_id = u.id) order_cnt
+  FROM users u
+ WHERE EXISTS (SELECT 1 FROM orders o WHERE o.user_id = u.id);
+```
+对应测试：`demo/subquery/JQuickSQLSubqueryTest.java`。
+
+### 4.9 表达式与自定义函数
+
+- 内置字符串/数学函数可直接在 SELECT 与 WHERE 中使用；
+- 自定义函数：通过 `jquick-transform-function` SPI 扩展，示例中使用 `toUpper(name)` 即为此类扩展；
+- 算术运算：`+ - * /`，字符串拼接可在 SELECT 列表中使用。
+
+### 4.10 XML 动态代理与 Builder API
+
+- XML 动态代理（iBatis 风格）：把 SQL 写在 classpath XML 中，通过 JDK 动态代理生成 Service/DAO 实现，支持 `#{param}` 占位符（见下文 Demo05）；
+- Builder 流式 API：`JQuickSQL.builder().embedded(n).config(cfg).table(name,cols,rows).build()`（见下文 Demo06）。
+
+---
+
+## 五、Demo 示例
+
+> 每个案例都是**完整独立可运行**的 Java 类，可直接复制到 `src/test/java/demo/` 运行。
+> 更多案例见仓库 `src/test/java/com/github/paohaijiao/demo/` 目录。
+
+---
+
+### 案例 1：WHERE 条件过滤 + 函数表达式
+
+#### 功能说明
+支持 `AND/OR/NOT`、比较、`BETWEEN`、`IN`、`LIKE`、`REGEXP`、`IS NULL`、`EXISTS`，并可在条件与字段中使用 `toUpper()` 等 SPI 扩展函数。适用于报表过滤、名单筛选、数据质量校验。
+
+#### 完整 Demo 代码
 
 ```java
-JQuickSQL sql = JQuickSQL.builder()
-    .embedded(2)           // Use embedded mode with 2 workers
-    .parallelism(2)        // Set parallelism
-    .table("products", columns, rows)  // Register table
-    .build();
+package demo;
+
+import com.github.paohaijiao.engine.JQuickSQL;
+import com.github.paohaijiao.statement.JQuickColumnMeta;
+import com.github.paohaijiao.statement.JQuickDataSet;
+import com.github.paohaijiao.statement.JQuickRow;
+
+import java.util.Arrays;
+import java.util.List;
+
+/**
+ * 功能作用：演示等值/范围/模糊/正则/函数/空值 6 类典型 WHERE 条件。
+ * 使用场景：ETL 清洗、名单筛选、动态条件报表。
+ * 注意事项：enable 字段类型为 Boolean.class；toUpper() 由 jquick-transform-function SPI 提供。
+ */
+public class Demo01WhereCondition {
+
+    public static void main(String[] args) {
+        JQuickSQL sql = JQuickSQL.embedded();
+        try {
+            registerUsers(sql);
+
+            System.out.println("=== 1) active 且 年龄 > 25 ===");
+            sql.execute("SELECT id,name,age,status FROM users " +
+                    "WHERE age > 25 AND status = 'active'").printTable();
+
+            System.out.println("=== 2) 年龄 BETWEEN 20 AND 30 ===");
+            sql.execute("SELECT * FROM users WHERE age BETWEEN 20 AND 30").printTable();
+
+            System.out.println("=== 3) addr IN (beijing, shanghai) ===");
+            sql.execute("SELECT name, addr FROM users WHERE addr IN ('beijing','shanghai')").printTable();
+
+            System.out.println("=== 4) name LIKE '%Davi%' ===");
+            sql.execute("SELECT id, name FROM users WHERE name LIKE '%Davi%'").printTable();
+
+            System.out.println("=== 5) name REGEXP '^A.*' ===");
+            sql.execute("SELECT name FROM users WHERE name REGEXP '^A.*'").printTable();
+
+            System.out.println("=== 6) toUpper(name) = 'ALICE' ===");
+            sql.execute("SELECT id, toUpper(name) uname FROM users WHERE toUpper(name)='ALICE'").printTable();
+
+            System.out.println("=== 7) addr IS NULL ===");
+            sql.execute("SELECT name FROM users WHERE addr IS NULL").printTable();
+
+        } finally {
+            sql.shutdown();
+        }
+    }
+
+    private static void registerUsers(JQuickSQL sql) {
+        List<JQuickColumnMeta> cols = Arrays.asList(
+                new JQuickColumnMeta("id", Integer.class, "users"),
+                new JQuickColumnMeta("name", String.class, "users"),
+                new JQuickColumnMeta("age", Integer.class, "users"),
+                new JQuickColumnMeta("status", String.class, "users"),
+                new JQuickColumnMeta("enable", Boolean.class, "users"),
+                new JQuickColumnMeta("addr", String.class, "users")
+        );
+        List<JQuickRow> rows = Arrays.asList(
+                row("id",1,"name","Alice",  "age",25,"status","active",  "enable",true, "addr","beijing"),
+                row("id",2,"name","Bob",    "age",30,"status","active",  "enable",true, "addr","shanghai"),
+                row("id",3,"name","Charlie","age",20,"status","pending", "enable",false,"addr","chengdu"),
+                row("id",4,"name","David",  "age",35,"status","inactive","enable",true, "addr","xian"),
+                row("id",5,"name","Eve",    "age",28,"status","active",  "enable",true, "addr","chongqing"),
+                row("id",6,"name","Martin", "age",30,"status","active",  "enable",true, "addr","guangzhou"),
+                row("id",7,"name","Davila", "age",39,"status","active",  "enable",true, "addr",null)
+        );
+        sql.registerTable("users", cols, rows);
+    }
+
+    private static JQuickRow row(Object... kv) {
+        JQuickRow r = new JQuickRow();
+        for (int i = 0; i < kv.length; i += 2) r.put((String) kv[i], kv[i + 1]);
+        return r;
+    }
+}
 ```
 
+---
 
+### 案例 2：多表 JOIN + EXISTS 子查询
 
+#### 功能说明
+支持 `INNER / LEFT / RIGHT / CROSS / NATURAL` 五种 JOIN；`EXISTS / IN (子查询)` 语法。适用于订单-用户联查、主从数据对照。注意：FULL OUTER JOIN 当前不支持。
 
+#### 完整 Demo 代码
 
-## License
+```java
+package demo;
 
-Apache License 2.0
+import com.github.paohaijiao.engine.JQuickSQL;
+import com.github.paohaijiao.statement.JQuickColumnMeta;
+import com.github.paohaijiao.statement.JQuickDataSet;
+import com.github.paohaijiao.statement.JQuickRow;
+
+import java.util.Arrays;
+import java.util.List;
+
+/**
+ * 功能作用：演示 INNER / LEFT / RIGHT JOIN + EXISTS 子查询 + JOIN 聚合。
+ * 使用场景：订单-用户联表、缺失数据补齐（LEFT JOIN）、名单对照。
+ * 注意事项：两表关联字段类型需一致（Integer↔Integer）；否则会按 Object 比较导致不匹配。
+ */
+public class Demo02JoinAndSubquery {
+
+    public static void main(String[] args) {
+        JQuickSQL sql = JQuickSQL.embedded(2);   // 同 JVM 内 2 个并行 Worker
+        try {
+            registerUsers(sql);
+            registerOrders(sql);
+
+            System.out.println("===== INNER JOIN：有订单的用户 =====");
+            sql.execute("SELECT u.id,u.name,o.id order_id,o.amount " +
+                    "FROM users u INNER JOIN orders o ON u.id=o.user_id " +
+                    "ORDER BY u.id, o.id").printTable();
+
+            System.out.println("===== LEFT JOIN：所有用户（含未下单） =====");
+            sql.execute("SELECT u.name, o.amount FROM users u " +
+                    "LEFT JOIN orders o ON u.id = o.user_id").printTable();
+
+            System.out.println("===== RIGHT JOIN：所有订单 + 对应用户 =====");
+            sql.execute("SELECT u.name, o.id, o.amount FROM users u " +
+                    "RIGHT JOIN orders o ON u.id = o.user_id").printTable();
+
+            System.out.println("===== EXISTS：有订单的用户 =====");
+            sql.execute("SELECT u.id, u.name FROM users u WHERE EXISTS (" +
+                    "SELECT 1 FROM orders o WHERE o.user_id = u.id)" +
+                    " ORDER BY u.id").printTable();
+
+            System.out.println("===== 聚合 JOIN：每个用户订单总额 =====");
+            sql.execute("SELECT u.name, SUM(o.amount) total " +
+                    "FROM users u LEFT JOIN orders o ON u.id=o.user_id " +
+                    "GROUP BY u.name ORDER BY total DESC NULLS LAST").printTable();
+
+        } finally {
+            sql.shutdown();
+        }
+    }
+
+    private static void registerUsers(JQuickSQL sql) {
+        List<JQuickColumnMeta> cols = Arrays.asList(
+                new JQuickColumnMeta("id", Integer.class, "users"),
+                new JQuickColumnMeta("name", String.class, "users"));
+        List<JQuickRow> rows = Arrays.asList(
+                row("id", 1, "name", "Alice"),
+                row("id", 2, "name", "Bob"),
+                row("id", 3, "name", "Charlie"),
+                row("id", 4, "name", "David"));
+        sql.registerTable("users", cols, rows);
+    }
+
+    private static void registerOrders(JQuickSQL sql) {
+        List<JQuickColumnMeta> cols = Arrays.asList(
+                new JQuickColumnMeta("id", Integer.class, "orders"),
+                new JQuickColumnMeta("user_id", Integer.class, "orders"),
+                new JQuickColumnMeta("amount", Double.class, "orders"));
+        List<JQuickRow> rows = Arrays.asList(
+                row("id", 101, "user_id", 1, "amount", 100.0),
+                row("id", 102, "user_id", 1, "amount", 200.0),
+                row("id", 103, "user_id", 2, "amount", 150.0),
+                row("id", 104, "user_id", 3, "amount", 300.0),
+                row("id", 105, "user_id", 99, "amount", 99.99)); // 不存在的用户
+        sql.registerTable("orders", cols, rows);
+    }
+
+    private static JQuickRow row(Object... kv) {
+        JQuickRow r = new JQuickRow();
+        for (int i = 0; i < kv.length; i += 2) r.put((String) kv[i], kv[i + 1]);
+        return r;
+    }
+}
+```
+
+---
+
+### 案例 3：GROUP BY + HAVING + 分页（ORDER BY + LIMIT）
+
+#### 功能说明
+内存聚合 + HAVING 过滤 + 多字段排序 + MySQL 风格 `LIMIT offset, size` 分页；配合 embedded(n) 在同 JVM 内并行完成大表计算。
+
+#### 完整 Demo 代码
+
+```java
+package demo;
+
+import com.github.paohaijiao.engine.JQuickSQL;
+import com.github.paohaijiao.statement.JQuickColumnMeta;
+import com.github.paohaijiao.statement.JQuickDataSet;
+import com.github.paohaijiao.statement.JQuickRow;
+
+import java.util.Arrays;
+import java.util.List;
+
+/**
+ * 功能作用：COUNT/SUM/AVG/MIN/MAX + HAVING + CASE WHEN 分组 + 多字段排序 + 分页。
+ * 使用场景：BI 图表数据、排行榜、列表分页。
+ * 注意事项：LIMIT 同时支持 `LIMIT n` 与 `LIMIT offset, n`。
+ */
+public class Demo03GroupByPageOrder {
+
+    public static void main(String[] args) {
+        JQuickSQL sql = JQuickSQL.embedded();
+        try {
+            registerEmployees(sql);
+
+            System.out.println("===== 部门维度统计 =====");
+            sql.execute("SELECT dept, COUNT(*) emp_cnt, ROUND(AVG(salary),2) avg_sal," +
+                    " SUM(salary) sum_sal FROM emp GROUP BY dept ORDER BY sum_sal DESC").printTable();
+
+            System.out.println("===== HAVING：只保留人数>=2 的部门 =====");
+            sql.execute("SELECT dept, COUNT(*) c FROM emp GROUP BY dept " +
+                    "HAVING COUNT(*) >= 2 ORDER BY c DESC").printTable();
+
+            System.out.println("===== CASE WHEN 分段 + 多列排序 =====");
+            sql.execute("SELECT name, salary, dept, CASE " +
+                    "WHEN salary>=30000 THEN '高' WHEN salary>=20000 THEN '中' ELSE '低' END grade " +
+                    "FROM emp ORDER BY dept ASC, salary DESC").printTable();
+
+            System.out.println("===== 分页：按工资倒序，跳过前 2 取 3 条 =====");
+            sql.execute("SELECT name, dept, salary FROM emp " +
+                    "ORDER BY salary DESC LIMIT 2, 3").printTable();
+
+        } finally {
+            sql.shutdown();
+        }
+    }
+
+    private static void registerEmployees(JQuickSQL sql) {
+        List<JQuickColumnMeta> cols = Arrays.asList(
+                new JQuickColumnMeta("id", Integer.class, "emp"),
+                new JQuickColumnMeta("name", String.class, "emp"),
+                new JQuickColumnMeta("dept", String.class, "emp"),
+                new JQuickColumnMeta("salary", Integer.class, "emp"));
+        List<JQuickRow> rows = Arrays.asList(
+                row("id",1,"name","Alice", "dept","研发",  "salary",32000),
+                row("id",2,"name","Bob",   "dept","研发",  "salary",28000),
+                row("id",3,"name","Carol", "dept","市场",  "salary",22000),
+                row("id",4,"name","David", "dept","市场",  "salary",18000),
+                row("id",5,"name","Eve",   "dept","产品",  "salary",25000),
+                row("id",6,"name","Frank", "dept","研发",  "salary",35000),
+                row("id",7,"name","Grace", "dept","人力",  "salary",15000));
+        sql.registerTable("emp", cols, rows);
+    }
+
+    private static JQuickRow row(Object... kv) {
+        JQuickRow r = new JQuickRow();
+        for (int i = 0; i < kv.length; i += 2) r.put((String) kv[i], kv[i + 1]);
+        return r;
+    }
+}
+```
+
+---
+
+### 案例 4：集合运算 UNION / MINUS / INTERSECT
+
+#### 功能说明
+支持合并（UNION 去重）、差集（MINUS）、交集（INTERSECT）三种集合运算；两边 SELECT 列数与列类型需对齐。适用于名单合并、差异比对、共同项筛选。
+
+#### 完整 Demo 代码
+
+```java
+package demo;
+
+import com.github.paohaijiao.engine.JQuickSQL;
+import com.github.paohaijiao.statement.JQuickColumnMeta;
+import com.github.paohaijiao.statement.JQuickDataSet;
+import com.github.paohaijiao.statement.JQuickRow;
+
+import java.util.Arrays;
+import java.util.List;
+
+/**
+ * 功能作用：演示 UNION（合并去重）、MINUS（差集）、INTERSECT（交集）三种集合运算。
+ * 使用场景：名单合并、两批数据差异比对、同时出现在两份清单中的共同项筛选。
+ * 注意事项：两边 SELECT 的列数与对应列的 Java 类型需保持一致；
+ *           UNION 自动去重，不去重的 UNION ALL 当前未支持。
+ */
+public class Demo04SetOperations {
+
+    public static void main(String[] args) {
+        JQuickSQL sql = JQuickSQL.embedded();
+        try {
+            registerListA(sql);
+            registerListB(sql);
+
+            System.out.println("===== UNION：A 名单 + B 名单 合并去重 =====");
+            sql.execute("SELECT id, name FROM list_a " +
+                        "UNION " +
+                        "SELECT id, name FROM list_b " +
+                        "ORDER BY id").printTable();
+
+            System.out.println("===== MINUS：只在 A 中出现、不在 B 中出现的用户 =====");
+            sql.execute("SELECT id, name FROM list_a " +
+                        "MINUS " +
+                        "SELECT id, name FROM list_b " +
+                        "ORDER BY id").printTable();
+
+            System.out.println("===== INTERSECT：同时出现在 A 与 B 中的用户 =====");
+            sql.execute("SELECT id, name FROM list_a " +
+                        "INTERSECT " +
+                        "SELECT id, name FROM list_b " +
+                        "ORDER BY id").printTable();
+
+        } finally {
+            sql.shutdown();
+        }
+    }
+
+    private static void registerListA(JQuickSQL sql) {
+        List<JQuickColumnMeta> cols = Arrays.asList(
+                new JQuickColumnMeta("id",   Integer.class, "list_a"),
+                new JQuickColumnMeta("name", String.class,  "list_a"));
+        List<JQuickRow> rows = Arrays.asList(
+                row("id", 1, "name", "Alice"),
+                row("id", 2, "name", "Bob"),
+                row("id", 3, "name", "Charlie"),
+                row("id", 4, "name", "David"));      // A 独有的 David
+        sql.registerTable("list_a", cols, rows);
+    }
+
+    private static void registerListB(JQuickSQL sql) {
+        List<JQuickColumnMeta> cols = Arrays.asList(
+                new JQuickColumnMeta("id",   Integer.class, "list_b"),
+                new JQuickColumnMeta("name", String.class,  "list_b"));
+        List<JQuickRow> rows = Arrays.asList(
+                row("id", 1, "name", "Alice"),
+                row("id", 2, "name", "Bob"),
+                row("id", 5, "name", "Eve"),
+                row("id", 6, "name", "Frank"));
+        sql.registerTable("list_b", cols, rows);
+    }
+
+    private static JQuickRow row(Object... kv) {
+        JQuickRow r = new JQuickRow();
+        for (int i = 0; i < kv.length; i += 2) r.put((String) kv[i], kv[i + 1]);
+        return r;
+    }
+}
+```
+
+---
+
+### 案例 5：XML 动态 SQL 代理（iBatis 风格，老项目无缝迁移）
+
+#### 功能说明
+沿用遗留 iBatis / MyBatis 习惯，将 SQL 写在 XML 中，通过 JDK 动态代理生成 Service 接口实现，**老项目零侵入迁移**。
+
+#### 完整 Demo 代码
+
+```java
+package demo;
+
+import com.github.paohaijiao.domain.JQuickTable;
+import com.github.paohaijiao.engine.JQuickSQL;
+import com.github.paohaijiao.statement.JQuickColumnMeta;
+import com.github.paohaijiao.statement.JQuickDataSet;
+import com.github.paohaijiao.statement.JQuickRow;
+import com.github.paohaijiao.xml.JQuickJavaXmlParseFactory;
+
+import java.util.Arrays;
+import java.util.List;
+
+/**
+ * 功能作用：将 SQL 写在 XML 文件中，通过 JDK 动态代理生成 DAO/Service 接口实现；支持 #{param} 占位。
+ * 使用场景：老系统 iBatis 2.x / Struts 项目无缝迁移到 JQuick-SQL；SQL 集中管理。
+ * 注意事项：XML 的 <sqls namespace="..."> 必须与代理接口全类名一致；
+ *           DTD 路径 classpath:paohaijiao/dtd/Jquick-sql.dtd 已内置。
+ *
+ * <pre>{@code
+ * <!-- classpath:jquick-sql.xml 示例 -->
+ * <?xml version="1.0" encoding="UTF-8"?>
+ * <!DOCTYPE sqls PUBLIC "-//PAOHAIJIAO//DTD API JAVA 1.0//EN"
+ *         "classpath:paohaijiao/dtd/Jquick-sql.dtd">
+ * <sqls namespace="demo.Demo05XmlProxy.UserService">
+ *     <sql name="topUsers" returnClass="java.util.List">
+ *         select id, name, age from users order by age desc limit #{limit}
+ *     </sql>
+ * </sqls>
+ * }</pre>
+ */
+public class Demo05XmlProxy {
+
+    /** 业务接口：namespace 必须与 XML 完全一致（jquick-sql.xml 中写 demo.Demo05XmlProxy.UserService） */
+    public interface UserService {
+        List<JQuickRow> topUsers(int limit);
+    }
+
+    public static void main(String[] args) {
+        JQuickSQL sql = JQuickSQL.embedded();
+        try {
+            // 1) 注册内存表
+            List<JQuickColumnMeta> cols = Arrays.asList(
+                    new JQuickColumnMeta("id", Integer.class, "users"),
+                    new JQuickColumnMeta("name", String.class, "users"),
+                    new JQuickColumnMeta("age", Integer.class, "users"));
+            List<JQuickRow> rows = Arrays.asList(
+                    row("id",1,"name","Alice",  "age",25),
+                    row("id",2,"name","Bob",    "age",30),
+                    row("id",3,"name","Charlie","age",20),
+                    row("id",4,"name","David",  "age",35));
+            sql.registerTable("users", cols, rows);
+
+            // 2) 封装为 JQuickTable 交给 XML 代理工厂
+            List<JQuickTable> tables = Arrays.asList(new JQuickTable("users", cols, rows));
+            JQuickJavaXmlParseFactory factory = new JQuickJavaXmlParseFactory(tables);
+
+            // 3) 生成接口代理，调用时自动根据 XML 里的 SQL 替换 #{limit}
+            UserService service = (UserService) factory
+                    .createlInvocationHandler()
+                    .getProxy(UserService.class);
+
+            List<JQuickRow> list = service.topUsers(2);
+            System.out.println("===== 年龄 Top 2（取 XML SQL 执行结果）=====");
+            new JQuickDataSet(cols, list).printTable();
+
+        } finally {
+            sql.shutdown();
+        }
+    }
+
+    private static JQuickRow row(Object... kv) {
+        JQuickRow r = new JQuickRow();
+        for (int i = 0; i < kv.length; i += 2) r.put((String) kv[i], kv[i + 1]);
+        return r;
+    }
+}
+```
+
+---
+
+### 案例 6：Builder 模式 + 嵌入式并行配置
+
+#### 功能说明
+`JQuickSQL.builder()` 流式 API 配置并行度、超时重试、预注册表；`embedded(n)` 在同 JVM 内启动 n 个并行 Worker，适用于代码化配置、多租户引擎构造。
+
+#### 完整 Demo 代码
+
+```java
+package demo;
+
+import com.github.paohaijiao.config.JQuickSqlConfig;
+import com.github.paohaijiao.config.JQuickSqlRuntimeConfig;
+import com.github.paohaijiao.engine.JQuickSQL;
+import com.github.paohaijiao.statement.JQuickColumnMeta;
+import com.github.paohaijiao.statement.JQuickDataSet;
+import com.github.paohaijiao.statement.JQuickRow;
+
+import java.util.Arrays;
+import java.util.List;
+
+/**
+ * 功能作用：流式 Builder 构造 JQuickSQL；可配置并行度、任务超时、重试次数、预注册表。
+ * 使用场景：代码化配置、多租户引擎构造、批量任务统一构造。
+ * 注意事项：示例使用 embedded(2) 在同 JVM 内启动 2 个并行 Worker，保证本 Demo 开箱即用。
+ */
+public class Demo06BuilderEmbedded {
+
+    public static void main(String[] args) {
+        // 1) 运行时配置
+        JQuickSqlRuntimeConfig rt = new JQuickSqlRuntimeConfig();
+        rt.setDefaultParallelism(2);
+        rt.setMaxTaskRetries(3);
+        rt.setTaskTimeoutMs(60_000);
+        JQuickSqlConfig cfg = new JQuickSqlConfig();
+        cfg.setRuntime(rt);
+
+        // 2) 准备城市销售表
+        List<JQuickColumnMeta> cols = Arrays.asList(
+                new JQuickColumnMeta("city",   String.class, "sales"),
+                new JQuickColumnMeta("amount", Long.class,   "sales"));
+        List<JQuickRow> rows = Arrays.asList(
+                row("city","北京","amount",1200L),
+                row("city","上海","amount",2100L),
+                row("city","广州","amount",980L),
+                row("city","北京","amount",800L),
+                row("city","成都","amount",650L),
+                row("city","上海","amount",1300L));
+
+        // 3) Builder 模式构造引擎（embedded(2) 同 JVM 内 2 个并行 Worker）
+        JQuickSQL sql = JQuickSQL.builder()
+                .embedded(2)
+                .config(cfg)
+                .table("sales", cols, rows)
+                .build();
+
+        try {
+            System.out.println("===== 各城市 GMV 聚合 =====");
+            JQuickDataSet r = sql.execute(
+                    "SELECT city, SUM(amount) gmv, COUNT(*) order_cnt " +
+                    "FROM sales GROUP BY city ORDER BY gmv DESC");
+            r.printTable();
+            System.out.println("已注册表：" + sql.getRegisteredTables());
+
+        } finally {
+            sql.shutdown();
+        }
+    }
+
+    private static JQuickRow row(Object... kv) {
+        JQuickRow r = new JQuickRow();
+        for (int i = 0; i < kv.length; i += 2) r.put((String) kv[i], kv[i + 1]);
+        return r;
+    }
+}
+```
+
+---
+
+## 六、核心特性
+
+| 分类 | 能力 | 状态 |
+|------|------|------|
+| 🧩 SQL 语法 | SELECT 子句(*) / WHERE / ORDER BY / LIMIT / GROUP BY / HAVING / JOIN(5种: INNER/LEFT/RIGHT/CROSS/NATURAL) / UNION / MINUS / INTERSECT / 子查询(8种位置) / CASE WHEN / DISTINCT | ✅ |
+| 🔍 函数 | 内置数学 / 字符串 + **SPI 自定义函数**（jquick-transform-function 扩展） | ✅ |
+| 🧠 优化器 | 谓词下推 · 投影下推 · 常量折叠 · 过滤合并 等基础规则 | ✅ |
+| 🚀 并行执行 | `embedded(n)` 同一 JVM 内 n 个并行 Worker；Fragment 切分；Hash/NestedLoop Join | ✅ |
+| 🗂️ 数据源 | 内存注册表 + 生态组件接入：jquick-curl(REST JSON) / jquick-excel(Excel) / jquick-java(规则脚本)；更多 RDBMS 连接器在 jquick-connector 路线图中 | ✅ / 🗺️ |
+| 🧓 老旧兼容 | JDK 8、XML 动态代理（iBatis 风格）、单 Worker 模式可嵌入 Tomcat 7 应用 | ✅ |
+| 🔗 生态组合 | jquick-curl（REST 数据注册） · jquick-excel（Excel 行注册后 JOIN） · jquick-java（规则 SQL） | ✅ |
+
+> 🗺️ 路线图：国产数据库 Dialect 适配（达梦 / 人大金仓 / OceanBase / GaussDB / TiDB）规划通过 jquick-connector 子项目统一发布，当前未内置。
+
+---
+
+## 七、依赖配置
+
+### 7.1 完整 pom.xml 最小可运行模板
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+         https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.example</groupId>
+    <artifactId>jquick-sql-demo</artifactId>
+    <version>1.0-SNAPSHOT</version>
+
+    <properties>
+        <maven.compiler.source>8</maven.compiler.source>
+        <maven.compiler.target>8</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <jquick.version>4.1.0</jquick.version>
+        <junit.version>4.13.2</junit.version>
+    </properties>
+
+    <dependencies>
+        <!-- JQuick-SQL 嵌入式 SQL 查询引擎 -->
+        <dependency>
+            <groupId>io.github.paohaijiao</groupId>
+            <artifactId>jquick-sql</artifactId>
+            <version>${jquick.version}</version>
+        </dependency>
+
+        <!-- 可选：REST JSON 数据注册为内存表 -->
+        <dependency>
+            <groupId>io.github.paohaijiao</groupId>
+            <artifactId>jquick-curl</artifactId>
+            <version>1.3.2</version>
+        </dependency>
+
+        <!-- 可选：Excel 数据注册为内存表 -->
+        <dependency>
+            <groupId>io.github.paohaijiao</groupId>
+            <artifactId>jquick-excel</artifactId>
+            <version>2.0.1</version>
+        </dependency>
+
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>${junit.version}</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+</project>
+```
+
+### 7.2 jquick.properties（可选，放 classpath）
+
+```properties
+# Banner
+jquick.banner.enabled=true
+jquick.banner.slogan=JQuick-SQL · Just Query, Quickly!
+
+# Runtime（同 JVM 内并行 Worker 配置）
+jquick.runtime.defaultParallelism=4
+jquick.runtime.maxFileSize=134217728
+jquick.runtime.maxTaskRetries=3
+jquick.runtime.taskTimeoutMs=60000
+```
+
+---
+
+## 八、注意事项
+
+| # | 说明 |
+|---|------|
+| 1 | `embedded(n)` 会占用 `19001 ~ 19000+n` 端口；防火墙需放开；`shutdown()` 必须在 `finally` 中调用。 |
+| 2 | `JQuickColumnMeta` 第 3 个参数是表别名（tableAlias），多表 JOIN 时 SQL 里的别名必须与此一致，否则列解析失败。 |
+| 3 | 布尔字段建议用 `Boolean.class`；若存 `String "true/false"`，`WHERE enable` 会按字符串处理导致报错。 |
+| 4 | **Tomcat 7 / 老应用** 推荐 `embedded(1)` 单 Worker 模式；gRPC Netty Shaded 在老 JDK 8u 早期版本存在反射权限问题时，可替换为 `grpc-netty`。 |
+| 5 | **国产数据库方言**：当前仅作为 jquick-connector 子项目路线图规划中，jquick-sql 核心包暂不内置对应方言与分页自动翻译。 |
+| 6 | **协议边界**：jquick-sql 自身 Apache-2.0，免费商用；若业务同时使用 jquick-pdf，请单独阅读 AGPL-3.0 商业授权条款。 |
+| 7 | `JQuickSQL` 单例即可（内部同步锁）；`JQuickDataSet` 非线程安全。 |
+| 8 | 大 SQL / 大数据量请把 `taskTimeoutMs` 调大并适当提升 `embedded(n)` 的并行度（`Runtime.getRuntime().availableProcessors()` 做参考）。 |
+| 9 | FULL OUTER JOIN 当前未支持；CTE / 递归 UNION / 窗口函数 未实现，请勿在生产 SQL 中使用。 |
+
+---
+
+## 九、贡献指南
+
+> 参考 [paohaijiao 组织贡献规范](https://github.com/paohaijiao)，针对 JQuick-SQL 特殊补充：
+
+1. Fork → 新建分支 `feature/xxx` / `fix/issue-123` / `docs/xxx`；
+2. 本地 `mvn clean test` 全部通过后提交；
+3. **新增或修改能力必须附带独立完整可运行 Demo**（放入 `src/test/java/com/github/paohaijiao/demo/` 目录，含 import + main 或 @Test + 注释头）；
+4. 每条 Optimizer Rule 附带**正反向**测试（`src/test/java/com/github/paohaijiao/optimizer/*Test.java`）；
+5. 并行执行相关 Bug 请提供 `embedded(2)` 最小复现用例；
+6. PR 标题：`[模块] 一句话描述`，例：`[optimizer] ProjectionPushdown 支持子查询派生表`；
+7. 合入后自动更新贡献者墙 🙌。
+
+---
+
+<div align="center">
+
+**⬆️ 回到 [【JQuick 生态导航】](#三jquick-生态导航) · [Apache-2.0](LICENSE) · Made with ❤️ by [paohaijiao](https://github.com/paohaijiao)**
+
+</div>
