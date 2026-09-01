@@ -143,15 +143,17 @@ public class QuickStartDemo {
 > 点击下表即可跳转到对应子项目。所有项目共享 `io.github.paohaijiao` groupId。
 > 协议：Apache-2.0（✅ 免费商用），**除 jquick-pdf 为 AGPL-3.0（⚠️ 商用需授权）**。
 
-| # | 项目名称 | 仓库地址 | 简介 | 开源协议 |
-|---|---------|---------|------|---------|
-| 1 | **jquick-sql** ⭐ | [paohaijiao/jquick-sql](https://github.com/paohaijiao/jquick-sql) | 嵌入式 SQL 查询引擎（当前项目） | Apache-2.0 |
-| 2 | jquick-gateway | [paohaijiao/jquick-gateway](https://github.com/paohaijiao/jquick-gateway) | 基于 Netty 的轻量级 API 网关（路由 / 限流 / 熔断 / 灰度） | Apache-2.0 |
-| 3 | jquick-excel | [paohaijiao/jquick-excel](https://github.com/paohaijiao/jquick-excel) | Excel 读写工具；大文件 SAX 流式；老项目 POI 3.x 兼容 | Apache-2.0 |
-| 4 | jquick-pdf | [paohaijiao/jquick-pdf](https://github.com/paohaijiao/jquick-pdf) | 基于 iText7 的 PDF 处理（模板渲染 / 签章 / 水印 / 合并拆分） | **AGPL-3.0 ⚠️** |
-| 5 | jquick-asm | [paohaijiao/jquick-asm](https://github.com/paohaijiao/jquick-asm) | ASM 9.x 字节码增强；AOP 代理 / 动态 Bean / 类转换 | Apache-2.0 |
-| 6 | jquick-curl | [paohaijiao/jquick-curl](https://github.com/paohaijiao/jquick-curl) | HTTP 客户端（链式 Fluent API / 连接池 / 断点续传 / 重试） | Apache-2.0 |
-| 7 | jquick-java | [paohaijiao/jquick-java](https://github.com/paohaijiao/jquick-java) | ANTLR4 脚本引擎 + XML 动态代理；规则引擎热加载 | Apache-2.0 |
+| # | 项目名称             | 仓库地址                                                                  | 简介                                        | 开源协议 |
+|---|------------------|-----------------------------------------------------------------------|-------------------------------------------|---------|
+| 1 | **jquick-sql** ⭐ | [paohaijiao/jquick-sql](https://github.com/paohaijiao/jquick-sql)     | 嵌入式 SQL 查询引擎（当前项目）                        | Apache-2.0 |
+| 2 | jquick-hub       | [paohaijiao/jquick-hub](https://github.com/paohaijiao/jquick-hub)     | 基于 Netty 的轻量级 tcp 网关                      | Apache-2.0 |
+| 3 | jquick-excel     | [paohaijiao/jquick-excel](https://github.com/paohaijiao/jquick-excel) | Excel 读写工具；大文件 SAX 流式；老项目 POI 3.x 兼容      | Apache-2.0 |
+| 4 | jquick-pdf       | [paohaijiao/jquick-pdf](https://github.com/paohaijiao/jquick-pdf)     | 基于 iText7 的 PDF 处理（模板渲染 / 签章 / 水印 / 合并拆分） | **AGPL-3.0 ⚠️** |
+| 5 | jquick-asm       | [paohaijiao/jquick-asm](https://github.com/paohaijiao/jquick-asm)     | ASM 9.x 字节码增强；AOP 代理 / 动态 Bean / 类转换      | Apache-2.0 |
+| 6 | jquick-curl      | [paohaijiao/jquick-curl](https://github.com/paohaijiao/jquick-curl)   | HTTP 客户端（链式 Fluent API / 连接池 / 断点续传 / 重试） | Apache-2.0 |
+| 7 | jquick-java      | [paohaijiao/jquick-java](https://github.com/paohaijiao/jquick-java)   | ANTLR4 脚本引擎 + XML 动态代理；规则引擎热加载            | Apache-2.0 |
+| 8 | jquick-json      | [paohaijiao/jquick-json](https://github.com/paohaijiao/jquick-json)   | JSON 读/写                                  | Apache-2.0 |
+| 9 | jquick-path      | [paohaijiao/jquick-path](https://github.com/paohaijiao/jquick-path)   | Path 操作工具箱                                | Apache-2.0 |
 
 > 📌 **跨项目组合示例**：jquick-sql + jquick-curl → 将 REST JSON 数据注册为内存表后联邦查询；jquick-sql + jquick-excel → 读取 Excel 行后与业务表 JOIN；更多见各项目 README。
 
