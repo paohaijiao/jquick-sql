@@ -1,0 +1,1552 @@
+package com.github.paohaijiao.distributed.worker;
+
+import com.github.paohaijiao.console.JConsole;
+import com.github.paohaijiao.datasource.JQuickDataSourceManager;
+import com.github.paohaijiao.distributed.proto.JQuickProtoService;
+import com.github.paohaijiao.distributed.worker.join.JQuickJoinHandler;
+import com.github.paohaijiao.distributed.worker.join.JQuickJoinHandlerFactory;
+import com.github.paohaijiao.enums.JQuickExchangeType;
+import com.github.paohaijiao.enums.JQuickSubqueryType;
+import com.github.paohaijiao.expression.JQuickExpression;
+import com.github.paohaijiao.expression.JQuickSubqueryExpression;
+import com.github.paohaijiao.expression.domain.JQuickBinaryExpression;
+import com.github.paohaijiao.expression.domain.JQuickColumnRefExpression;
+import com.github.paohaijiao.expression.domain.JQuickFunctionCallExpression;
+import com.github.paohaijiao.expression.domain.JQuickLiteralExpression;
+import com.github.paohaijiao.physical.JQuickPhysicalPlanNode;
+import com.github.paohaijiao.physical.domain.JQuickPhysicalColumn;
+import com.github.paohaijiao.physical.node.*;
+import com.github.paohaijiao.proto.JQuickExecuteTaskRequest;
+import com.github.paohaijiao.proto.JQuickFragmentProto;
+import com.github.paohaijiao.proto.JQuickMemoryPartitionProto;
+import com.github.paohaijiao.statement.JQuickColumnMeta;
+import com.github.paohaijiao.statement.JQuickDataSet;
+import com.github.paohaijiao.statement.JQuickRow;
+
+import java.util.*;
+import java.util.stream.Collectors;
+
+/**
+ * 节点执行服务 - 负责执行各种物理计划节点
+ */
+public class JQuickNodeExecutor {
+
+    private JConsole console=JConsole.initConsoleEnvironment();
+
+    private final JQuickWorker worker;
+
+    private final JQuickExpressionEvaluator expressionEvaluator;
+
+    private final JQuickPartitionManager partitionManager;
+
+    private final JQuickDataConverter dataConverter;
+
+    private final JQuickProtoService jQuickprotoService;
+
+    private final JQuickJoinHandlerFactory joinHandlerFactory;
+
+
+    public JQuickNodeExecutor(JQuickWorker worker, JQuickExpressionEvaluator expressionEvaluator, JQuickPartitionManager partitionManager, JQuickDataConverter dataConverter) {
+        this.worker = worker;
+        this.expressionEvaluator = expressionEvaluator;
+        this.partitionManager = partitionManager;
+        this.dataConverter = dataConverter;
+        this.jQuickprotoService = new JQuickProtoService();
+        this.joinHandlerFactory = new JQuickJoinHandlerFactory(expressionEvaluator);
+    }
+
+    /**
+     * 执行片段的核心方法
+     */
+    public JQuickDataSet executeFragment(JQuickFragmentProto fragment, JQuickWorker.JQuickTaskContext context) {
+        JQuickPhysicalPlanNode rootNode = jQuickprotoService.buildPhysicalNode(fragment.getPlan());
+        JQuickDataSet result = executeNode(rootNode, context);
+        console.info("executeFragment: returning " + result.size() + " rows from executeNode ["+rootNode.getNodeType()+"]");
+        return result;
+    }
+
+    /**
+     * 递归执行物理计划节点
+     */
+    public JQuickDataSet executeNode(JQuickPhysicalPlanNode node, JQuickWorker.JQuickTaskContext context) {
+        if (node == null) {
+            return JQuickDataSet.builder().build();
+        }
+        if (node instanceof JQuickTableScanPhysicalNode) {//1
+            return executeTableScan((JQuickTableScanPhysicalNode) node, context);
+        } else if (node instanceof JQuickFilterPhysicalNode) {//2
+            return executeFilter((JQuickFilterPhysicalNode) node, context);
+        } else if (node instanceof JQuickProjectPhysicalNode) {//3
+            return executeProject((JQuickProjectPhysicalNode) node, context);
+        } else if (node instanceof JQuickHashJoinPhysicalNode) {
+            return executeHashJoin((JQuickHashJoinPhysicalNode) node, context);
+        } else if (node instanceof JQuickNestedLoopJoinPhysicalNode) {
+            return executeNestedLoopJoin((JQuickNestedLoopJoinPhysicalNode) node, context);
+        }else if (node instanceof JQuickTopNPhysicalNode) {//7
+            return executeTopN((JQuickTopNPhysicalNode) node, context);
+        } else if (node instanceof JQuickSortPhysicalNode) {//6
+            return executeSort((JQuickSortPhysicalNode) node, context);
+        } else if (node instanceof JQuickLimitPhysicalNode) {//5
+            return executeLimit((JQuickLimitPhysicalNode) node, context);
+        }  else if (node instanceof JQuickWindowPhysicalNode) {//4
+            return executeWindow((JQuickWindowPhysicalNode) node, context);
+        } else if (node instanceof JQuickHashAggregatePhysicalNode) {//5
+            return executeHashAggregate((JQuickHashAggregatePhysicalNode) node, context);
+        } else if (node instanceof JQuickExchangePhysicalNode) {
+            return executeExchange((JQuickExchangePhysicalNode) node, context);
+        }else if (node instanceof JQuickSetOperationPhysicalNode) {//8
+            return executeSetOperation((JQuickSetOperationPhysicalNode) node, context);
+        } else if (node instanceof JQuickValuesPhysicalNode) {
+            return executeValues((JQuickValuesPhysicalNode) node, context);
+        } else if (node instanceof JQuickEmptyPhysicalNode) {
+            return JQuickDataSet.builder().build();
+        } else if (node instanceof JQuickRecursiveUnionPhysicalNode) {//9
+            return executeRecursiveUnion((JQuickRecursiveUnionPhysicalNode) node, context);
+        }
+        throw new UnsupportedOperationException("Unknown node type: " + node.getNodeType());
+    }
+
+
+    /**
+     * 执行物理计划（用于相关子查询，传递外部行数据）
+     */
+    public JQuickDataSet executePhysicalPlan(JQuickPhysicalPlanNode node, JQuickRow parentRow) {
+        JQuickPhysicalPlanNode actualNode = node;
+        if (node instanceof JQuickExchangePhysicalNode) {
+            JQuickExchangePhysicalNode exchangeNode = (JQuickExchangePhysicalNode) node;
+            if (exchangeNode.getExchangeType() == JQuickExchangeType.SHUFFLE || 
+                exchangeNode.getExchangeType() == JQuickExchangeType.BROADCAST ||
+                exchangeNode.getExchangeType() == JQuickExchangeType.GATHER) {
+                if (exchangeNode.getChild() != null) {
+                    actualNode = exchangeNode.getChild();
+                }
+            }
+        }
+        
+        Set<JQuickTableScanPhysicalNode> tableScans = collectTableScans(actualNode);
+        // 收集内部表别名，用于相关子查询中区分内部表和外部表
+        if (parentRow != null) {
+            Set<String> innerAliases = new HashSet<>();
+            for (JQuickTableScanPhysicalNode tableScan : tableScans) {
+                if (tableScan.getAlias() != null) {
+                    innerAliases.add(tableScan.getAlias());
+                }
+            }
+            expressionEvaluator.setInnerTableAliases(innerAliases);
+        }
+        JQuickExecuteTaskRequest.Builder requestBuilder = JQuickExecuteTaskRequest.newBuilder()
+                .setQueryId("subquery")
+                .setTaskId("subquery_task_" + System.currentTimeMillis())
+                .setMemoryLimitBytes(1024 * 1024 * 1024);
+        for (JQuickTableScanPhysicalNode tableScan : tableScans) {
+            JQuickDataSet tableData = readFromDataSource(tableScan.getTableName());
+            if (parentRow != null) {
+                List<JQuickRow> filteredRows = new ArrayList<>();
+                for (JQuickRow row : tableData.getRows()) {
+                    JQuickRow mergedRow = new JQuickRow();
+                    mergedRow.putAll(row);
+                    for (String key : parentRow.keySet()) {
+                        mergedRow.put("outer_" + key, parentRow.get(key));
+                    }
+                    filteredRows.add(mergedRow);
+                }
+                tableData = new JQuickDataSet(tableData.getColumns(), filteredRows);
+            }
+            JQuickMemoryPartitionProto partition = JQuickMemoryPartitionProto.newBuilder()
+                    .setPartitionId("subquery_partition_" + tableScan.getTableName())
+                    .setPartitionIndex(0)
+                    .setTotalPartitions(1)
+                    .setData(dataConverter.convertToProto(tableData))
+                    .build();
+            requestBuilder.addInputPartitions(partition);
+        }
+        JQuickExecuteTaskRequest request = requestBuilder.build();
+        JQuickWorker.JQuickTaskContext context = worker.new JQuickTaskContext(request.getTaskId(), request);
+        console.info("executePhysicalPlan - actualNode type: " + actualNode.getNodeType() + ", tableScans found: " + tableScans.size() + ", inputPartitions: " + request.getInputPartitionsCount());
+        JQuickDataSet result = executeNode(actualNode, context);
+        console.info("executePhysicalPlan - result: rows=" + result.size() + ", columns=" + result.getColumnNames());
+        expressionEvaluator.clearInnerTableAliases();
+        return result;
+    }
+
+    private Set<JQuickTableScanPhysicalNode> collectTableScans(JQuickPhysicalPlanNode node) {
+        Set<JQuickTableScanPhysicalNode> tableScans = new HashSet<>();
+        collectTableScansRecursive(node, tableScans);
+        return tableScans;
+    }
+
+    private void collectTableScansRecursive(JQuickPhysicalPlanNode node, Set<JQuickTableScanPhysicalNode> tableScans) {
+        if (node instanceof JQuickTableScanPhysicalNode) {
+            tableScans.add((JQuickTableScanPhysicalNode) node);
+        }
+        for (JQuickPhysicalPlanNode child : node.getChildren()) {
+            collectTableScansRecursive(child, tableScans);
+        }
+    }
+
+    /**
+     * 执行 TableScan
+     */
+    private JQuickDataSet executeTableScan(JQuickTableScanPhysicalNode node, JQuickWorker.JQuickTaskContext context) {
+        String tableName = node.getTableName();
+        console.info("executeTableScan - tableName: " + tableName + ", partitionInfo: " + (node.getPartitionInfo() != null ? "exists" : "null"));
+        Set<String> requiredColumns = node.getRequiredColumns();
+        JQuickDataSet data;
+        boolean fromInputPartitions = false;
+        if (context != null && context.getRequest() != null && context.getRequest().getInputPartitionsCount() > 0) {
+            JQuickDataSet partitionData = readFromInputPartitions(tableName, context.getRequest());
+            if (partitionData != null && !partitionData.isEmpty()) {
+                console.info("Reading from input partitions (by table name): " + tableName + ", rows: " + partitionData.size());
+                data = partitionData;
+                fromInputPartitions = true;
+            } else {
+                String subqueryPartitionId = "subquery_partition_" + tableName;
+                JQuickDataSet memoryData = readFromMemoryPartition(subqueryPartitionId);
+                if (memoryData != null && !memoryData.isEmpty()) {
+                    console.info("Reading from memory partition (subquery): " + subqueryPartitionId + ", rows: " + memoryData.size());
+                    data = memoryData;
+                    fromInputPartitions = true;
+                } else {
+                    partitionData = readFromAnyInputPartition(context.getRequest());
+                    if (partitionData != null && !partitionData.isEmpty()) {
+                        console.info("Reading from input partitions (INTERMEDIATE fragment): " + tableName + ", rows: " + partitionData.size());
+                        data = partitionData;
+                        fromInputPartitions = true;
+                    } else if (node.getPartitionInfo() != null) {
+                        console.info("Reading from memory partition: " + tableName);
+                        data = readFromMemoryPartition(tableName);
+                    } else if (JQuickDataSourceManager.containsTable(tableName)) {
+                        console.info("Reading from data source (fallback): " + tableName);
+                        data = JQuickDataSourceManager.getTable(tableName);
+                    } else {
+                        console.info("Reading from data source: " + tableName);
+                        data = readFromDataSource(tableName);
+                    }
+                }
+            }
+        } else if (JQuickDataSourceManager.containsTable(tableName)) {
+            console.info("Reading from data source (CTE or registered table): " + tableName);
+            data = JQuickDataSourceManager.getTable(tableName);
+        } else if (node.getPartitionInfo() != null) {
+            console.info("Reading from memory partition: " + tableName);
+            data = readFromMemoryPartition(tableName);
+        } else {
+            console.info("Reading from data source: " + tableName);
+            data = readFromDataSource(tableName);
+        }
+        console.info("Table data loaded - rows: " + data.size() + ", columns: " + data.getColumns().size());
+        if (node.getFilterPredicate() != null) {
+            data = applyFilter(data, node.getFilterPredicate());
+            console.info("After filter - rows: " + data.size());
+        }
+        if (requiredColumns != null && !requiredColumns.isEmpty() && !fromInputPartitions) {
+            String alias=node.getAlias();
+            Set<String> columns = new HashSet<>();
+            for (String column : requiredColumns) {
+                if (null!=alias&&!alias.equals(column)) {
+                    columns.add(column.replace( alias+".",""));
+                }else {
+                    columns.add(column);
+                }
+            }
+            data= data.select(columns.toArray(new String[0]));
+            console.info("After projection - columns: " + data.getColumns().size());
+        }
+        context.addProcessedRows(data.size());
+        return data;
+    }
+    
+    /**
+     * 从 input partitions 读取数据（分布式场景）
+     */
+    private JQuickDataSet readFromInputPartitions(String tableName, JQuickExecuteTaskRequest request) {
+        String targetPartitionId = "subquery_partition_" + tableName;
+        for (JQuickMemoryPartitionProto partition : request.getInputPartitionsList()) {
+            console.info("readFromInputPartitions - checking partition: " + partition.getPartitionId() + ", hasData: " + partition.hasData());
+            if (partition.getPartitionId().equals(targetPartitionId) && partition.hasData()) {
+                JQuickDataSet partitionData = dataConverter.convertFromProto(partition.getData());
+                console.info("readFromInputPartitions - found data in partition: " + partition.getPartitionId() + ", rows: " + partitionData.size());
+                return partitionData;
+            }
+        }
+        console.warn("readFromInputPartitions - no data found for table: " + tableName);
+        return JQuickDataSet.builder().build();
+    }
+    
+    /**
+     * 读取任意输入分区数据（适用于 INTERMEDIATE Fragment）
+     */
+    private JQuickDataSet readFromAnyInputPartition(JQuickExecuteTaskRequest request) {
+        for (JQuickMemoryPartitionProto partition : request.getInputPartitionsList()) {
+            if (partition.hasData()) {
+                JQuickDataSet partitionData = dataConverter.convertFromProto(partition.getData());
+                console.info("readFromAnyInputPartition - reading from partition: " + partition.getPartitionId() + ", rows: " + partitionData.size());
+                return partitionData;
+            }
+        }
+        return JQuickDataSet.builder().build();
+    }
+    /**
+     * 执行 Filter
+     * 对谓词中的非相关 SCALAR 子查询提前计算一次，用字面量替换，避免逐行重复执行
+     */
+    private JQuickDataSet executeFilter(JQuickFilterPhysicalNode node, JQuickWorker.JQuickTaskContext context) {
+        JQuickDataSet input = executeNode(node.getChild(), context);
+        JQuickExpression predicate = preEvaluateScalarSubqueries(node.getPredicate());
+        JQuickDataSet result = input.filter(row -> expressionEvaluator.evaluatePredicate(row, predicate));
+        context.addProcessedRows(input.size());
+        return result;
+    }
+
+    /**
+     * 预计算表达式中的标量子查询
+     * 对 SCALAR 类型子查询，用 null parentRow 提前执行一次：
+     *   - 非相关子查询：返回标量值，用 JQuickLiteralExpression 替换，后续逐行比较只需常量比较
+     *   - 相关子查询：执行时找不到外部列会返回 null 或抛异常，保持原样逐行计算
+     * 递归处理二元表达式的左右子树。
+     */
+    private JQuickExpression preEvaluateScalarSubqueries(JQuickExpression expr) {
+        if (expr == null) {
+            return null;
+        }
+        if (expr instanceof JQuickSubqueryExpression) {
+            JQuickSubqueryExpression subqueryExpr = (JQuickSubqueryExpression) expr;
+            if (subqueryExpr.getSubqueryType() == JQuickSubqueryType.SCALAR) {
+                try {
+                    Object value = expressionEvaluator.evaluateExpression(null, subqueryExpr);
+                    console.info("preEvaluateScalarSubqueries - subquery result: " + value);
+                    if (value != null) {
+                        return new JQuickLiteralExpression(value);
+                    }
+                } catch (Exception e) {
+                    console.warn("preEvaluateScalarSubqueries - failed to pre-evaluate subquery, keep original: " + e.getMessage());
+                }
+            }
+            return expr;
+        } else if (expr instanceof JQuickBinaryExpression) {
+            JQuickBinaryExpression binary = (JQuickBinaryExpression) expr;
+            JQuickExpression left = preEvaluateScalarSubqueries(binary.getLeft());
+            JQuickExpression right = preEvaluateScalarSubqueries(binary.getRight());
+            return new JQuickBinaryExpression(left, right, binary.getOperator());
+        }
+        return expr;
+    }
+
+
+    /**
+     * 执行 Project
+     */
+    private JQuickDataSet executeProject(JQuickProjectPhysicalNode node, JQuickWorker.JQuickTaskContext context) {
+        JQuickPhysicalPlanNode child = node.getChild();
+        // 先执行子节点（含JOIN及子查询），不提前设置别名上下文
+        // 因为子查询中的Project会覆盖/清除外层别名上下文
+        JQuickDataSet input = executeNode(child, context);
+        // 子节点执行完毕后，如果是JOIN节点，设置别名上下文用于投影求值
+        boolean needAliasContext = false;
+        if (child instanceof JQuickHashJoinPhysicalNode) {
+            setupAliasContext((JQuickHashJoinPhysicalNode) child);
+            needAliasContext = true;
+        } else if (child instanceof JQuickNestedLoopJoinPhysicalNode) {
+            setupAliasContext((JQuickNestedLoopJoinPhysicalNode) child);
+            needAliasContext = true;
+        }
+        try {
+            if (node.isStar()) {
+                if (node.isDistinct()) {
+                    List<JQuickRow> distinctRows = input.getRows().stream().distinct().collect(Collectors.toList());
+                    return new JQuickDataSet(input.getColumns(), distinctRows);
+                }
+                return input;
+            }
+            // 处理 qualified star (如 u.*)：过滤出指定表别名的列
+            if (node.getQualifiedStar() != null) {
+                String starAlias = node.getQualifiedStar();
+                List<JQuickRow> projectedRows = new ArrayList<>();
+                List<JQuickColumnMeta> qualifiedColumns = new ArrayList<>();
+                // 检查是否有 JOIN 前缀的列（left./right.）
+                boolean hasJoinPrefix = false;
+                if (!input.getRows().isEmpty()) {
+                    for (String key : input.getRows().get(0).keySet()) {
+                        if (key.startsWith("left.") || key.startsWith("right.")) {
+                            hasJoinPrefix = true;
+                            break;
+                        }
+                    }
+                }
+                if (!hasJoinPrefix) {
+                    // 非JOIN场景：单表查询 u1.* 等价于 SELECT *
+                    // 检查列是否带表别名前缀（如 u1.col）
+                    boolean hasAliasPrefix = false;
+                    if (!input.getRows().isEmpty()) {
+                        for (String key : input.getRows().get(0).keySet()) {
+                            if (key.startsWith(starAlias + ".")) {
+                                hasAliasPrefix = true;
+                                break;
+                            }
+                        }
+                    }
+                    for (JQuickRow row : input.getRows()) {
+                        JQuickRow newRow = new JQuickRow();
+                        for (String key : row.keySet()) {
+                            if (hasAliasPrefix && key.startsWith(starAlias + ".")) {
+                                newRow.put(key.substring(starAlias.length() + 1), row.get(key));
+                            } else if (!hasAliasPrefix) {
+                                // 列名不带前缀，直接返回所有列
+                                newRow.put(key, row.get(key));
+                            }
+                        }
+                        projectedRows.add(newRow);
+                    }
+                    for (JQuickColumnMeta col : input.getColumns()) {
+                        String colName = col.getName();
+                        if (hasAliasPrefix && colName.startsWith(starAlias + ".")) {
+                            qualifiedColumns.add(col);
+                        } else if (!hasAliasPrefix) {
+                            qualifiedColumns.add(col);
+                        }
+                    }
+                } else {
+                    // JOIN场景：根据别名过滤 left.u1.col / right.u1.col / u1.col
+                    for (JQuickRow row : input.getRows()) {
+                        JQuickRow newRow = new JQuickRow();
+                        for (String key : row.keySet()) {
+                            if (key.startsWith(starAlias + ".")) {
+                                newRow.put(key.substring(starAlias.length() + 1), row.get(key));
+                            } else if (key.startsWith("left." + starAlias + ".")) {
+                                newRow.put(key.substring(5 + starAlias.length() + 1), row.get(key));
+                            } else if (key.startsWith("right." + starAlias + ".")) {
+                                newRow.put(key.substring(6 + starAlias.length() + 1), row.get(key));
+                            }
+                        }
+                        projectedRows.add(newRow);
+                    }
+                    for (JQuickColumnMeta col : input.getColumns()) {
+                        String colName = col.getName();
+                        if (colName.startsWith(starAlias + ".") || colName.startsWith("left." + starAlias + ".") || colName.startsWith("right." + starAlias + ".")) {
+                            qualifiedColumns.add(col);
+                        }
+                    }
+                }
+                if (node.isDistinct()) {
+                    projectedRows = projectedRows.stream().distinct().collect(Collectors.toList());
+                }
+                return new JQuickDataSet(qualifiedColumns, projectedRows);
+            }
+            List<JQuickRow> projectedRows = new ArrayList<>();
+            for (JQuickRow row : input.getRows()) {
+                JQuickRow newRow = new JQuickRow();
+                for (JQuickProjectPhysicalNode.SelectItem item : node.getSelectItems()) {
+                    Object value = expressionEvaluator.evaluateExpression(row, item.getExpression());
+                    String col="";
+                    if (item.getExpression() instanceof JQuickColumnRefExpression){
+                        col=((JQuickColumnRefExpression) item.getExpression()).getColumnName();
+                    }
+                    String alias = item.getAlias() != null ? item.getAlias() : col;
+                    newRow.put(alias, value);
+                }
+                projectedRows.add(newRow);
+            }
+
+            if (node.isDistinct()) {
+                projectedRows = projectedRows.stream().distinct().collect(Collectors.toList());
+            }
+            List<JQuickColumnMeta> columnMetas = buildColumnMetasForProject(node);
+            return new JQuickDataSet(columnMetas, projectedRows);
+        } finally {
+            if (needAliasContext) {
+                expressionEvaluator.clearAliasContext();
+            }
+        }
+    }
+
+    /**
+     * 执行 Hash Join
+     */
+    private JQuickDataSet executeHashJoin(JQuickHashJoinPhysicalNode node, JQuickWorker.JQuickTaskContext context) {
+        setupAliasContext(node);
+        try {
+            JQuickDataSet leftData = null;
+            JQuickDataSet rightData = null;
+            if (context != null && context.getRequest() != null && context.getRequest().getInputPartitionsCount() > 0) {
+                List<JQuickMemoryPartitionProto> inputPartitions = context.getRequest().getInputPartitionsList();
+                if (inputPartitions.size() >= 2) {
+                    leftData = dataConverter.convertFromProto(inputPartitions.get(0).getData());
+                    rightData = dataConverter.convertFromProto(inputPartitions.get(1).getData());
+                } else if (inputPartitions.size() == 1) {
+                    leftData = dataConverter.convertFromProto(inputPartitions.get(0).getData());
+                }
+            }
+            if (leftData == null || leftData.isEmpty()) {
+                leftData = executeNode(node.getLeft(), context);
+            }
+            if (rightData == null || rightData.isEmpty()) {
+                rightData = executeNode(node.getRight(), context);
+            }
+            JQuickJoinHandler handler = joinHandlerFactory.getHandler(node.getJoinType());
+            boolean buildLeft = node.getBuildSide() == JQuickHashJoinPhysicalNode.BuildSide.LEFT;
+            JQuickDataSet result = handler.join(leftData, rightData, node.getJoinKeys(),node.getCondition(), buildLeft);
+            List<JQuickColumnMeta> columnMetas = convertPhysicalColumnsToMeta(dataConverter.buildOutputSchema(node));
+            return new JQuickDataSet(columnMetas, result.getRows());
+        } finally {
+            expressionEvaluator.clearAliasContext();
+        }
+    }
+
+    /**
+     * 设置表别名上下文，用于表达式求值器解析带别名的列引用
+     */
+    private void setupAliasContext(JQuickHashJoinPhysicalNode node) {
+        setupAliasContext(node.getLeft(), node.getRight(), node.getLeftAlias(), node.getRightAlias());
+    }
+
+    /**
+     * 为 NestedLoopJoin 设置别名上下文
+     */
+    private void setupAliasContext(JQuickNestedLoopJoinPhysicalNode node) {
+        setupAliasContext(node.getLeft(), node.getRight(), node.getLeftAlias(), node.getRightAlias());
+    }
+
+    /**
+     * 通用的别名上下文设置方法
+     */
+    private void setupAliasContext(JQuickPhysicalPlanNode left, JQuickPhysicalPlanNode right, String leftAlias, String rightAlias) {
+        Map<String, String> aliasToTable = new HashMap<>();
+        Map<String, String> columnAliasToActual = new HashMap<>();
+        if (leftAlias == null) {
+            leftAlias = extractTableAlias(left);
+        }
+        if (rightAlias == null) {
+            rightAlias = extractTableAlias(right);
+        }
+        if (leftAlias != null) {
+            aliasToTable.put(leftAlias, "left");
+            for (JQuickPhysicalColumn col : left.getOutputSchema()) {
+                columnAliasToActual.put(leftAlias + "." + col.getName(), "left." + col.getName());
+            }
+        }
+        if (rightAlias != null) {
+            aliasToTable.put(rightAlias, "right");
+            for (JQuickPhysicalColumn col : right.getOutputSchema()) {
+                columnAliasToActual.put(rightAlias + "." + col.getName(), "right." + col.getName());
+            }
+        }
+        expressionEvaluator.setAliasContext(aliasToTable, columnAliasToActual);
+    }
+    
+    /**
+     * 执行 Nested Loop Join
+     * 采用 JQuickJoinHandler 来实现所有 JOIN 类型的处理
+     */
+    private JQuickDataSet executeNestedLoopJoin(JQuickNestedLoopJoinPhysicalNode node, JQuickWorker.JQuickTaskContext context) {
+        setupAliasContext(node);
+        try {
+            JQuickDataSet leftData = executeNode(node.getLeft(), context);
+            JQuickDataSet rightData = executeNode(node.getRight(), context);
+            console.info("executeNestedLoopJoin - joinType: " + node.getJoinType() + ", condition: " + node.getCondition());
+            JQuickJoinHandler handler = joinHandlerFactory.getHandler(node.getJoinType());
+            JQuickDataSet result = handler.join(leftData, rightData, null, node.getCondition(), true);
+            console.info("executeNestedLoopJoin - result rows: " + result.size());
+            return result;
+        } finally {
+            expressionEvaluator.clearAliasContext();
+        }
+    }
+    /**
+     * 执行 Hash Aggregate
+     */
+    private JQuickDataSet executeHashAggregate(JQuickHashAggregatePhysicalNode node, JQuickWorker.JQuickTaskContext context) {
+        JQuickDataSet input = executeNode(node.getChild(), context);
+        if (node.getGroupKeys() == null || node.getGroupKeys().isEmpty()) {
+            return executeGlobalAggregate(input, node);
+        } else {
+            return executeGroupedAggregate(input, node);
+        }
+    }
+
+    /**
+     * 分组聚合
+     */
+    private JQuickDataSet executeGroupedAggregate(JQuickDataSet input, JQuickHashAggregatePhysicalNode node) {
+        Map<String, List<JQuickRow>> groups = new HashMap<>();
+        for (JQuickRow row : input.getRows()) {
+            String groupKey = extractGroupKeyString(row, node.getGroupKeys());
+            groups.computeIfAbsent(groupKey, k -> new ArrayList<>()).add(row);
+        }
+        List<JQuickRow> resultRows = new ArrayList<>();
+        for (Map.Entry<String, List<JQuickRow>> entry : groups.entrySet()) {
+            JQuickRow aggregated = new JQuickRow();
+            JQuickRow firstRow = entry.getValue().get(0);
+            for (JQuickExpression keyExpr : node.getGroupKeys()) {
+                if (keyExpr instanceof JQuickColumnRefExpression) {
+                    String colName = ((JQuickColumnRefExpression) keyExpr).getColumnName();
+                    aggregated.put(colName, firstRow.get(colName));
+                }
+            }
+            for (JQuickHashAggregatePhysicalNode.AggregateFunction agg : node.getAggregates()) {
+                Object value = computeAggregate(entry.getValue(), agg);
+                String alias = agg.getAlias() != null ? agg.getAlias() : agg.getFunctionName();
+                aggregated.put(alias, value);
+            }
+            resultRows.add(aggregated);
+        }
+        if (node.getHavingCondition() != null) {
+            Map<String, String> aggToAlias = new HashMap<>();
+            for (JQuickHashAggregatePhysicalNode.AggregateFunction agg : node.getAggregates()) {
+                StringBuilder sig = new StringBuilder();
+                sig.append(agg.getFunctionName().toUpperCase()).append("(");
+                if (agg.getArgument() != null) {
+                    if (agg.getArgument() instanceof JQuickColumnRefExpression) {
+                        sig.append(((JQuickColumnRefExpression) agg.getArgument()).getColumnName());
+                    } else {
+                        sig.append(agg.getArgument().toString());
+                    }
+                } else if (agg.isCountStar()) {
+                    sig.append("*");
+                }
+                sig.append(")");
+                aggToAlias.put(sig.toString(), agg.getAlias() != null ? agg.getAlias() : agg.getFunctionName());
+            }
+            JQuickExpression resolvedHaving = resolveAggRefs(node.getHavingCondition(), aggToAlias);
+            resultRows = resultRows.stream().filter(row -> expressionEvaluator.evaluatePredicate(row, resolvedHaving)).collect(Collectors.toList());
+        }
+        List<JQuickColumnMeta> columnMetas = buildColumnMetasForAggregate(node);
+        return new JQuickDataSet(columnMetas, resultRows);
+    }
+
+    /**
+     * 将 HAVING 条件中的聚合函数引用替换为列别名
+     */
+    private JQuickExpression resolveAggRefs(JQuickExpression expr, Map<String, String> aggToAlias) {
+        if (expr instanceof JQuickFunctionCallExpression) {
+            JQuickFunctionCallExpression func = (JQuickFunctionCallExpression) expr;
+            StringBuilder sig = new StringBuilder();
+            sig.append(func.getFunctionName().toUpperCase()).append("(");
+            if (func.isStarArg()) {
+                sig.append("*");
+            } else if (func.getArguments() != null && !func.getArguments().isEmpty()) {
+                JQuickExpression arg = func.getArguments().get(0);
+                if (arg instanceof JQuickColumnRefExpression) {
+                    sig.append(((JQuickColumnRefExpression) arg).getColumnName());
+                } else {
+                    sig.append(arg.toString());
+                }
+            }
+            sig.append(")");
+            String alias = aggToAlias.get(sig.toString());
+            if (alias != null) {
+                return new JQuickColumnRefExpression(alias);
+            }
+            return expr;
+        } else if (expr instanceof JQuickBinaryExpression) {
+            JQuickBinaryExpression binary = (JQuickBinaryExpression) expr;
+            return new JQuickBinaryExpression(
+                resolveAggRefs(binary.getLeft(), aggToAlias),
+                resolveAggRefs(binary.getRight(), aggToAlias),
+                binary.getOperator()
+            );
+        }
+        return expr;
+    }
+
+    /**
+     * 全局聚合
+     */
+    private JQuickDataSet executeGlobalAggregate(JQuickDataSet input, JQuickHashAggregatePhysicalNode node) {
+        JQuickRow result = new JQuickRow();
+        for (JQuickHashAggregatePhysicalNode.AggregateFunction agg : node.getAggregates()) {
+            Object value = computeAggregate(input.getRows(), agg);
+            String alias = agg.getAlias() != null ? agg.getAlias() : agg.getFunctionName();
+            result.put(alias, value);
+        }
+        List<JQuickColumnMeta> columnMetas = buildColumnMetasForAggregate(node);
+        return new JQuickDataSet(columnMetas, Collections.singletonList(result));
+    }
+
+    /**
+     * 执行 Sort
+     */
+    private JQuickDataSet executeSort(JQuickSortPhysicalNode node, JQuickWorker.JQuickTaskContext context) {
+        JQuickDataSet input = executeNode(node.getChild(), context);
+        List<JQuickRow> sortedRows = new ArrayList<>(input.getRows());
+        sortedRows.sort((row1, row2) -> {
+            for (JQuickSortPhysicalNode.OrderByItem item : node.getOrderByItems()) {
+                Object v1 = row1.get(item.getColumnName());
+                Object v2 = row2.get(item.getColumnName());
+                int cmp = compareValues(v1, v2, item.isNullsFirst());
+                if (cmp != 0) {
+                    return item.isAscending() ? cmp : -cmp;
+                }
+            }
+            return 0;
+        });
+        return new JQuickDataSet(input.getColumns(), sortedRows);
+    }
+
+    /**
+     * 执行 TopN
+     */
+    private JQuickDataSet executeTopN(JQuickTopNPhysicalNode node, JQuickWorker.JQuickTaskContext context) {
+        JQuickDataSet sorted = executeSort(node, context);
+        List<JQuickRow> rows = sorted.getRows();
+        int limit = node.getLimit();
+        int offset = node.getOffset();
+        if (offset >= rows.size()) {
+            return new JQuickDataSet(sorted.getColumns(), new ArrayList<>());
+        }
+        int endIndex = Math.min(offset + limit, rows.size());
+        List<JQuickRow> limitedRows = rows.subList(offset, endIndex);
+        return new JQuickDataSet(sorted.getColumns(), new ArrayList<>(limitedRows));
+    }
+
+    /**
+     * 执行 Limit
+     */
+    private JQuickDataSet executeLimit(JQuickLimitPhysicalNode node, JQuickWorker.JQuickTaskContext context) {
+        JQuickDataSet input = executeNode(node.getChild(), context);
+        List<JQuickRow> rows = input.getRows();
+        int limit = node.getLimit();
+        int offset = node.getOffset();
+        if (offset >= rows.size()) {
+            return new JQuickDataSet(input.getColumns(), new ArrayList<>());
+        }
+        int endIndex = Math.min(offset + limit, rows.size());
+        List<JQuickRow> limitedRows = rows.subList(offset, endIndex);
+        return new JQuickDataSet(input.getColumns(), new ArrayList<>(limitedRows));
+    }
+
+    /**
+     * 执行 Window Function
+     */
+    private JQuickDataSet executeWindow(JQuickWindowPhysicalNode node, JQuickWorker.JQuickTaskContext context) {
+        JQuickDataSet input = executeNode(node.getChild(), context);
+        List<JQuickRow> resultRows = new ArrayList<>();
+        for (JQuickRow row : input.getRows()) {
+            JQuickRow newRow = new JQuickRow(row);
+            for (JQuickWindowPhysicalNode.WindowFunction wf : node.getWindowFunctions()) {
+                Object value = evaluateWindowFunction(input, row, wf);
+                newRow.put(wf.getAlias(), value);
+            }
+            resultRows.add(newRow);
+        }
+        List<JQuickColumnMeta> columnMetas = new ArrayList<>(input.getColumns());
+        for (JQuickWindowPhysicalNode.WindowFunction wf : node.getWindowFunctions()) {
+            columnMetas.add(new JQuickColumnMeta(wf.getAlias(), Object.class, "window"));
+        }
+        return new JQuickDataSet(columnMetas, resultRows);
+    }
+
+    /**
+     * 执行 Set Operation
+     */
+    private JQuickDataSet executeSetOperation(JQuickSetOperationPhysicalNode node, JQuickWorker.JQuickTaskContext context) {
+        JQuickDataSet leftData;
+        JQuickDataSet rightData;
+        boolean hasInputPartitions = context != null && context.getRequest() != null && context.getRequest().getInputPartitionsCount() > 0;
+        if (hasInputPartitions) {
+            List<JQuickMemoryPartitionProto> inputPartitions = context.getRequest().getInputPartitionsList();
+            Set<JQuickTableScanPhysicalNode> leftTableScans = collectTableScans(node.getLeft());
+            Set<JQuickTableScanPhysicalNode> rightTableScans = collectTableScans(node.getRight());
+            if (!inputPartitions.isEmpty()) {
+                JQuickDataSet leftPartitionData = dataConverter.convertFromProto(inputPartitions.get(0).getData());
+                for (JQuickTableScanPhysicalNode ts : leftTableScans) {
+                    String partitionId = "subquery_partition_" + ts.getTableName();
+                    JQuickWorker.JQuickMemoryPartition partition = new JQuickWorker.JQuickMemoryPartition(0, 1);
+                    partition.setPartitionId(partitionId);
+                    partition.setData(leftPartitionData);
+                    worker.getMemoryPartitions().put(partitionId, partition);
+                }
+            }
+            leftData = executeNode(node.getLeft(), context);
+            for (JQuickTableScanPhysicalNode ts : leftTableScans) {
+                String partitionId = "subquery_partition_" + ts.getTableName();
+                worker.getMemoryPartitions().remove(partitionId);
+            }
+            if (inputPartitions.size() >= 2) {
+                JQuickDataSet rightPartitionData = dataConverter.convertFromProto(inputPartitions.get(1).getData());
+                for (JQuickTableScanPhysicalNode ts : rightTableScans) {
+                    String partitionId = "subquery_partition_" + ts.getTableName();
+                    JQuickWorker.JQuickMemoryPartition partition = new JQuickWorker.JQuickMemoryPartition(0, 1);
+                    partition.setPartitionId(partitionId);
+                    partition.setData(rightPartitionData);
+                    worker.getMemoryPartitions().put(partitionId, partition);
+                }
+            }
+            rightData = executeNode(node.getRight(), context);
+            for (JQuickTableScanPhysicalNode ts : rightTableScans) {
+                String partitionId = "subquery_partition_" + ts.getTableName();
+                worker.getMemoryPartitions().remove(partitionId);
+            }
+        } else {
+            leftData = executeNode(node.getLeft(), context);
+            rightData = executeNode(node.getRight(), context);
+        }
+        List<JQuickRow> resultRows;
+        switch (node.getOperationType()) {
+            case UNION:
+                resultRows = unionWithContentComparison(leftData.getRows(), rightData.getRows());
+                break;
+            case UNION_ALL:
+                resultRows = new ArrayList<>(leftData.getRows());
+                resultRows.addAll(rightData.getRows());
+                break;
+
+            case INTERSECT:
+                resultRows = intersectWithContentComparison(leftData.getRows(), rightData.getRows());
+                break;
+            case MINUS:
+                resultRows = exceptWithContentComparison(leftData.getRows(), rightData.getRows());
+                break;
+            case EXCEPT:
+                resultRows = exceptWithContentComparison(leftData.getRows(), rightData.getRows());
+                break;
+            default:
+                resultRows = new ArrayList<>(leftData.getRows());
+        }
+        return new JQuickDataSet(leftData.getColumns(), resultRows);
+    }
+    
+    /**
+     * 从 input partitions 读取数据用于 Set Operation（分布式场景）
+     * 返回多个数据集，分别对应左右操作数
+     */
+    private List<JQuickDataSet> readFromInputPartitionsForSetOperation(JQuickExecuteTaskRequest request) {
+        List<JQuickDataSet> datasets = new ArrayList<>();
+        for (JQuickMemoryPartitionProto partition : request.getInputPartitionsList()) {
+            if (partition.hasData()) {
+                JQuickDataSet partitionData = dataConverter.convertFromProto(partition.getData());
+                if (!partitionData.isEmpty()) {
+                    datasets.add(partitionData);
+                }
+            }
+        }
+        return datasets;
+    }
+    
+    /**
+     * 使用基于内容的比较实现 UNION
+     */
+    private List<JQuickRow> unionWithContentComparison(List<JQuickRow> leftRows, List<JQuickRow> rightRows) {
+        List<JQuickRow> result = new ArrayList<>();
+        Set<String> seen = new HashSet<>();
+        for (JQuickRow row : leftRows) {
+            String key = generateRowKey(row);
+            if (!seen.contains(key)) {
+                seen.add(key);
+                result.add(row);
+            }
+        }
+        for (JQuickRow row : rightRows) {
+            String key = generateRowKey(row);
+            if (!seen.contains(key)) {
+                seen.add(key);
+                result.add(row);
+            }
+        }
+        return result;
+    }
+    
+    /**
+     * 使用基于内容的比较实现 INTERSECT（去重）
+     */
+    private List<JQuickRow> intersectWithContentComparison(List<JQuickRow> leftRows, List<JQuickRow> rightRows) {
+        Set<String> rightKeys = new HashSet<>();
+        for (JQuickRow row : rightRows) {
+            rightKeys.add(generateRowKey(row));
+        }
+        Set<String> seenKeys = new HashSet<>();
+        List<JQuickRow> result = new ArrayList<>();
+        for (JQuickRow row : leftRows) {
+            String key = generateRowKey(row);
+            if (rightKeys.contains(key) && !seenKeys.contains(key)) {
+                result.add(row);
+                seenKeys.add(key);
+            }
+        }
+        return result;
+    }
+    
+    /**
+     * 使用基于内容的比较实现 EXCEPT
+     */
+    private List<JQuickRow> exceptWithContentComparison(List<JQuickRow> leftRows, List<JQuickRow> rightRows) {
+        Set<String> rightKeys = new HashSet<>();
+        for (JQuickRow row : rightRows) {
+            rightKeys.add(generateRowKey(row));
+        }
+        List<JQuickRow> result = new ArrayList<>();
+        for (JQuickRow row : leftRows) {
+            String key = generateRowKey(row);
+            if (!rightKeys.contains(key)) {
+                result.add(row);
+            }
+        }
+        return result;
+    }
+    
+    /**
+     * 生成行的内容键（用于基于内容的比较）
+     */
+    private String generateRowKey(JQuickRow row) {
+        StringBuilder key = new StringBuilder();
+        List<String> keys = new ArrayList<>(row.keySet());
+        Collections.sort(keys);
+        for (String k : keys) {
+            if (key.length() > 0) {
+                key.append("|");
+            }
+            key.append(k).append("=").append(String.valueOf(row.get(k)));
+        }
+        return key.toString();
+    }
+
+    /**
+     * 执行 Values
+     */
+    private JQuickDataSet executeValues(JQuickValuesPhysicalNode node, JQuickWorker.JQuickTaskContext context) {
+        List<JQuickRow> rows = new ArrayList<>();
+        for (List<Object> rowValues : node.getRows()) {
+            JQuickRow row = new JQuickRow();
+            for (int i = 0; i < node.getColumnNames().size() && i < rowValues.size(); i++) {
+                row.put(node.getColumnNames().get(i), rowValues.get(i));
+            }
+            rows.add(row);
+        }
+        List<JQuickColumnMeta> columnMetas = new ArrayList<>();
+        for (int i = 0; i < node.getColumnNames().size(); i++) {
+            Class<?> type = i < node.getColumnTypes().size() ? node.getColumnTypes().get(i) : Object.class;
+            columnMetas.add(new JQuickColumnMeta(node.getColumnNames().get(i), type, "values"));
+        }
+        return new JQuickDataSet(columnMetas, rows);
+    }
+
+    /**
+     * 执行递归 Union
+     */
+    private JQuickDataSet executeRecursiveUnion(JQuickRecursiveUnionPhysicalNode node, JQuickWorker.JQuickTaskContext context) {
+        JQuickDataSet result = executeNode(node.getInitialPlan(), context);
+        Set<String> seenRowKeys = new HashSet<>();
+        for (JQuickRow row : result.getRows()) {
+            seenRowKeys.add(createRowKey(row));
+        }
+        List<JQuickRow> workingRows = new ArrayList<>(result.getRows());
+        int depth = 0;
+        String ctePartitionId = "cte_partition_" + node.getCteName();
+        while (depth < node.getMaxRecursionDepth() && !workingRows.isEmpty()) {
+            JQuickDataSet workingDataSet = new JQuickDataSet(result.getColumns(), workingRows);
+            JQuickWorker.JQuickMemoryPartition ctePartition = new JQuickWorker.JQuickMemoryPartition(0, 1);
+            ctePartition.setPartitionId(ctePartitionId);
+            ctePartition.setData(workingDataSet);
+            worker.getMemoryPartitions().put(ctePartitionId, ctePartition);
+            JQuickDataSourceManager.registerOrReplace(node.getCteName(), workingDataSet);
+            try {
+                JQuickDataSet newRows = executeNode(node.getRecursivePlan(), context);
+                List<JQuickRow> filteredRows = new ArrayList<>();
+                for (JQuickRow row : newRows.getRows()) {
+                    String rowKey = createRowKey(row);
+                    if (!seenRowKeys.contains(rowKey)) {
+                        filteredRows.add(row);
+                        seenRowKeys.add(rowKey);
+                    }
+                }
+                if (filteredRows.isEmpty()) break;
+                List<JQuickRow> allRows = new ArrayList<>(result.getRows());
+                allRows.addAll(filteredRows);
+                result = new JQuickDataSet(result.getColumns(), allRows);
+                workingRows = filteredRows;
+                depth++;
+            } finally {
+                worker.getMemoryPartitions().remove(ctePartitionId);
+                JQuickDataSourceManager.removeTable(node.getCteName());
+            }
+        }
+
+        return result;
+    }
+
+    /**
+     * 创建行的唯一键（基于内容）
+     */
+    private String createRowKey(JQuickRow row) {
+        StringBuilder sb = new StringBuilder();
+        for (Map.Entry<String, Object> entry : row.entrySet()) {
+            sb.append(entry.getKey()).append("=").append(entry.getValue()).append(";");
+        }
+        return sb.toString();
+    }
+
+    /**
+     * 判断当前是否为子查询执行上下文（queryId 以 "subquery" 开头）。
+     * 子查询上下文中，Exchange 节点必须被绕过，直接执行子节点。
+     */
+    private boolean isSubqueryContext(JQuickWorker.JQuickTaskContext context) {
+        return context != null
+                && context.getRequest() != null
+                && context.getRequest().getQueryId() != null
+                && context.getRequest().getQueryId().startsWith("subquery");
+    }
+
+    /**
+     * 执行 Exchange - 数据分发或接收
+     */
+    private JQuickDataSet executeExchange(JQuickExchangePhysicalNode node, JQuickWorker.JQuickTaskContext context) {
+        console.info("=== Exchange Debug ===");
+        console.info("Exchange type: " + node.getExchangeType());
+        console.info("Target parallelism: " + node.getTargetParallelism());
+        console.info("Partition strategy: " + node.getPartitionStrategy());
+        // 子查询执行上下文中，SHUFFLE/BROADCAST/GATHER Exchange 必须被绕过，直接执行子节点。
+        // 因为 executePhysicalPlan 把原始表数据放入 subquery_partition_<table> 分区，
+        // Exchange 若读取这些分区会拿到原始数据，绕过本应执行的 HashAggregate 等节点。
+        if (isSubqueryContext(context)
+                && (node.getExchangeType() == JQuickExchangeType.SHUFFLE
+                    || node.getExchangeType() == JQuickExchangeType.BROADCAST
+                    || node.getExchangeType() == JQuickExchangeType.GATHER)) {
+            console.info("Exchange bypassed in subquery context, executing child directly");
+            if (node.getChild() != null) {
+                return executeNode(node.getChild(), context);
+            }
+            return JQuickDataSet.builder().build();
+        }
+        // GATHER Exchange: 收集数据（从 gRPC 接收的数据中收集）
+        if (node.getExchangeType() == JQuickExchangeType.GATHER) {
+            console.info("GATHER Exchange: collecting data from gRPC received partitions");
+            List<JQuickRow> allRows = new ArrayList<>();
+            List<JQuickColumnMeta> columns = null;
+            Set<String> rowHashes = new HashSet<>();
+            for (String partitionId : worker.getAllReceivedPartitions()) {
+                JQuickDataSet partitionData = worker.getReceivedPartitionData(partitionId);
+                if (partitionData != null && !partitionData.isEmpty()) {
+                    for (JQuickRow row : partitionData.getRows()) {
+                        String rowHash = row.toString();
+                        if (!rowHashes.contains(rowHash)) {
+                            rowHashes.add(rowHash);
+                            allRows.add(row);
+                        }
+                    }
+                    if (columns == null) {
+                        columns = partitionData.getColumns();
+                    }
+                    console.info("GATHER collected " + partitionData.size() + " rows from partition " + partitionId + ", total unique: " + allRows.size());
+                }
+            }
+            if (!allRows.isEmpty() && columns != null) {
+                console.info("GATHER Exchange: returning " + allRows.size() + " unique rows from gRPC");
+                return new JQuickDataSet(columns, allRows);
+            }
+            // 如果没有从 gRPC 收到数据，尝试直接执行子节点（本地测试场景）
+            console.info("GATHER Exchange: no data from gRPC, trying child node");
+            JQuickDataSet childData = executeNode(node.getChild(), context);
+            console.info("GATHER Exchange: collected " + childData.size() + " rows from child node");
+            return childData;
+        }
+        // RECEIVE Exchange: 从 gRPC 接收的数据中收集数据（由上游 Worker 发送过来）
+        if (node.getExchangeType() == JQuickExchangeType.RECEIVE) {
+            console.info("RECEIVE Exchange: collecting data from received partitions");
+            List<JQuickRow> allRows = new ArrayList<>();
+            List<JQuickColumnMeta> columns = null;
+            // 收集所有通过 gRPC 接收到的分区数据
+            for (String partitionId : worker.getAllReceivedPartitions()) {
+                JQuickDataSet partitionData = worker.getReceivedPartitionData(partitionId);
+                if (partitionData != null && !partitionData.isEmpty()) {
+                    allRows.addAll(partitionData.getRows());
+                    if (columns == null) {
+                        columns = partitionData.getColumns();
+                    }
+                    console.info("Collected " + partitionData.size() + " rows from partition " + partitionId);
+                }
+            }
+            console.info("RECEIVE Exchange: total rows collected: " + allRows.size());
+            // 如果没有列信息，返回空数据集
+            if (allRows.isEmpty() || columns == null) {
+                console.warn("RECEIVE Exchange returned empty result!");
+                return JQuickDataSet.builder().build();
+            }
+            return new JQuickDataSet(columns, allRows);
+        }
+        // SHUFFLE/BROADCAST Exchange: 发送数据到其他 Worker
+        // 但首先检查是否有 input partitions（Fragment 输入边界）
+        if (context != null && context.getRequest() != null && context.getRequest().getInputPartitionsCount() > 0) {
+            console.info("SHUFFLE Exchange: reading from input partitions (Fragment input boundary)");
+            List<JQuickRow> allRows = new ArrayList<>();
+            List<JQuickColumnMeta> columns = null;
+            for (JQuickMemoryPartitionProto partition : context.getRequest().getInputPartitionsList()) {
+                JQuickDataSet partitionData = dataConverter.convertFromProto(partition.getData());
+                if (partitionData != null && !partitionData.isEmpty()) {
+                    allRows.addAll(partitionData.getRows());
+                    if (columns == null) {
+                        columns = partitionData.getColumns();
+                    }
+                    console.info("Read " + partitionData.size() + " rows from input partition " + partition.getPartitionId());
+                }
+            }
+            if (!allRows.isEmpty() && columns != null) {
+                console.info("SHUFFLE Exchange: returning " + allRows.size() + " rows from input partitions");
+                return new JQuickDataSet(columns, allRows);
+            }
+            console.info("SHUFFLE Exchange: no data from input partitions, falling through to child execution");
+        }
+        JQuickDataSet input = executeNode(node.getChild(), context);//获取数据
+        console.info("Input data rows: " + input.size());
+        if (input.isEmpty()) {
+            console.warn("Input data is empty, skipping send");
+            return JQuickDataSet.builder().build();
+        }
+        List<JQuickWorker.JQuickMemoryPartition> partitions = partitionManager.partitionData(input, node, expressionEvaluator, node.getTargetParallelism());//进行分区
+        console.info("Created " + partitions.size() + " partitions");
+        for (int i = 0; i < partitions.size(); i++) {//获取分区数据信息
+            JQuickWorker.JQuickMemoryPartition partition = partitions.get(i);
+            console.info("Partition " + i + ": " + partition.getData().size() + " rows");
+        }
+        // 发送所有分区数据到目标 Worker（包括当前 Worker）
+        int currentWorkerIndex = worker.getWorkerIndex();
+        console.info("Current worker index: " + currentWorkerIndex);
+        for (JQuickWorker.JQuickMemoryPartition partition : partitions) {
+            int targetWorkerId = partition.getIndex() % node.getTargetParallelism();
+            console.info("Partition " + partition.getIndex() + " target worker: " + targetWorkerId);
+            // 发送所有分区到目标 Worker（包括当前 Worker）
+            partitionManager.sendToWorker(partition, node.getTargetParallelism(), node.getExchangeType(), worker);
+            console.info("Sent partition " + partition.getIndex() + " to worker " + targetWorkerId);
+        }
+        // SHUFFLE Exchange 不返回数据，所有数据都通过 gRPC 发送
+        console.info("SHUFFLE Exchange: all partitions sent via gRPC, returning empty");
+        return JQuickDataSet.builder().build();
+    }
+    /**
+     * 将 JQuickPhysicalColumn 列表转换为 JQuickColumnMeta 列表
+     */
+    private List<JQuickColumnMeta> convertPhysicalColumnsToMeta(List<JQuickPhysicalColumn> physicalColumns) {
+        List<JQuickColumnMeta> columnMetas = new ArrayList<>();
+        if (physicalColumns != null) {
+            for (JQuickPhysicalColumn col : physicalColumns) {
+                columnMetas.add(new JQuickColumnMeta(col.getName(), col.getType(), col.getSourceTable() != null ? col.getSourceTable() : ""));
+            }
+        }
+        return columnMetas;
+    }
+
+    /**
+     * 为 Project 节点构建列元数据
+     */
+    private List<JQuickColumnMeta> buildColumnMetasForProject(JQuickProjectPhysicalNode node) {
+        List<JQuickColumnMeta> columnMetas = new ArrayList<>();
+        if (node.getSelectItems() == null) {
+            return columnMetas;
+        }
+        for (JQuickProjectPhysicalNode.SelectItem item : node.getSelectItems()) {
+            String name = item.getAlias() != null ? item.getAlias() : generateColumnName(item.getExpression());
+            Class<?> type = inferExpressionType(item.getExpression());
+            columnMetas.add(new JQuickColumnMeta(name, type, "project"));
+        }
+        return columnMetas;
+    }
+
+    /**
+     * 为 Aggregate 节点构建列元数据
+     */
+    private List<JQuickColumnMeta> buildColumnMetasForAggregate(JQuickHashAggregatePhysicalNode node) {
+        List<JQuickColumnMeta> columnMetas = new ArrayList<>();
+        // 添加分组键列
+        if (node.getGroupKeys() != null) {
+            for (JQuickExpression expr : node.getGroupKeys()) {
+                String name = extractColumnName(expr);
+                columnMetas.add(new JQuickColumnMeta(name, Object.class, "group"));
+            }
+        }
+        // 添加聚合函数列
+        if (node.getAggregates() != null) {
+            for (JQuickHashAggregatePhysicalNode.AggregateFunction agg : node.getAggregates()) {
+                String name = agg.getAlias() != null ? agg.getAlias() : agg.getFunctionName();
+                Class<?> type = inferAggregateType(agg);
+                columnMetas.add(new JQuickColumnMeta(name, type, "aggregate"));
+            }
+        }
+
+        return columnMetas;
+    }
+
+    /**
+     * 从表达式提取列名
+     */
+    private String extractColumnName(JQuickExpression expr) {
+        if (expr instanceof JQuickColumnRefExpression) {
+            return ((JQuickColumnRefExpression) expr).getColumnName();
+        }
+        return "expr";
+    }
+
+    /**
+     * 推断聚合函数返回类型
+     */
+    private Class<?> inferAggregateType(JQuickHashAggregatePhysicalNode.AggregateFunction agg) {
+        String funcName = agg.getFunctionName().toLowerCase();
+        switch (funcName) {
+            case "count":
+                return Long.class;
+            case "sum":
+            case "avg":
+                return Double.class;
+            case "max":
+            case "min":
+                return Object.class;
+            default:
+                return Object.class;
+        }
+    }
+
+
+
+    private String extractGroupKeyString(JQuickRow row, List<JQuickExpression> groupKeys) {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < groupKeys.size(); i++) {
+            if (i > 0) sb.append("|");
+            JQuickExpression expr = groupKeys.get(i);
+            if (expr instanceof JQuickColumnRefExpression) {
+                String colName = ((JQuickColumnRefExpression) expr).getColumnName();
+                Object val = row.get(colName);
+                sb.append(val != null ? val.toString() : "null");
+            }
+        }
+        return sb.toString();
+    }
+
+    private Object computeAggregate(List<JQuickRow> rows, JQuickHashAggregatePhysicalNode.AggregateFunction agg) {
+        String funcName = agg.getFunctionName().toLowerCase();
+        JQuickHashAggregatePhysicalNode.AggregateStage stage = agg.getInternalStage();
+        switch (funcName) {
+            case "count":
+                if (stage == JQuickHashAggregatePhysicalNode.AggregateStage.FINAL) {
+                    return rows.stream().mapToLong(r -> {
+                        Object val = expressionEvaluator.evaluateExpression(r, agg.getArgument());
+                        return val instanceof Number ? ((Number) val).longValue() : 0L;
+                    }).sum();
+                }
+                if (agg.isDistinct()) {
+                    return rows.stream()
+                            .map(r -> expressionEvaluator.evaluateExpression(r, agg.getArgument()))
+                            .distinct().count();
+                }
+                return (long) rows.size();
+            case "sum":
+                if (stage == JQuickHashAggregatePhysicalNode.AggregateStage.FINAL) {
+                    return rows.stream().mapToDouble(r -> {
+                        Object val = expressionEvaluator.evaluateExpression(r, agg.getArgument());
+                        return val instanceof Number ? ((Number) val).doubleValue() : 0.0;
+                    }).sum();
+                }
+                return rows.stream().mapToDouble(r -> {
+                    Object val = expressionEvaluator.evaluateExpression(r, agg.getArgument());
+                    return val instanceof Number ? ((Number) val).doubleValue() : 0.0;
+                }).sum();
+            case "avg":
+                if (stage == JQuickHashAggregatePhysicalNode.AggregateStage.FINAL) {
+                    double sum = rows.stream().mapToDouble(r -> {
+                        Object val = r.get(agg.getAlias() + "_sum");
+                        return val instanceof Number ? ((Number) val).doubleValue() : 0.0;
+                    }).sum();
+                    long count = rows.stream().mapToLong(r -> {
+                        Object val = r.get(agg.getAlias() + "_count");
+                        return val instanceof Number ? ((Number) val).longValue() : 0L;
+                    }).sum();
+                    return count > 0 ? sum / count : 0.0;
+                }
+                return rows.stream().mapToDouble(r -> {
+                    Object val = expressionEvaluator.evaluateExpression(r, agg.getArgument());
+                    return val instanceof Number ? ((Number) val).doubleValue() : 0.0;
+                }).average().orElse(0.0);
+            case "max":
+                return rows.stream()
+                        .map(r -> expressionEvaluator.evaluateExpression(r, agg.getArgument()))
+                        .max((a, b) -> compareValues(a, b, false)).orElse(null);
+            case "min":
+                return rows.stream().map(r -> expressionEvaluator.evaluateExpression(r, agg.getArgument())).min((a, b) -> compareValues(a, b, false)).orElse(null);
+            case "divide":
+                double divSum = rows.stream().mapToDouble(r -> {
+                    Object val = r.get(agg.getAlias() + "_sum");
+                    return val instanceof Number ? ((Number) val).doubleValue() : 0.0;
+                }).sum();
+                long divCount = rows.stream().mapToLong(r -> {
+                    Object val = r.get(agg.getAlias() + "_count");
+                    return val instanceof Number ? ((Number) val).longValue() : 0L;
+                }).sum();
+                return divCount > 0 ? divSum / divCount : 0.0;
+            default:
+                List<Object> args = rows.stream().map(r -> expressionEvaluator.evaluateExpression(r, agg.getArgument())).collect(Collectors.toList());
+                return expressionEvaluator.evaluateFunction(funcName, args);
+        }
+    }
+
+    private Object evaluateWindowFunction(JQuickDataSet data, JQuickRow currentRow, JQuickWindowPhysicalNode.WindowFunction wf) {
+        String funcName = wf.getFunctionName().toLowerCase();
+        List<JQuickRow> allRows = data.getRows();
+        int currentIdx = allRows.indexOf(currentRow);
+        JQuickWindowPhysicalNode.WindowSpec windowSpec = wf.getWindowSpec();
+        List<JQuickRow> windowRows;
+        if (windowSpec != null && windowSpec.getPartitionKeys() != null && !windowSpec.getPartitionKeys().isEmpty()) {
+            windowRows = getPartitionRows(allRows, currentRow, windowSpec);
+        } else {
+            windowRows = allRows;
+        }
+        if (windowSpec != null && windowSpec.getOrderKeys() != null && !windowSpec.getOrderKeys().isEmpty()) {
+            windowRows = sortWindowRows(windowRows, windowSpec);
+        }
+        int windowIdx = windowRows.indexOf(currentRow);
+        switch (funcName) {
+            case "row_number":
+                return (long) (windowIdx + 1);
+            case "rank":
+                Object currentOrderValue = getOrderValue(windowRows.get(windowIdx), windowSpec);
+                int rank = 1;
+                for (int i = 0; i < windowIdx; i++) {
+                    Object prevValue = getOrderValue(windowRows.get(i), windowSpec);
+                    if (!Objects.equals(currentOrderValue, prevValue)) {
+                        rank = i + 2;
+                    }
+                }
+                return (long) rank;
+            case "dense_rank":
+                // 计算密集排名（无跳跃）
+                Object denseCurrentValue = getOrderValue(windowRows.get(windowIdx), windowSpec);
+                int denseRank = 1;
+                for (int i = 0; i < windowIdx; i++) {
+                    Object prevValue = getOrderValue(windowRows.get(i), windowSpec);
+                    if (!Objects.equals(denseCurrentValue, prevValue)) {
+                        denseRank++;
+                    }
+                }
+                return (long) denseRank;
+            case "lead":
+                if (windowIdx + 1 < windowRows.size()) {
+                    return expressionEvaluator.evaluateExpression(windowRows.get(windowIdx + 1), wf.getArgument());
+                }
+                return null;
+            case "lag":
+                if (windowIdx - 1 >= 0) {
+                    return expressionEvaluator.evaluateExpression(windowRows.get(windowIdx - 1), wf.getArgument());
+                }
+                return null;
+            case "count":
+                return (long) windowRows.size();
+            case "sum":
+                if (wf.getArgument() == null) {
+                    return null;
+                }
+                double sum = 0;
+                for (JQuickRow row : windowRows) {
+                    Object val = expressionEvaluator.evaluateExpression(row, wf.getArgument());
+                    if (val instanceof Number) {
+                        sum += ((Number) val).doubleValue();
+                    }
+                }
+                return sum;
+            case "avg":
+                if (wf.getArgument() == null) {
+                    return null;
+                }
+                double total = 0;
+                int count = 0;
+                for (JQuickRow row : windowRows) {
+                    Object val = expressionEvaluator.evaluateExpression(row, wf.getArgument());
+                    if (val instanceof Number) {
+                        total += ((Number) val).doubleValue();
+                        count++;
+                    }
+                }
+                return count > 0 ? total / count : null;
+            case "max":
+                if (wf.getArgument() == null) {
+                    return null;
+                }
+                Double maxVal = null;
+                for (JQuickRow row : windowRows) {
+                    Object val = expressionEvaluator.evaluateExpression(row, wf.getArgument());
+                    if (val instanceof Number) {
+                        double num = ((Number) val).doubleValue();
+                        if (maxVal == null || num > maxVal) {
+                            maxVal = num;
+                        }
+                    }
+                }
+                return maxVal;
+            case "min":
+                if (wf.getArgument() == null) {
+                    return null;
+                }
+                Double minVal = null;
+                for (JQuickRow row : windowRows) {
+                    Object val = expressionEvaluator.evaluateExpression(row, wf.getArgument());
+                    if (val instanceof Number) {
+                        double num = ((Number) val).doubleValue();
+                        if (minVal == null || num < minVal) {
+                            minVal = num;
+                        }
+                    }
+                }
+                return minVal;
+            default:
+                List<Object> args = new ArrayList<>();
+                if (wf.getArgument() != null) {
+                    args.add(expressionEvaluator.evaluateExpression(currentRow, wf.getArgument()));
+                }
+                return expressionEvaluator.evaluateFunction(funcName, args);
+        }
+    }
+    
+    /**
+     * 获取当前行所在分区的所有行
+     */
+    private List<JQuickRow> getPartitionRows(List<JQuickRow> allRows, JQuickRow currentRow, JQuickWindowPhysicalNode.WindowSpec windowSpec) {
+        List<JQuickRow> partitionRows = new ArrayList<>();
+        for (JQuickRow row : allRows) {
+            if (isSamePartition(currentRow, row, windowSpec.getPartitionKeys())) {
+                partitionRows.add(row);
+            }
+        }
+        return partitionRows;
+    }
+    
+    /**
+     * 判断两行是否在同一个分区
+     */
+    private boolean isSamePartition(JQuickRow row1, JQuickRow row2, List<JQuickExpression> partitionKeys) {
+        for (JQuickExpression key : partitionKeys) {
+            if (!(key instanceof JQuickColumnRefExpression)) {
+                continue;
+            }
+            String columnName = ((JQuickColumnRefExpression) key).getColumnName();
+            Object val1 = row1.get(columnName);
+            Object val2 = row2.get(columnName);
+            if (!Objects.equals(val1, val2)) {
+                return false;
+            }
+        }
+        return true;
+    }
+    
+    /**
+     * 对窗口内的行进行排序
+     */
+    private List<JQuickRow> sortWindowRows(List<JQuickRow> rows, JQuickWindowPhysicalNode.WindowSpec windowSpec) {
+        List<JQuickRow> sortedRows = new ArrayList<>(rows);
+        sortedRows.sort((row1, row2) -> {
+            for (JQuickSortPhysicalNode.OrderByItem orderItem : windowSpec.getOrderKeys()) {
+                Object v1 = row1.get(orderItem.getColumnName());
+                Object v2 = row2.get(orderItem.getColumnName());
+                int cmp = compareValues(v1, v2, orderItem.isNullsFirst());
+                if (cmp != 0) {
+                    return orderItem.isAscending() ? cmp : -cmp;
+                }
+            }
+            return 0;
+        });
+        return sortedRows;
+    }
+    
+    /**
+     * 获取用于排序的值
+     */
+    private Object getOrderValue(JQuickRow row, JQuickWindowPhysicalNode.WindowSpec windowSpec) {
+        if (windowSpec == null || windowSpec.getOrderKeys() == null || windowSpec.getOrderKeys().isEmpty()) {
+            return null;
+        }
+        // 返回第一个排序键的值
+        return row.get(windowSpec.getOrderKeys().get(0).getColumnName());
+    }
+
+    private JQuickDataSet applyFilter(JQuickDataSet data, JQuickExpression predicate) {
+        JQuickExpression preEvaluated = preEvaluateScalarSubqueries(predicate);
+        return data.filter(row -> expressionEvaluator.evaluatePredicate(row, preEvaluated));
+    }
+
+    private int compareValues(Object v1, Object v2, boolean nullsFirst) {
+        if (v1 == null && v2 == null) return 0;
+        if (v1 == null) return nullsFirst ? -1 : 1;
+        if (v2 == null) return nullsFirst ? 1 : -1;
+        if (v1 instanceof Number || v2 instanceof Number) {
+            double d1 = Double.parseDouble(v1.toString());
+            double d2 = Double.parseDouble(v2.toString());
+            return Double.compare(d1, d2);
+        }
+        if (v1 instanceof String || v2 instanceof String) {
+            String s1 = v1.toString();
+            String s2 = v2.toString();
+            return s1.compareTo(s2);
+        }
+        if (v1 instanceof Comparable && v2 instanceof Comparable) {
+            int cmp = ((Comparable<Object>) v1).compareTo(v2);
+            return cmp;
+        }
+        return v1.toString().compareTo(v2.toString());
+    }
+
+    private JQuickDataSet readFromDataSource(String tableName) {
+        if (tableName == null) {
+            console.warn("readFromDataSource - tableName is null");
+            return JQuickDataSet.builder().build();
+        }
+        JQuickDataSet tableData = JQuickDataSourceManager.getTable(tableName);
+        if (tableData == null) {
+            console.warn("readFromDataSource - table not found: " + tableName);
+            console.info("Available tables: " + JQuickDataSourceManager.getTableNames());
+            return JQuickDataSet.builder().build();
+        }
+        console.info("readFromDataSource - table found: " + tableName + ", rows: " + tableData.size());
+        return tableData;
+    }
+
+    private JQuickDataSet readFromMemoryPartition(String partitionId) {
+        JQuickWorker.JQuickMemoryPartition partition = worker.getMemoryPartitions().get(partitionId);
+        if (partition == null) {
+            return JQuickDataSet.builder().build();
+        }
+        JQuickDataSet data = partition.getData();
+        return data;
+    }
+
+    private String generateColumnName(JQuickExpression expr) {
+        if (expr == null) return "col";
+        if (expr instanceof JQuickColumnRefExpression) {
+            return ((JQuickColumnRefExpression) expr).getColumnName();
+        }
+        if (expr instanceof JQuickFunctionCallExpression) {
+            return ((JQuickFunctionCallExpression) expr).getFunctionName();
+        }
+        return "expr";
+    }
+
+    private Class<?> inferExpressionType(JQuickExpression expr) {
+        if (expr == null) return Object.class;
+        if (expr instanceof JQuickLiteralExpression) {
+            Object value = ((JQuickLiteralExpression) expr).getValue();
+            return value != null ? value.getClass() : Object.class;
+        }
+        if (expr instanceof JQuickFunctionCallExpression) {
+            String functionName = ((JQuickFunctionCallExpression) expr).getFunctionName().toLowerCase();
+            if (functionName.equals("to_int") || functionName.equals("toInt")) return Integer.class;
+            if (functionName.equals("to_long") || functionName.equals("toLong")) return Long.class;
+            if (functionName.equals("to_double") || functionName.equals("toDouble")) return Double.class;
+            if (functionName.equals("to_string") || functionName.equals("toString")) return String.class;
+            if (functionName.equals("to_boolean") || functionName.equals("toBoolean")) return Boolean.class;
+            if (functionName.equals("year") || functionName.equals("month") || functionName.equals("day"))
+                return Long.class;
+            if (functionName.equals("now") || functionName.equals("current_date")) return java.time.LocalDate.class;
+        }
+        return Object.class;
+    }
+
+
+    /**
+     * 提取表别名
+     */
+    private String extractTableAlias(JQuickPhysicalPlanNode node) {
+        if (node instanceof JQuickTableScanPhysicalNode) {
+            return ((JQuickTableScanPhysicalNode) node).getAlias();
+        }
+        for (JQuickPhysicalPlanNode child : node.getChildren()) {
+            String alias = extractTableAlias(child);
+            if (alias != null) return alias;
+        }
+        return null;
+    }
+
+
+
+}
