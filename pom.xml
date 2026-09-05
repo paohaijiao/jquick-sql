@@ -144,6 +144,7 @@
             <dependency>
                 <groupId>junit</groupId>
                 <artifactId>junit</artifactId>
+                <version>4.13.2</version>
                 <scope>test</scope>
             </dependency>
             <dependency>
@@ -164,7 +165,7 @@
         capabilities for java applications, particularly suitable for development scenarios such
         as data analysis, report generation, and custom query engines.
     </description>
-    <url>https://github.com/paohaijiao/jquick-pdf</url>
+    <url>https://github.com/paohaijiao/jquick-sql</url>
     <licenses>
         <license>
             <name>The Apache License, Version 2.0</name>
