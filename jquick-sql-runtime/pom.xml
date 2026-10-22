@@ -4,7 +4,7 @@
     <parent>
         <groupId>io.github.paohaijiao</groupId>
         <artifactId>jquick-sql</artifactId>
-        <version>5.0.0</version>
+        <version>5.1.0</version>
     </parent>
 
     <artifactId>jquick-sql-runtime</artifactId>
@@ -18,7 +18,7 @@
         <dependency>
             <groupId>io.github.paohaijiao</groupId>
             <artifactId>jquick-sql-query</artifactId>
-            <version>5.0.0</version>
+            <version>5.1.0</version>
         </dependency>
         <dependency>
             <groupId>io.github.paohaijiao</groupId>
