@@ -16,7 +16,7 @@
     </modules>
     <modelVersion>4.0.0</modelVersion>
     <artifactId>jquick-sql</artifactId>
-    <version>5.1.0</version>
+    <version>5.2.0</version>
     <packaging>pom</packaging>
     <name>jquick-sql</name>
     <properties>
@@ -31,6 +31,7 @@
         <grpc.version>1.80.0</grpc.version>
         <protobuf.maven.plugin.version>0.6.1</protobuf.maven.plugin.version>
     </properties>
+
     <dependencyManagement>
         <dependencies>
             <dependency>
@@ -257,7 +258,7 @@
             <plugin>
                 <groupId>org.sonatype.central</groupId>
                 <artifactId>central-publishing-maven-plugin</artifactId>
-                <version>0.8.0</version>
+                <version>0.11.0</version>
                 <extensions>true</extensions>
                 <configuration>
                     <publishingServerId>ossrh</publishingServerId>

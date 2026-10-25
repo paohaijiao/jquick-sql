@@ -4,7 +4,7 @@
     <parent>
         <groupId>io.github.paohaijiao</groupId>
         <artifactId>jquick-sql</artifactId>
-        <version>5.1.0</version>
+        <version>5.2.0</version>
     </parent>
 
     <artifactId>jquick-sql-runtime</artifactId>
@@ -18,7 +18,7 @@
         <dependency>
             <groupId>io.github.paohaijiao</groupId>
             <artifactId>jquick-sql-query</artifactId>
-            <version>5.1.0</version>
+            <version>5.2.0</version>
         </dependency>
         <dependency>
             <groupId>io.github.paohaijiao</groupId>
@@ -151,12 +151,13 @@
             <plugin>
                 <groupId>org.sonatype.central</groupId>
                 <artifactId>central-publishing-maven-plugin</artifactId>
-                <version>0.8.0</version>
+                <version>0.11.0</version>
                 <extensions>true</extensions>
                 <configuration>
                     <publishingServerId>ossrh</publishingServerId>
                     <autoPublish>true</autoPublish>
                     <waitUntil>published</waitUntil>
+                    <waitMaxTime>3600</waitMaxTime>
                 </configuration>
             </plugin>
             <plugin>
