@@ -20,12 +20,15 @@ import com.github.paohaijiao.config.WorkerEndpoint;
 import com.github.paohaijiao.console.JConsole;
 import com.github.paohaijiao.datasource.JQuickDataSourceManager;
 import com.github.paohaijiao.distributed.JQuickDistributedPlan;
+import com.github.paohaijiao.distributed.grpc.JQuickGrpcCallSupport;
+import com.github.paohaijiao.distributed.grpc.JQuickGrpcChannelRegistry;
 import com.github.paohaijiao.distributed.proto.JQuickProtoService;
 import com.github.paohaijiao.distributed.worker.JQuickDataConverter;
 import com.github.paohaijiao.enums.JQuickFragmentType;
 import com.github.paohaijiao.exception.JAssert;
 import com.github.paohaijiao.fragment.JQuickFragment;
 import com.github.paohaijiao.fragment.JQuickFragmenter;
+import com.github.paohaijiao.grpc.context.JQuickGrpcContext;
 import com.github.paohaijiao.physical.JQuickPhysicalPlanNode;
 import com.github.paohaijiao.physical.node.JQuickTableScanPhysicalNode;
 import com.github.paohaijiao.proto.*;
@@ -33,8 +36,6 @@ import com.github.paohaijiao.statement.JQuickColumnMeta;
 import com.github.paohaijiao.statement.JQuickDataSet;
 import com.github.paohaijiao.statement.JQuickRow;
 import com.github.paohaijiao.uid.JQuickUuidGenerator;
-import io.grpc.ManagedChannel;
-import io.grpc.ManagedChannelBuilder;
 import io.grpc.stub.StreamObserver;
 import lombok.Data;
 
@@ -81,10 +82,8 @@ public class JQuickCoordinator {
 
     private final Map<Integer, WorkerEndpoint> workerIndexMap;
 
-    // gRPC 连接管理
-    private final Map<String, ManagedChannel> workerChannels;
 
-    private final Map<String, JQuickPhysicalPlanServiceGrpc.JQuickPhysicalPlanServiceStub> workerStubs;
+    private final JQuickGrpcChannelRegistry channelRegistry;
 
     private final Map<String, QueryExecution> activeQueries;
 
@@ -108,8 +107,7 @@ public class JQuickCoordinator {
         this.workers = new ArrayList<>(config.getRuntime().getWorkers());
         this.workerIdMap = new ConcurrentHashMap<>();
         this.workerIndexMap = new ConcurrentHashMap<>();
-        this.workerChannels = new ConcurrentHashMap<>();
-        this.workerStubs = new ConcurrentHashMap<>();
+        this.channelRegistry = new JQuickGrpcChannelRegistry(config.getRuntime().getMaxFileSize());
         this.activeQueries = new ConcurrentHashMap<>();
         this.maxRetries = config.getRuntime().getMaxTaskRetries();
         this.jQuickprotoService=new JQuickProtoService();
@@ -295,7 +293,9 @@ public class JQuickCoordinator {
      */
     private JQuickExecuteTaskResponse doExecuteTask(JQuickExecuteTaskRequest request, WorkerEndpoint worker) throws Exception {
         JQuickPhysicalPlanServiceGrpc.JQuickPhysicalPlanServiceBlockingStub stub = getBlockingStub(worker);
-        return stub.executeTask(request);
+        try (JQuickGrpcContext.Scope ignored = JQuickGrpcCallSupport.trace(request.getQueryId())) {
+            return stub.executeTask(request);
+        }
     }
 
 
@@ -460,29 +460,17 @@ public class JQuickCoordinator {
     }
 
     /**
-     * 获取阻塞式 gRPC Stub
+     * 获取阻塞式 Stub（通道由 jquick-grpc 统一创建与复用）
      */
     private JQuickPhysicalPlanServiceGrpc.JQuickPhysicalPlanServiceBlockingStub getBlockingStub(WorkerEndpoint worker) {
-        ManagedChannel channel = workerChannels.computeIfAbsent(worker.getWorkerId(), k ->
-                ManagedChannelBuilder.forAddress(worker.getHost(), worker.getPort())
-                        .usePlaintext()
-                        .maxInboundMessageSize(64 * 1024 * 1024)
-                        .build()
-        );
-        return JQuickPhysicalPlanServiceGrpc.newBlockingStub(channel);
+        return channelRegistry.physicalPlanBlocking(worker);
     }
 
     /**
-     * 获取异步 gRPC Stub
+     * 获取异步 Stub（通道由 jquick-grpc 统一创建与复用）
      */
     private JQuickPhysicalPlanServiceGrpc.JQuickPhysicalPlanServiceStub getAsyncStub(WorkerEndpoint worker) {
-        ManagedChannel channel = workerChannels.computeIfAbsent(worker.getWorkerId(), k ->
-                ManagedChannelBuilder.forAddress(worker.getHost(), worker.getPort())
-                        .usePlaintext()
-                        .maxInboundMessageSize(64 * 1024 * 1024)
-                        .build()
-        );
-        return JQuickPhysicalPlanServiceGrpc.newStub(channel);
+        return channelRegistry.physicalPlanAsync(worker);
     }
 
     /**
@@ -633,10 +621,7 @@ public class JQuickCoordinator {
         if (worker != null) {
             workers.remove(worker);
             workerIndexMap.values().remove(worker);
-            ManagedChannel channel = workerChannels.remove(workerId);
-            if (channel != null) {
-                channel.shutdown();
-            }
+            channelRegistry.release(worker);
             console.info(String.format("Worker removed - %s", worker));
         }
     }
@@ -651,10 +636,8 @@ public class JQuickCoordinator {
         for (String queryId : new ArrayList<>(activeQueries.keySet())) {
             cancelQuery(queryId, "Coordinator shutting down");
         }
-        // 关闭所有 gRPC 连接
-        for (ManagedChannel channel : workerChannels.values()) {
-            channel.shutdown();
-        }
+        // 关闭所有节点间调用通道
+        channelRegistry.close();
         console.info("JQuickCoordinator shutdown complete");
     }
     public JQuickRegisterWorkerResponse registerWorker(JQuickRegisterWorkerRequest request) {

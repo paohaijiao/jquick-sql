@@ -17,6 +17,7 @@ package com.github.paohaijiao.distributed.worker;
 
 import com.github.paohaijiao.config.WorkerEndpoint;
 import com.github.paohaijiao.console.JConsole;
+import com.github.paohaijiao.distributed.grpc.JQuickGrpcChannelRegistry;
 import com.github.paohaijiao.enums.JQuickExchangeType;
 import com.github.paohaijiao.enums.JQuickPartitionStrategy;
 import com.github.paohaijiao.expression.JQuickExpression;
@@ -26,8 +27,6 @@ import com.github.paohaijiao.proto.JQuickDataDistributionServiceGrpc;
 import com.github.paohaijiao.proto.JQuickEmptyNodeProto;
 import com.github.paohaijiao.statement.JQuickDataSet;
 import com.github.paohaijiao.statement.JQuickRow;
-import io.grpc.ManagedChannel;
-import io.grpc.ManagedChannelBuilder;
 import io.grpc.stub.StreamObserver;
 
 import java.util.ArrayList;
@@ -42,21 +41,39 @@ import java.util.concurrent.TimeUnit;
  */
 public class JQuickPartitionManager {
 
+    /**
+     * 默认最大入站消息，与 jquick.runtime.maxFileSize 默认值保持一致
+     */
+    private static final int DEFAULT_MAX_INBOUND_MESSAGE_SIZE = 64 * 1024 * 1024;
+
+    /**
+     * 单次数据块发送超时（秒）
+     */
+    private static final long SEND_TIMEOUT_SECONDS = 30;
+
     private JConsole console = JConsole.initConsoleEnvironment();
 
     // Worker 端点映射：workerId -> WorkerEndpoint
     private final Map<String, WorkerEndpoint> workerEndpoints;
 
-    // gRPC 通道缓存
-    private final Map<String, ManagedChannel> channelCache;
+    // 节点间调用通道（统一由 jquick-grpc 管理）
+    private final JQuickGrpcChannelRegistry channelRegistry;
 
-    // gRPC Stub 缓存
-    private final Map<String, JQuickDataDistributionServiceGrpc.JQuickDataDistributionServiceStub> stubCache;
+    // 通道注册表是否由本对象自行创建（仅自带注册表时负责释放）
+    private final boolean ownsChannelRegistry;
 
     public JQuickPartitionManager() {
+        this(new JQuickGrpcChannelRegistry(DEFAULT_MAX_INBOUND_MESSAGE_SIZE), true);
+    }
+
+    public JQuickPartitionManager(JQuickGrpcChannelRegistry channelRegistry) {
+        this(channelRegistry, false);
+    }
+
+    private JQuickPartitionManager(JQuickGrpcChannelRegistry channelRegistry, boolean ownsChannelRegistry) {
         this.workerEndpoints = new ConcurrentHashMap<>();
-        this.channelCache = new ConcurrentHashMap<>();
-        this.stubCache = new ConcurrentHashMap<>();
+        this.channelRegistry = channelRegistry;
+        this.ownsChannelRegistry = ownsChannelRegistry;
     }
 
     /**
@@ -240,7 +257,6 @@ public class JQuickPartitionManager {
      * 修改为同步方式，确保数据发送完成后再返回
      */
     private void sendChunkAsync(JQuickDataChunkProto chunk, WorkerEndpoint targetEndpoint, JQuickWorker worker) {
-        String endpointKey = targetEndpoint.getWorkerId();
         try {
             JQuickDataDistributionServiceGrpc.JQuickDataDistributionServiceStub stub = getDistributionStub(targetEndpoint, worker);
             CompletableFuture<Void> future = new CompletableFuture<>();
@@ -264,7 +280,7 @@ public class JQuickPartitionManager {
             });
             requestObserver.onNext(chunk);
             requestObserver.onCompleted();
-            future.get(30, TimeUnit.SECONDS);
+            future.get(SEND_TIMEOUT_SECONDS, TimeUnit.SECONDS);
             console.info("Sent partition " + chunk.getPartitionId() + " to worker " + targetEndpoint.getWorkerId());
 
         } catch (Exception e) {
@@ -274,20 +290,10 @@ public class JQuickPartitionManager {
     }
 
     /**
-     * 获取分发服务 Stub（使用 WorkerEndpoint）
+     * 获取分发服务 Stub（通道由 jquick-grpc 统一创建与复用）
      */
     private JQuickDataDistributionServiceGrpc.JQuickDataDistributionServiceStub getDistributionStub(WorkerEndpoint endpoint, JQuickWorker worker) {
-        return stubCache.computeIfAbsent(endpoint.getWorkerId(), id -> {
-            ManagedChannel channel = ManagedChannelBuilder
-                    .forAddress(endpoint.getHost(), endpoint.getPort())
-                    .usePlaintext()
-                    .maxInboundMessageSize(64 * 1024 * 1024)
-                    .build();
-            channelCache.put(endpoint.getWorkerId(), channel);
-            worker.getWorkerChannels().put(endpoint.getIndex(), channel);
-            console.info("Created gRPC channel to worker: " + endpoint.getWorkerId() + " at " + endpoint.getHost() + ":" + endpoint.getPort());
-            return JQuickDataDistributionServiceGrpc.newStub(channel);
-        });
+        return channelRegistry.distributionAsync(endpoint);
     }
 
     private int computeHashPartition(JQuickRow row, List<JQuickExpression> partitionKeys, int numPartitions, JQuickExpressionEvaluator evaluator) {
@@ -331,15 +337,9 @@ public class JQuickPartitionManager {
      * 关闭所有连接
      */
     public void shutdown() {
-        for (ManagedChannel channel : channelCache.values()) {
-            try {
-                channel.shutdown();
-            } catch (Exception e) {
-                // ignore
-            }
+        if (ownsChannelRegistry) {
+            channelRegistry.close();
         }
-        channelCache.clear();
-        stubCache.clear();
         workerEndpoints.clear();
     }
 }

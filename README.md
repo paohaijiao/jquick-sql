@@ -104,9 +104,19 @@ The library is built around four stages:
 |------|-------------|
 | JDK | 1.8 or higher (`java.version=1.8`) |
 | Build tool | Maven 3.x |
-| Execution layer | gRPC 1.80.0 + protobuf-java 3.21.12 + grpc-netty-shaded |
+| Execution layer | jquick-grpc 1.4.0 (managed by the JQuick BOM, transitively provides grpc 1.80.0) + protobuf-java 3.21.12 |
 | Serialization | snappy-java 1.1.10.5 |
 | JQuick dependencies | javelin-core, jquick-grpc, jquick-banner, jquick-path, jquick-xmlProxy, jquick-transform-function |
+
+### 3.1 Remote execution layer runs on jquick-grpc
+
+Since 5.2.0 the cross-node SQL execution layer no longer calls raw grpc-java APIs directly; everything goes through the ecosystem component [jquick-grpc](https://github.com/paohaijiao/jquick-grpc):
+
+- **One ecosystem**: `jquick-sql` shares the same service publishing / discovery / load-balancing / interceptor stack with `jquick-gateway` and `jquick-asm`, with grpc versions pinned by the JQuick BOM — this project declares no `io.grpc:grpc-*` dependency at all.
+- **Simpler configuration**: a single `JQuickGrpcNodeServer` handles registration and lifecycle, a single `JQuickGrpcChannelRegistry` hands out channels and stubs; port, message size, keepAlive and deadline live in `JQuickGrpcServerConfig` / `JQuickGrpcClientConfig` instead of business code.
+- **Gateway / ASM integration**: services register under their proto fully-qualified names with built-in health checking and reflection, so the gateway can do gRPC-JSON transcoding without proto descriptors; traceId / userId propagate end-to-end via `JQuickGrpcContext` and the built-in interceptor.
+
+Public SPI, configuration keys, configuration file layout and remote request/response structures are unchanged. See [docs/grpc-migration.md](docs/grpc-migration.md) for the migration checklist and open items.
 
 ---
 

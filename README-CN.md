@@ -104,9 +104,19 @@ JQuick-SQL 是面向 Java 应用的 SQL AST 语法解析与 SQL 逻辑转换工�
 |------|------|
 | JDK | 1.8 及以上（`java.version=1.8`） |
 | 构建工具 | Maven 3.x |
-| 执行层 | gRPC 1.80.0 + protobuf-java 3.21.12 + grpc-netty-shaded |
+| 执行层 | jquick-grpc 1.4.0（JQuick BOM 统一管理，传递提供 grpc 1.80.0）+ protobuf-java 3.21.12 |
 | 序列化 | snappy-java 1.1.10.5 |
 | JQuick 依赖 | javelin-core、jquick-grpc、jquick-banner、jquick-path、jquick-xmlProxy、jquick-transform-function |
+
+### 3.1 远程执行层统一使用 jquick-grpc
+
+从 5.2.0 起，跨节点 SQL 执行与节点间通信不再直接使用原生 grpc-java API，统一由生态组件 [jquick-grpc](https://github.com/paohaijiao/jquick-grpc) 提供：
+
+- **生态统一**：`jquick-sql` 与 `jquick-gateway`、`jquick-asm` 共用同一套服务发布 / 服务发现 / 负载均衡 / 拦截器实现，grpc 版本由 JQuick BOM 统一收敛，本工程不再声明任何 `io.grpc:grpc-*` 依赖。
+- **简化配置**：服务端一个 `JQuickGrpcNodeServer` 完成注册与生命周期管理，客户端一个 `JQuickGrpcChannelRegistry` 统一出通道与 Stub；端口、最大消息、keepAlive、超时集中在 `JQuickGrpcServerConfig` / `JQuickGrpcClientConfig`，业务代码不再出现 `ServerBuilder` / `ManagedChannelBuilder`。
+- **与 JQuick 网关 / ASM 体系打通**：服务以 proto 全限定名注册，内置健康检查与反射服务，网关可零 proto 描述文件完成 gRPC-JSON 转码；traceId / userId 经 `JQuickGrpcContext` + 内置拦截器全链路透传。
+
+对外 SPI、配置项、配置文件结构、远程调用入参出参结构保持不变；迁移明细与待跟进项见 [docs/grpc-migration.md](docs/grpc-migration.md)。
 
 ---
 

@@ -5,6 +5,9 @@ import com.github.paohaijiao.config.WorkerEndpoint;
 import com.github.paohaijiao.console.JConsole;
 import com.github.paohaijiao.datasource.JQuickDataSourceManager;
 import com.github.paohaijiao.distributed.coordinator.JQuickCoordinator;
+import com.github.paohaijiao.distributed.grpc.JQuickGrpcChannelRegistry;
+import com.github.paohaijiao.distributed.grpc.JQuickGrpcNodeServer;
+import com.github.paohaijiao.distributed.grpc.JQuickGrpcServiceNames;
 import com.github.paohaijiao.distributed.proto.JQuickProtoService;
 import com.github.paohaijiao.enums.JQuickExchangeType;
 import com.github.paohaijiao.enums.JQuickFragmentType;
@@ -14,10 +17,6 @@ import com.github.paohaijiao.proto.*;
 import com.github.paohaijiao.statement.JQuickColumnMeta;
 import com.github.paohaijiao.statement.JQuickDataSet;
 import com.github.paohaijiao.statement.JQuickRow;
-import io.grpc.ManagedChannel;
-import io.grpc.ManagedChannelBuilder;
-import io.grpc.Server;
-import io.grpc.ServerBuilder;
 import io.grpc.stub.StreamObserver;
 
 import java.io.IOException;
@@ -47,12 +46,18 @@ public class JQuickWorker {
 
     private final Map<String, JQuickMemoryPartition> memoryPartitions;
 
-    private final Map<Integer, ManagedChannel> workerChannels;
+    /**
+     * 节点间调用通道（统一由 jquick-grpc 管理）
+     */
+    private final JQuickGrpcChannelRegistry channelRegistry;
+
+    /**
+     * 运行时配置（端口、最大消息、并行度等，来源不变）
+     */
+    private final JQuickSqlConfig config;
 
     private JQuickTableServiceImpl tableService;
 
-
-    private final Map<Integer, JQuickDataDistributionServiceGrpc.JQuickDataDistributionServiceStub> distributionStubs;
 
     private final JQuickMethodInvocationManager functionManager;
 
@@ -64,7 +69,7 @@ public class JQuickWorker {
 
     private final JQuickNodeExecutor nodeExecutor;
 
-    private Server server;
+    private JQuickGrpcNodeServer grpcServer;
 
     private JQuickDataDistributionServiceImpl distributionService;
 
@@ -81,14 +86,14 @@ public class JQuickWorker {
     public JQuickWorker(String workerId, int port) {
         this.workerId = workerId;
         this.port = port;
+        this.config = new JQuickSqlConfig();
         this.executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
         this.activeTasks = new ConcurrentHashMap<>();
         this.memoryPartitions = new ConcurrentHashMap<>();
-        this.workerChannels = new ConcurrentHashMap<>();
-        this.distributionStubs = new ConcurrentHashMap<>();
+        this.channelRegistry = new JQuickGrpcChannelRegistry(config.getRuntime().getMaxFileSize());
         this.functionManager = JQuickMethodInvocationManager.getInstance();
         this.expressionEvaluator = new JQuickExpressionEvaluator(functionManager);
-        this.partitionManager = new JQuickPartitionManager();
+        this.partitionManager = new JQuickPartitionManager(channelRegistry);
         this.dataConverter = new JQuickDataConverter();
         this.jQuickprotoService = new JQuickProtoService();
         this.nodeExecutor = new JQuickNodeExecutor(this, expressionEvaluator, partitionManager, dataConverter);
@@ -104,8 +109,7 @@ public class JQuickWorker {
         }
         console.info("Registering with coordinator at " + coordinatorHost + ":" + coordinatorPort);
         try {
-            ManagedChannel channel = ManagedChannelBuilder.forAddress(coordinatorHost, coordinatorPort).usePlaintext().build();
-            JQuickPhysicalPlanServiceGrpc.JQuickPhysicalPlanServiceBlockingStub stub = JQuickPhysicalPlanServiceGrpc.newBlockingStub(channel);
+            JQuickPhysicalPlanServiceGrpc.JQuickPhysicalPlanServiceBlockingStub stub = channelRegistry.physicalPlanBlocking(coordinatorHost, coordinatorPort);
             JQuickRegisterWorkerRequest request = JQuickRegisterWorkerRequest.newBuilder()
                     .setWorkerId(workerId)
                     .setHost(getLocalHostAddress())
@@ -116,7 +120,6 @@ public class JQuickWorker {
                     .putAttributes("start_time", String.valueOf(System.currentTimeMillis()))
                     .build();
             JQuickRegisterWorkerResponse response = stub.registerWorker(request);
-            channel.shutdown();
             if (response.getSuccess()) {
                 List<WorkerEndpoint> endpoints = response.getAllWorkersList().stream()
                         .map(p -> new WorkerEndpoint(p.getWorkerId(), p.getHost(), p.getPort(), p.getIndex()))
@@ -225,13 +228,13 @@ public class JQuickWorker {
         return executor;
     }
 
-    public Map<Integer, ManagedChannel> getWorkerChannels() {
-        return workerChannels;
+    /**
+     * 获取节点间调用通道注册表（替代原 getWorkerChannels / getDistributionStubs）
+     */
+    public JQuickGrpcChannelRegistry getChannelRegistry() {
+        return channelRegistry;
     }
 
-    public Map<Integer, JQuickDataDistributionServiceGrpc.JQuickDataDistributionServiceStub> getDistributionStubs() {
-        return distributionStubs;
-    }
     public void setWorkerEndpoints(List<WorkerEndpoint> endpoints) {
         partitionManager.setWorkerEndpoints(endpoints);
     }
@@ -378,20 +381,23 @@ public class JQuickWorker {
     }
 
     /**
-     * 启动 Worker 服务
+     * 启动 Worker 服务（通过 jquick-grpc 发布执行层服务）
      */
     public void start() throws IOException {
-        JQuickSqlConfig config=new JQuickSqlConfig();
         JQuickPhysicalPlanServiceImpl planService = new JQuickPhysicalPlanServiceImpl(this);
         distributionService = new JQuickDataDistributionServiceImpl(this);
         tableService = new JQuickTableServiceImpl(dataConverter);
-        server = ServerBuilder.forPort(port)
-                .maxInboundMessageSize(config.getRuntime().getMaxFileSize())
-                .addService(planService)
-                .addService(distributionService)
-                .addService(tableService)
-                .build()
-                .start();
+        grpcServer = new JQuickGrpcNodeServer(port, config.getRuntime().getMaxFileSize());
+        grpcServer.registerService(JQuickGrpcServiceNames.PHYSICAL_PLAN, planService);
+        grpcServer.registerService(JQuickGrpcServiceNames.DATA_DISTRIBUTION, distributionService);
+        grpcServer.registerService(JQuickGrpcServiceNames.TABLE, tableService);
+        try {
+            grpcServer.start();
+        } catch (IOException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new IOException("Failed to start jquick-grpc server on port " + port, e);
+        }
         console.info("Worker " + workerId + " started on port " + port);
         console.info("Loaded " + functionManager.getAllInvokers().size() + " functions via SPI");
     }
@@ -400,13 +406,11 @@ public class JQuickWorker {
      * 停止 Worker 服务
      */
     public void stop() {
-        if (server != null) {
-            server.shutdown();
+        if (grpcServer != null) {
+            grpcServer.stop();
         }
         executor.shutdown();
-        for (ManagedChannel channel : workerChannels.values()) {
-            channel.shutdown();
-        }
+        channelRegistry.close();
         if (distributionService != null) {
             distributionService.shutdown();
         }
@@ -417,8 +421,8 @@ public class JQuickWorker {
      * 等待服务终止
      */
     public void awaitTermination() throws InterruptedException {
-        if (server != null) {
-            server.awaitTermination();
+        if (grpcServer != null) {
+            grpcServer.awaitTermination();
         }
     }
     public void registerTableLocally(String tableName, JQuickDataSet data) {

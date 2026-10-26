@@ -22,6 +22,7 @@ import com.github.paohaijiao.console.JConsole;
 import com.github.paohaijiao.datasource.JQuickDataSourceManager;
 import com.github.paohaijiao.distributed.JQuickDistributedPlan;
 import com.github.paohaijiao.distributed.coordinator.JQuickCoordinator;
+import com.github.paohaijiao.distributed.grpc.JQuickGrpcChannelRegistry;
 import com.github.paohaijiao.distributed.worker.JQuickDataConverter;
 import com.github.paohaijiao.distributed.worker.JQuickExpressionEvaluator;
 import com.github.paohaijiao.distributed.worker.JQuickPartitionManager;
@@ -40,8 +41,6 @@ import com.github.paohaijiao.physical.node.*;
 import com.github.paohaijiao.proto.*;
 import com.github.paohaijiao.statement.JQuickDataSet;
 import com.github.paohaijiao.statement.JQuickRow;
-import io.grpc.ManagedChannel;
-import io.grpc.ManagedChannelBuilder;
 import io.grpc.stub.StreamObserver;
 import org.junit.After;
 import org.junit.Before;
@@ -98,6 +97,11 @@ public class JQuickCoordinatorPartitionTest {
 
     private List<WorkerEndpoint> endpoints;
     private List<JQuickWorker> workers;
+
+    /**
+     * 测试用节点间调用通道（jquick-grpc）
+     */
+    private JQuickGrpcChannelRegistry channelRegistry;
 
     @BeforeClass
     public static void setUpAll() {
@@ -162,6 +166,7 @@ public class JQuickCoordinatorPartitionTest {
     public void setUp() throws IOException, InterruptedException {
         // 清理数据源
         JQuickDataSourceManager.clearAll();
+        channelRegistry = new JQuickGrpcChannelRegistry(64 * 1024 * 1024);
         // 注册测试数据到数据源管理器（替代 broadcastTable）
         JQuickDataSourceManager.registerTable("employees", employeeData);
         console.info("测试数据已注册到数据源管理器");
@@ -207,6 +212,9 @@ public class JQuickCoordinatorPartitionTest {
         }
         if (worker3 != null) {
             worker3.stop();
+        }
+        if (channelRegistry != null) {
+            channelRegistry.close();
         }
         JQuickDataSourceManager.clearAll();
         console.info("测试环境清理完成");
@@ -293,8 +301,7 @@ public class JQuickCoordinatorPartitionTest {
         WorkerEndpoint targetEndpoint = endpoints.get(0);
         // 发送数据
         CompletableFuture<Void> sendFuture = new CompletableFuture<>();
-        ManagedChannel channel = ManagedChannelBuilder.forAddress("localhost", WORKER1_PORT).usePlaintext().build();
-        JQuickDataDistributionServiceGrpc.JQuickDataDistributionServiceStub stub = JQuickDataDistributionServiceGrpc.newStub(channel);
+        JQuickDataDistributionServiceGrpc.JQuickDataDistributionServiceStub stub = channelRegistry.distributionAsync("localhost", WORKER1_PORT);
         JQuickDataChunkProto chunk = JQuickDataChunkProto.newBuilder()
                 .setPartitionId(partition.getPartitionId())
                 .setData(dataConverter.convertToProto(employeeData))
@@ -310,13 +317,11 @@ public class JQuickCoordinatorPartitionTest {
             @Override
             public void onError(Throwable t) {
                 sendFuture.completeExceptionally(t);
-                channel.shutdown();
             }
 
             @Override
             public void onCompleted() {
                 sendFuture.complete(null);
-                channel.shutdown();
             }
         }).onNext(chunk);
         sendFuture.get(30, TimeUnit.SECONDS);
@@ -329,10 +334,7 @@ public class JQuickCoordinatorPartitionTest {
         // 先在 Worker1 上注册表
         JQuickDataSourceManager.registerTable("test_receive", employeeData);
         // 从 Worker1 拉取数据
-        ManagedChannel channel = ManagedChannelBuilder.forAddress("localhost", WORKER1_PORT)
-                .usePlaintext()
-                .build();
-        JQuickDataDistributionServiceGrpc.JQuickDataDistributionServiceBlockingStub stub = JQuickDataDistributionServiceGrpc.newBlockingStub(channel);
+        JQuickDataDistributionServiceGrpc.JQuickDataDistributionServiceBlockingStub stub = channelRegistry.distributionBlocking(endpoints.get(0));
         JQuickFetchDataRequest request = JQuickFetchDataRequest.newBuilder()
                 .setPartitionId("0_1")
                 .setChunkIndex(0)
@@ -343,7 +345,6 @@ public class JQuickCoordinatorPartitionTest {
             assertNotNull(response);
             console.info("数据接收成功，数据大小: " + response.next().getDataSizeBytes());
         }
-        channel.shutdown();
     }
 
     @Test
@@ -352,10 +353,7 @@ public class JQuickCoordinatorPartitionTest {
         // 创建大数据集（1000行）
         JQuickDataSet largeData = largeDataSet;
         // 流式发送
-        ManagedChannel channel = ManagedChannelBuilder.forAddress("localhost", WORKER1_PORT)
-                .usePlaintext()
-                .build();
-        JQuickDataDistributionServiceGrpc.JQuickDataDistributionServiceStub stub = JQuickDataDistributionServiceGrpc.newStub(channel);
+        JQuickDataDistributionServiceGrpc.JQuickDataDistributionServiceStub stub = channelRegistry.distributionAsync("localhost", WORKER1_PORT);
         AtomicInteger receivedChunks = new AtomicInteger(0);
         CompletableFuture<Void> receiveComplete = new CompletableFuture<>();
         stub.sendData(new StreamObserver<JQuickEmptyNodeProto>() {
@@ -370,7 +368,6 @@ public class JQuickCoordinatorPartitionTest {
             @Override
             public void onCompleted() {
                 receiveComplete.complete(null);
-                channel.shutdown();
             }
         }).onNext(createChunk(largeData, 0, true));
         receiveComplete.get(30, TimeUnit.SECONDS);

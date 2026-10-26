@@ -16,11 +16,10 @@
 package com.github.paohaijiao.distributed.worker;
 
 import com.github.paohaijiao.console.JConsole;
+import com.github.paohaijiao.distributed.grpc.JQuickGrpcCallSupport;
 import com.github.paohaijiao.proto.*;
 import com.github.paohaijiao.statement.JQuickDataSet;
 import com.github.paohaijiao.statement.JQuickRow;
-import io.grpc.ManagedChannel;
-import io.grpc.ManagedChannelBuilder;
 import io.grpc.stub.StreamObserver;
 
 import java.util.*;
@@ -258,8 +257,7 @@ public class JQuickDataDistributionServiceImpl extends JQuickDataDistributionSer
     public CompletableFuture<Void> sendDataToWorker(String targetWorkerId, String host, int port, JQuickDataChunkProto chunk) {
         CompletableFuture<Void> future = new CompletableFuture<>();
         try {
-            ManagedChannel channel = ManagedChannelBuilder.forAddress(host, port).usePlaintext().maxInboundMessageSize(64 * 1024 * 1024).build();
-            JQuickDataDistributionServiceGrpc.JQuickDataDistributionServiceStub stub = JQuickDataDistributionServiceGrpc.newStub(channel);
+            JQuickDataDistributionServiceGrpc.JQuickDataDistributionServiceStub stub = worker.getChannelRegistry().distributionAsync(host, port);
             StreamObserver<JQuickDataChunkProto> requestObserver = stub.sendData(
                     new StreamObserver<JQuickEmptyNodeProto>() {
                         @Override
@@ -270,14 +268,12 @@ public class JQuickDataDistributionServiceImpl extends JQuickDataDistributionSer
                         public void onError(Throwable t) {
                             console.warn(String.format("Send data to worker failed - target: %s:%d, workerId: %s", host, port, targetWorkerId), t);
                             future.completeExceptionally(t);
-                            channel.shutdown();
                         }
 
                         @Override
                         public void onCompleted() {
                             console.warn(String.format("Send data to worker completed - target: %s:%d, workerId: %s", host, port, targetWorkerId));
                             future.complete(null);
-                            channel.shutdown();
                         }
                     }
             );

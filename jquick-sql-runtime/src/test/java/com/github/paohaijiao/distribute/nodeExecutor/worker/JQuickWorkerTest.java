@@ -352,8 +352,7 @@ public class JQuickWorkerTest {
         assertNotNull("DataConverter 不应为 null", worker.getDataConverter());
         assertNotNull("PartitionManager 不应为 null", worker.getPartitionManager());
         assertNotNull("Executor 不应为 null", worker.getExecutor());
-        assertNotNull("WorkerChannels 不应为 null", worker.getWorkerChannels());
-        assertNotNull("DistributionStubs 不应为 null", worker.getDistributionStubs());
+        assertNotNull("ChannelRegistry 不应为 null", worker.getChannelRegistry());
     }
 
     /**

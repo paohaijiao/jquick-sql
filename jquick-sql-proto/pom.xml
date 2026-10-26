@@ -19,25 +19,24 @@
             <groupId>io.github.paohaijiao</groupId>
             <artifactId>jquick-sql-plan</artifactId>
         </dependency>
+
         <dependency>
-            <groupId>io.grpc</groupId>
-            <artifactId>grpc-protobuf</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>io.grpc</groupId>
-            <artifactId>grpc-stub</artifactId>
+            <groupId>io.github.paohaijiao</groupId>
+            <artifactId>jquick-grpc</artifactId>
         </dependency>
         <dependency>
             <groupId>com.google.protobuf</groupId>
             <artifactId>protobuf-java</artifactId>
         </dependency>
+        <!--
+            编译期注解依赖：protobuf / gRPC 生成代码引用了 @CheckReturnValue，
+            jquick-grpc 以 provided 方式声明，此处显式补齐（仅注解，无运行期开销，非 gRPC 实现依赖）。
+        -->
         <dependency>
-            <groupId>io.grpc</groupId>
-            <artifactId>grpc-netty-shaded</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>io.github.paohaijiao</groupId>
-            <artifactId>jquick-grpc</artifactId>
+            <groupId>com.google.errorprone</groupId>
+            <artifactId>error_prone_annotations</artifactId>
+            <version>2.23.0</version>
+            <scope>provided</scope>
         </dependency>
     </dependencies>
     <description>
@@ -74,33 +73,6 @@
             </extension>
         </extensions>
         <plugins>
-            <plugin>
-                <groupId>org.xolstice.maven.plugins</groupId>
-                <artifactId>protobuf-maven-plugin</artifactId>
-                <version>${protobuf.maven.plugin.version}</version>
-                <configuration>
-                    <!-- protoc 可执行文件 -->
-                    <protocArtifact>com.google.protobuf:protoc:${protobuf.version}:exe:${os.detected.classifier}</protocArtifact>
-                    <!-- gRPC 插件 -->
-                    <pluginId>grpc-java</pluginId>
-                    <pluginArtifact>io.grpc:protoc-gen-grpc-java:${grpc.version}:exe:${os.detected.classifier}</pluginArtifact>
-                    <!-- proto 文件目录 -->
-                    <protoSourceRoot>${project.basedir}/src/main/proto</protoSourceRoot>
-                    <!-- 输出目录 -->
-                    <outputDirectory>${project.basedir}/src/main/java</outputDirectory>
-                    <!-- 清理输出目录 -->
-                    <clearOutputDirectory>false</clearOutputDirectory>
-                </configuration>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>compile</goal>
-                            <!-- 生成 gRPC 服务类 -->
-                            <goal>compile-custom</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>build-helper-maven-plugin</artifactId>
@@ -191,4 +163,49 @@
             </plugin>
         </plugins>
     </build>
+
+    <profiles>
+        <!--
+            proto 代码生成（可选，默认关闭）
+            生成的 *Proto.java / *Grpc.java 已随源码入库，日常构建直接编译既有源码，不依赖 protoc。
+            修改 src/main/proto 下的 .proto 后执行：
+                mvn -Pgrpc-codegen -pl jquick-sql-proto generate-sources
+            jquick-grpc 1.4.0 未提供定制 protoc 插件，生成插件仍使用 protoc-gen-grpc-java，
+            生成结果遵循 jquick-grpc 的通道/Stub 契约（原生 Stub 由通道注册表统一获取）。
+        -->
+        <profile>
+            <id>grpc-codegen</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.xolstice.maven.plugins</groupId>
+                        <artifactId>protobuf-maven-plugin</artifactId>
+                        <version>${protobuf.maven.plugin.version}</version>
+                        <configuration>
+                            <!-- protoc 可执行文件 -->
+                            <protocArtifact>com.google.protobuf:protoc:${protobuf.version}:exe:${os.detected.classifier}</protocArtifact>
+                            <!-- gRPC 插件（编译期工具，不进入运行期依赖） -->
+                            <pluginId>grpc-java</pluginId>
+                            <pluginArtifact>io.grpc:protoc-gen-grpc-java:${grpc.codegen.version}:exe:${os.detected.classifier}</pluginArtifact>
+                            <!-- proto 文件目录 -->
+                            <protoSourceRoot>${project.basedir}/src/main/proto</protoSourceRoot>
+                            <!-- 输出目录 -->
+                            <outputDirectory>${project.basedir}/src/main/java</outputDirectory>
+                            <!-- 清理输出目录 -->
+                            <clearOutputDirectory>false</clearOutputDirectory>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <goals>
+                                    <goal>compile</goal>
+                                    <!-- 生成 gRPC 服务类 -->
+                                    <goal>compile-custom</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 </project>
