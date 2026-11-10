@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqls PUBLIC "-//PAOHAIJIAO//DTD API SQLS 1.0//EN"
+        "classpath:paohaijiao/dtd/Jquick-sql.dtd">
+<sqls namespace="com.github.paohaijiao.xml.dao.DataDao">
+    <sql name="selectData" returnClass="com.github.paohaijiao.xml.model.DataStatistics">
+       select *  from data_catalog_stat
+    </sql>
+</sqls>
