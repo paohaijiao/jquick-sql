@@ -462,8 +462,16 @@ public class JQuickExpressionEvaluator {
             } catch (Exception e) {
             }
         }
+        if(v1 instanceof Date&&v2 instanceof Date) {
+            try {
+                Date d1 = (Date)v1;
+                Date d2 =  (Date)v2;
+                return d1.compareTo(d2);
+            } catch (Exception e) {
+            }
+        }
 
-        if (v1 instanceof Comparable && v2 instanceof Comparable) {
+        if (v1 instanceof Comparable && v2 instanceof Comparable && v1.getClass().isInstance(v2)) {
             @SuppressWarnings("unchecked")
             int cmp = ((Comparable<Object>) v1).compareTo(v2);
             return cmp;

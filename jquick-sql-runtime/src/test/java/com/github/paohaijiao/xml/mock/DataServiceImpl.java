@@ -32,7 +32,7 @@ public class DataServiceImpl {
                 new JQuickColumnMeta("compilation_progress", String.class, tableName),
                 new JQuickColumnMeta("type", String.class, tableName),
                 new JQuickColumnMeta("level", String.class, tableName),
-                new JQuickColumnMeta("create_date", Date.class, tableName)
+                new JQuickColumnMeta("createdate", Date.class, tableName)
         );
         JQuickTable virtualTable = new JQuickTable(tableName, columns, rows);
         return virtualTable;

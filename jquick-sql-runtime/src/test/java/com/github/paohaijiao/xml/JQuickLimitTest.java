@@ -16,7 +16,6 @@
 package com.github.paohaijiao.xml;
 
 import com.github.paohaijiao.domain.JQuickTable;
-import com.github.paohaijiao.param.JContext;
 import com.github.paohaijiao.statement.JQuickColumnMeta;
 import com.github.paohaijiao.statement.JQuickDataSet;
 import com.github.paohaijiao.statement.JQuickRow;
@@ -87,7 +86,7 @@ public class JQuickLimitTest {
     @Test
     public void limit() {
         JQuickTable table=new JQuickTable("users",getUserColumns(),getUserRows());
-        JQuickJavaXmlParseFactory handler=new JQuickJavaXmlParseFactory(Arrays.asList(table));
+        JQuickSQLXmlParseFactory handler=new JQuickSQLXmlParseFactory(Arrays.asList(table));
         JQuickFactory factory = new JQuickXmlFactory(handler,"jquick-sql.xml");
         JQuickUserService orderService = factory.createApi(JQuickUserService.class);
         JQuickDataSet dataSet= orderService.getUsers(2);
@@ -97,7 +96,7 @@ public class JQuickLimitTest {
     @Test
     public void limit1() {
         JQuickTable table=new JQuickTable("users",getUserColumns(),getUserRows());
-        JQuickJavaXmlParseFactory handler=new JQuickJavaXmlParseFactory(Arrays.asList(table));
+        JQuickSQLXmlParseFactory handler=new JQuickSQLXmlParseFactory(Arrays.asList(table));
         JQuickFactory factory = new JQuickXmlFactory(handler,"jquick-sql.xml");
         JQuickUserService orderService = factory.createApi(JQuickUserService.class);
         List<JQuickRow> dataSet= orderService.getUsersOne(2);
@@ -106,7 +105,7 @@ public class JQuickLimitTest {
     @Test
     public void limit3() {
         JQuickTable table=new JQuickTable("users",getUserColumns(),getUserRows());
-        JQuickJavaXmlParseFactory handler=new JQuickJavaXmlParseFactory(Arrays.asList(table));
+        JQuickSQLXmlParseFactory handler=new JQuickSQLXmlParseFactory(Arrays.asList(table));
         JQuickFactory factory = new JQuickXmlFactory(handler,"jquick-sql.xml");
         JQuickUserService orderService = factory.createApi(JQuickUserService.class);
         Integer dataSet= orderService.getUsersTwo(2);

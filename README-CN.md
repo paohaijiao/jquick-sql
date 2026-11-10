@@ -278,7 +278,7 @@ package demo;
 import com.github.paohaijiao.domain.JQuickTable;
 import com.github.paohaijiao.statement.JQuickColumnMeta;
 import com.github.paohaijiao.statement.JQuickRow;
-import com.github.paohaijiao.xml.JQuickJavaXmlParseFactory;
+import com.github.paohaijiao.xml.JQuickSQLXmlParseFactory;
 import com.github.paohaijiao.xml.factory.JQuickFactory;
 import com.github.paohaijiao.xml.factory.JQuickXmlFactory;
 import com.github.paohaijiao.xml.param.Param;

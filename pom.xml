@@ -16,7 +16,7 @@
     </modules>
     <modelVersion>4.0.0</modelVersion>
     <artifactId>jquick-sql</artifactId>
-    <version>5.2.0</version>
+    <version>5.2.1</version>
     <packaging>pom</packaging>
     <name>jquick-sql</name>
     <properties>
@@ -118,7 +118,7 @@
             <dependency>
                 <groupId>io.github.paohaijiao</groupId>
                 <artifactId>jquick-xmlProxy</artifactId>
-                <version>1.4.0</version>
+                <version>1.8.0</version>
             </dependency>
             <dependency>
                 <groupId>io.github.paohaijiao</groupId>

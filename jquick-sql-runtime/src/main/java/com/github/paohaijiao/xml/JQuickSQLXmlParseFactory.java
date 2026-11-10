@@ -23,11 +23,11 @@ import com.github.paohaijiao.domain.JQuickTable;
 import java.util.List;
 
 
-public class JQuickJavaXmlParseFactory implements JQuickParseHandler {
+public class JQuickSQLXmlParseFactory implements JQuickParseHandler {
 
     private List<JQuickTable> tables;
 
-    public JQuickJavaXmlParseFactory(List<JQuickTable> tables){
+    public JQuickSQLXmlParseFactory(List<JQuickTable> tables){
         JAssert.notNull(tables,"tables require not be null");
         JAssert.notEmptyCol(tables,"tables require not be empty ");
         this.tables=tables;

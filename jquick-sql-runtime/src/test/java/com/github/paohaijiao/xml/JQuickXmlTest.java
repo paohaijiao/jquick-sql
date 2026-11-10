@@ -6,10 +6,10 @@ import com.github.paohaijiao.xml.dao.DataDao;
 import com.github.paohaijiao.xml.factory.JQuickFactory;
 import com.github.paohaijiao.xml.factory.JQuickXmlFactory;
 import com.github.paohaijiao.xml.mock.DataServiceImpl;
-import com.github.paohaijiao.xml.model.DataStatistics;
 import org.junit.Test;
 
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 
 public class JQuickXmlTest {
@@ -19,10 +19,10 @@ public class JQuickXmlTest {
         DataServiceImpl service= new DataServiceImpl();
         JQuickTable table=service.getTable();
         List<JQuickTable> tables=Arrays.asList(table);
-        JQuickJavaXmlParseFactory handler = new JQuickJavaXmlParseFactory(tables);
+        JQuickSQLXmlParseFactory handler = new JQuickSQLXmlParseFactory(tables);
         JQuickFactory factory = new JQuickXmlFactory(handler, "jquick-sql.xml");
         DataDao dao = factory.createApi(DataDao.class);
-        List<JQuickRow>  list= dao.selectData(1L,"1","1",null,null);
+        List<JQuickRow>  list= dao.selectData(1L,"1","2",null,new Date());
         System.out.println(list);
 
     }
