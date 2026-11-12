@@ -27,7 +27,6 @@
         <dependency>
             <groupId>io.github.paohaijiao</groupId>
             <artifactId>javelin-core</artifactId>
-            <version>${javelin.version}</version>
         </dependency>
         <dependency>
             <groupId>org.yaml</groupId>
