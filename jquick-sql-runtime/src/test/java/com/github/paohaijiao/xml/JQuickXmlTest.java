@@ -6,6 +6,7 @@ import com.github.paohaijiao.xml.dao.DataDao;
 import com.github.paohaijiao.xml.factory.JQuickFactory;
 import com.github.paohaijiao.xml.factory.JQuickXmlFactory;
 import com.github.paohaijiao.xml.mock.DataServiceImpl;
+import com.github.paohaijiao.xml.model.DataStatistics;
 import org.junit.Test;
 
 import java.util.Arrays;
@@ -39,6 +40,19 @@ public class JQuickXmlTest {
         DataDao dao = factory.createApi(DataDao.class);
         List<JQuickRow>  list= dao.selectData(1L,"1","2",null,new Date());
         List<JQuickRow>  list1= dao.selectData(1L,"1","1",null,new Date());
+        System.out.println(list);
+
+    }
+    @Test
+    public void selectDataBean() {
+        DataServiceImpl service= new DataServiceImpl();
+        JQuickTable table=service.getTable();
+        List<JQuickTable> tables=Arrays.asList(table);
+        JQuickSQLXmlParseFactory handler = new JQuickSQLXmlParseFactory(tables);
+        JQuickFactory factory = new JQuickXmlFactory(handler, "jquick-sql.xml");
+        DataDao dao = factory.createApi(DataDao.class);
+        List<DataStatistics>  list= dao.selectDataBean(1L,"1","2",null,new Date());
+        List<DataStatistics>  list1= dao.selectDataBean(1L,"1","1",null,new Date());
         System.out.println(list);
 
     }

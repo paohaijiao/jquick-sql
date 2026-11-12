@@ -10,4 +10,6 @@ import java.util.List;
 public interface DataDao {
 
     public List<JQuickRow>  selectData(@Param("deptId" )Long deptId, @Param("type" )String type, @Param("level" )String level, @Param("startDate" ) Date startDate, @Param("endDate" ) Date endDate);
+
+    public List<DataStatistics>  selectDataBean(@Param("deptId" )Long deptId, @Param("type" )String type, @Param("level" )String level, @Param("startDate" ) Date startDate, @Param("endDate" ) Date endDate);
 }

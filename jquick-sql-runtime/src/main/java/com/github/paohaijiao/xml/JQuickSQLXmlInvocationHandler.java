@@ -25,11 +25,16 @@ import com.github.paohaijiao.xml.util.ParamUtil;
 import com.github.paohaijiao.domain.JQuickTable;
 import com.github.paohaijiao.engine.JQuickSQL;
 
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.time.Instant;
+import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class JQuickSQLXmlInvocationHandler extends JQuickXmlInvocationHandler {
 
@@ -72,10 +77,38 @@ public class JQuickSQLXmlInvocationHandler extends JQuickXmlInvocationHandler {
                     if (rowType == JQuickRow.class) {
                         return dataSet.getRows();
                     }
+                    if (rowType instanceof Class) {
+                        return JQuickRow.toBeanList(restoreDateColumns(dataSet.getRows(), (Class<?>) rowType), (Class<?>) rowType);
+                    }
                 }
             }
         }
-        throw new UnsupportedOperationException("Unsupported return type: " + returnType + ". Expected JQuickDataSet or List<JQuickRow>");
+        throw new UnsupportedOperationException("Unsupported return type: " + returnType + ". Expected JQuickDataSet, List<JQuickRow> or List<Bean>");
+    }
+
+    /**
+     * 分布式执行时日期经 protobuf Timestamp 序列化，返回后为 Instant；
+     * 目标 Bean 字段为 java.util.Date 时先还原，避免 toBeanList 类型转换失败。
+     */
+    private List<JQuickRow> restoreDateColumns(List<JQuickRow> rows, Class<?> beanType) {
+        Set<String> dateFields = new HashSet<>();
+        for (Field field : beanType.getDeclaredFields()) {
+            if (Date.class.isAssignableFrom(field.getType())) {
+                dateFields.add(field.getName());
+            }
+        }
+        if (dateFields.isEmpty()) {
+            return rows;
+        }
+        for (JQuickRow row : rows) {
+            for (String field : dateFields) {
+                Object value = row.get(field);
+                if (value instanceof Instant) {
+                    row.put(field, Date.from((Instant) value));
+                }
+            }
+        }
+        return rows;
     }
 
 }
