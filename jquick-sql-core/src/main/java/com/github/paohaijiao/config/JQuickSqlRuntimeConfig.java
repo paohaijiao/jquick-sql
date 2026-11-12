@@ -50,7 +50,7 @@ public class JQuickSqlRuntimeConfig {
     private int executionMode=1;
 
     /**
-     * 嵌入式 Worker 的 gRPC 起始端口，第 i 个 Worker 使用 grpcPort + i
+     * Base gRPC port for embedded workers; worker i uses grpcPort + i.
      */
     private int grpcPort = 19001;
 
@@ -58,8 +58,8 @@ public class JQuickSqlRuntimeConfig {
 
 
     /**
-     * 读取 classpath 下 jquick-sql.yml/jquick-sql.yaml 与 jquick-sql.properties，
-     * properties 优先级高于 yml
+     * Loads jquick-sql.yml/jquick-sql.yaml and jquick-sql.properties from the classpath;
+     * properties take precedence over yml.
      */
     public static JQuickSqlRuntimeConfig loadFromProperties() {
         JQuickSqlRuntimeConfig config = new JQuickSqlRuntimeConfig();
@@ -92,12 +92,7 @@ public class JQuickSqlRuntimeConfig {
     }
 
     /**
-     * 解析 YAML 并拍平为 Properties，支持 jquick.runtime.grpcPort 这类层级写法：
-     * <pre>
-     * jquick:
-     *   runtime:
-     *     grpcPort: 19001
-     * </pre>
+     * Flattens YAML into properties, e.g. jquick.runtime.grpcPort.
      */
     public static Properties loadYaml(InputStream input) {
         Properties props = new Properties();
@@ -124,7 +119,7 @@ public class JQuickSqlRuntimeConfig {
     }
 
     /**
-     * 应用配置项，属性文件、yml 拍平后的结果、系统属性都走同一入口
+     * Applies jquick.runtime.* properties.
      */
     public void applyProperties(Properties props) {
         setIfPresent(props, "jquick.runtime.grpcPort", value -> this.grpcPort = Integer.parseInt(value.trim()));

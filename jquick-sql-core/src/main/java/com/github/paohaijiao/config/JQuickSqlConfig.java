@@ -65,7 +65,7 @@ public class JQuickSqlConfig {
     }
 
     /**
-     * 从文件加载配置，支持 .properties / .yml / .yaml
+     * Loads configuration from a .properties, .yml or .yaml file.
      */
     public static JQuickSqlConfig loadFromFile(String path) throws IOException {
         JQuickSqlConfig config = new JQuickSqlConfig();

@@ -24,11 +24,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * 嵌入式 Worker 集群单例
+ * Shared embedded worker cluster.
  * <p>
- * 同一 JVM 内所有 {@code JQuickSQL.embedded(...)} 实例共享同一组 Worker，gRPC 端口只在首次使用时绑定一次，
- * 避免多个 SQL 实例重复绑定固定端口（19001 起）导致的 {@code Address already in use: bind}。
- * 生命周期通过引用计数管理：最后一个持有者 {@link #release()} 后才真正停止 Worker。
+ * All {@code JQuickSQL.embedded(...)} instances in one JVM share the same workers,
+ * so the gRPC ports are bound only once. Workers are stopped when the last holder
+ * calls {@link #release()}.
  *
  * @author Martin
  * @version 1.0.0
@@ -55,10 +55,10 @@ final class JQuickEmbeddedCluster {
     }
 
     /**
-     * 获取共享集群（首次调用时按需启动 Worker），并增加引用计数
+     * Returns the shared cluster, starting workers on first use and increasing the reference count.
      *
-     * @param workerCount 期望的 Worker 数量，已有 Worker 足够时直接复用
-     * @param basePort    gRPC 起始端口，仅首次创建集群时生效
+     * @param workerCount expected worker count; existing workers are reused when sufficient
+     * @param basePort    base gRPC port, applied only when the cluster is created
      */
     static JQuickEmbeddedCluster acquire(int workerCount, int basePort) {
         synchronized (LOCK) {
@@ -72,7 +72,7 @@ final class JQuickEmbeddedCluster {
     }
 
     /**
-     * 已启动的 Worker 端点（副本）
+     * Returns a copy of the started worker endpoints.
      */
     List<WorkerEndpoint> getEndpoints() {
         synchronized (LOCK) {
@@ -81,7 +81,7 @@ final class JQuickEmbeddedCluster {
     }
 
     /**
-     * 释放引用，引用计数归零时停止全部 Worker 并销毁单例
+     * Releases a reference and stops all workers when the count reaches zero.
      */
     void release() {
         synchronized (LOCK) {

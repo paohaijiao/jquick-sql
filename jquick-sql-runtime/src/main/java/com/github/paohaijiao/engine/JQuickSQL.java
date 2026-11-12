@@ -206,7 +206,7 @@ public class JQuickSQL {
     }
 
     /**
-     * 复用 JVM 内共享的嵌入式 Worker 集群，避免重复绑定 gRPC 端口
+     * Reuses the JVM-wide embedded worker cluster to avoid binding gRPC ports twice.
      */
     private void startEmbeddedWorkers() {
         int workerCount = config.getRuntime().getDefaultParallelism();

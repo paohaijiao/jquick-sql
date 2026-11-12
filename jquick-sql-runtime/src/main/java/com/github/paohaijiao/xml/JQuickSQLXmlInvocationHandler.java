@@ -92,8 +92,8 @@ public class JQuickSQLXmlInvocationHandler extends JQuickXmlInvocationHandler {
     }
 
     /**
-     * 分布式执行时日期经 protobuf Timestamp 序列化，返回后为 Instant；
-     * 目标 Bean 字段为 java.util.Date 时先还原，避免 toBeanList 类型转换失败。
+     * Distributed execution returns dates as protobuf Timestamp, which is deserialized as Instant.
+     * Converts them back to java.util.Date when the target bean field requires it.
      */
     private List<JQuickRow> restoreDateColumns(List<JQuickRow> rows, Class<?> beanType) {
         Set<String> dateFields = new HashSet<>();
