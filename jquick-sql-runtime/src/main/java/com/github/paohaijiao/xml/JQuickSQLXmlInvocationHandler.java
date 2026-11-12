@@ -33,7 +33,7 @@ import java.util.Map;
 
 public class JQuickSQLXmlInvocationHandler extends JQuickXmlInvocationHandler {
 
-    private static JQuickSQL sql;
+    private final JQuickSQL sql;
 
     private JContext context=new JContext();
 

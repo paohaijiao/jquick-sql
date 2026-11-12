@@ -23,6 +23,22 @@ public class JQuickXmlTest {
         JQuickFactory factory = new JQuickXmlFactory(handler, "jquick-sql.xml");
         DataDao dao = factory.createApi(DataDao.class);
         List<JQuickRow>  list= dao.selectData(1L,"1","2",null,new Date());
+        JQuickFactory factory1 = new JQuickXmlFactory(handler, "jquick-sql.xml");
+        DataDao dao1 = factory1.createApi(DataDao.class);
+        List<JQuickRow>  list1= dao1.selectData(1L,"1","2",null,new Date());
+        System.out.println(list);
+
+    }
+    @Test
+    public void query1() {
+        DataServiceImpl service= new DataServiceImpl();
+        JQuickTable table=service.getTable();
+        List<JQuickTable> tables=Arrays.asList(table);
+        JQuickSQLXmlParseFactory handler = new JQuickSQLXmlParseFactory(tables);
+        JQuickFactory factory = new JQuickXmlFactory(handler, "jquick-sql.xml");
+        DataDao dao = factory.createApi(DataDao.class);
+        List<JQuickRow>  list= dao.selectData(1L,"1","2",null,new Date());
+        List<JQuickRow>  list1= dao.selectData(1L,"1","1",null,new Date());
         System.out.println(list);
 
     }

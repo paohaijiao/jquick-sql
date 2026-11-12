@@ -23,7 +23,6 @@ import com.github.paohaijiao.console.JConsole;
 import com.github.paohaijiao.datasource.JQuickDataSourceManager;
 import com.github.paohaijiao.distributed.JQuickDistributedPlan;
 import com.github.paohaijiao.distributed.coordinator.JQuickCoordinator;
-import com.github.paohaijiao.distributed.worker.JQuickWorker;
 import com.github.paohaijiao.executor.JQuickSQLExecutor;
 import com.github.paohaijiao.fragment.JQuickFragmenter;
 import com.github.paohaijiao.logic.JQuickLogicalPlanNode;
@@ -55,7 +54,7 @@ public class JQuickSQL {
 
     private final JQuickFragmenter fragmenter;
 
-    private final List<JQuickWorker> workers;
+    private JQuickEmbeddedCluster embeddedCluster;
 
     private JQuickCoordinator coordinator;
 
@@ -65,7 +64,6 @@ public class JQuickSQL {
         this.config = config != null ? config : new JQuickSqlConfig();
         this.physicalGenerator = new JQuickPhysicalPlanGenerator();
         this.fragmenter = new JQuickFragmenter(this.config.getRuntime().getDefaultParallelism());
-        this.workers = new ArrayList<>();
         this.embeddedMode = false;
         this.optimizer=new JQuickLogicalPlanOptimizer();
     }
@@ -199,37 +197,20 @@ public class JQuickSQL {
 
     private synchronized void ensureInitialized() {
         if (coordinator == null) {
-            if (embeddedMode && config.getRuntime().getWorkers() == null || config.getRuntime().getWorkers().isEmpty()) {
+            if (embeddedMode && (config.getRuntime().getWorkers() == null || config.getRuntime().getWorkers().isEmpty())) {
                 startEmbeddedWorkers();
             }
             coordinator = new JQuickCoordinator(config);
         }
     }
 
+    /**
+     * 复用 JVM 内共享的嵌入式 Worker 集群，避免重复绑定 gRPC 端口
+     */
     private void startEmbeddedWorkers() {
         int workerCount = config.getRuntime().getDefaultParallelism();
-        List<WorkerEndpoint> endpoints = new ArrayList<>();
-        int basePort = 19001;
-        for (int i = 0; i < workerCount; i++) {
-            int port = basePort + i;
-            JQuickWorker worker = new JQuickWorker("worker-" + (i + 1), port);
-            try {
-                worker.start();
-            } catch (java.io.IOException e) {
-                throw new RuntimeException("Failed to start worker on port " + port, e);
-            }
-            workers.add(worker);
-            endpoints.add(new WorkerEndpoint("worker-" + (i + 1), "localhost", port, i));
-            try {
-                Thread.sleep(200);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
-        }
-        config.getRuntime().setWorkers(endpoints);
-        for (JQuickWorker worker : workers) {
-            worker.setWorkerEndpoints(endpoints);
-        }
+        embeddedCluster = JQuickEmbeddedCluster.acquire(workerCount);
+        config.getRuntime().setWorkers(embeddedCluster.getEndpoints());
     }
 
     public void shutdown() {
@@ -237,10 +218,10 @@ public class JQuickSQL {
             coordinator.shutdown();
             coordinator = null;
         }
-        for (JQuickWorker worker : workers) {
-            worker.stop();
+        if (embeddedCluster != null) {
+            embeddedCluster.release();
+            embeddedCluster = null;
         }
-        workers.clear();
     }
 
     public JQuickSqlConfig getConfig() {
