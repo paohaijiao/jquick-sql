@@ -22,7 +22,6 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <java.version>1.8</java.version>
-        <jquick.sql.version>5.0.0</jquick.sql.version>
         <lombok.version>1.18.30</lombok.version>
         <rest.assured.version>2.3.3</rest.assured.version>
         <jquick.grpc.version>1.4.0</jquick.grpc.version>
@@ -52,32 +51,32 @@
             <dependency>
                 <groupId>io.github.paohaijiao</groupId>
                 <artifactId>jquick-sql-core</artifactId>
-                <version>${jquick.sql.version}</version>
+                <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>io.github.paohaijiao</groupId>
                 <artifactId>jquick-sql-parser</artifactId>
-                <version>${jquick.sql.version}</version>
+                <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>io.github.paohaijiao</groupId>
                 <artifactId>jquick-sql-plan</artifactId>
-                <version>${jquick.sql.version}</version>
+                <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>io.github.paohaijiao</groupId>
                 <artifactId>jquick-sql-proto</artifactId>
-                <version>${jquick.sql.version}</version>
+                <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>io.github.paohaijiao</groupId>
                 <artifactId>jquick-sql-query</artifactId>
-                <version>${jquick.sql.version}</version>
+                <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>io.github.paohaijiao</groupId>
                 <artifactId>jquick-sql-runtime</artifactId>
-                <version>${jquick.sql.version}</version>
+                <version>${project.version}</version>
             </dependency>
 
             <dependency>
@@ -107,7 +106,7 @@
             <dependency>
                 <groupId>io.github.paohaijiao</groupId>
                 <artifactId>jquick-banner</artifactId>
-                <version>1.5.0</version>
+                <version>1.6.0</version>
             </dependency>
             <dependency>
                 <groupId>io.github.paohaijiao</groupId>
