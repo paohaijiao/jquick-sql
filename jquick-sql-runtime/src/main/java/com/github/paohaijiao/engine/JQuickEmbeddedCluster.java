@@ -38,14 +38,11 @@ final class JQuickEmbeddedCluster {
 
     private static final JConsole console = JConsole.initConsoleEnvironment();
 
-    /**
-     * 嵌入式 Worker 起始端口，与原实现保持一致
-     */
-    private static final int BASE_PORT = 19001;
-
     private static final Object LOCK = new Object();
 
     private static JQuickEmbeddedCluster instance;
+
+    private final int basePort;
 
     private final List<JQuickWorker> workers = new ArrayList<>();
 
@@ -53,18 +50,20 @@ final class JQuickEmbeddedCluster {
 
     private int refCount;
 
-    private JQuickEmbeddedCluster() {
+    private JQuickEmbeddedCluster(int basePort) {
+        this.basePort = basePort;
     }
 
     /**
      * 获取共享集群（首次调用时按需启动 Worker），并增加引用计数
      *
      * @param workerCount 期望的 Worker 数量，已有 Worker 足够时直接复用
+     * @param basePort    gRPC 起始端口，仅首次创建集群时生效
      */
-    static JQuickEmbeddedCluster acquire(int workerCount) {
+    static JQuickEmbeddedCluster acquire(int workerCount, int basePort) {
         synchronized (LOCK) {
             if (instance == null) {
-                instance = new JQuickEmbeddedCluster();
+                instance = new JQuickEmbeddedCluster(basePort);
             }
             instance.startWorkers(workerCount);
             instance.refCount++;
@@ -105,7 +104,7 @@ final class JQuickEmbeddedCluster {
         int startIndex = workers.size();
         try {
             for (int index = startIndex; index < workerCount; index++) {
-                int port = BASE_PORT + index;
+                int port = basePort + index;
                 JQuickWorker worker = new JQuickWorker("worker-" + (index + 1), port);
                 try {
                     worker.start();
@@ -126,8 +125,8 @@ final class JQuickEmbeddedCluster {
         for (JQuickWorker worker : workers) {
             worker.setWorkerEndpoints(new ArrayList<>(endpoints));
         }
-        console.info("Embedded worker cluster ready on ports [" + (BASE_PORT + startIndex)
-                + " - " + (BASE_PORT + workers.size() - 1) + "]");
+        console.info("Embedded worker cluster ready on ports [" + (basePort + startIndex)
+                + " - " + (basePort + workers.size() - 1) + "]");
     }
 
     private void rollback(int startIndex) {

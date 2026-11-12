@@ -65,11 +65,17 @@ public class JQuickSqlConfig {
     }
 
     /**
-     * 从文件加载配置
+     * 从文件加载配置，支持 .properties / .yml / .yaml
      */
     public static JQuickSqlConfig loadFromFile(String path) throws IOException {
         JQuickSqlConfig config = new JQuickSqlConfig();
-        config.loadPropertiesFile(path);
+        if (path.endsWith(".yml") || path.endsWith(".yaml")) {
+            try (InputStream input = new FileInputStream(path)) {
+                config.applyProperties(JQuickSqlRuntimeConfig.loadYaml(input));
+            }
+        } else {
+            config.loadPropertiesFile(path);
+        }
         return config;
     }
 
@@ -146,8 +152,7 @@ public class JQuickSqlConfig {
 
     }
     private void applyRuntimeProperties(Properties props) {
-        setIfPresent(props, "jquick.runtime.defaultParallelism", v -> runtime.setDefaultParallelism(Integer.parseInt(v)));
-        setIfPresent(props, "jquick.runtime.maxFileSize", v -> runtime.setMaxFileSize(Integer.parseInt(v)));
+        runtime.applyProperties(props);
     }
     /**
      * 应用Properties配置

@@ -16,10 +16,12 @@
 package com.github.paohaijiao.config;
 
 import lombok.Data;
+import org.yaml.snakeyaml.Yaml;
 
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -33,35 +35,118 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Data
 public class JQuickSqlRuntimeConfig {
 
+    private static final String CONFIG_PROPERTIES = "jquick-sql.properties";
+
+    private static final String[] CONFIG_YAML_FILES = {"jquick-sql.yml", "jquick-sql.yaml"};
+
     private int defaultParallelism=1;//Runtime.getRuntime().availableProcessors()
 
     private int maxFileSize=64 * 1024 * 1024;
 
     private int maxTaskRetries=1;
+
     private int taskTimeoutMs=1;
 
     private int executionMode=1;
 
+    /**
+     * 嵌入式 Worker 的 gRPC 起始端口，第 i 个 Worker 使用 grpcPort + i
+     */
+    private int grpcPort = 19001;
+
     private List<WorkerEndpoint> workers;
 
 
+    /**
+     * 读取 classpath 下 jquick-sql.yml/jquick-sql.yaml 与 jquick-sql.properties，
+     * properties 优先级高于 yml
+     */
     public static JQuickSqlRuntimeConfig loadFromProperties() {
         JQuickSqlRuntimeConfig config = new JQuickSqlRuntimeConfig();
-        try (InputStream input = JQuickBannerConfig.class.getClassLoader().getResourceAsStream("jquick-sql.properties")) {
+        config.applyProperties(loadClasspathProperties());
+        return config;
+    }
+
+    private static Properties loadClasspathProperties() {
+        Properties props = new Properties();
+        ClassLoader classLoader = JQuickSqlRuntimeConfig.class.getClassLoader();
+        for (String yamlFile : CONFIG_YAML_FILES) {
+            try (InputStream input = classLoader.getResourceAsStream(yamlFile)) {
+                if (input != null) {
+                    props.putAll(loadYaml(input));
+                }
+            } catch (Exception e) {
+                // 使用默认值
+            }
+        }
+        try (InputStream input = classLoader.getResourceAsStream(CONFIG_PROPERTIES)) {
             if (input != null) {
-                Properties props = new Properties();
-                props.load(input);
-                config.setDefaultParallelism(Integer.getInteger(props.getProperty("jquick.runtime.defaultParallelism", "1")));
-                config.setMaxFileSize(Integer.getInteger(props.getProperty("jquick.runtime.maxFileSize", "64 * 1024 * 1024")));
-                config.setMaxTaskRetries(Integer.getInteger(props.getProperty("jquick.runtime.maxTaskRetries", "1")));
-                config.setMaxTaskRetries(Integer.getInteger(props.getProperty("jquick.runtime.taskTimeoutMs", "1")));
-                config.setMaxTaskRetries(Integer.getInteger(props.getProperty("jquick.runtime.executionMode", "1")));
+                Properties fileProps = new Properties();
+                fileProps.load(input);
+                props.putAll(fileProps);
             }
         } catch (Exception e) {
             // 使用默认值
         }
-        return config;
+        return props;
     }
+
+    /**
+     * 解析 YAML 并拍平为 Properties，支持 jquick.runtime.grpcPort 这类层级写法：
+     * <pre>
+     * jquick:
+     *   runtime:
+     *     grpcPort: 19001
+     * </pre>
+     */
+    public static Properties loadYaml(InputStream input) {
+        Properties props = new Properties();
+        Object data = new Yaml().load(input);
+        if (data instanceof Map) {
+            flattenProperties("", (Map<?, ?>) data, props);
+        }
+        return props;
+    }
+
+    private static void flattenProperties(String prefix, Map<?, ?> source, Properties props) {
+        for (Map.Entry<?, ?> entry : source.entrySet()) {
+            if (entry.getKey() == null) {
+                continue;
+            }
+            String key = prefix.isEmpty() ? String.valueOf(entry.getKey()) : prefix + "." + entry.getKey();
+            Object value = entry.getValue();
+            if (value instanceof Map) {
+                flattenProperties(key, (Map<?, ?>) value, props);
+            } else if (value != null) {
+                props.setProperty(key, String.valueOf(value));
+            }
+        }
+    }
+
+    /**
+     * 应用配置项，属性文件、yml 拍平后的结果、系统属性都走同一入口
+     */
+    public void applyProperties(Properties props) {
+        setIfPresent(props, "jquick.runtime.grpcPort", value -> this.grpcPort = Integer.parseInt(value.trim()));
+        setIfPresent(props, "jquick.runtime.defaultParallelism", value -> this.defaultParallelism = Integer.parseInt(value.trim()));
+        setIfPresent(props, "jquick.runtime.maxFileSize", value -> this.maxFileSize = Integer.parseInt(value.trim()));
+        setIfPresent(props, "jquick.runtime.maxTaskRetries", value -> this.maxTaskRetries = Integer.parseInt(value.trim()));
+        setIfPresent(props, "jquick.runtime.taskTimeoutMs", value -> this.taskTimeoutMs = Integer.parseInt(value.trim()));
+        setIfPresent(props, "jquick.runtime.executionMode", value -> this.executionMode = Integer.parseInt(value.trim()));
+    }
+
+    private void setIfPresent(Properties props, String key, PropertySetter setter) {
+        String value = props.getProperty(key);
+        if (value != null && !value.trim().isEmpty()) {
+            setter.set(value);
+        }
+    }
+
+    @FunctionalInterface
+    private interface PropertySetter {
+        void set(String value);
+    }
+
     /**
      * 从 properties 初始化 workers
      * 支持格式: jquick.runtime.workers.1.host=192.168.1.100

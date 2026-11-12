@@ -16,6 +16,7 @@
 package com.github.paohaijiao.xml;
 
 
+import com.github.paohaijiao.config.JQuickSqlConfig;
 import com.github.paohaijiao.exception.JAssert;
 import com.github.paohaijiao.param.JContext;
 import com.github.paohaijiao.statement.JQuickDataSet;
@@ -43,8 +44,12 @@ public class JQuickSQLXmlInvocationHandler extends JQuickXmlInvocationHandler {
     private JContext context=new JContext();
 
 
-    public JQuickSQLXmlInvocationHandler(List<JQuickTable> tables){
-        sql = JQuickSQL.embedded();
+    public JQuickSQLXmlInvocationHandler(List<JQuickTable> tables, JQuickSqlConfig config){
+        if (null!=config){
+             sql = JQuickSQL.embedded().withConfig(config);
+        }else{
+            sql = JQuickSQL.embedded();
+        }
         JAssert.notNull(tables,"tables require not be null");
         JAssert.notEmptyCol(tables,"tables require not be empty");
         tables.forEach(t->{

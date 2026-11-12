@@ -14,6 +14,7 @@
  * Copyright (c) [2025-2099] Martin (goudingcheng@gmail.com)
  */
 package com.github.paohaijiao.xml;
+import com.github.paohaijiao.config.JQuickSqlConfig;
 import com.github.paohaijiao.exception.JAssert;
 import com.github.paohaijiao.xml.element.JQuickXmlElement;
 import com.github.paohaijiao.xml.handler.JQuickParseHandler;
@@ -27,10 +28,16 @@ public class JQuickSQLXmlParseFactory implements JQuickParseHandler {
 
     private List<JQuickTable> tables;
 
+    private JQuickSqlConfig config;
+
     public JQuickSQLXmlParseFactory(List<JQuickTable> tables){
+         this(tables, null);
+    }
+    public JQuickSQLXmlParseFactory(List<JQuickTable> tables,JQuickSqlConfig config){
         JAssert.notNull(tables,"tables require not be null");
         JAssert.notEmptyCol(tables,"tables require not be empty ");
         this.tables=tables;
+        this.config=config;
     }
 
     @Override
@@ -40,6 +47,6 @@ public class JQuickSQLXmlParseFactory implements JQuickParseHandler {
 
     @Override
     public JQuickXmlInvocationHandler createlInvocationHandler() {
-        return new JQuickSQLXmlInvocationHandler(tables);
+        return new JQuickSQLXmlInvocationHandler(tables,config);
     }
 }

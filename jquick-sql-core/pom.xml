@@ -29,6 +29,10 @@
             <artifactId>javelin-core</artifactId>
             <version>${javelin.version}</version>
         </dependency>
+        <dependency>
+            <groupId>org.yaml</groupId>
+            <artifactId>snakeyaml</artifactId>
+        </dependency>
     </dependencies>
     <description>
         jquicksql is a lightweight sql parser and query engine built on antlr4, supporting standard

@@ -116,6 +116,7 @@ public class JQuickSQL {
     public JQuickSQL withConfig(JQuickSqlConfig config) {
         if (config != null) {
             this.config.getRuntime().setDefaultParallelism(config.getRuntime().getDefaultParallelism());
+            this.config.getRuntime().setGrpcPort(config.getRuntime().getGrpcPort());
             this.config.getRuntime().setWorkers(config.getRuntime().getWorkers());
             this.config.getRuntime().setMaxTaskRetries(config.getRuntime().getMaxTaskRetries());
             this.config.getRuntime().setTaskTimeoutMs(config.getRuntime().getTaskTimeoutMs());
@@ -209,7 +210,7 @@ public class JQuickSQL {
      */
     private void startEmbeddedWorkers() {
         int workerCount = config.getRuntime().getDefaultParallelism();
-        embeddedCluster = JQuickEmbeddedCluster.acquire(workerCount);
+        embeddedCluster = JQuickEmbeddedCluster.acquire(workerCount, config.getRuntime().getGrpcPort());
         config.getRuntime().setWorkers(embeddedCluster.getEndpoints());
     }
 

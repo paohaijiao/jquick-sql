@@ -1,5 +1,6 @@
 package com.github.paohaijiao.xml;
 
+import com.github.paohaijiao.config.JQuickSqlConfig;
 import com.github.paohaijiao.domain.JQuickTable;
 import com.github.paohaijiao.statement.JQuickRow;
 import com.github.paohaijiao.xml.dao.DataDao;
@@ -49,6 +50,21 @@ public class JQuickXmlTest {
         JQuickTable table=service.getTable();
         List<JQuickTable> tables=Arrays.asList(table);
         JQuickSQLXmlParseFactory handler = new JQuickSQLXmlParseFactory(tables);
+        JQuickFactory factory = new JQuickXmlFactory(handler, "jquick-sql.xml");
+        DataDao dao = factory.createApi(DataDao.class);
+        List<DataStatistics>  list= dao.selectDataBean(1L,"1","2",null,new Date());
+        List<DataStatistics>  list1= dao.selectDataBean(1L,"1","1",null,new Date());
+        System.out.println(list);
+
+    }
+    @Test
+    public void selectDataBean1() {
+        JQuickSqlConfig config = new JQuickSqlConfig();
+        config.getRuntime().setGrpcPort(19500);
+        DataServiceImpl service= new DataServiceImpl();
+        JQuickTable table=service.getTable();
+        List<JQuickTable> tables=Arrays.asList(table);
+        JQuickSQLXmlParseFactory handler = new JQuickSQLXmlParseFactory(tables,config);
         JQuickFactory factory = new JQuickXmlFactory(handler, "jquick-sql.xml");
         DataDao dao = factory.createApi(DataDao.class);
         List<DataStatistics>  list= dao.selectDataBean(1L,"1","2",null,new Date());
