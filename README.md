@@ -45,6 +45,10 @@
   Part of the <a href="https://github.com/paohaijiao">JQuick</a> open-source ecosystem — Five projects in this ecosystem are listed in <a href="https://github.com/akullpp/awesome-java">Awesome Java</a>.
 </p>
 
+<p align="center">
+  <img src="./images/jquick-sql-demo.gif" width="720" alt="JQuick-SQL demo — XML SQL binding, dynamic Dao generation and direct query" />
+</p>
+
 ---
 
 ## 1. Project Introduction

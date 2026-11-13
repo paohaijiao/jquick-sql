@@ -44,6 +44,10 @@
   <a href="https://github.com/paohaijiao">JQuick</a> 开源生态成员 —— 该生态已有 5 个项目被 <a href="https://github.com/akullpp/awesome-java">Awesome Java</a> 收录。
 </p>
 
+<p align="center">
+  <img src="./images/jquick-sql-demo.gif" width="720" alt="JQuick-SQL 演示 —— XML SQL 绑定、动态 Dao 生成与直接调用查询" />
+</p>
+
 ---
 
 ## 1. 项目简介
